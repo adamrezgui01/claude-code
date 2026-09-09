@@ -1,0 +1,221 @@
+{
+  "deck": "Psoriasis — prise en charge (partie 1)",
+  "cards": [
+    {
+      "question": "Quelle est la nature du psoriasis ?",
+      "answer": "Maladie de peau auto-immune, chronique et multifactorielle, liée à une dysfonction du système immunitaire.\nPlus de 10 types cliniques.\nMédiation par le TNF-α et les interleukines 12, 17 et 23."
+    },
+    {
+      "question": "Quelle est la prévalence du psoriasis selon l'origine ethnique, et quel est le ratio hommes/femmes ?",
+      "answer": "3 % chez les Caucasiens, 0,5 % chez les personnes noires et asiatiques.\nHommes = femmes."
+    },
+    {
+      "question": "À quels âges se situent les deux pics d'apparition du psoriasis ?",
+      "answer": "20-29 ans et 50-60 ans."
+    },
+    {
+      "question": "Quel est le lien entre l'âge d'apparition du psoriasis et le pronostic ?",
+      "answer": "Une apparition tôt dans la vie est associée à un moins bon pronostic et à plus d'évolution vers l'arthrite psoriasique."
+    },
+    {
+      "question": "Combien de personnes le psoriasis touche-t-il au Canada et dans le monde ?",
+      "answer": "1 million de Canadiens, 125 millions de personnes dans le monde.\nPrincipalement du psoriasis en plaques."
+    },
+    {
+      "question": "Comment se répartissent les cas de psoriasis selon la sévérité ?",
+      "answer": "2/3 des cas : maladie légère.\n1/3 des cas : maladie sévère."
+    },
+    {
+      "question": "Que sait-on du cycle rémission/exacerbation du psoriasis ?",
+      "answer": "Il est non prévisible.\nLes rémissions spontanées sont de cause inconnue et durent de 1 an à plusieurs décennies.\nPlus de 5 ans de rémission chez 5 % des patients."
+    },
+    {
+      "question": "Quel est le temps de reproduction des kératinocytes basaux, normal et dans le psoriasis ?",
+      "answer": "Normal : 311 heures (13 jours).\nPsoriasis : 36 heures (1 jour et demi)."
+    },
+    {
+      "question": "Quel est le temps de transit des kératinocytes, normal et dans le psoriasis ?",
+      "answer": "Normal : 28 jours.\nPsoriasis : 4 jours."
+    },
+    {
+      "question": "Quels sont les impacts systémiques associés au psoriasis ?",
+      "answer": "• Arthrite\n• Syndrome métabolique et maladie cardiovasculaire (risque x3)\n• Hypertension\n• Dyslipidémie\n• Diabète de type II\n• Goutte\n• Maladies rénales"
+    },
+    {
+      "question": "Quel est l'impact du psoriasis sévère sur l'espérance de vie ?",
+      "answer": "Diminution possible de 3,5 à 4 ans par rapport à la population générale."
+    },
+    {
+      "question": "Quels facteurs liés au mode de vie aggravent le psoriasis ?",
+      "answer": "• Obésité\n• Alcool\n• Tabac\n• Stress"
+    },
+    {
+      "question": "Quels médicaments peuvent aggraver les symptômes du psoriasis ou provoquer une « crise » ?",
+      "answer": "• Lithium\n• Bêta-bloqueurs\n• Antimalariques\n• AINS\n• IECA\n\nAussi : l'arrêt brusque des corticostéroïdes topiques.\nL'association chronologique reste à définir au cas par cas."
+    },
+    {
+      "question": "Quels patients ont une sensibilité accrue aux facteurs aggravants du psoriasis ?",
+      "answer": "• Ceux avec des plaques larges\n• Ceux dont la maladie est apparue en jeune âge\n• Ceux avec une maladie sévère"
+    },
+    {
+      "question": "Quels sont les signes cliniques caractéristiques d'une plaque de psoriasis ?",
+      "answer": "• Contour bien défini\n• Plaque surélevée\n• Couleur rouge saumonée\n• Dilatation des vaisseaux\n• Squames argentées\n• Signe d'Auspitz"
+    },
+    {
+      "question": "Quels sont les signes histologiques du psoriasis ?",
+      "answer": "• Infiltrats inflammatoires\n• Cellules immatures"
+    },
+    {
+      "question": "Quelles sont les localisations préférentielles du psoriasis en plaques ?",
+      "answer": "• Cuir chevelu\n• Coudes\n• Genoux\n• Tronc\n• Organes génitaux (30 % des cas)\n\nPlaques pouvant atteindre 20 cm. L'atteinte des ongles est fréquente."
+    },
+    {
+      "question": "Quelles sont les manifestations du psoriasis unguéal ?",
+      "answer": "• Criblures (pitting)\n• Leuconychie\n• Taches rouges de la lunule\n• Effritement de la tablette\n• Hyperkératose sous l'ongle\n• Onycholyse\n• Hémorragies sous l'ongle"
+    },
+    {
+      "question": "Quelle est la fréquence du psoriasis unguéal, avec et sans arthrite ?",
+      "answer": "40 % des patients atteints de psoriasis sans arthrite.\n80-90 % des patients avec arthrite psoriasique."
+    },
+    {
+      "question": "Quels traitements sont utilisés pour le psoriasis unguéal ?",
+      "answer": "Atteinte difficile à traiter :\n• Agents topiques\n• Injections de corticostéroïdes (douloureuses)\n• Méthotrexate\n• Cyclosporine\n• Thérapie biologique"
+    },
+    {
+      "question": "Quelle proportion de patients psoriasiques développe une arthrite psoriasique, et quand apparaissent les premiers symptômes rhumatismaux ?",
+      "answer": "1/3 des patients atteints de psoriasis.\nLes premiers symptômes rhumatismaux apparaissent 10 ans ou plus après les symptômes cutanés."
+    },
+    {
+      "question": "Quelles articulations l'arthrite psoriasique touche-t-elle, et quelle est sa présentation typique ?",
+      "answer": "Potentiel de toucher toutes les articulations, principalement les doigts et les orteils.\nEnflure en forme de « saucisse ».\nLa thérapie biologique est favorisée."
+    },
+    {
+      "question": "Quels critères définissent un psoriasis modéré à sévère ?",
+      "answer": "• Surface corporelle touchée de 5 à 10 %\nOU\n• Atteinte du visage, des paumes/plantes, ou symptômes invalidants\n\nAvec évaluation de l'élévation des plaques, de l'érythème et de l'impact sur la qualité de vie."
+    },
+    {
+      "question": "Que signifie l'acronyme PASI et à quoi sert ce score ?",
+      "answer": "Psoriasis Area and Severity Index.\nÉvalue la sévérité du psoriasis.\nUtilisé dans les études cliniques (comparaison de l'efficacité des agents) et comme critère RAMQ pour les médicaments d'exception.\nPourrait servir d'outil de suivi."
+    },
+    {
+      "question": "Comment le score PASI est-il construit ?",
+      "answer": "Combine l'évaluation de 4 parties : tête et cou, membres supérieurs, tronc, membres inférieurs.\nUne cote de 1 à 6 est attribuée selon le % d'atteinte par région.\nGradation des plaques sur une échelle de 0 (inexistant) à 4 (très sévère), estimant rougeur, épaisseur et desquamation."
+    },
+    {
+      "question": "Quel est le score PASI le plus élevé possible, et que signifie un score de 0 ?",
+      "answer": "Score maximal : 72.\nScore de 0 : pas de psoriasis."
+    },
+    {
+      "question": "Que signifient PASI-75 et PASI-100 ?",
+      "answer": "PASI-75 : diminution (amélioration) de 75 % par rapport au score d'origine.\nPASI-100 : la personne n'a plus aucune lésion."
+    },
+    {
+      "question": "Quelles sont les limites du score PASI ?",
+      "answer": "Usage limité car non convivial.\nNe tient pas compte de l'impact sur la qualité de vie."
+    },
+    {
+      "question": "Qu'est-ce que le DLQI et quelle est son étendue ?",
+      "answer": "Dermatology Life Quality Index : indice de qualité de vie en dermatologie, coté de 0 à 30.\nIl sert à déterminer le niveau de sévérité selon l'impact sur la qualité de vie."
+    },
+    {
+      "question": "Comment définit-on un psoriasis léger selon l'impact sur la qualité de vie ?",
+      "answer": "Peu d'impact sur la qualité de vie.\nPatient satisfait du niveau de contrôle obtenu avec des agents topiques."
+    },
+    {
+      "question": "Comment définit-on un psoriasis modéré selon l'impact sur la qualité de vie ?",
+      "answer": "Maladie non contrôlée à un niveau acceptable avec les topiques.\nNuit à la qualité de vie par son étendue, sa localisation, la douleur et/ou les démangeaisons."
+    },
+    {
+      "question": "Comment définit-on un psoriasis sévère selon l'impact sur la qualité de vie ?",
+      "answer": "Impossible à contrôler avec des agents topiques.\nQualité de vie très dégradée."
+    },
+    {
+      "question": "Quels sont les principaux motifs de consultation des patients psoriasiques ?",
+      "answer": "• Démangeaisons (65 %)\n• Douleur\n• Perte de chaleur excessive\n• Desquamation excessive\n• Impact psychologique : perte d'estime de soi, sentiment d'isolation sociale"
+    },
+    {
+      "question": "En quoi consiste l'hypothèse de la blessure kératinocytaire dans la pathogenèse du psoriasis ?",
+      "answer": "Une blessure du kératinocyte déclenche le processus. Elle peut être :\n• Mécanique\n• Solaire\n• Liée au stress psychologique, aigu ou chronique (?)\n• Infectieuse\n• Liée à des changements hormonaux"
+    },
+    {
+      "question": "En quoi consiste l'hypothèse immunologique dans la pathogenèse du psoriasis ?",
+      "answer": "Surproduction de TNF-alpha entraînant :\n• Stimulation de la prolifération cellulaire\n• Stimulation de l'angiogenèse"
+    },
+    {
+      "question": "Décrivez la cascade d'immunopathogenèse menant au déclenchement ou à l'exacerbation du psoriasis.",
+      "answer": "1. Présence d'un stress local\n2. Libération d'interleukines et de TNF-α\n3. Stimulation de l'immunité innée (derme/épiderme)\n4. Cellules dendritiques (présentatrices d'antigène)\n5. Stimulation de la multiplication des kératinocytes\n6. Stimulation soutenue : libération des cytokines\n7. Amplification"
+    },
+    {
+      "question": "Quels sont les types de psoriasis localisés ?",
+      "answer": "• En plaques (90 %), incluant le cuir chevelu\n• Inversé : zones épaissies, dans les plis\n• Palmo-plantaire (douleur ++)\n• Facial (rare)"
+    },
+    {
+      "question": "À quoi le psoriasis en goutte est-il lié, et quelle est sa présentation ?",
+      "answer": "Lié à une infection à streptocoque A.\nPapules rouges multiples et discrètes sur les membres, le tronc et le cuir chevelu.\nTraitement : UV."
+    },
+    {
+      "question": "Quelles sont les deux formes dangereuses de psoriasis ?",
+      "answer": "• Pustuleux généralisé\n• Érythrodermique (risque de déshydratation)\n\nCe sont des formes étendues."
+    },
+    {
+      "question": "Où se situe le psoriasis inverse et comment se présente-t-il ?",
+      "answer": "Dans les plis cutanés : aisselles, seins, ventre, aines.\nZone desquamante, rouge et enflammée.\nTraitement : topiques."
+    },
+    {
+      "question": "Comment se présente le psoriasis érythrodermique et comment le traite-t-on ?",
+      "answer": "Atteinte de tout le corps : érythème pancorporel suivi d'exfoliation.\nTraitement : agents per os ou thérapie biologique."
+    },
+    {
+      "question": "Comment se présentent le psoriasis pustulaire généralisé et le pustulaire localisé ?",
+      "answer": "Pustulaire généralisé : tout le corps, pustules sur peau érythémateuse. Traitement per os ou biologique.\nPustulaire localisé : mains et pieds, pustules sur plaques épaissies érythémateuses. Traitement per os, biologique ou UV."
+    },
+    {
+      "question": "Quels éléments faut-il recueillir pour une prise en charge individualisée du psoriasis ?",
+      "answer": "• Type de psoriasis, étendue, sévérité, distribution\n• Âge, sexe, potentiel de grossesse\n• Autres symptômes, co-morbidités\n• Impact sur la qualité de vie\n• Histoire antérieure et évolution\n• Occupation et localisation du domicile"
+    },
+    {
+      "question": "Selon le cours, qu'est-ce que « le bon traitement » du psoriasis ?",
+      "answer": "Ce n'est pas celui qui répond à toutes les attentes cliniques du professionnel de la santé : c'est celui qui sied le mieux au patient, celui que le patient prend.\n« Parfois on s'inspire des guides de pratique plutôt que de les appliquer à la lettre. »"
+    },
+    {
+      "question": "Quels sont les objectifs de traitement à court terme du psoriasis ?",
+      "answer": "• Soulagement des symptômes incommodants (douleur, prurit) en visant un niveau tolérable\n• Amélioration à court terme de la maladie, selon le délai d'action de la médication : 8 à 12 semaines\n• Amélioration de la qualité de vie"
+    },
+    {
+      "question": "Quel est l'objectif ultime du traitement du psoriasis, et avec quelles thérapies est-il atteignable ?",
+      "answer": "Disparition complète (rémission) : une peau claire.\nSouvent irréaliste avec les topiques et les anciens traitements systémiques.\nPossible avec la photothérapie et la thérapie biologique."
+    },
+    {
+      "question": "Quel niveau d'amélioration vise-t-on de façon réaliste en pratique, et en combien de temps ?",
+      "answer": "Entre 75 et 95 % d'amélioration en 3 à 6 mois.\nSoit passer d'environ 3 % à 1 % de surface corporelle atteinte."
+    },
+    {
+      "question": "Quels sont les objectifs de traitement à long terme du psoriasis ?",
+      "answer": "• Contribuer à diminuer le nombre et l'intensité des rechutes, en agissant sur les facteurs modifiables\n• Viser une rémission à long terme\n• Limiter l'impact systémique d'une maladie non contrôlée (effet de l'inflammation soutenue sur les autres systèmes)\n• S'assurer du meilleur choix de traitement : risques vs bénéfices"
+    },
+    {
+      "question": "Quelles sont les mesures non pharmacologiques recommandées dans le psoriasis ?",
+      "answer": "• Limiter les traumas cutanés, incluant le grattage (phénomène de Koebner)\n• Exposition solaire modérée\n• Limiter la consommation d'alcool\n• Envisager la cessation tabagique\n• Contrôle du stress (peu prouvé dans les études)\n• Porter des vêtements amples, légers et confortables\n• Limiter les baignades prolongées (irritation par le chlore et le savon)\n\nLes données sur l'impact alimentaire sont conflictuelles."
+    },
+    {
+      "question": "Quelle limite fondamentale faut-il faire comprendre au patient concernant l'arsenal thérapeutique du psoriasis ?",
+      "answer": "Il existe beaucoup de thérapies, mais aucun agent n'induit une rémission permanente.\nLe choix est limité par les effets indésirables, les contre-indications et la réalité du patient."
+    },
+    {
+      "question": "Quels sont les agents topiques disponibles dans le traitement du psoriasis ?",
+      "answer": "• Corticostéroïdes\n• Vitamine D\n• Goudron\n• Tazarotène\n• Roflumilast"
+    },
+    {
+      "question": "Quels sont les agents systémiques non biologiques utilisés dans le psoriasis ?",
+      "answer": "• Aprémilast\n• Méthotrexate\n• Cyclosporine\n• Acitrétine\n• Deucravacitinib"
+    },
+    {
+      "question": "Décrivez l'échelle de traitement du psoriasis, du premier au dernier palier.",
+      "answer": "1. Agents topiques (cortico, vitamine D, goudron, tazarotène, roflumilast)\n2. Photothérapie, seule ou en combinaison si accessible\n3. Agents systémiques : aprémilast, MTX, cyclosporine, acitrétine, deucravacitinib\n4. Thérapie biologique\n\nOn monte d'un palier si le précédent est insuffisant. Les effets indésirables augmentent avec les paliers."
+    },
+    {
+      "question": "Avec quels agents pratique-t-on parfois une thérapie en rotation ?",
+      "answer": "Surtout avec les agents topiques (corticostéroïdes) et les UV."
+    }
+  ]
+}
