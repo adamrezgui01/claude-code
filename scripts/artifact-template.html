@@ -1,0 +1,772 @@
+<title>Flashcards pharmaco</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+<style>
+  :root {
+    --ground: #f1f4f6;
+    --surface: #ffffff;
+    --sunken: #e7ecf0;
+    --border: #d7e0e6;
+    --ink: #12181d;
+    --muted: #5b6a75;
+    --accent: #265073;
+    --accent-hover: #1b3d5c;
+    --accent-ink: #ffffff;
+    --r1: #b23a2f;
+    --r2: #ad5a1c;
+    --r3: #8c6b0f;
+    --r4: #4d7a25;
+    --r5: #2b6f4a;
+    --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #10151a;
+      --surface: #191f26;
+      --sunken: #222932;
+      --border: #2c353f;
+      --ink: #e5ecf2;
+      --muted: #8d9ba8;
+      --accent: #8fb6d9;
+      --accent-hover: #a8c8e5;
+      --accent-ink: #0f1419;
+      --r1: #e0796d;
+      --r2: #d8914f;
+      --r3: #c3a944;
+      --r4: #8cba5f;
+      --r5: #61b083;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #10151a;
+    --surface: #191f26;
+    --sunken: #222932;
+    --border: #2c353f;
+    --ink: #e5ecf2;
+    --muted: #8d9ba8;
+    --accent: #8fb6d9;
+    --accent-hover: #a8c8e5;
+    --accent-ink: #0f1419;
+    --r1: #e0796d;
+    --r2: #d8914f;
+    --r3: #c3a944;
+    --r4: #8cba5f;
+    --r5: #61b083;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+    padding: 0 18px;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .wrap {
+    max-width: 620px;
+    margin: 0 auto;
+    padding-block: 26px 40px;
+  }
+
+  h1 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .lede {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin: 4px 0 24px;
+  }
+
+  .eyebrow {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .btn {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .btn:hover {
+    background: var(--accent-hover);
+  }
+
+  .btn.ghost {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--border);
+    font-weight: 500;
+  }
+
+  .btn.ghost:hover {
+    background: var(--sunken);
+  }
+
+  .link {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.82rem;
+    padding: 0;
+    margin-bottom: 18px;
+  }
+
+  .link:hover {
+    color: var(--ink);
+  }
+
+  /* Liste des decks */
+
+  .decks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .deck {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+
+  .deck-text {
+    flex: 1 1 200px;
+    min-width: 0;
+  }
+
+  .deck-name {
+    font-weight: 600;
+    font-size: 0.98rem;
+    margin: 0 0 3px;
+  }
+
+  .deck-meta {
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .deck-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+  }
+
+  .count {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-radius: 999px;
+    padding: 3px 10px;
+  }
+
+  .count.zero {
+    background: transparent;
+    color: var(--muted);
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+
+  /* Session */
+
+  .session-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .session-deck {
+    font-weight: 500;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .remaining {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .track {
+    height: 3px;
+    background: var(--sunken);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .fill {
+    height: 100%;
+    width: 0;
+    background: var(--accent);
+    transition: width 0.25s ease;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 30px 24px;
+    min-height: 190px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .question {
+    font-family: var(--serif);
+    font-size: 1.22rem;
+    font-weight: 600;
+    line-height: 1.4;
+    text-wrap: balance;
+    margin: 8px 0 0;
+    text-align: center;
+  }
+
+  .answer-block {
+    margin-top: 24px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+  }
+
+  .answer {
+    font-family: var(--serif);
+    font-size: 1rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    margin: 8px 0 0;
+  }
+
+  .hint {
+    color: var(--muted);
+    font-size: 0.76rem;
+    text-align: center;
+    margin: 20px 0 0;
+  }
+
+  .hint .keys {
+    display: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .hint .taps {
+      display: none;
+    }
+
+    .hint .keys {
+      display: inline;
+    }
+  }
+
+  .controls {
+    position: sticky;
+    bottom: 0;
+    padding-block: 14px 12px;
+    background: linear-gradient(to top, var(--ground) 76%, transparent);
+  }
+
+  .flip {
+    width: 100%;
+    padding: 14px;
+    font-size: 0.95rem;
+  }
+
+  .rating-prompt {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin: 0 0 10px;
+  }
+
+  .scores {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+
+  .score {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 2px 9px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: var(--ink);
+    min-height: 62px;
+    justify-content: center;
+  }
+
+  .score:hover {
+    border-color: var(--tone);
+  }
+
+  .score:disabled {
+    opacity: 0.45;
+  }
+
+  .score b {
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--tone);
+    line-height: 1;
+  }
+
+  .score span {
+    font-size: 0.6rem;
+    line-height: 1.2;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* Fin de session et état vide */
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 34px 26px;
+    text-align: center;
+  }
+
+  .panel h2 {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 6px 0 8px;
+  }
+
+  .panel p {
+    color: var(--muted);
+    font-size: 0.86rem;
+    margin: 0 0 20px;
+  }
+
+  .status {
+    color: var(--muted);
+    font-size: 0.72rem;
+    margin-top: 26px;
+    text-align: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fill {
+      transition: none;
+    }
+  }
+</style>
+
+<div class="wrap">
+  <section id="deck-view">
+    <h1>Flashcards pharmaco</h1>
+    <p class="lede" id="lede">Chargement…</p>
+    <div class="decks" id="decks"></div>
+    <p class="status" id="status"></p>
+  </section>
+
+  <section id="session-view" hidden>
+    <button class="link" id="back" type="button">← Tous les decks</button>
+
+    <div id="running">
+      <div class="session-top">
+        <span class="session-deck" id="session-deck"></span>
+        <span class="remaining" id="remaining"></span>
+      </div>
+      <div class="track"><div class="fill" id="fill"></div></div>
+
+      <div class="card" id="card">
+        <div>
+          <p class="eyebrow">Question</p>
+          <p class="question" id="question"></p>
+        </div>
+        <div class="answer-block" id="answer-block" hidden>
+          <p class="eyebrow">Réponse</p>
+          <p class="answer" id="answer"></p>
+        </div>
+        <p class="hint" id="hint">
+          <span class="taps">Touchez la carte pour voir la réponse</span>
+          <span class="keys">Cliquez la carte ou appuyez sur Espace</span>
+        </p>
+      </div>
+
+      <div class="controls">
+        <button class="btn flip" id="flip" type="button">Voir la réponse</button>
+        <div id="rating" hidden>
+          <p class="rating-prompt">Votre niveau de confiance ?</p>
+          <div class="scores" id="scores"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="done" hidden>
+      <p class="eyebrow">Session terminée</p>
+      <h2 id="done-title"></h2>
+      <p id="done-note"></p>
+      <button class="btn" id="done-back" type="button">Retour aux decks</button>
+    </div>
+  </section>
+</div>
+
+<script>
+  (function () {
+    const DECKS = /*__DECKS__*/ [];
+
+    const LABELS = {
+      1: "Aucune idée",
+      2: "Difficile",
+      3: "Hésitant",
+      4: "Bien su",
+      5: "Parfait",
+    };
+    const TONES = { 1: "--r1", 2: "--r2", 3: "--r3", 4: "--r4", 5: "--r5" };
+    const LOCAL_KEY = "flashcards-progress-v1";
+    const FRESH = { ef: 2.5, iv: 0, rep: 0, next: "", total: 0, last: null };
+
+    let progress = {};
+    let db = null;
+    let session = null;
+    let busy = false;
+
+    const $ = (id) => document.getElementById(id);
+
+    /* --- Répétition espacée (SM-2) --- */
+
+    function todayString(date) {
+      const d = date || new Date();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return d.getFullYear() + "-" + m + "-" + day;
+    }
+
+    function addDays(days) {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return todayString(d);
+    }
+
+    function schedule(state, confidence) {
+      const gap = 5 - confidence;
+      const ef = Math.max(
+        1.3,
+        Number((state.ef + (0.1 - gap * (0.08 + gap * 0.02))).toFixed(4)),
+      );
+
+      let iv;
+      if (confidence < 3) iv = 0;
+      else if (state.rep === 0) iv = 1;
+      else if (state.rep === 1) iv = 6;
+      else iv = Math.max(state.iv + 1, Math.round(state.iv * ef));
+
+      return {
+        ef: ef,
+        iv: iv,
+        rep: confidence < 3 ? 0 : state.rep + 1,
+        next: addDays(iv),
+        total: state.total + 1,
+        last: confidence,
+      };
+    }
+
+    const stateOf = (cardId) =>
+      Object.assign({}, FRESH, progress[cardId] || {});
+
+    const isDue = (cardId) => (stateOf(cardId).next || "") <= todayString();
+
+    /* --- Stockage : base de l'artefact, avec miroir local --- */
+
+    function readLocal() {
+      try {
+        return JSON.parse(localStorage.getItem(LOCAL_KEY) || "{}");
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function writeLocal() {
+      try {
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(progress));
+      } catch (e) {
+        /* stockage indisponible : la session reste utilisable */
+      }
+    }
+
+    async function loadProgress() {
+      progress = readLocal();
+
+      try {
+        db = window.claude && window.claude.use ? await window.claude.use("db") : null;
+      } catch (e) {
+        db = null;
+      }
+
+      if (!db) {
+        $("status").textContent =
+          "Progression conservée sur cet appareil seulement.";
+        renderDecks();
+        return;
+      }
+
+      try {
+        const snap = await db.collection("progress").get();
+        snap.docs.forEach((doc) => {
+          const stored = doc.data();
+          const local = progress[doc.id];
+          if (!local || (stored.total || 0) >= (local.total || 0)) {
+            progress[doc.id] = stored;
+          }
+        });
+        writeLocal();
+      } catch (e) {
+        $("status").textContent =
+          "Progression enregistrée localement : la base n'a pas répondu.";
+      }
+
+      renderDecks();
+    }
+
+    async function saveCard(cardId) {
+      writeLocal();
+      if (!db) return;
+      try {
+        await db.doc("progress/" + cardId).set(progress[cardId]);
+      } catch (e) {
+        $("status").textContent =
+          "Progression enregistrée localement : la base n'a pas répondu.";
+      }
+    }
+
+    /* --- Vue decks --- */
+
+    function dueCards(deck) {
+      return deck.cards.filter((card) => isDue(card.id));
+    }
+
+    function nextDate(deck) {
+      const dates = deck.cards
+        .map((card) => stateOf(card.id).next)
+        .filter(Boolean)
+        .sort();
+      return dates[0] || null;
+    }
+
+    function plural(n, word) {
+      return n + " " + word + (n > 1 ? "s" : "");
+    }
+
+    function renderDecks() {
+      const list = $("decks");
+      list.textContent = "";
+      let totalDue = 0;
+
+      DECKS.forEach((deck) => {
+        const due = dueCards(deck).length;
+        const fresh = deck.cards.filter(
+          (card) => stateOf(card.id).total === 0,
+        ).length;
+        totalDue += due;
+
+        const row = document.createElement("div");
+        row.className = "deck";
+
+        const text = document.createElement("div");
+        text.className = "deck-text";
+        const name = document.createElement("p");
+        name.className = "deck-name";
+        name.textContent = deck.name;
+        const meta = document.createElement("p");
+        meta.className = "deck-meta";
+        meta.textContent =
+          plural(deck.cards.length, "carte") +
+          (fresh > 0 ? " · " + plural(fresh, "jamais révisée") : "");
+        text.append(name, meta);
+
+        const actions = document.createElement("div");
+        actions.className = "deck-actions";
+        const count = document.createElement("span");
+        count.className = due > 0 ? "count" : "count zero";
+        count.textContent = due;
+        const go = document.createElement("button");
+        go.type = "button";
+        go.className = due > 0 ? "btn" : "btn ghost";
+        go.textContent = due > 0 ? "Réviser" : "Réviser en avance";
+        go.addEventListener("click", () => startSession(deck, due > 0));
+        actions.append(count, go);
+
+        row.append(text, actions);
+        list.append(row);
+      });
+
+      const upcoming = DECKS.map(nextDate).filter(Boolean).sort()[0];
+      $("lede").textContent =
+        totalDue > 0
+          ? plural(totalDue, "carte") + " à réviser aujourd'hui"
+          : upcoming
+            ? "Rien à réviser aujourd'hui · prochaine révision le " + upcoming
+            : "Rien à réviser aujourd'hui";
+    }
+
+    /* --- Session de révision --- */
+
+    function startSession(deck, dueOnly) {
+      const cards = dueOnly ? dueCards(deck) : deck.cards.slice();
+      if (cards.length === 0) return;
+
+      session = { deck: deck, queue: cards, answered: 0, revealed: false };
+      $("deck-view").hidden = true;
+      $("session-view").hidden = false;
+      $("running").hidden = false;
+      $("done").hidden = true;
+      $("session-deck").textContent = deck.name;
+      window.scrollTo(0, 0);
+      renderCard();
+    }
+
+    function renderCard() {
+      const card = session.queue[0];
+      const remaining = session.queue.length;
+
+      $("question").textContent = card.q;
+      $("answer").textContent = card.a;
+      $("remaining").textContent = remaining + " restante" + (remaining > 1 ? "s" : "");
+      $("fill").style.width =
+        (session.answered / (session.answered + remaining)) * 100 + "%";
+
+      $("answer-block").hidden = !session.revealed;
+      $("hint").hidden = session.revealed;
+      $("flip").hidden = session.revealed;
+      $("rating").hidden = !session.revealed;
+    }
+
+    function reveal() {
+      if (session && !session.revealed) {
+        session.revealed = true;
+        renderCard();
+      }
+    }
+
+    async function rate(confidence) {
+      if (!session || !session.revealed || busy) return;
+      busy = true;
+
+      const card = session.queue[0];
+      progress[card.id] = schedule(stateOf(card.id), confidence);
+      await saveCard(card.id);
+
+      session.answered += 1;
+      session.revealed = false;
+      session.queue =
+        confidence < 3
+          ? session.queue.slice(1).concat(card)
+          : session.queue.slice(1);
+
+      busy = false;
+
+      if (session.queue.length === 0) finish();
+      else renderCard();
+    }
+
+    function finish() {
+      $("running").hidden = true;
+      $("done").hidden = false;
+      $("done-title").textContent =
+        plural(session.answered, "révision") + " terminée" +
+        (session.answered > 1 ? "s" : "");
+      $("done-note").textContent =
+        "Deck « " + session.deck.name + " ». Les cartes bien sues reviendront plus tard.";
+    }
+
+    function backToDecks() {
+      session = null;
+      $("session-view").hidden = true;
+      $("deck-view").hidden = false;
+      renderDecks();
+      window.scrollTo(0, 0);
+    }
+
+    /* --- Câblage --- */
+
+    const scores = $("scores");
+    [1, 2, 3, 4, 5].forEach((score) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "score";
+      button.style.setProperty("--tone", "var(" + TONES[score] + ")");
+      const digit = document.createElement("b");
+      digit.textContent = score;
+      const label = document.createElement("span");
+      label.textContent = LABELS[score];
+      button.append(digit, label);
+      button.addEventListener("click", () => rate(score));
+      scores.append(button);
+    });
+
+    $("card").addEventListener("click", reveal);
+    $("flip").addEventListener("click", reveal);
+    $("back").addEventListener("click", backToDecks);
+    $("done-back").addEventListener("click", backToDecks);
+
+    document.addEventListener("keydown", (event) => {
+      if (!session || $("session-view").hidden) return;
+      if (!session.revealed && (event.key === " " || event.key === "Enter")) {
+        event.preventDefault();
+        reveal();
+        return;
+      }
+      if (session.revealed && event.key >= "1" && event.key <= "5") {
+        rate(Number(event.key));
+      }
+    });
+
+    renderDecks();
+    loadProgress();
+  })();
+</script>

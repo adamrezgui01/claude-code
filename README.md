@@ -19,6 +19,12 @@ La base est créée automatiquement dans `data/flashcards.db`.
 
 Une note inférieure à 3 remet la carte en fin de file de la session en cours. Une note de 3 ou plus programme la carte selon SM-2 : 1 jour, puis 6 jours, puis intervalle × facteur de facilité.
 
+## Version web (téléphone)
+
+`npm run build-web` génère `build/flashcards.html`, une page autonome contenant les mêmes cartes et le même algorithme, publiée comme artefact Claude et consultable au téléphone. La progression y est enregistrée dans la base de l'artefact, avec copie locale dans le navigateur.
+
+Les identifiants de carte sont les mêmes des deux côtés (hash de la question), mais les deux progressions sont distinctes : la version locale suit ses propres révisions, la version web les siennes.
+
 ## Ajouter des cartes
 
 Le contenu des cartes vit dans `content/*.json` :

@@ -6,3 +6,4 @@ next-env.d.ts
 # Base locale : contient la progression de révision, propre à chaque machine.
 # Le contenu des cartes est versionné dans content/*.json et importé via `npm run add-cards`.
 data/
+build/

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "add-cards": "tsx scripts/add-cards.ts"
+    "add-cards": "tsx scripts/add-cards.ts",
+    "build-web": "tsx scripts/build-artifact.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.7.0",
