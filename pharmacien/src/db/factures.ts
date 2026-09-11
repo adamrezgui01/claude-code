@@ -43,12 +43,17 @@ export function supprimerFacture(id: number) {
   db.runSync('DELETE FROM factures WHERE id = ?', id);
 }
 
-/** Numéro séquentiel de la forme `2026-004`. */
+/**
+ * Numéro séquentiel de la forme `2026-004`. Suit le plus grand numéro de
+ * l'année plutôt que le nombre de factures : supprimer une facture ne doit pas
+ * faire réapparaître un numéro déjà émis.
+ */
 export function prochainNumeroFacture(): string {
   const annee = new Date().getFullYear();
-  const r = db.getFirstSync<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM factures WHERE numero LIKE ?",
+  const r = db.getFirstSync<{ numero: string }>(
+    'SELECT numero FROM factures WHERE numero LIKE ? ORDER BY numero DESC LIMIT 1',
     `${annee}-%`
   );
-  return `${annee}-${`${(r?.n ?? 0) + 1}`.padStart(3, '0')}`;
+  const dernier = r ? parseInt(r.numero.slice(5), 10) : 0;
+  return `${annee}-${`${(Number.isFinite(dernier) ? dernier : 0) + 1}`.padStart(3, '0')}`;
 }

@@ -3,7 +3,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
 import type { QuartDetaille, Reglages } from '../db/types';
-import { dureeHeures, formatDateCourte } from './dates';
+import { aujourdhui, dureeHeures, formatDateCourte } from './dates';
 import { argent, heures, nombre } from './format';
 
 export type OptionsFacture = {
@@ -84,7 +84,7 @@ function ligneSousTotal(libelle: string, detail: string, montant: number): strin
 
 export function construireHtml(o: OptionsFacture): string {
   const t = calculerTotaux(o);
-  const emission = formatDateCourte(new Date().toISOString().slice(0, 10));
+  const emission = formatDateCourte(aujourdhui());
 
   const sousTotaux = [
     ligneSousTotal('Honoraires', heures(t.totalHeures), t.honoraires),
