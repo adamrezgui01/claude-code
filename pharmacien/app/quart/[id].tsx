@@ -2,7 +2,14 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { creerPharmacie, listerPharmacies } from '../../src/db/pharmacies';
+import {
+  creerPharmacie,
+  listerPharmacies,
+  listerPharmaciesRecentes,
+  obtenirPharmacie,
+  pharmacieVide,
+} from '../../src/db/pharmacies';
+import { obtenirReglages } from '../../src/db/profil';
 import {
   creerQuart,
   enregistrerRappelQuart,
@@ -11,7 +18,7 @@ import {
   obtenirQuart,
   supprimerQuart,
 } from '../../src/db/quarts';
-import type { Pharmacie, QuartDetaille } from '../../src/db/types';
+import type { ModeDeplacement, Pharmacie, QuartDetaille } from '../../src/db/types';
 import { aujourdhui, combiner, dureeHeures } from '../../src/lib/dates';
 import { analyserNombre, heures } from '../../src/lib/format';
 import { annulerRappel, planifierRappelQuart } from '../../src/lib/notifications';
@@ -25,6 +32,7 @@ import {
   Separateur,
   SousTitre,
 } from '../../src/ui/composants';
+import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
 import { couleurs, espace } from '../../src/ui/theme';
 
 export default function FormulaireQuart() {
@@ -34,42 +42,60 @@ export default function FormulaireQuart() {
   const quartId = nouveau ? null : Number(params.id);
 
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
-  const [pharmacieId, setPharmacieId] = useState<number | null>(
-    params.pharmacie ? Number(params.pharmacie) : null
-  );
+  const [recentes, setRecentes] = useState<Pharmacie[]>([]);
+  const [pharmacieId, setPharmacieId] = useState<number | null>(null);
+  const [modeDeplacement, setModeDeplacement] = useState<ModeDeplacement>('aucun');
+  const [creationPharmacie, setCreationPharmacie] = useState(false);
   const [nouvellePharmacie, setNouvellePharmacie] = useState('');
+
   const [date, setDate] = useState(params.date ?? aujourdhui());
   const [heureDebut, setHeureDebut] = useState('09:00');
   const [heureFin, setHeureFin] = useState('17:00');
   const [taux, setTaux] = useState('');
   const [kilometrage, setKilometrage] = useState('');
+  const [montantFixe, setMontantFixe] = useState('');
   const [notes, setNotes] = useState('');
   const [rappelExistant, setRappelExistant] = useState<string | null>(null);
 
   useEffect(() => {
-    const liste = listerPharmacies();
-    setPharmacies(liste);
+    setPharmacies(listerPharmacies());
+    setRecentes(listerPharmaciesRecentes());
 
     if (quartId) {
       const q = obtenirQuart(quartId);
       if (q) {
         setPharmacieId(q.pharmacie_id);
+        setModeDeplacement(q.pharmacie_mode_deplacement);
         setDate(q.date);
         setHeureDebut(q.heure_debut);
         setHeureFin(q.heure_fin);
         setTaux(`${q.taux_horaire}`);
         setKilometrage(q.kilometrage ? `${q.kilometrage}` : '');
+        setMontantFixe(q.montant_fixe_deplacement ? `${q.montant_fixe_deplacement}` : '');
         setNotes(q.notes);
         setRappelExistant(q.notification_id);
       }
-    } else {
-      // Reprend le taux du dernier quart saisi : il change rarement d'une fois à l'autre.
-      const precedents = listerQuarts();
-      const dernier = precedents[precedents.length - 1];
-      if (dernier) setTaux(`${dernier.taux_horaire}`);
-      if (!params.pharmacie && liste.length === 1) setPharmacieId(liste[0].id);
+      return;
     }
+
+    if (params.pharmacie) appliquerPharmacie(Number(params.pharmacie));
   }, [quartId, params.pharmacie]);
+
+  /** Reprend les conditions de la pharmacie : taux, distance ou forfait. */
+  function appliquerPharmacie(id: number) {
+    setPharmacieId(id);
+    setCreationPharmacie(false);
+    const p = obtenirPharmacie(id);
+    if (!p) return;
+    setModeDeplacement(p.mode_deplacement);
+    if (p.taux_horaire) setTaux(`${p.taux_horaire}`);
+    setKilometrage(p.mode_deplacement === 'km' && p.distance_km ? `${p.distance_km}` : '');
+    setMontantFixe(
+      p.mode_deplacement === 'fixe' && p.montant_fixe_deplacement
+        ? `${p.montant_fixe_deplacement}`
+        : ''
+    );
+  }
 
   const duree = dureeHeures(heureDebut, heureFin);
 
@@ -93,6 +119,7 @@ export default function FormulaireQuart() {
       heure_fin: heureFin,
       taux_horaire: analyserNombre(taux),
       kilometrage: analyserNombre(kilometrage),
+      montant_fixe_deplacement: analyserNombre(montantFixe),
       notes: notes.trim(),
     };
 
@@ -111,13 +138,9 @@ export default function FormulaireQuart() {
   async function valider() {
     let idPharmacie = pharmacieId;
     if (!idPharmacie && nouvellePharmacie.trim()) {
-      idPharmacie = creerPharmacie({
-        nom: nouvellePharmacie.trim(),
-        adresse: '',
-        contact_nom: '',
-        contact_coordonnees: '',
-        notes: '',
-      });
+      idPharmacie = creerPharmacie(
+        pharmacieVide(nouvellePharmacie.trim(), obtenirReglages().taux_par_km)
+      );
     }
     if (!idPharmacie) {
       Alert.alert('Pharmacie manquante', 'Choisissez une pharmacie ou créez-en une.');
@@ -165,31 +188,35 @@ export default function FormulaireQuart() {
       <Stack.Screen options={{ title: nouveau ? 'Nouveau quart' : 'Modifier le quart' }} />
 
       <SousTitre>Pharmacie</SousTitre>
-      <View style={styles.puces}>
-        {pharmacies.map((p) => (
+      <SelecteurPharmacie
+        pharmacies={pharmacies}
+        recentes={recentes}
+        selection={pharmacieId ? [pharmacieId] : []}
+        onSelectionner={appliquerPharmacie}
+        enTete={
           <Puce
-            key={p.id}
-            texte={p.nom}
-            actif={p.id === pharmacieId}
+            texte="+ Nouvelle pharmacie"
+            actif={creationPharmacie}
             onPress={() => {
-              setPharmacieId(p.id);
-              setNouvellePharmacie('');
+              setCreationPharmacie((c) => !c);
+              setPharmacieId(null);
             }}
           />
-        ))}
-        <Puce
-          texte="+ Nouvelle"
-          actif={pharmacieId === null}
-          onPress={() => setPharmacieId(null)}
-        />
-      </View>
-      {pharmacieId === null && (
-        <Champ
-          label="Nom de la nouvelle pharmacie"
-          valeur={nouvellePharmacie}
-          onChange={setNouvellePharmacie}
-          placeholder="Pharmacie du Centre"
-        />
+        }
+      />
+      {creationPharmacie && (
+        <View style={styles.espacement}>
+          <Champ
+            label="Nom de la nouvelle pharmacie"
+            valeur={nouvellePharmacie}
+            onChange={setNouvellePharmacie}
+            placeholder="Nom de la pharmacie"
+          />
+          <Doux>
+            Elle sera créée avec ce nom. Ses conditions de facturation se remplissent depuis sa
+            fiche.
+          </Doux>
+        </View>
       )}
 
       <Separateur />
@@ -205,19 +232,35 @@ export default function FormulaireQuart() {
       </Text>
 
       <Champ
-        label="Taux horaire ($)"
+        label="Taux horaire ($/h)"
         valeur={taux}
         onChange={setTaux}
         clavier="decimal-pad"
         placeholder="0,00"
       />
-      <Champ
-        label="Kilométrage (km)"
-        valeur={kilometrage}
-        onChange={setKilometrage}
-        clavier="decimal-pad"
-        placeholder="0"
-      />
+
+      {modeDeplacement === 'km' && (
+        <Champ
+          label="Kilométrage (km)"
+          valeur={kilometrage}
+          onChange={setKilometrage}
+          clavier="decimal-pad"
+          placeholder="0"
+        />
+      )}
+      {modeDeplacement === 'fixe' && (
+        <Champ
+          label="Déplacement ($)"
+          valeur={montantFixe}
+          onChange={setMontantFixe}
+          clavier="decimal-pad"
+          placeholder="0,00"
+        />
+      )}
+      {modeDeplacement === 'aucun' && !!pharmacieId && (
+        <Doux>Cette pharmacie ne rembourse pas le déplacement.</Doux>
+      )}
+
       <Champ label="Notes" valeur={notes} onChange={setNotes} multiligne />
 
       <Doux>Un rappel est programmé 24 h avant le début du quart.</Doux>
@@ -235,9 +278,8 @@ const styles = StyleSheet.create({
     padding: espace.l,
     paddingBottom: espace.xxl,
   },
-  puces: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  espacement: {
+    marginTop: espace.m,
   },
   rangee: {
     flexDirection: 'row',

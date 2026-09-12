@@ -33,11 +33,13 @@ export default function Profil() {
 
   const [documents, setDocuments] = useState<DocumentProfessionnel[]>([]);
 
-  const [tauxKm, setTauxKm] = useState('');
-  const [perDiem, setPerDiem] = useState('');
   const [nom, setNom] = useState('');
   const [permis, setPermis] = useState('');
   const [adresse, setAdresse] = useState('');
+  const [telephone, setTelephone] = useState('');
+  const [courriel, setCourriel] = useState('');
+  const [tauxKm, setTauxKm] = useState('');
+  const [cleItineraire, setCleItineraire] = useState('');
   const [reglagesEnregistres, setReglagesEnregistres] = useState(false);
 
   useFocusEffect(
@@ -50,13 +52,22 @@ export default function Profil() {
       setDocuments(listerDocuments());
 
       const r = obtenirReglages();
-      setTauxKm(`${r.taux_par_km}`);
-      setPerDiem(`${r.per_diem_defaut}`);
       setNom(r.nom);
       setPermis(r.permis_opq);
       setAdresse(r.adresse);
+      setTelephone(r.telephone);
+      setCourriel(r.courriel);
+      setTauxKm(`${r.taux_par_km}`);
+      setCleItineraire(r.cle_itineraire);
     }, [])
   );
+
+  function modifie<T>(setter: (v: T) => void) {
+    return (valeur: T) => {
+      setter(valeur);
+      setReglagesEnregistres(false);
+    };
+  }
 
   function sauvegarderFormation() {
     enregistrerFormation({
@@ -69,11 +80,13 @@ export default function Profil() {
 
   function sauvegarderReglages() {
     enregistrerReglages({
-      taux_par_km: analyserNombre(tauxKm),
-      per_diem_defaut: analyserNombre(perDiem),
       nom: nom.trim(),
       permis_opq: permis.trim(),
       adresse: adresse.trim(),
+      telephone: telephone.trim(),
+      courriel: courriel.trim(),
+      taux_par_km: analyserNombre(tauxKm),
+      cle_itineraire: cleItineraire.trim(),
     });
     setReglagesEnregistres(true);
   }
@@ -145,62 +158,62 @@ export default function Profil() {
 
       <Separateur />
 
+      <SousTitre>Vos coordonnées</SousTitre>
+      <Doux>Elles apparaissent en en-tête de chaque facture.</Doux>
+      <View style={styles.bloc}>
+        <Champ
+          label="Votre nom (pharmacien remplaçant)"
+          valeur={nom}
+          onChange={modifie(setNom)}
+        />
+        <Champ label="Numéro de permis OPQ" valeur={permis} onChange={modifie(setPermis)} />
+        <Champ label="Adresse" valeur={adresse} onChange={modifie(setAdresse)} multiligne />
+        <Champ
+          label="Téléphone"
+          valeur={telephone}
+          onChange={modifie(setTelephone)}
+          clavier="phone-pad"
+        />
+        <Champ
+          label="Courriel"
+          valeur={courriel}
+          onChange={modifie(setCourriel)}
+          clavier="email-address"
+        />
+      </View>
+
+      <Separateur />
+
       <SousTitre>Réglages</SousTitre>
       <Champ
-        label="Taux par kilomètre ($)"
+        label="Taux par kilomètre par défaut ($/km)"
         valeur={tauxKm}
-        onChange={(v) => {
-          setTauxKm(v);
-          setReglagesEnregistres(false);
-        }}
+        onChange={modifie(setTauxKm)}
         clavier="decimal-pad"
       />
-      <Champ
-        label="Per diem par défaut ($ / jour)"
-        valeur={perDiem}
-        onChange={(v) => {
-          setPerDiem(v);
-          setReglagesEnregistres(false);
-        }}
-        clavier="decimal-pad"
-      />
-      <Doux>Utilisés pour les statistiques et les factures.</Doux>
+      <Doux>
+        Sert à préremplir une nouvelle fiche de pharmacie. Le taux réellement facturé est celui de
+        chaque pharmacie, tout comme son per diem.
+      </Doux>
 
       <View style={styles.bloc}>
         <Champ
-          label="Nom (en-tête de facture)"
-          valeur={nom}
-          onChange={(v) => {
-            setNom(v);
-            setReglagesEnregistres(false);
-          }}
+          label="Clé OpenRouteService (facultative)"
+          valeur={cleItineraire}
+          onChange={modifie(setCleItineraire)}
+          masque
         />
-        <Champ
-          label="Numéro de permis OPQ"
-          valeur={permis}
-          onChange={(v) => {
-            setPermis(v);
-            setReglagesEnregistres(false);
-          }}
-        />
-        <Champ
-          label="Adresse"
-          valeur={adresse}
-          onChange={(v) => {
-            setAdresse(v);
-            setReglagesEnregistres(false);
-          }}
-          multiligne
-        />
+        <Doux>
+          Permet de calculer la distance jusqu’à une pharmacie à partir de son adresse. Sans clé,
+          l’application ouvre plutôt l’itinéraire dans Plans. C’est la seule fonction qui envoie
+          des données à l’extérieur de l’appareil.
+        </Doux>
         <Bouton
-          titre={reglagesEnregistres ? 'Réglages enregistrés' : 'Enregistrer les réglages'}
+          titre={reglagesEnregistres ? 'Enregistré' : 'Enregistrer'}
           variante={reglagesEnregistres ? 'secondaire' : 'principal'}
           onPress={sauvegarderReglages}
         />
-        <Doux>
-          Kilométrage facturé à {argent(analyserNombre(tauxKm))} le kilomètre, per diem à{' '}
-          {argent(analyserNombre(perDiem))} par jour.
-        </Doux>
+        <Doux>Kilométrage facturé par défaut à {argent(analyserNombre(tauxKm))} le kilomètre.</Doux>
       </View>
     </ScrollView>
   );

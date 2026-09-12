@@ -1,11 +1,16 @@
-import type { QuartDetaille, Reglages } from '../db/types';
+import type { QuartDetaille } from '../db/types';
 import { combiner, dureeHeures } from './dates';
 
 export type StatsPharmacie = {
   pharmacie_id: number;
   nom: string;
-  heures: number;
   quarts: number;
+  heures: number;
+  km: number;
+  jours: number;
+  honoraires: number;
+  deplacement: number;
+  perDiem: number;
   revenu: number;
 };
 
@@ -15,55 +20,80 @@ export type Statistiques = {
   totalKm: number;
   joursTravailles: number;
   montantHoraire: number;
-  montantKm: number;
+  montantDeplacement: number;
   montantPerDiem: number;
   revenuEstime: number;
   parPharmacie: StatsPharmacie[];
 };
 
-export function calculerStatistiques(
-  quarts: QuartDetaille[],
-  reglages: Reglages
-): Statistiques {
+/**
+ * Agrège des quarts. Les conditions de déplacement et le per diem viennent de
+ * la pharmacie de chaque quart, d'où la nécessité de `QuartDetaille`.
+ */
+export function calculerStatistiques(quarts: QuartDetaille[]): Statistiques {
   const parPharmacie = new Map<number, StatsPharmacie>();
-  const jours = new Set<string>();
-  let totalHeures = 0;
-  let totalKm = 0;
-  let montantHoraire = 0;
+  const joursParPharmacie = new Map<number, Set<string>>();
+  const joursGlobaux = new Set<string>();
 
   for (const q of quarts) {
     const duree = dureeHeures(q.heure_debut, q.heure_fin);
-    const revenu = duree * q.taux_horaire;
-    totalHeures += duree;
-    totalKm += q.kilometrage;
-    montantHoraire += revenu;
-    jours.add(q.date);
-
-    const existant = parPharmacie.get(q.pharmacie_id) ?? {
+    const stats = parPharmacie.get(q.pharmacie_id) ?? {
       pharmacie_id: q.pharmacie_id,
       nom: q.pharmacie_nom,
-      heures: 0,
       quarts: 0,
+      heures: 0,
+      km: 0,
+      jours: 0,
+      honoraires: 0,
+      deplacement: 0,
+      perDiem: 0,
       revenu: 0,
     };
-    existant.heures += duree;
-    existant.quarts += 1;
-    existant.revenu += revenu;
-    parPharmacie.set(q.pharmacie_id, existant);
+
+    stats.quarts += 1;
+    stats.heures += duree;
+    stats.honoraires += duree * q.taux_horaire;
+    if (q.pharmacie_mode_deplacement === 'km') {
+      stats.km += q.kilometrage;
+      stats.deplacement += q.kilometrage * q.pharmacie_taux_par_km;
+    } else if (q.pharmacie_mode_deplacement === 'fixe') {
+      stats.deplacement += q.montant_fixe_deplacement;
+    }
+
+    const jours = joursParPharmacie.get(q.pharmacie_id) ?? new Set<string>();
+    jours.add(q.date);
+    joursParPharmacie.set(q.pharmacie_id, jours);
+    joursGlobaux.add(q.date);
+
+    stats.jours = jours.size;
+    stats.perDiem = jours.size * q.pharmacie_per_diem;
+    parPharmacie.set(q.pharmacie_id, stats);
   }
 
-  const montantKm = totalKm * reglages.taux_par_km;
-  const montantPerDiem = jours.size * reglages.per_diem_defaut;
+  let totalHeures = 0;
+  let totalKm = 0;
+  let montantHoraire = 0;
+  let montantDeplacement = 0;
+  let montantPerDiem = 0;
+
+  for (const stats of parPharmacie.values()) {
+    stats.revenu = stats.honoraires + stats.deplacement + stats.perDiem;
+    totalHeures += stats.heures;
+    totalKm += stats.km;
+    montantHoraire += stats.honoraires;
+    montantDeplacement += stats.deplacement;
+    montantPerDiem += stats.perDiem;
+  }
 
   return {
     nombreQuarts: quarts.length,
     totalHeures,
     totalKm,
-    joursTravailles: jours.size,
+    joursTravailles: joursGlobaux.size,
     montantHoraire,
-    montantKm,
+    montantDeplacement,
     montantPerDiem,
-    revenuEstime: montantHoraire + montantKm + montantPerDiem,
+    revenuEstime: montantHoraire + montantDeplacement + montantPerDiem,
     parPharmacie: [...parPharmacie.values()].sort((a, b) => b.heures - a.heures),
   };
 }

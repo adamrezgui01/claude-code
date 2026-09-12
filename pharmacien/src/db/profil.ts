@@ -4,20 +4,31 @@ import type { DocumentProfessionnel, FormationContinue, Reglages } from './types
 export function obtenirReglages(): Reglages {
   const r = db.getFirstSync<Reglages>('SELECT * FROM reglages WHERE id = 1');
   return (
-    r ?? { taux_par_km: 0.55, per_diem_defaut: 0, nom: '', permis_opq: '', adresse: '' }
+    r ?? {
+      taux_par_km: 0.55,
+      nom: '',
+      permis_opq: '',
+      adresse: '',
+      telephone: '',
+      courriel: '',
+      cle_itineraire: '',
+    }
   );
 }
 
 export function enregistrerReglages(r: Reglages) {
   db.runSync(
     `UPDATE reglages
-     SET taux_par_km = ?, per_diem_defaut = ?, nom = ?, permis_opq = ?, adresse = ?
+     SET taux_par_km = ?, nom = ?, permis_opq = ?, adresse = ?, telephone = ?,
+         courriel = ?, cle_itineraire = ?
      WHERE id = 1`,
     r.taux_par_km,
-    r.per_diem_defaut,
     r.nom,
     r.permis_opq,
-    r.adresse
+    r.adresse,
+    r.telephone,
+    r.courriel,
+    r.cle_itineraire
   );
 }
 

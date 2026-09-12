@@ -28,6 +28,12 @@
       "expo-router",
       "expo-secure-store",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "L’accès à la localisation sert uniquement à convertir l’adresse d’une pharmacie en coordonnées pour calculer la distance."
+        }
+      ],
+      [
         "expo-notifications",
         {
           "color": "#1F6F6B"

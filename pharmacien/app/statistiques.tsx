@@ -2,10 +2,9 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { listerPharmacies } from '../src/db/pharmacies';
-import { obtenirReglages } from '../src/db/profil';
+import { listerPharmacies, listerPharmaciesRecentes } from '../src/db/pharmacies';
 import { listerQuartsPeriode } from '../src/db/quarts';
-import type { Pharmacie, Reglages } from '../src/db/types';
+import type { Pharmacie } from '../src/db/types';
 import { ajouterMois, aujourdhui, debutMois, finMois, formatDateCourte } from '../src/lib/dates';
 import { argent, heures, nombre } from '../src/lib/format';
 import { calculerStatistiques } from '../src/lib/stats';
@@ -20,6 +19,7 @@ import {
   SousTitre,
   Vide,
 } from '../src/ui/composants';
+import { SelecteurPharmacie } from '../src/ui/SelecteurPharmacie';
 import { couleurs, espace } from '../src/ui/theme';
 
 type Preset = 'mois' | 'moisDernier' | 'trimestre' | 'personnalisee';
@@ -43,7 +43,7 @@ function bornes(preset: Preset, debut: string, fin: string): [string, string] {
 export default function Statistiques() {
   const router = useRouter();
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
-  const [reglages, setReglages] = useState<Reglages | null>(null);
+  const [recentes, setRecentes] = useState<Pharmacie[]>([]);
   const [preset, setPreset] = useState<Preset>('mois');
   const [debutPerso, setDebutPerso] = useState(() => debutMois(aujourdhui()));
   const [finPerso, setFinPerso] = useState(() => aujourdhui());
@@ -52,7 +52,7 @@ export default function Statistiques() {
   useFocusEffect(
     useCallback(() => {
       setPharmacies(listerPharmacies());
-      setReglages(obtenirReglages());
+      setRecentes(listerPharmaciesRecentes());
     }, [])
   );
 
@@ -62,10 +62,7 @@ export default function Statistiques() {
     [debut, fin, selection]
   );
 
-  const stats = useMemo(
-    () => (reglages ? calculerStatistiques(quarts, reglages) : null),
-    [quarts, reglages]
-  );
+  const stats = useMemo(() => calculerStatistiques(quarts), [quarts]);
 
   function basculerPharmacie(id: number) {
     setSelection((actuelle) =>
@@ -74,7 +71,7 @@ export default function Statistiques() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.contenu}>
+    <ScrollView contentContainerStyle={styles.contenu} keyboardShouldPersistTaps="handled">
       <SousTitre>Période</SousTitre>
       <View style={styles.puces}>
         <Puce texte="Ce mois-ci" actif={preset === 'mois'} onPress={() => setPreset('mois')} />
@@ -107,20 +104,18 @@ export default function Statistiques() {
 
       <View style={styles.section}>
         <SousTitre>Pharmacies</SousTitre>
-        <View style={styles.puces}>
-          <Puce texte="Toutes" actif={selection.length === 0} onPress={() => setSelection([])} />
-          {pharmacies.map((p) => (
-            <Puce
-              key={p.id}
-              texte={p.nom}
-              actif={selection.includes(p.id)}
-              onPress={() => basculerPharmacie(p.id)}
-            />
-          ))}
-        </View>
+        <SelecteurPharmacie
+          pharmacies={pharmacies}
+          recentes={recentes}
+          selection={selection}
+          onSelectionner={basculerPharmacie}
+          enTete={
+            <Puce texte="Toutes" actif={selection.length === 0} onPress={() => setSelection([])} />
+          }
+        />
       </View>
 
-      {!stats || stats.nombreQuarts === 0 ? (
+      {stats.nombreQuarts === 0 ? (
         <Vide texte="Aucun quart dans cette période." />
       ) : (
         <>
@@ -132,11 +127,11 @@ export default function Statistiques() {
             <Rangee label="Heures travaillées" valeur={heures(stats.totalHeures)} />
             <Rangee label="Honoraires" valeur={argent(stats.montantHoraire)} />
             <Rangee
-              label={`Kilométrage (${nombre(stats.totalKm)} km)`}
-              valeur={argent(stats.montantKm)}
+              label={stats.totalKm > 0 ? `Déplacement (${nombre(stats.totalKm)} km)` : 'Déplacement'}
+              valeur={argent(stats.montantDeplacement)}
             />
             <Rangee
-              label={`Per diem (${stats.joursTravailles} jours)`}
+              label={`Per diem (${stats.joursTravailles} jours travaillés)`}
               valeur={argent(stats.montantPerDiem)}
             />
           </Carte>

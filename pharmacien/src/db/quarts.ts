@@ -5,7 +5,11 @@ import type { Quart, QuartDetaille } from './types';
 export type EntreeQuart = Omit<Quart, 'id' | 'notification_id'>;
 
 const SELECT_DETAILLE = `
-  SELECT q.*, p.nom AS pharmacie_nom
+  SELECT q.*,
+         p.nom AS pharmacie_nom,
+         p.per_diem AS pharmacie_per_diem,
+         p.taux_par_km AS pharmacie_taux_par_km,
+         p.mode_deplacement AS pharmacie_mode_deplacement
   FROM quarts q
   JOIN pharmacies p ON p.id = q.pharmacie_id
 `;
@@ -40,14 +44,16 @@ export function obtenirQuart(id: number): QuartDetaille | null {
 
 export function creerQuart(entree: EntreeQuart): number {
   const r = db.runSync(
-    `INSERT INTO quarts (pharmacie_id, date, heure_debut, heure_fin, taux_horaire, kilometrage, notes)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO quarts (pharmacie_id, date, heure_debut, heure_fin, taux_horaire,
+       kilometrage, montant_fixe_deplacement, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     entree.pharmacie_id,
     entree.date,
     entree.heure_debut,
     entree.heure_fin,
     entree.taux_horaire,
     entree.kilometrage,
+    entree.montant_fixe_deplacement,
     entree.notes
   );
   return r.lastInsertRowId;
@@ -56,7 +62,8 @@ export function creerQuart(entree: EntreeQuart): number {
 export function modifierQuart(id: number, entree: EntreeQuart) {
   db.runSync(
     `UPDATE quarts
-     SET pharmacie_id = ?, date = ?, heure_debut = ?, heure_fin = ?, taux_horaire = ?, kilometrage = ?, notes = ?
+     SET pharmacie_id = ?, date = ?, heure_debut = ?, heure_fin = ?, taux_horaire = ?,
+         kilometrage = ?, montant_fixe_deplacement = ?, notes = ?
      WHERE id = ?`,
     entree.pharmacie_id,
     entree.date,
@@ -64,6 +71,7 @@ export function modifierQuart(id: number, entree: EntreeQuart) {
     entree.heure_fin,
     entree.taux_horaire,
     entree.kilometrage,
+    entree.montant_fixe_deplacement,
     entree.notes,
     id
   );

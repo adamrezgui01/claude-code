@@ -5,6 +5,7 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -120,6 +121,32 @@ export function Puce({
     <Pressable onPress={onPress} style={[styles.puce, actif && styles.puceActive]}>
       <Text style={[styles.puceTexte, actif && styles.puceTexteActif]}>{texte}</Text>
     </Pressable>
+  );
+}
+
+export function Interrupteur({
+  label,
+  detail,
+  valeur,
+  onChange,
+}: {
+  label: string;
+  detail?: string;
+  valeur: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <View style={styles.interrupteur}>
+      <View style={styles.interrupteurTexte}>
+        <Text style={styles.interrupteurLabel}>{label}</Text>
+        {!!detail && <Doux>{detail}</Doux>}
+      </View>
+      <Switch
+        value={valeur}
+        onValueChange={onChange}
+        trackColor={{ true: couleurs.accent, false: couleurs.bordure }}
+      />
+    </View>
   );
 }
 
@@ -329,6 +356,21 @@ const styles = StyleSheet.create({
   puceTexteActif: {
     color: couleurs.accent,
     fontWeight: '600',
+  },
+  interrupteur: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: espace.m,
+    paddingVertical: espace.xs,
+  },
+  interrupteurTexte: {
+    flex: 1,
+  },
+  interrupteurLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: couleurs.texte,
   },
   rangee: {
     flexDirection: 'row',
