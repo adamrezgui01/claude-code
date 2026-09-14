@@ -1,8 +1,20 @@
-import type { ModeDeplacement, Pharmacie, QuartDetaille, Reglages } from '../db/types';
+import type {
+  FraisExtra,
+  ModeDeplacement,
+  Pharmacie,
+  QuartDetaille,
+  Reglages,
+} from '../db/types';
+import { adresseComplete } from './adresses';
 import { aujourdhui, dureeHeures, formatDateCourte } from './dates';
 import { argent, heures, nombre } from './format';
+import { heuresTravaillees, quartCompte } from './stats';
 
-/** Une facture porte sur une seule pharmacie. */
+/**
+ * Composition d'une facture. Une facture porte sur une seule pharmacie.
+ * Aucune dépendance native ici : le calcul et le rendu se vérifient hors
+ * application. L'impression vit dans `facturePdf`.
+ */
 export type OptionsFacture = {
   numero: string;
   reglages: Reglages;
@@ -10,8 +22,10 @@ export type OptionsFacture = {
   periodeDebut: string;
   periodeFin: string;
   quarts: QuartDetaille[];
+  frais: FraisExtra[];
   inclureDeplacement: boolean;
   inclurePerDiem: boolean;
+  inclureFrais: boolean;
   hebergement: number;
 };
 
@@ -24,9 +38,14 @@ export type TotauxFacture = {
   deplacementMontant: number;
   perDiemJours: number;
   perDiemMontant: number;
+  fraisExtra: number;
   hebergement: number;
   total: number;
 };
+
+export function quartsFacturables(quarts: QuartDetaille[]): QuartDetaille[] {
+  return quarts.filter(quartCompte);
+}
 
 export function calculerTotaux(o: OptionsFacture): TotauxFacture {
   let totalHeures = 0;
@@ -35,8 +54,8 @@ export function calculerTotaux(o: OptionsFacture): TotauxFacture {
   let fixe = 0;
   const jours = new Set<string>();
 
-  for (const q of o.quarts) {
-    const duree = dureeHeures(q.heure_debut, q.heure_fin);
+  for (const q of quartsFacturables(o.quarts)) {
+    const duree = heuresTravaillees(q);
     totalHeures += duree;
     honoraires += duree * q.taux_horaire;
     km += q.kilometrage;
@@ -50,6 +69,7 @@ export function calculerTotaux(o: OptionsFacture): TotauxFacture {
 
   const perDiemJours = o.inclurePerDiem ? jours.size : 0;
   const perDiemMontant = perDiemJours * o.pharmacie.per_diem;
+  const fraisExtra = o.inclureFrais ? o.frais.reduce((t, f) => t + f.montant, 0) : 0;
 
   return {
     totalHeures,
@@ -60,8 +80,9 @@ export function calculerTotaux(o: OptionsFacture): TotauxFacture {
     deplacementMontant,
     perDiemJours,
     perDiemMontant,
+    fraisExtra,
     hebergement: o.hebergement,
-    total: honoraires + deplacementMontant + perDiemMontant + o.hebergement,
+    total: honoraires + deplacementMontant + perDiemMontant + fraisExtra + o.hebergement,
   };
 }
 
@@ -86,12 +107,16 @@ function ligneSiNonNulle(libelle: string, detail: string, montant: number): stri
 function lignesQuarts(quarts: QuartDetaille[]): string {
   return quarts
     .map((q) => {
-      const duree = dureeHeures(q.heure_debut, q.heure_fin);
+      const debut = q.heure_debut_reelle || q.heure_debut;
+      const fin = q.heure_fin_reelle || q.heure_fin;
+      const duree = heuresTravaillees(q);
+      const pause =
+        q.pause_minutes > 0 && !q.pause_payee ? ` <span class="detail">(pause ${q.pause_minutes} min)</span>` : '';
       return `
         <tr>
           <td>${echapper(formatDateCourte(q.date))}</td>
           <td>${echapper(q.pharmacie_nom)}</td>
-          <td>${echapper(q.heure_debut)} – ${echapper(q.heure_fin)}</td>
+          <td>${echapper(debut)} – ${echapper(fin)}${pause}</td>
           <td class="n">${echapper(heures(duree))}</td>
           <td class="n">${echapper(argent(q.taux_horaire))}/h</td>
           <td class="n">${echapper(argent(duree * q.taux_horaire))}</td>
@@ -100,9 +125,27 @@ function lignesQuarts(quarts: QuartDetaille[]): string {
     .join('');
 }
 
+function lignesFrais(frais: FraisExtra[]): string {
+  return frais
+    .map(
+      (f) => `
+        <tr>
+          <th colspan="5">${echapper(f.description || 'Frais')}</th>
+          <td class="n">${echapper(argent(f.montant))}</td>
+        </tr>`
+    )
+    .join('');
+}
+
+/**
+ * Document volontairement neutre : noir et blanc, sobre. Il part chez un
+ * propriétaire de pharmacie et engage de l'argent ; il doit avoir l'air d'une
+ * facture, pas d'un écran d'application.
+ */
 export function construireHtml(o: OptionsFacture): string {
   const t = calculerTotaux(o);
   const r = o.reglages;
+  const quarts = quartsFacturables(o.quarts);
 
   const coordonnees = [
     r.permis_opq ? `Permis OPQ ${r.permis_opq}` : '',
@@ -111,6 +154,11 @@ export function construireHtml(o: OptionsFacture): string {
     r.courriel,
   ]
     .filter(Boolean)
+    .map((ligne) => `<div class="gris">${echapper(ligne)}</div>`)
+    .join('');
+
+  const adresse = adresseComplete(o.pharmacie)
+    .split('\n')
     .map((ligne) => `<div class="gris">${echapper(ligne)}</div>`)
     .join('');
 
@@ -129,6 +177,7 @@ export function construireHtml(o: OptionsFacture): string {
       t.perDiemMontant
     ),
     ligneSiNonNulle('Hébergement', '', t.hebergement),
+    o.inclureFrais ? lignesFrais(o.frais.filter((f) => f.montant !== 0)) : '',
   ].join('');
 
   return `<!DOCTYPE html>
@@ -147,7 +196,7 @@ export function construireHtml(o: OptionsFacture): string {
   th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #e0e0e0; }
   thead th { border-bottom: 1px solid #1a1a1a; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
   td.n, th.n { text-align: right; }
-  .detail { color: #555; }
+  .detail { color: #555; font-weight: 400; }
   tfoot th { border-bottom: none; }
   tfoot .total th, tfoot .total td { border-top: 2px solid #1a1a1a; font-size: 14px; font-weight: 700; padding-top: 10px; }
 </style>
@@ -167,14 +216,14 @@ export function construireHtml(o: OptionsFacture): string {
   <div class="bloc">
     <div class="titre">Facturé à</div>
     <div>${echapper(o.pharmacie.nom)}</div>
-    ${o.pharmacie.adresse ? `<div class="gris">${echapper(o.pharmacie.adresse)}</div>` : ''}
+    ${adresse}
   </div>
 
   <div class="bloc">
     <div class="titre">Période</div>
     <div>Du ${echapper(formatDateCourte(o.periodeDebut))} au ${echapper(
       formatDateCourte(o.periodeFin)
-    )} — ${o.quarts.length} quart${o.quarts.length > 1 ? 's' : ''}</div>
+    )} — ${quarts.length} quart${quarts.length > 1 ? 's' : ''}</div>
   </div>
 
   <table>
@@ -184,7 +233,7 @@ export function construireHtml(o: OptionsFacture): string {
         <th class="n">Heures</th><th class="n">Taux horaire</th><th class="n">Montant</th>
       </tr>
     </thead>
-    <tbody>${lignesQuarts(o.quarts)}</tbody>
+    <tbody>${lignesQuarts(quarts)}</tbody>
     <tfoot>
       ${sousTotaux}
       <tr class="total">
@@ -195,4 +244,9 @@ export function construireHtml(o: OptionsFacture): string {
   </table>
 </body>
 </html>`;
+}
+
+/** Durée prévue d'un quart, pause déduite. Sert à l'affichage d'un formulaire. */
+export function dureePrevue(heureDebut: string, heureFin: string, pause: number, payee: boolean) {
+  return Math.max(0, dureeHeures(heureDebut, heureFin) - (payee ? 0 : pause / 60));
 }

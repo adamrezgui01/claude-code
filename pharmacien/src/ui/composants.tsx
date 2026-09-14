@@ -1,6 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   KeyboardTypeOptions,
   Platform,
   Pressable,
@@ -13,7 +14,34 @@ import {
 } from 'react-native';
 
 import { analyserDate, combiner, dateISO, formatDateLongue, heureISO } from '../lib/dates';
-import { couleurs, espace, rayon } from './theme';
+import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
+
+/** Apparition en fondu. Rien ne doit surgir sèchement. */
+export function Fondu({
+  children,
+  delai = 0,
+  style,
+}: {
+  children: ReactNode;
+  delai?: number;
+  style?: ViewStyle;
+}) {
+  const opacite = useRef(new Animated.Value(0)).current;
+  const montee = useRef(new Animated.Value(6)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacite, { toValue: 1, duration: 180, delay: delai, useNativeDriver: true }),
+      Animated.timing(montee, { toValue: 0, duration: 180, delay: delai, useNativeDriver: true }),
+    ]).start();
+  }, [opacite, montee, delai]);
+
+  return (
+    <Animated.View style={[style, { opacity: opacite, transform: [{ translateY: montee }] }]}>
+      {children}
+    </Animated.View>
+  );
+}
 
 export function Titre({ children }: { children: ReactNode }) {
   return <Text style={styles.titre}>{children}</Text>;
@@ -47,6 +75,9 @@ export function Champ({
   multiligne,
   clavier,
   masque,
+  aide,
+  avertissement,
+  auto,
 }: {
   label: string;
   valeur: string;
@@ -55,22 +86,36 @@ export function Champ({
   multiligne?: boolean;
   clavier?: KeyboardTypeOptions;
   masque?: boolean;
+  aide?: string;
+  avertissement?: string;
+  auto?: 'characters' | 'none' | 'sentences' | 'words';
 }) {
+  const accent = useAccent();
+  const [actif, setActif] = useState(false);
   return (
     <View style={styles.champ}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={[styles.saisieBoite, styles.saisieTexte, multiligne && styles.saisieMultiligne]}
+        style={[
+          styles.saisieBoite,
+          styles.saisieTexte,
+          multiligne && styles.saisieMultiligne,
+          actif && { borderColor: accent },
+        ]}
         value={valeur}
         onChangeText={onChange}
+        onFocus={() => setActif(true)}
+        onBlur={() => setActif(false)}
         placeholder={placeholder}
         placeholderTextColor={couleurs.doux}
         multiline={multiligne}
         keyboardType={clavier}
         secureTextEntry={masque}
-        autoCapitalize={masque ? 'none' : 'sentences'}
+        autoCapitalize={auto ?? (masque ? 'none' : 'sentences')}
         autoCorrect={!masque}
       />
+      {!!aide && <Text style={styles.aide}>{aide}</Text>}
+      {!!avertissement && <Text style={styles.avertissement}>{avertissement}</Text>}
     </View>
   );
 }
@@ -80,31 +125,58 @@ export function Bouton({
   onPress,
   variante = 'principal',
   desactive,
+  icone,
 }: {
   titre: string;
   onPress: () => void;
-  variante?: 'principal' | 'secondaire' | 'danger';
+  variante?: 'principal' | 'secondaire' | 'danger' | 'succes';
   desactive?: boolean;
+  icone?: ReactNode;
 }) {
+  const accent = useAccent();
+  const echelle = useRef(new Animated.Value(1)).current;
+
+  const animer = (vers: number) =>
+    Animated.spring(echelle, {
+      toValue: vers,
+      useNativeDriver: true,
+      speed: 40,
+      bounciness: 4,
+    }).start();
+
+  const fond =
+    variante === 'principal'
+      ? accent
+      : variante === 'succes'
+        ? couleurs.succes
+        : variante === 'danger'
+          ? couleurs.alertePale
+          : couleurs.carte;
+
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={desactive}
-      style={({ pressed }) => [
-        styles.bouton,
-        variante === 'secondaire' && styles.boutonSecondaire,
-        variante === 'danger' && styles.boutonDanger,
-        (pressed || desactive) && styles.boutonAttenue,
-      ]}>
-      <Text
+    <Animated.View style={{ transform: [{ scale: echelle }] }}>
+      <Pressable
+        onPress={onPress}
+        disabled={desactive}
+        onPressIn={() => animer(0.97)}
+        onPressOut={() => animer(1)}
         style={[
-          styles.boutonTexte,
-          variante === 'secondaire' && styles.boutonTexteSecondaire,
-          variante === 'danger' && styles.boutonTexteDanger,
+          styles.bouton,
+          { backgroundColor: fond },
+          variante === 'secondaire' && styles.boutonSecondaire,
+          desactive && styles.attenue,
         ]}>
-        {titre}
-      </Text>
-    </Pressable>
+        {icone}
+        <Text
+          style={[
+            styles.boutonTexte,
+            variante === 'secondaire' && styles.boutonTexteSecondaire,
+            variante === 'danger' && styles.boutonTexteDanger,
+          ]}>
+          {titre}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -117,10 +189,32 @@ export function Puce({
   actif: boolean;
   onPress: () => void;
 }) {
+  const accent = useAccent();
   return (
-    <Pressable onPress={onPress} style={[styles.puce, actif && styles.puceActive]}>
-      <Text style={[styles.puceTexte, actif && styles.puceTexteActif]}>{texte}</Text>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.puce,
+        actif && { backgroundColor: accentPale(accent), borderColor: accent },
+        pressed && styles.attenue,
+      ]}>
+      <Text style={[styles.puceTexte, actif && { color: accent, fontFamily: police.demi }]}>
+        {texte}
+      </Text>
     </Pressable>
+  );
+}
+
+/** Pastille d'état : gris en attente, vert une fois réglé. */
+export function Etiquette({ texte, ton }: { texte: string; ton: 'attente' | 'succes' | 'alerte' }) {
+  const fond =
+    ton === 'succes' ? couleurs.succesPale : ton === 'alerte' ? couleurs.alertePale : '#EDEBEF';
+  const encre =
+    ton === 'succes' ? couleurs.succes : ton === 'alerte' ? couleurs.alerte : couleurs.attente;
+  return (
+    <View style={[styles.etiquette, { backgroundColor: fond }]}>
+      <Text style={[styles.etiquetteTexte, { color: encre }]}>{texte}</Text>
+    </View>
   );
 }
 
@@ -135,6 +229,7 @@ export function Interrupteur({
   valeur: boolean;
   onChange: (v: boolean) => void;
 }) {
+  const accent = useAccent();
   return (
     <View style={styles.interrupteur}>
       <View style={styles.interrupteurTexte}>
@@ -144,7 +239,7 @@ export function Interrupteur({
       <Switch
         value={valeur}
         onValueChange={onChange}
-        trackColor={{ true: couleurs.accent, false: couleurs.bordure }}
+        trackColor={{ true: accent, false: couleurs.bordure }}
       />
     </View>
   );
@@ -154,22 +249,23 @@ export function Rangee({
   label,
   valeur,
   onPress,
-  accent,
+  accent: enAccent,
 }: {
   label: string;
   valeur: string;
   onPress?: () => void;
   accent?: boolean;
 }) {
+  const accent = useAccent();
   const contenu = (
     <View style={styles.rangee}>
       <Text style={styles.rangeeLabel}>{label}</Text>
-      <Text style={[styles.rangeeValeur, accent && styles.rangeeValeurAccent]}>{valeur}</Text>
+      <Text style={[styles.rangeeValeur, enAccent && { color: accent }]}>{valeur}</Text>
     </View>
   );
   if (!onPress) return contenu;
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => pressed && styles.boutonAttenue}>
+    <Pressable onPress={onPress} style={({ pressed }) => pressed && styles.attenue}>
       {contenu}
     </Pressable>
   );
@@ -240,21 +336,23 @@ export function SelecteurHeure({
 
 const styles = StyleSheet.create({
   titre: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 24,
+    fontFamily: police.gras,
     color: couleurs.texte,
   },
   sousTitre: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: police.demi,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
     color: couleurs.doux,
     marginBottom: espace.s,
   },
   doux: {
     fontSize: 13,
+    fontFamily: police.normal,
     color: couleurs.doux,
+    lineHeight: 18,
   },
   carte: {
     backgroundColor: couleurs.carte,
@@ -267,11 +365,12 @@ const styles = StyleSheet.create({
   separateur: {
     height: 1,
     backgroundColor: couleurs.bordure,
-    marginVertical: espace.m,
+    marginVertical: espace.l,
   },
   vide: {
     color: couleurs.doux,
     fontSize: 14,
+    fontFamily: police.normal,
     paddingVertical: espace.l,
     textAlign: 'center',
   },
@@ -283,6 +382,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 13,
+    fontFamily: police.normal,
     color: couleurs.doux,
     marginBottom: espace.xs,
   },
@@ -291,43 +391,53 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: couleurs.bordure,
     borderRadius: rayon,
-    paddingHorizontal: espace.m,
+    paddingHorizontal: espace.l,
     paddingVertical: espace.m,
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: 50,
   },
   saisieTexte: {
     fontSize: 16,
+    fontFamily: police.normal,
     color: couleurs.texte,
   },
   saisieMultiligne: {
-    minHeight: 90,
+    minHeight: 92,
     textAlignVertical: 'top',
   },
+  aide: {
+    fontSize: 12,
+    fontFamily: police.normal,
+    color: couleurs.doux,
+    marginTop: espace.xs,
+  },
+  avertissement: {
+    fontSize: 12,
+    fontFamily: police.normal,
+    color: couleurs.alerte,
+    marginTop: espace.xs,
+  },
   bouton: {
-    backgroundColor: couleurs.accent,
     borderRadius: rayon,
     paddingVertical: espace.m,
     paddingHorizontal: espace.l,
     alignItems: 'center',
-    minHeight: 48,
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: espace.s,
+    minHeight: 52,
   },
   boutonSecondaire: {
-    backgroundColor: couleurs.carte,
     borderWidth: 1,
     borderColor: couleurs.bordure,
   },
-  boutonDanger: {
-    backgroundColor: couleurs.alertePale,
-  },
-  boutonAttenue: {
+  attenue: {
     opacity: 0.6,
   },
   boutonTexte: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: police.demi,
   },
   boutonTexteSecondaire: {
     color: couleurs.texte,
@@ -341,21 +451,24 @@ const styles = StyleSheet.create({
     backgroundColor: couleurs.carte,
     borderRadius: 999,
     paddingVertical: espace.s,
-    paddingHorizontal: espace.m,
+    paddingHorizontal: espace.l,
     marginRight: espace.s,
     marginBottom: espace.s,
   },
-  puceActive: {
-    backgroundColor: couleurs.accentPale,
-    borderColor: couleurs.accent,
-  },
   puceTexte: {
     fontSize: 14,
+    fontFamily: police.normal,
     color: couleurs.texte,
   },
-  puceTexteActif: {
-    color: couleurs.accent,
-    fontWeight: '600',
+  etiquette: {
+    borderRadius: 999,
+    paddingVertical: 3,
+    paddingHorizontal: espace.m,
+    alignSelf: 'flex-start',
+  },
+  etiquetteTexte: {
+    fontSize: 12,
+    fontFamily: police.demi,
   },
   interrupteur: {
     flexDirection: 'row',
@@ -369,7 +482,7 @@ const styles = StyleSheet.create({
   },
   interrupteurLabel: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: police.demi,
     color: couleurs.texte,
   },
   rangee: {
@@ -381,17 +494,15 @@ const styles = StyleSheet.create({
   },
   rangeeLabel: {
     fontSize: 15,
+    fontFamily: police.normal,
     color: couleurs.doux,
     flexShrink: 1,
   },
   rangeeValeur: {
     fontSize: 15,
+    fontFamily: police.demi,
     color: couleurs.texte,
-    fontWeight: '600',
     flexShrink: 1,
     textAlign: 'right',
-  },
-  rangeeValeurAccent: {
-    color: couleurs.accent,
   },
 });

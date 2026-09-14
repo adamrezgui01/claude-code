@@ -1,7 +1,9 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { listerFrais } from '../../src/db/frais';
 import {
   creerPharmacie,
   listerPharmacies,
@@ -9,34 +11,46 @@ import {
   obtenirPharmacie,
   pharmacieVide,
 } from '../../src/db/pharmacies';
-import { obtenirReglages } from '../../src/db/profil';
+import { delaisSecondaires, obtenirReglages } from '../../src/db/profil';
 import {
   creerQuart,
-  enregistrerRappelQuart,
-  listerQuarts,
+  enregistrerRappels,
   modifierQuart,
   obtenirQuart,
+  quartsDuJour,
+  rappelsDuQuart,
+  statutQuart,
   supprimerQuart,
 } from '../../src/db/quarts';
-import type { ModeDeplacement, Pharmacie, QuartDetaille } from '../../src/db/types';
-import { aujourdhui, combiner, dureeHeures } from '../../src/lib/dates';
-import { analyserNombre, heures } from '../../src/lib/format';
-import { annulerRappel, planifierRappelQuart } from '../../src/lib/notifications';
+import type { FraisExtra, ModeDeplacement, Pharmacie } from '../../src/db/types';
+import { aujourdhui, dureeHeures } from '../../src/lib/dates';
+import { dureePrevue } from '../../src/lib/facture';
+import { analyserNombre, argent, heures } from '../../src/lib/format';
+import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
+import { verifierQuart } from '../../src/lib/stats';
 import {
   Bouton,
+  Carte,
   Champ,
   Doux,
+  Fondu,
+  Interrupteur,
   Puce,
   SelecteurDate,
   SelecteurHeure,
   Separateur,
   SousTitre,
 } from '../../src/ui/composants';
+import { useCompteurs } from '../../src/ui/compteurs';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
-import { couleurs, espace } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+
+const PAUSES = [0, 30, 45, 60];
 
 export default function FormulaireQuart() {
   const router = useRouter();
+  const accent = useAccent();
+  const { rafraichir } = useCompteurs();
   const params = useLocalSearchParams<{ id: string; date?: string; pharmacie?: string }>();
   const nouveau = params.id === 'nouveau';
   const quartId = nouveau ? null : Number(params.id);
@@ -51,11 +65,14 @@ export default function FormulaireQuart() {
   const [date, setDate] = useState(params.date ?? aujourdhui());
   const [heureDebut, setHeureDebut] = useState('09:00');
   const [heureFin, setHeureFin] = useState('17:00');
+  const [pause, setPause] = useState(0);
+  const [pausePayee, setPausePayee] = useState(false);
   const [taux, setTaux] = useState('');
   const [kilometrage, setKilometrage] = useState('');
   const [montantFixe, setMontantFixe] = useState('');
   const [notes, setNotes] = useState('');
-  const [rappelExistant, setRappelExistant] = useState<string | null>(null);
+  const [frais, setFrais] = useState<FraisExtra[]>([]);
+  const [statut, setStatut] = useState('a_venir');
 
   useEffect(() => {
     setPharmacies(listerPharmacies());
@@ -69,19 +86,26 @@ export default function FormulaireQuart() {
         setDate(q.date);
         setHeureDebut(q.heure_debut);
         setHeureFin(q.heure_fin);
+        setPause(q.pause_minutes);
+        setPausePayee(!!q.pause_payee);
         setTaux(`${q.taux_horaire}`);
         setKilometrage(q.kilometrage ? `${q.kilometrage}` : '');
         setMontantFixe(q.montant_fixe_deplacement ? `${q.montant_fixe_deplacement}` : '');
         setNotes(q.notes);
-        setRappelExistant(q.notification_id);
+        setStatut(statutQuart(q));
       }
       return;
     }
-
     if (params.pharmacie) appliquerPharmacie(Number(params.pharmacie));
   }, [quartId, params.pharmacie]);
 
-  /** Reprend les conditions de la pharmacie : taux, distance ou forfait. */
+  useFocusEffect(
+    useCallback(() => {
+      if (quartId) setFrais(listerFrais(quartId));
+    }, [quartId])
+  );
+
+  /** Reprend les conditions de la pharmacie : taux, déplacement, pause. */
   function appliquerPharmacie(id: number) {
     setPharmacieId(id);
     setCreationPharmacie(false);
@@ -89,6 +113,8 @@ export default function FormulaireQuart() {
     if (!p) return;
     setModeDeplacement(p.mode_deplacement);
     if (p.taux_horaire) setTaux(`${p.taux_horaire}`);
+    setPause(p.pause_minutes);
+    setPausePayee(!!p.pause_payee);
     setKilometrage(p.mode_deplacement === 'km' && p.distance_km ? `${p.distance_km}` : '');
     setMontantFixe(
       p.mode_deplacement === 'fixe' && p.montant_fixe_deplacement
@@ -97,19 +123,8 @@ export default function FormulaireQuart() {
     );
   }
 
-  const duree = dureeHeures(heureDebut, heureFin);
-
-  function chevauche(): QuartDetaille | null {
-    const debut = combiner(date, heureDebut).getTime();
-    const fin = debut + duree * 3600000;
-    for (const autre of listerQuarts()) {
-      if (autre.id === quartId) continue;
-      const autreDebut = combiner(autre.date, autre.heure_debut).getTime();
-      const autreFin = autreDebut + dureeHeures(autre.heure_debut, autre.heure_fin) * 3600000;
-      if (debut < autreFin && autreDebut < fin) return autre;
-    }
-    return null;
-  }
+  const duree = dureePrevue(heureDebut, heureFin, pause, pausePayee);
+  const totalFrais = frais.reduce((t, f) => t + f.montant, 0);
 
   async function enregistrer(idPharmacie: number) {
     const entree = {
@@ -120,18 +135,24 @@ export default function FormulaireQuart() {
       taux_horaire: analyserNombre(taux),
       kilometrage: analyserNombre(kilometrage),
       montant_fixe_deplacement: analyserNombre(montantFixe),
+      pause_minutes: pause,
+      pause_payee: pausePayee ? 1 : 0,
       notes: notes.trim(),
     };
 
     const id = quartId ?? creerQuart(entree);
-    if (quartId) modifierQuart(quartId, entree);
+    if (quartId) {
+      const ancien = obtenirQuart(quartId);
+      if (ancien) await annulerRappels(rappelsDuQuart(ancien));
+      modifierQuart(quartId, entree);
+    }
 
-    await annulerRappel(rappelExistant);
     const quart = obtenirQuart(id);
     if (quart) {
-      const rappel = await planifierRappelQuart(quart);
-      enregistrerRappelQuart(id, rappel);
+      const rappels = await planifierRappelsQuart(quart, delaisSecondaires(obtenirReglages()));
+      enregistrerRappels(id, rappels.principal, rappels.secondaires, rappels.validation);
     }
+    rafraichir();
     router.back();
   }
 
@@ -147,23 +168,43 @@ export default function FormulaireQuart() {
       return;
     }
     const retenue = idPharmacie;
-    if (duree === 0) {
+    if (dureeHeures(heureDebut, heureFin) === 0) {
       Alert.alert('Horaire invalide', 'L’heure de fin doit être différente de l’heure de début.');
       return;
     }
 
-    const conflit = chevauche();
-    if (conflit) {
+    const autres = quartsDuJour(date).filter((q) => q.id !== quartId);
+    const verification = verifierQuart(
+      { date, heure_debut: heureDebut, heure_fin: heureFin, pharmacie_id: retenue },
+      autres
+    );
+
+    if (verification.type === 'chevauchement') {
+      const autre = verification.autre;
       Alert.alert(
-        'Chevauchement',
-        `Ce quart en chevauche un autre : ${conflit.pharmacie_nom}, ${conflit.heure_debut} – ${conflit.heure_fin}.`,
+        'Ces deux quarts se chevauchent',
+        `${autre.pharmacie_nom}, ${autre.heure_debut} à ${autre.heure_fin}. Que voulez-vous faire ?`,
         [
-          { text: 'Corriger', style: 'cancel' },
+          { text: 'Modifier ce quart-ci', style: 'cancel' },
+          { text: 'Ouvrir l’autre quart', onPress: () => router.replace(`/quart/${autre.id}`) },
           { text: 'Enregistrer quand même', onPress: () => enregistrer(retenue) },
         ]
       );
       return;
     }
+
+    if (verification.type === 'serre') {
+      Alert.alert(
+        'Trajet serré',
+        `Il ne reste que ${verification.minutes} minutes entre ce quart et celui de ${verification.autre.pharmacie_nom}. Êtes-vous certain d’avoir le temps de vous déplacer ?`,
+        [
+          { text: 'Corriger', style: 'cancel' },
+          { text: 'Enregistrer', onPress: () => enregistrer(retenue) },
+        ]
+      );
+      return;
+    }
+
     await enregistrer(retenue);
   }
 
@@ -175,8 +216,10 @@ export default function FormulaireQuart() {
         text: 'Supprimer',
         style: 'destructive',
         onPress: async () => {
-          await annulerRappel(rappelExistant);
+          const quart = obtenirQuart(quartId);
+          if (quart) await annulerRappels(rappelsDuQuart(quart));
           supprimerQuart(quartId);
+          rafraichir();
           router.back();
         },
       },
@@ -186,6 +229,17 @@ export default function FormulaireQuart() {
   return (
     <ScrollView contentContainerStyle={styles.contenu} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: nouveau ? 'Nouveau quart' : 'Modifier le quart' }} />
+
+      {statut === 'a_valider' && (
+        <Fondu>
+          <Bouton
+            titre="Valider ce quart"
+            icone={<Ionicons name="checkmark" size={20} color="#FFFFFF" />}
+            onPress={() => router.replace(`/validation/${quartId}`)}
+          />
+          <View style={styles.espacement} />
+        </Fondu>
+      )}
 
       <SousTitre>Pharmacie</SousTitre>
       <SelecteurPharmacie
@@ -211,11 +265,8 @@ export default function FormulaireQuart() {
             valeur={nouvellePharmacie}
             onChange={setNouvellePharmacie}
             placeholder="Nom de la pharmacie"
+            aide="Son adresse et ses conditions se remplissent ensuite dans sa fiche."
           />
-          <Doux>
-            Elle sera créée avec ce nom. Ses conditions de facturation se remplissent depuis sa
-            fiche.
-          </Doux>
         </View>
       )}
 
@@ -226,8 +277,29 @@ export default function FormulaireQuart() {
         <SelecteurHeure label="Début" valeur={heureDebut} onChange={setHeureDebut} />
         <SelecteurHeure label="Fin" valeur={heureFin} onChange={setHeureFin} />
       </View>
+
+      <Text style={styles.label}>Pause repas</Text>
+      <View style={styles.puces}>
+        {PAUSES.map((minutes) => (
+          <Puce
+            key={minutes}
+            texte={minutes === 0 ? 'Aucune' : `${minutes} min`}
+            actif={pause === minutes}
+            onPress={() => setPause(minutes)}
+          />
+        ))}
+      </View>
+      {pause > 0 && (
+        <Interrupteur
+          label="Pause payée"
+          detail={pausePayee ? 'Incluse dans les heures' : 'Déduite des heures facturées'}
+          valeur={pausePayee}
+          onChange={setPausePayee}
+        />
+      )}
+
       <Text style={styles.duree}>
-        Durée : {heures(duree)}
+        Durée facturable : {heures(duree)}
         {heureFin <= heureDebut ? ' (quart de nuit)' : ''}
       </Text>
 
@@ -257,13 +329,46 @@ export default function FormulaireQuart() {
           placeholder="0,00"
         />
       )}
-      {modeDeplacement === 'aucun' && !!pharmacieId && (
-        <Doux>Cette pharmacie ne rembourse pas le déplacement.</Doux>
-      )}
 
       <Champ label="Notes" valeur={notes} onChange={setNotes} multiligne />
 
-      <Doux>Un rappel est programmé 24 h avant le début du quart.</Doux>
+      {!nouveau && (
+        <>
+          <Separateur />
+          <SousTitre>Frais extra</SousTitre>
+          {frais.length === 0 ? (
+            <Doux>Rien de facturé en plus des heures pour ce quart.</Doux>
+          ) : (
+            frais.map((f) => (
+              <Pressable
+                key={f.id}
+                onPress={() => router.push(`/frais/${f.id}`)}
+                style={({ pressed }) => [styles.frais, pressed && { opacity: 0.6 }]}>
+                <View style={styles.fraisTexte}>
+                  <Text style={styles.fraisDescription}>{f.description || 'Frais'}</Text>
+                  {!f.photo && <Doux>Sans reçu</Doux>}
+                </View>
+                <Text style={styles.fraisMontant}>{argent(f.montant)}</Text>
+              </Pressable>
+            ))
+          )}
+          {totalFrais > 0 && (
+            <Text style={[styles.total, { color: accent }]}>Total des frais {argent(totalFrais)}</Text>
+          )}
+          <Bouton
+            titre="Charger quelque chose en plus"
+            variante="secondaire"
+            icone={<Ionicons name="add" size={18} color={couleurs.texte} />}
+            onPress={() => router.push(`/frais/nouveau?quart=${quartId}`)}
+          />
+        </>
+      )}
+
+      <Carte style={styles.note}>
+        <Doux>
+          Un rappel part 48 h avant le quart, et une demande de validation 2 h après sa fin.
+        </Doux>
+      </Carte>
 
       <View style={styles.actions}>
         <Bouton titre="Enregistrer" onPress={valider} />
@@ -285,13 +390,57 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: espace.m,
   },
+  label: {
+    fontSize: 13,
+    fontFamily: police.normal,
+    color: couleurs.doux,
+    marginBottom: espace.xs,
+  },
+  puces: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
   duree: {
     fontSize: 14,
-    color: couleurs.doux,
+    fontFamily: police.demi,
+    color: couleurs.texte,
+    marginVertical: espace.m,
+  },
+  frais: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: couleurs.carte,
+    borderWidth: 1,
+    borderColor: couleurs.bordure,
+    borderRadius: rayon,
+    padding: espace.m,
+    marginBottom: espace.s,
+    gap: espace.m,
+  },
+  fraisTexte: {
+    flex: 1,
+  },
+  fraisDescription: {
+    fontSize: 15,
+    fontFamily: police.normal,
+    color: couleurs.texte,
+  },
+  fraisMontant: {
+    fontSize: 15,
+    fontFamily: police.demi,
+    color: couleurs.texte,
+  },
+  total: {
+    fontSize: 14,
+    fontFamily: police.demi,
     marginBottom: espace.m,
   },
-  actions: {
+  note: {
     marginTop: espace.l,
+  },
+  actions: {
+    marginTop: espace.m,
     gap: espace.s,
   },
 });

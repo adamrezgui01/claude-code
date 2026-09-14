@@ -3,9 +3,10 @@ import { ReactNode, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { Pharmacie } from '../db/types';
+import { ligneVille } from '../lib/adresses';
 import { normaliser } from '../lib/texte';
 import { Puce } from './composants';
-import { couleurs, espace, rayon } from './theme';
+import { couleurs, espace, police, rayon, useAccent } from './theme';
 
 const VISIBLES = 6;
 
@@ -26,6 +27,7 @@ export function SelecteurPharmacie({
   onSelectionner: (id: number) => void;
   enTete?: ReactNode;
 }) {
+  const accent = useAccent();
   const [recherche, setRecherche] = useState('');
   const [toutAfficher, setToutAfficher] = useState(false);
 
@@ -33,7 +35,7 @@ export function SelecteurPharmacie({
     const terme = normaliser(recherche.trim());
     if (!terme) return pharmacies;
     return pharmacies.filter(
-      (p) => normaliser(p.nom).includes(terme) || normaliser(p.adresse).includes(terme)
+      (p) => normaliser(p.nom).includes(terme) || normaliser(ligneVille(p)).includes(terme)
     );
   }, [pharmacies, recherche]);
 
@@ -90,20 +92,22 @@ export function SelecteurPharmacie({
               onPress={() => onSelectionner(p.id)}
               style={({ pressed }) => [
                 styles.ligne,
-                choisie && styles.ligneChoisie,
+                choisie && { borderColor: accent, backgroundColor: `${accent}22` },
                 pressed && { opacity: 0.6 },
               ]}>
               <View style={styles.texte}>
-                <Text style={[styles.nom, choisie && styles.nomChoisi]} numberOfLines={1}>
+                <Text
+                  style={[styles.nom, choisie && { fontFamily: police.demi, color: accent }]}
+                  numberOfLines={1}>
                   {p.nom}
                 </Text>
-                {!!p.adresse && (
+                {!!ligneVille(p) && (
                   <Text style={styles.adresse} numberOfLines={1}>
-                    {p.adresse}
+                    {ligneVille(p)}
                   </Text>
                 )}
               </View>
-              {choisie && <Ionicons name="checkmark" size={18} color={couleurs.accent} />}
+              {choisie && <Ionicons name="checkmark" size={18} color={accent} />}
             </Pressable>
           );
         })
@@ -138,11 +142,13 @@ const styles = StyleSheet.create({
   saisie: {
     flex: 1,
     fontSize: 15,
+    fontFamily: police.normal,
     color: couleurs.texte,
     paddingVertical: espace.s,
   },
   section: {
     fontSize: 12,
+    fontFamily: police.normal,
     color: couleurs.doux,
     marginTop: espace.m,
     marginBottom: espace.xs,
@@ -166,34 +172,29 @@ const styles = StyleSheet.create({
     paddingVertical: espace.s,
     marginBottom: espace.xs,
   },
-  ligneChoisie: {
-    borderColor: couleurs.accent,
-    backgroundColor: couleurs.accentPale,
-  },
   texte: {
     flex: 1,
   },
   nom: {
     fontSize: 15,
+    fontFamily: police.normal,
     color: couleurs.texte,
-  },
-  nomChoisi: {
-    fontWeight: '600',
-    color: couleurs.accent,
   },
   adresse: {
     fontSize: 12,
+    fontFamily: police.normal,
     color: couleurs.doux,
   },
   aucune: {
     fontSize: 14,
+    fontFamily: police.normal,
     color: couleurs.doux,
     paddingVertical: espace.s,
   },
   lien: {
-    color: couleurs.accent,
+    color: couleurs.texte,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: police.demi,
     paddingVertical: espace.s,
   },
 });

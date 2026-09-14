@@ -3,13 +3,42 @@ import type { Pharmacie } from './types';
 
 export type EntreePharmacie = Omit<Pharmacie, 'id'>;
 
+const CHAMPS = [
+  'nom',
+  'numero_civique',
+  'rue',
+  'local',
+  'code_postal',
+  'ville',
+  'province',
+  'latitude',
+  'longitude',
+  'contact_nom',
+  'contact_telephone',
+  'contact_courriel',
+  'notes',
+  'logiciel',
+  'taux_horaire',
+  'per_diem',
+  'mode_deplacement',
+  'distance_km',
+  'taux_par_km',
+  'montant_fixe_deplacement',
+  'pause_minutes',
+  'pause_payee',
+] as const;
+
+function valeurs(e: EntreePharmacie) {
+  return CHAMPS.map((champ) => e[champ]);
+}
+
 export function listerPharmacies(): Pharmacie[] {
   return db.getAllSync<Pharmacie>('SELECT * FROM pharmacies ORDER BY nom COLLATE NOCASE');
 }
 
 /**
  * Pharmacies triées par date du dernier quart, les plus récentes d'abord.
- * Celles où l'usager n'a jamais travaillé viennent ensuite.
+ * Celles où l'usager n'a jamais travaillé n'y figurent pas.
  */
 export function listerPharmaciesRecentes(limite = 5): Pharmacie[] {
   return db.getAllSync<Pharmacie>(
@@ -26,55 +55,42 @@ export function obtenirPharmacie(id: number): Pharmacie | null {
   return db.getFirstSync<Pharmacie>('SELECT * FROM pharmacies WHERE id = ?', id);
 }
 
-const CHAMPS = `nom, adresse, contact_nom, contact_telephone, contact_courriel, notes,
-  logiciel, taux_horaire, per_diem, mode_deplacement, distance_km, taux_par_km,
-  montant_fixe_deplacement`;
-
-function valeurs(e: EntreePharmacie) {
-  return [
-    e.nom,
-    e.adresse,
-    e.contact_nom,
-    e.contact_telephone,
-    e.contact_courriel,
-    e.notes,
-    e.logiciel,
-    e.taux_horaire,
-    e.per_diem,
-    e.mode_deplacement,
-    e.distance_km,
-    e.taux_par_km,
-    e.montant_fixe_deplacement,
-  ];
-}
-
 export function creerPharmacie(entree: EntreePharmacie): number {
-  const trous = valeurs(entree)
-    .map(() => '?')
-    .join(', ');
-  const r = db.runSync(`INSERT INTO pharmacies (${CHAMPS}) VALUES (${trous})`, valeurs(entree));
+  const trous = CHAMPS.map(() => '?').join(', ');
+  const r = db.runSync(
+    `INSERT INTO pharmacies (${CHAMPS.join(', ')}) VALUES (${trous})`,
+    valeurs(entree)
+  );
   return r.lastInsertRowId;
 }
 
 export function modifierPharmacie(id: number, entree: EntreePharmacie) {
-  const affectations = CHAMPS.split(',')
-    .map((c) => `${c.trim()} = ?`)
-    .join(', ');
+  const affectations = CHAMPS.map((c) => `${c} = ?`).join(', ');
   db.runSync(`UPDATE pharmacies SET ${affectations} WHERE id = ?`, [...valeurs(entree), id]);
 }
 
 /**
  * Supprime la pharmacie et, en cascade, ses quarts. Retourne les identifiants
- * de notification des quarts supprimés pour que l'appelant les annule.
+ * de notification à annuler.
  */
 export function supprimerPharmacie(id: number): string[] {
-  const rappels = db
-    .getAllSync<{ notification_id: string | null }>(
-      'SELECT notification_id FROM quarts WHERE pharmacie_id = ?',
-      id
-    )
-    .map((r) => r.notification_id)
-    .filter((n): n is string => !!n);
+  const colonnes = ['notification_id', 'notification_validation'] as const;
+  const rappels: string[] = [];
+  for (const q of db.getAllSync<{
+    notification_id: string | null;
+    notification_validation: string | null;
+    notifications_secondaires: string;
+  }>(
+    `SELECT ${colonnes.join(', ')}, notifications_secondaires FROM quarts WHERE pharmacie_id = ?`,
+    id
+  )) {
+    for (const colonne of colonnes) if (q[colonne]) rappels.push(q[colonne] as string);
+    try {
+      rappels.push(...(JSON.parse(q.notifications_secondaires) as string[]));
+    } catch {
+      // Champ vide ou corrompu : rien à annuler.
+    }
+  }
   db.runSync('DELETE FROM pharmacies WHERE id = ?', id);
   return rappels;
 }
@@ -90,7 +106,14 @@ export function compterQuartsPharmacie(id: number): number {
 export function pharmacieVide(nom: string, tauxParKmDefaut: number): EntreePharmacie {
   return {
     nom,
-    adresse: '',
+    numero_civique: '',
+    rue: '',
+    local: '',
+    code_postal: '',
+    ville: '',
+    province: 'Québec',
+    latitude: null,
+    longitude: null,
     contact_nom: '',
     contact_telephone: '',
     contact_courriel: '',
@@ -102,5 +125,7 @@ export function pharmacieVide(nom: string, tauxParKmDefaut: number): EntreePharm
     distance_km: 0,
     taux_par_km: tauxParKmDefaut,
     montant_fixe_deplacement: 0,
+    pause_minutes: 0,
+    pause_payee: 0,
   };
 }

@@ -9,9 +9,10 @@ import {
   listerPharmaciesRecentes,
 } from '../src/db/pharmacies';
 import type { Pharmacie } from '../src/db/types';
+import { ligneVille } from '../src/lib/adresses';
 import { normaliser } from '../src/lib/texte';
 import { Bouton, Vide } from '../src/ui/composants';
-import { couleurs, espace, rayon } from '../src/ui/theme';
+import { couleurs, espace, police, rayon } from '../src/ui/theme';
 
 export default function Pharmacies() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function Pharmacies() {
     const terme = normaliser(recherche.trim());
     if (!terme) return pharmacies;
     return pharmacies.filter(
-      (p) => normaliser(p.nom).includes(terme) || normaliser(p.adresse).includes(terme)
+      (p) => normaliser(p.nom).includes(terme) || normaliser(ligneVille(p)).includes(terme)
     );
   }, [pharmacies, recherche]);
 
@@ -91,9 +92,9 @@ function LignePharmacie({ pharmacie, onPress }: { pharmacie: Pharmacie; onPress:
     <Pressable onPress={onPress} style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
       <View style={styles.texte}>
         <Text style={styles.nom}>{pharmacie.nom}</Text>
-        {!!pharmacie.adresse && (
+        {!!ligneVille(pharmacie) && (
           <Text style={styles.detail} numberOfLines={1}>
-            {pharmacie.adresse}
+            {ligneVille(pharmacie)}
           </Text>
         )}
       </View>
@@ -122,11 +123,13 @@ const styles = StyleSheet.create({
   saisie: {
     flex: 1,
     fontSize: 15,
+    fontFamily: police.normal,
     color: couleurs.texte,
     paddingVertical: espace.s,
   },
   section: {
     fontSize: 12,
+    fontFamily: police.normal,
     color: couleurs.doux,
     marginTop: espace.s,
     marginBottom: espace.xs,
@@ -150,15 +153,17 @@ const styles = StyleSheet.create({
   },
   nom: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: police.demi,
     color: couleurs.texte,
   },
   detail: {
     fontSize: 13,
+    fontFamily: police.normal,
     color: couleurs.doux,
   },
   compte: {
     fontSize: 13,
+    fontFamily: police.normal,
     color: couleurs.doux,
   },
 });

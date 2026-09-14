@@ -1,7 +1,29 @@
 import { db } from './index';
-import type { Facture } from './types';
+import type { Facture, StatutPaiement } from './types';
 
 export type EntreeFacture = Omit<Facture, 'id' | 'cree_le'>;
+
+const CHAMPS = [
+  'numero',
+  'pharmacie_id',
+  'pharmacie_nom',
+  'pharmacie_adresse',
+  'periode_debut',
+  'periode_fin',
+  'total_heures',
+  'deplacement_mode',
+  'deplacement_km',
+  'deplacement_taux',
+  'deplacement_montant',
+  'per_diem_jours',
+  'per_diem_montant',
+  'hebergement_montant',
+  'frais_extra_montant',
+  'total',
+  'statut_paiement',
+  'html',
+  'date_generation',
+] as const;
 
 export function listerFactures(): Facture[] {
   return db.getAllSync<Facture>('SELECT * FROM factures ORDER BY cree_le DESC');
@@ -16,32 +38,24 @@ export function obtenirFactures(ids: number[]): Facture[] {
   );
 }
 
+export function compterFacturesEnAttente(): number {
+  const r = db.getFirstSync<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM factures WHERE statut_paiement = 'en_attente'"
+  );
+  return r?.n ?? 0;
+}
+
 export function enregistrerFacture(entree: EntreeFacture): number {
+  const trous = CHAMPS.map(() => '?').join(', ');
   const r = db.runSync(
-    `INSERT INTO factures (
-       numero, pharmacie_id, pharmacie_nom, pharmacie_adresse, periode_debut, periode_fin,
-       total_heures, deplacement_mode, deplacement_km, deplacement_taux, deplacement_montant,
-       per_diem_jours, per_diem_montant, hebergement_montant, total, html, cree_le
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    entree.numero,
-    entree.pharmacie_id,
-    entree.pharmacie_nom,
-    entree.pharmacie_adresse,
-    entree.periode_debut,
-    entree.periode_fin,
-    entree.total_heures,
-    entree.deplacement_mode,
-    entree.deplacement_km,
-    entree.deplacement_taux,
-    entree.deplacement_montant,
-    entree.per_diem_jours,
-    entree.per_diem_montant,
-    entree.hebergement_montant,
-    entree.total,
-    entree.html,
-    new Date().toISOString()
+    `INSERT INTO factures (${CHAMPS.join(', ')}, cree_le) VALUES (${trous}, ?)`,
+    [...CHAMPS.map((champ) => entree[champ]), new Date().toISOString()]
   );
   return r.lastInsertRowId;
+}
+
+export function definirStatutPaiement(id: number, statut: StatutPaiement) {
+  db.runSync('UPDATE factures SET statut_paiement = ? WHERE id = ?', statut, id);
 }
 
 export function supprimerFacture(id: number) {

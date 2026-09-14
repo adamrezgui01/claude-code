@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { QuartDetaille } from '../db/types';
 import { aujourdhui, formatMoisAnnee, grilleMois, JOURS_COURTS } from '../lib/dates';
-import { couleurs, espace, rayon } from './theme';
+import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 
 export function Calendrier({
   mois,
@@ -20,6 +20,7 @@ export function Calendrier({
   onSelectionner: (iso: string) => void;
   onChangerMois: (delta: number) => void;
 }) {
+  const accent = useAccent();
   const semaines = grilleMois(mois);
   const ceJour = aujourdhui();
 
@@ -27,11 +28,11 @@ export function Calendrier({
     <View style={styles.cadre}>
       <View style={styles.entete}>
         <Pressable onPress={() => onChangerMois(-1)} hitSlop={12} style={styles.fleche}>
-          <Ionicons name="chevron-back" size={20} color={couleurs.accent} />
+          <Ionicons name="chevron-back" size={20} color={accent} />
         </Pressable>
         <Text style={styles.mois}>{formatMoisAnnee(mois)}</Text>
         <Pressable onPress={() => onChangerMois(1)} hitSlop={12} style={styles.fleche}>
-          <Ionicons name="chevron-forward" size={20} color={couleurs.accent} />
+          <Ionicons name="chevron-forward" size={20} color={accent} />
         </Pressable>
       </View>
 
@@ -54,11 +55,11 @@ export function Calendrier({
               <Pressable
                 key={j}
                 onPress={() => onSelectionner(iso)}
-                style={[styles.case, selectionne && styles.caseSelectionnee]}>
+                style={[styles.case, selectionne && { backgroundColor: accentPale(accent) }]}>
                 <Text
                   style={[
                     styles.numero,
-                    iso === ceJour && styles.numeroAujourdhui,
+                    iso === ceJour && { fontFamily: police.gras, color: accent },
                     selectionne && styles.numeroSelectionne,
                   ]}>
                   {Number(iso.slice(8))}
@@ -67,7 +68,11 @@ export function Calendrier({
                   {quarts.slice(0, 3).map((q) => (
                     <View
                       key={q.id}
-                      style={[styles.point, chevauchements.has(q.id) && styles.pointConflit]}
+                      style={[
+                        styles.point,
+                        { backgroundColor: accent },
+                        chevauchements.has(q.id) && styles.pointConflit,
+                      ]}
                     />
                   ))}
                 </View>
@@ -102,7 +107,7 @@ const styles = StyleSheet.create({
   },
   mois: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: police.demi,
     color: couleurs.texte,
     textTransform: 'capitalize',
   },
@@ -113,6 +118,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontSize: 11,
+    fontFamily: police.normal,
     color: couleurs.doux,
     paddingVertical: espace.xs,
   },
@@ -124,19 +130,13 @@ const styles = StyleSheet.create({
     borderRadius: rayon,
     margin: 1,
   },
-  caseSelectionnee: {
-    backgroundColor: couleurs.accentPale,
-  },
   numero: {
     fontSize: 14,
+    fontFamily: police.normal,
     color: couleurs.texte,
   },
-  numeroAujourdhui: {
-    fontWeight: '700',
-    color: couleurs.accent,
-  },
   numeroSelectionne: {
-    fontWeight: '700',
+    fontFamily: police.gras,
   },
   points: {
     flexDirection: 'row',
@@ -148,7 +148,6 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: couleurs.accent,
   },
   pointConflit: {
     backgroundColor: couleurs.alerte,

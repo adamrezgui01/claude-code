@@ -1,10 +1,29 @@
 /** Comment la pharmacie rembourse les déplacements. */
 export type ModeDeplacement = 'aucun' | 'km' | 'fixe';
 
-export type Pharmacie = {
+/**
+ * Cycle de vie d'un quart. `a_valider` n'est jamais écrit en base : il se
+ * déduit de l'heure de fin passée. Voir `statutQuart`.
+ */
+export type StatutQuart = 'a_venir' | 'a_valider' | 'valide' | 'non_effectue';
+
+/** Adresse postale canadienne, éclatée pour être fiable et localisable. */
+export type Adresse = {
+  numero_civique: string;
+  rue: string;
+  /** Numéro de local ou de suite. Souvent nécessaire en centre commercial. */
+  local: string;
+  code_postal: string;
+  ville: string;
+  province: string;
+  /** Nulles tant que l'adresse n'a pas pu être localisée. */
+  latitude: number | null;
+  longitude: number | null;
+};
+
+export type Pharmacie = Adresse & {
   id: number;
   nom: string;
-  adresse: string;
   contact_nom: string;
   contact_telephone: string;
   contact_courriel: string;
@@ -18,6 +37,10 @@ export type Pharmacie = {
   distance_km: number;
   taux_par_km: number;
   montant_fixe_deplacement: number;
+  /** Pause repas habituelle, en minutes. Sert à préremplir un quart. */
+  pause_minutes: number;
+  /** 1 si la pharmacie paie la pause. */
+  pause_payee: number;
 };
 
 export type Quart = {
@@ -25,23 +48,43 @@ export type Quart = {
   pharmacie_id: number;
   /** Format `AAAA-MM-JJ`. */
   date: string;
-  /** Format `HH:MM`. */
+  /** Heures prévues, format `HH:MM`. */
   heure_debut: string;
-  /** Format `HH:MM`. Peut être antérieure à `heure_debut` : le quart passe alors minuit. */
   heure_fin: string;
+  /** Heures réelles, vides tant que le quart n'est pas validé. */
+  heure_debut_reelle: string;
+  heure_fin_reelle: string;
+  statut: StatutQuart;
   taux_horaire: number;
   kilometrage: number;
   montant_fixe_deplacement: number;
+  pause_minutes: number;
+  pause_payee: number;
   notes: string;
   notification_id: string | null;
+  /** Identifiants des rappels secondaires, encodés en JSON. */
+  notifications_secondaires: string;
+  notification_validation: string | null;
 };
 
-/** Un quart accompagné des conditions de sa pharmacie. */
+/** Un quart accompagné des données de sa pharmacie. */
 export type QuartDetaille = Quart & {
   pharmacie_nom: string;
   pharmacie_per_diem: number;
   pharmacie_taux_par_km: number;
   pharmacie_mode_deplacement: ModeDeplacement;
+  pharmacie_latitude: number | null;
+  pharmacie_longitude: number | null;
+};
+
+/** Frais ponctuel facturé en plus des heures. */
+export type FraisExtra = {
+  id: number;
+  quart_id: number;
+  description: string;
+  montant: number;
+  /** Chemin local de la photo du reçu. Vide si absente. */
+  photo: string;
 };
 
 export type Reglages = {
@@ -52,8 +95,15 @@ export type Reglages = {
   adresse: string;
   telephone: string;
   courriel: string;
-  /** Clé OpenRouteService, facultative. Voir `lib/distance`. */
+  /** Clé OpenRouteService : adresses et distances. Voir `lib/adresses`. */
   cle_itineraire: string;
+  /** Teinte d'accent choisie par l'usager. */
+  accent: string;
+  rappel_secondaire_actif: number;
+  /** Délais des rappels secondaires en minutes, encodés en JSON. */
+  rappel_delais: string;
+  /** Date du dernier bandeau de vérification des factures. */
+  dernier_rappel_factures: string;
 };
 
 export type FormationContinue = {
@@ -72,6 +122,8 @@ export type DocumentProfessionnel = {
   notification_id: string | null;
 };
 
+export type StatutPaiement = 'en_attente' | 'payee';
+
 /** Une facture porte sur une seule pharmacie. */
 export type Facture = {
   id: number;
@@ -89,9 +141,13 @@ export type Facture = {
   per_diem_jours: number;
   per_diem_montant: number;
   hebergement_montant: number;
+  frais_extra_montant: number;
   total: number;
+  statut_paiement: StatutPaiement;
   /** Facture rendue, conservée telle quelle pour un repartage fidèle. */
   html: string;
+  /** Format `AAAA-MM-JJ`. */
+  date_generation: string;
   cree_le: string;
 };
 
@@ -108,3 +164,19 @@ export type IdentifiantsLogiciel = {
 };
 
 export const LOGICIELS = ['RxPro', 'AssystRx', 'ReflexRx', 'Ubik', 'PrioRx'] as const;
+
+export const PROVINCES = [
+  'Québec',
+  'Ontario',
+  'Nouveau-Brunswick',
+  'Nouvelle-Écosse',
+  'Île-du-Prince-Édouard',
+  'Terre-Neuve-et-Labrador',
+  'Manitoba',
+  'Saskatchewan',
+  'Alberta',
+  'Colombie-Britannique',
+  'Yukon',
+  'Territoires du Nord-Ouest',
+  'Nunavut',
+] as const;

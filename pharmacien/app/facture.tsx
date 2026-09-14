@@ -3,12 +3,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { enregistrerFacture, prochainNumeroFacture } from '../src/db/factures';
+import { listerFraisPeriode } from '../src/db/frais';
 import { listerPharmacies, listerPharmaciesRecentes } from '../src/db/pharmacies';
 import { obtenirReglages } from '../src/db/profil';
 import { listerQuartsPeriode } from '../src/db/quarts';
-import type { Pharmacie, QuartDetaille } from '../src/db/types';
-import { ajouterMois, aujourdhui, debutMois, finMois, formatDateCourte } from '../src/lib/dates';
-import { calculerTotaux, type OptionsFacture } from '../src/lib/facture';
+import type { FraisExtra, Pharmacie, QuartDetaille } from '../src/db/types';
+import { adresseComplete } from '../src/lib/adresses';
+import { aujourdhui, debutMois, formatDateCourte } from '../src/lib/dates';
+import { calculerTotaux, quartsFacturables, type OptionsFacture } from '../src/lib/facture';
+import { bornes, type Preset } from '../src/lib/periodes';
 import { genererPdf } from '../src/lib/facturePdf';
 import { analyserNombre, argent, heures } from '../src/lib/format';
 import {
@@ -16,6 +19,7 @@ import {
   Carte,
   Champ,
   Doux,
+  Fondu,
   Interrupteur,
   Puce,
   Rangee,
@@ -25,25 +29,7 @@ import {
   Vide,
 } from '../src/ui/composants';
 import { SelecteurPharmacie } from '../src/ui/SelecteurPharmacie';
-import { couleurs, espace } from '../src/ui/theme';
-
-type Preset = 'mois' | 'moisDernier' | 'trimestre' | 'personnalisee';
-
-function bornes(preset: Preset, debut: string, fin: string): [string, string] {
-  const ceJour = aujourdhui();
-  switch (preset) {
-    case 'mois':
-      return [debutMois(ceJour), finMois(ceJour)];
-    case 'moisDernier': {
-      const mois = ajouterMois(ceJour, -1);
-      return [debutMois(mois), finMois(mois)];
-    }
-    case 'trimestre':
-      return [debutMois(ajouterMois(ceJour, -2)), finMois(ceJour)];
-    default:
-      return [debut, fin];
-  }
-}
+import { couleurs, espace, police } from '../src/ui/theme';
 
 export default function GenererFacture() {
   const router = useRouter();
@@ -61,6 +47,7 @@ export default function GenererFacture() {
 
   const [inclureDeplacement, setInclureDeplacement] = useState(true);
   const [inclurePerDiem, setInclurePerDiem] = useState(true);
+  const [inclureFrais, setInclureFrais] = useState(true);
   const [inclureHebergement, setInclureHebergement] = useState(false);
   const [hebergements, setHebergements] = useState<Record<number, string>>({});
   const [enCours, setEnCours] = useState(false);
@@ -71,36 +58,50 @@ export default function GenererFacture() {
   }, []);
 
   const [debut, fin] = bornes(preset, debutPerso, finPerso);
+  const filtre = selection.length ? selection : undefined;
 
-  const quarts = useMemo(
-    () => listerQuartsPeriode(debut, fin, selection.length ? selection : undefined),
-    [debut, fin, selection]
-  );
+  const quarts = useMemo(() => listerQuartsPeriode(debut, fin, filtre), [debut, fin, filtre]);
+  const frais = useMemo(() => listerFraisPeriode(debut, fin, filtre), [debut, fin, filtre]);
 
-  /** Une facture par pharmacie : les quarts sont regroupés par pharmacie. */
+  /** Une facture par pharmacie : quarts et frais sont regroupés par pharmacie. */
   const groupes = useMemo(() => {
-    const carte = new Map<number, QuartDetaille[]>();
-    for (const q of quarts) {
-      const liste = carte.get(q.pharmacie_id) ?? [];
-      liste.push(q);
-      carte.set(q.pharmacie_id, liste);
+    const carte = new Map<number, { quarts: QuartDetaille[]; frais: FraisExtra[] }>();
+    for (const q of quartsFacturables(quarts)) {
+      const entree = carte.get(q.pharmacie_id) ?? { quarts: [], frais: [] };
+      entree.quarts.push(q);
+      carte.set(q.pharmacie_id, entree);
+    }
+    for (const f of frais) {
+      const entree = carte.get(f.pharmacie_id);
+      if (entree) entree.frais.push(f);
     }
     return [...carte.entries()]
-      .map(([id, liste]) => ({ pharmacie: pharmacies.find((p) => p.id === id), quarts: liste }))
-      .filter((g): g is { pharmacie: Pharmacie; quarts: QuartDetaille[] } => !!g.pharmacie);
-  }, [quarts, pharmacies]);
+      .map(([id, entree]) => ({ pharmacie: pharmacies.find((p) => p.id === id), ...entree }))
+      .filter(
+        (g): g is { pharmacie: Pharmacie; quarts: QuartDetaille[]; frais: FraisExtra[] } =>
+          !!g.pharmacie
+      );
+  }, [quarts, frais, pharmacies]);
 
-  function options(pharmacie: Pharmacie, quartsPharmacie: QuartDetaille[]): OptionsFacture {
+  function options(groupe: {
+    pharmacie: Pharmacie;
+    quarts: QuartDetaille[];
+    frais: FraisExtra[];
+  }): OptionsFacture {
     return {
       numero: '—',
       reglages,
-      pharmacie,
+      pharmacie: groupe.pharmacie,
       periodeDebut: debut,
       periodeFin: fin,
-      quarts: quartsPharmacie,
+      quarts: groupe.quarts,
+      frais: groupe.frais,
       inclureDeplacement,
       inclurePerDiem,
-      hebergement: inclureHebergement ? analyserNombre(hebergements[pharmacie.id] ?? '') : 0,
+      inclureFrais,
+      hebergement: inclureHebergement
+        ? analyserNombre(hebergements[groupe.pharmacie.id] ?? '')
+        : 0,
     };
   }
 
@@ -116,7 +117,7 @@ export default function GenererFacture() {
     try {
       const ids: number[] = [];
       for (const groupe of groupes) {
-        const o = { ...options(groupe.pharmacie, groupe.quarts), numero: prochainNumeroFacture() };
+        const o = { ...options(groupe), numero: prochainNumeroFacture() };
         const totaux = calculerTotaux(o);
         const { html } = await genererPdf(o);
         ids.push(
@@ -124,7 +125,7 @@ export default function GenererFacture() {
             numero: o.numero,
             pharmacie_id: groupe.pharmacie.id,
             pharmacie_nom: groupe.pharmacie.nom,
-            pharmacie_adresse: groupe.pharmacie.adresse,
+            pharmacie_adresse: adresseComplete(groupe.pharmacie).replace('\n', ', '),
             periode_debut: debut,
             periode_fin: fin,
             total_heures: totaux.totalHeures,
@@ -135,8 +136,11 @@ export default function GenererFacture() {
             per_diem_jours: totaux.perDiemJours,
             per_diem_montant: totaux.perDiemMontant,
             hebergement_montant: totaux.hebergement,
+            frais_extra_montant: totaux.fraisExtra,
             total: totaux.total,
+            statut_paiement: 'en_attente',
             html,
+            date_generation: aujourdhui(),
           })
         );
       }
@@ -149,6 +153,10 @@ export default function GenererFacture() {
   }
 
   const enteteIncomplete = !reglages.nom.trim() || !reglages.permis_opq.trim();
+  const totalFrais = groupes.reduce(
+    (t, g) => t + g.frais.reduce((s, f) => s + f.montant, 0),
+    0
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.contenu} keyboardShouldPersistTaps="handled">
@@ -200,7 +208,7 @@ export default function GenererFacture() {
       {groupes.length === 0 ? (
         <Vide texte="Aucun quart dans cette période : rien à facturer." />
       ) : (
-        <>
+        <Fondu>
           <SousTitre>À inclure</SousTitre>
           <Carte>
             <Interrupteur
@@ -215,6 +223,15 @@ export default function GenererFacture() {
               detail="Jours travaillés × montant de la pharmacie"
               valeur={inclurePerDiem}
               onChange={setInclurePerDiem}
+            />
+            <Separateur />
+            <Interrupteur
+              label="Frais extra"
+              detail={
+                totalFrais > 0 ? `${argent(totalFrais)} sur la période` : 'Aucun frais sur la période'
+              }
+              valeur={inclureFrais}
+              onChange={setInclureFrais}
             />
             <Separateur />
             <Interrupteur
@@ -242,15 +259,16 @@ export default function GenererFacture() {
             {groupes.length > 1 ? `${groupes.length} factures à générer` : 'Facture à générer'}
           </SousTitre>
           {groupes.map((g) => {
-            const t = calculerTotaux(options(g.pharmacie, g.quarts));
+            const t = calculerTotaux(options(g));
             return (
               <Carte key={g.pharmacie.id}>
                 <Rangee label={g.pharmacie.nom} valeur={argent(t.total)} accent />
                 <Doux>
-                  {g.quarts.length} quart{g.quarts.length > 1 ? 's' : ''} ·{' '}
-                  {heures(t.totalHeures)} · honoraires {argent(t.honoraires)}
+                  {g.quarts.length} quart{g.quarts.length > 1 ? 's' : ''} · {heures(t.totalHeures)} ·
+                  honoraires {argent(t.honoraires)}
                   {t.deplacementMontant > 0 ? ` · déplacement ${argent(t.deplacementMontant)}` : ''}
                   {t.perDiemMontant > 0 ? ` · per diem ${argent(t.perDiemMontant)}` : ''}
+                  {t.fraisExtra > 0 ? ` · frais ${argent(t.fraisExtra)}` : ''}
                   {t.hebergement > 0 ? ` · hébergement ${argent(t.hebergement)}` : ''}
                 </Doux>
               </Carte>
@@ -275,7 +293,7 @@ export default function GenererFacture() {
             onPress={generer}
             desactive={enCours}
           />
-        </>
+        </Fondu>
       )}
     </ScrollView>
   );
@@ -297,6 +315,7 @@ const styles = StyleSheet.create({
   avertissement: {
     color: couleurs.alerte,
     fontSize: 13,
+    fontFamily: police.normal,
     marginBottom: espace.m,
   },
 });

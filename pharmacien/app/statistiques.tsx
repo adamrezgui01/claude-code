@@ -2,16 +2,19 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { listerFraisPeriode } from '../src/db/frais';
 import { listerPharmacies, listerPharmaciesRecentes } from '../src/db/pharmacies';
 import { listerQuartsPeriode } from '../src/db/quarts';
 import type { Pharmacie } from '../src/db/types';
-import { ajouterMois, aujourdhui, debutMois, finMois, formatDateCourte } from '../src/lib/dates';
+import { aujourdhui, debutMois, formatDateCourte } from '../src/lib/dates';
+import { bornes, type Preset } from '../src/lib/periodes';
 import { argent, heures, nombre } from '../src/lib/format';
 import { calculerStatistiques } from '../src/lib/stats';
 import {
   Bouton,
   Carte,
   Doux,
+  Fondu,
   Puce,
   Rangee,
   SelecteurDate,
@@ -20,25 +23,7 @@ import {
   Vide,
 } from '../src/ui/composants';
 import { SelecteurPharmacie } from '../src/ui/SelecteurPharmacie';
-import { couleurs, espace } from '../src/ui/theme';
-
-type Preset = 'mois' | 'moisDernier' | 'trimestre' | 'personnalisee';
-
-function bornes(preset: Preset, debut: string, fin: string): [string, string] {
-  const ceJour = aujourdhui();
-  switch (preset) {
-    case 'mois':
-      return [debutMois(ceJour), finMois(ceJour)];
-    case 'moisDernier': {
-      const mois = ajouterMois(ceJour, -1);
-      return [debutMois(mois), finMois(mois)];
-    }
-    case 'trimestre':
-      return [debutMois(ajouterMois(ceJour, -2)), finMois(ceJour)];
-    default:
-      return [debut, fin];
-  }
-}
+import { couleurs, espace, police } from '../src/ui/theme';
 
 export default function Statistiques() {
   const router = useRouter();
@@ -57,12 +42,16 @@ export default function Statistiques() {
   );
 
   const [debut, fin] = bornes(preset, debutPerso, finPerso);
-  const quarts = useMemo(
-    () => listerQuartsPeriode(debut, fin, selection.length ? selection : undefined),
-    [debut, fin, selection]
-  );
+  const filtre = selection.length ? selection : undefined;
 
-  const stats = useMemo(() => calculerStatistiques(quarts), [quarts]);
+  const stats = useMemo(
+    () =>
+      calculerStatistiques(
+        listerQuartsPeriode(debut, fin, filtre),
+        listerFraisPeriode(debut, fin, filtre)
+      ),
+    [debut, fin, filtre]
+  );
 
   function basculerPharmacie(id: number) {
     setSelection((actuelle) =>
@@ -118,7 +107,7 @@ export default function Statistiques() {
       {stats.nombreQuarts === 0 ? (
         <Vide texte="Aucun quart dans cette période." />
       ) : (
-        <>
+        <Fondu>
           <Carte>
             <Text style={styles.revenu}>{argent(stats.revenuEstime)}</Text>
             <Doux>Revenu estimé</Doux>
@@ -134,6 +123,7 @@ export default function Statistiques() {
               label={`Per diem (${stats.joursTravailles} jours travaillés)`}
               valeur={argent(stats.montantPerDiem)}
             />
+            <Rangee label="Frais extra" valeur={argent(stats.montantFraisExtra)} />
           </Carte>
 
           <SousTitre>Par pharmacie</SousTitre>
@@ -141,14 +131,15 @@ export default function Statistiques() {
             {stats.parPharmacie.map((p, i) => (
               <View key={p.pharmacie_id}>
                 {i > 0 && <Separateur />}
-                <Rangee label={p.nom} valeur={argent(p.revenu)} />
+                <Rangee label={p.nom} valeur={argent(p.revenu)} accent />
                 <Doux>
                   {p.quarts} quart{p.quarts > 1 ? 's' : ''} · {heures(p.heures)}
+                  {p.fraisExtra > 0 ? ` · frais ${argent(p.fraisExtra)}` : ''}
                 </Doux>
               </View>
             ))}
           </Carte>
-        </>
+        </Fondu>
       )}
 
       <View style={styles.actions}>
@@ -163,7 +154,7 @@ export default function Statistiques() {
           }
         />
         <Bouton
-          titre="Factures générées"
+          titre="Factures"
           variante="secondaire"
           onPress={() => router.push('/factures')}
         />
@@ -186,8 +177,8 @@ const styles = StyleSheet.create({
     marginBottom: espace.m,
   },
   revenu: {
-    fontSize: 30,
-    fontWeight: '700',
+    fontSize: 32,
+    fontFamily: police.gras,
     color: couleurs.texte,
   },
   actions: {

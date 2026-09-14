@@ -12,7 +12,7 @@ import {
 import { ajouterJours, aujourdhui } from '../../src/lib/dates';
 import { analyserNombre } from '../../src/lib/format';
 import { annulerRappel, planifierRappelDocument } from '../../src/lib/notifications';
-import { Bouton, Champ, Doux, SelecteurDate } from '../../src/ui/composants';
+import { Bouton, Champ, Doux, Fondu, SelecteurDate } from '../../src/ui/composants';
 import { espace } from '../../src/ui/theme';
 
 export default function FormulaireDocument() {
@@ -76,6 +76,7 @@ export default function FormulaireDocument() {
     <ScrollView contentContainerStyle={styles.contenu} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: nouveau ? 'Nouveau document' : 'Document' }} />
 
+      <Fondu>
       <Champ
         label="Nom"
         valeur={nom}
@@ -93,6 +94,7 @@ export default function FormulaireDocument() {
 
       <Bouton titre="Enregistrer" onPress={enregistrer} />
       {!nouveau && <Bouton titre="Supprimer" variante="danger" onPress={supprimer} />}
+      </Fondu>
     </ScrollView>
   );
 }

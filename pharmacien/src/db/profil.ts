@@ -1,35 +1,48 @@
 import { db } from './index';
 import type { DocumentProfessionnel, FormationContinue, Reglages } from './types';
 
+const REGLAGES_VIDES: Reglages = {
+  taux_par_km: 0.55,
+  nom: '',
+  permis_opq: '',
+  adresse: '',
+  telephone: '',
+  courriel: '',
+  cle_itineraire: '',
+  accent: '',
+  rappel_secondaire_actif: 0,
+  rappel_delais: '[180]',
+  dernier_rappel_factures: '',
+};
+
+const CHAMPS = Object.keys(REGLAGES_VIDES) as (keyof Reglages)[];
+
 export function obtenirReglages(): Reglages {
-  const r = db.getFirstSync<Reglages>('SELECT * FROM reglages WHERE id = 1');
-  return (
-    r ?? {
-      taux_par_km: 0.55,
-      nom: '',
-      permis_opq: '',
-      adresse: '',
-      telephone: '',
-      courriel: '',
-      cle_itineraire: '',
-    }
-  );
+  return db.getFirstSync<Reglages>('SELECT * FROM reglages WHERE id = 1') ?? REGLAGES_VIDES;
 }
 
 export function enregistrerReglages(r: Reglages) {
+  const affectations = CHAMPS.map((c) => `${c} = ?`).join(', ');
   db.runSync(
-    `UPDATE reglages
-     SET taux_par_km = ?, nom = ?, permis_opq = ?, adresse = ?, telephone = ?,
-         courriel = ?, cle_itineraire = ?
-     WHERE id = 1`,
-    r.taux_par_km,
-    r.nom,
-    r.permis_opq,
-    r.adresse,
-    r.telephone,
-    r.courriel,
-    r.cle_itineraire
+    `UPDATE reglages SET ${affectations} WHERE id = 1`,
+    CHAMPS.map((champ) => r[champ])
   );
+}
+
+/** Écrit un seul réglage, sans toucher aux autres. */
+export function definirReglage<C extends keyof Reglages>(champ: C, valeur: Reglages[C]) {
+  db.runSync(`UPDATE reglages SET ${champ} = ? WHERE id = 1`, valeur);
+}
+
+/** Délais des rappels secondaires, en minutes avant le début du quart. */
+export function delaisSecondaires(r: Reglages): number[] {
+  if (!r.rappel_secondaire_actif) return [];
+  try {
+    const delais = JSON.parse(r.rappel_delais) as number[];
+    return Array.isArray(delais) ? delais.filter((d) => Number.isFinite(d) && d > 0) : [];
+  } catch {
+    return [];
+  }
 }
 
 export function obtenirFormation(): FormationContinue {
