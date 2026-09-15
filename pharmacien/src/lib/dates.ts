@@ -87,6 +87,18 @@ export function ajouterMois(iso: string, n: number): string {
   return dateISO(d);
 }
 
+/** Lundi de la semaine qui contient cette date. */
+export function debutSemaine(iso: string): string {
+  const d = analyserDate(iso);
+  return ajouterJours(iso, -((d.getDay() + 6) % 7));
+}
+
+/** Les sept dates de la semaine, du lundi au dimanche. */
+export function semaineDe(iso: string): string[] {
+  const lundi = debutSemaine(iso);
+  return Array.from({ length: 7 }, (_, i) => ajouterJours(lundi, i));
+}
+
 export function debutMois(iso: string): string {
   return `${iso.slice(0, 7)}-01`;
 }

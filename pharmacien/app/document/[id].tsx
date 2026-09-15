@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 
 import {
   creerDocument,
@@ -12,7 +12,14 @@ import {
 import { ajouterJours, aujourdhui } from '../../src/lib/dates';
 import { analyserNombre } from '../../src/lib/format';
 import { annulerRappel, planifierRappelDocument } from '../../src/lib/notifications';
-import { Bouton, Champ, Doux, Fondu, SelecteurDate } from '../../src/ui/composants';
+import {
+  Bouton,
+  Champ,
+  Doux,
+  Ecran,
+  Fondu,
+  SelecteurDate,
+} from '../../src/ui/composants';
 import { espace } from '../../src/ui/theme';
 
 export default function FormulaireDocument() {
@@ -73,7 +80,7 @@ export default function FormulaireDocument() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.contenu} keyboardShouldPersistTaps="handled">
+    <Ecran style={styles.contenu}>
       <Stack.Screen options={{ title: nouveau ? 'Nouveau document' : 'Document' }} />
 
       <Fondu>
@@ -95,7 +102,7 @@ export default function FormulaireDocument() {
       <Bouton titre="Enregistrer" onPress={enregistrer} />
       {!nouveau && <Bouton titre="Supprimer" variante="danger" onPress={supprimer} />}
       </Fondu>
-    </ScrollView>
+    </Ecran>
   );
 }
 

@@ -2,12 +2,12 @@ import type { FraisExtra, Quart, QuartDetaille } from '../db/types';
 import { combiner, dureeHeures } from './dates';
 
 /**
- * Heures effectivement travaillées : les heures réelles si le quart a été
- * validé, les heures prévues sinon, moins la pause repas si elle n'est pas
+ * Heures effectivement travaillées : les heures réelles si l'usager les a
+ * corrigées, les heures prévues sinon, moins la pause repas si elle n'est pas
  * payée.
  */
 export function heuresTravaillees(quart: Quart): number {
-  if (quart.statut === 'non_effectue') return 0;
+  if (quart.annule) return 0;
   const debut = quart.heure_debut_reelle || quart.heure_debut;
   const fin = quart.heure_fin_reelle || quart.heure_fin;
   const brut = dureeHeures(debut, fin);
@@ -16,7 +16,7 @@ export function heuresTravaillees(quart: Quart): number {
 }
 
 export function quartCompte(quart: Quart): boolean {
-  return quart.statut !== 'non_effectue';
+  return !quart.annule;
 }
 
 export type StatsPharmacie = {
@@ -91,7 +91,7 @@ export function calculerStatistiques(
     joursGlobaux.add(q.date);
 
     stats.jours = jours.size;
-    stats.perDiem = jours.size * q.pharmacie_per_diem;
+    stats.perDiem += q.per_diem_reclame;
     parPharmacie.set(q.pharmacie_id, stats);
   }
 

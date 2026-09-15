@@ -1,10 +1,14 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useId, useRef, useState } from 'react';
 import {
   Animated,
+  InputAccessoryView,
+  Keyboard,
   KeyboardTypeOptions,
+  Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -15,6 +19,31 @@ import {
 
 import { analyserDate, combiner, dateISO, formatDateLongue, heureISO } from '../lib/dates';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
+
+/**
+ * Enveloppe de tout écran qui contient des champs. Le clavier se ferme au
+ * défilement et au toucher n'importe où en dehors d'un champ, comme partout
+ * ailleurs sur un téléphone.
+ */
+export function Ecran({
+  children,
+  style,
+}: {
+  children: ReactNode;
+  style?: ViewStyle;
+}) {
+  return (
+    <ScrollView
+      style={styles.ecran}
+      contentContainerStyle={[styles.ecranContenu, style]}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag">
+      <Pressable onPress={Keyboard.dismiss} accessible={false}>
+        {children}
+      </Pressable>
+    </ScrollView>
+  );
+}
 
 /** Apparition en fondu. Rien ne doit surgir sèchement. */
 export function Fondu({
@@ -92,6 +121,14 @@ export function Champ({
 }) {
   const accent = useAccent();
   const [actif, setActif] = useState(false);
+  // Un pavé numérique n'a pas de touche de retour sur iOS : sans cette barre,
+  // le clavier n'a aucun bouton pour se fermer.
+  const identifiant = useId();
+  const numerique =
+    clavier === 'number-pad' || clavier === 'decimal-pad' || clavier === 'numeric' ||
+    clavier === 'phone-pad';
+  const barre = Platform.OS === 'ios' && (numerique || multiligne);
+
   return (
     <View style={styles.champ}>
       <Text style={styles.label}>{label}</Text>
@@ -113,7 +150,19 @@ export function Champ({
         secureTextEntry={masque}
         autoCapitalize={auto ?? (masque ? 'none' : 'sentences')}
         autoCorrect={!masque}
+        returnKeyType={multiligne ? undefined : 'done'}
+        blurOnSubmit={!multiligne}
+        inputAccessoryViewID={barre ? identifiant : undefined}
       />
+      {barre && (
+        <InputAccessoryView nativeID={identifiant}>
+          <View style={styles.barreClavier}>
+            <Pressable onPress={Keyboard.dismiss} hitSlop={10}>
+              <Text style={[styles.barreTexte, { color: accent }]}>Terminé</Text>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      )}
       {!!aide && <Text style={styles.aide}>{aide}</Text>}
       {!!avertissement && <Text style={styles.avertissement}>{avertissement}</Text>}
     </View>
@@ -271,6 +320,38 @@ export function Rangee({
   );
 }
 
+/**
+ * Feuille qui contient un sélecteur natif. Sur iOS, un sélecteur posé dans une
+ * colonne à demi-largeur déborde de l'écran ; ici il a toute la largeur, quel
+ * que soit l'endroit d'où on l'ouvre.
+ */
+function FeuillePicker({
+  ouvert,
+  titre,
+  onFermer,
+  children,
+}: {
+  ouvert: boolean;
+  titre: string;
+  onFermer: () => void;
+  children: ReactNode;
+}) {
+  const accent = useAccent();
+  return (
+    <Modal visible={ouvert} transparent animationType="fade" onRequestClose={onFermer}>
+      <Pressable style={styles.voile} onPress={onFermer}>
+        <Pressable style={styles.feuille} onPress={() => {}}>
+          <Text style={styles.feuilleTitre}>{titre}</Text>
+          <View style={styles.feuilleCorps}>{children}</View>
+          <Pressable style={styles.feuilleAction} onPress={onFermer} hitSlop={8}>
+            <Text style={[styles.feuilleTexte, { color: accent }]}>Terminé</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
 export function SelecteurDate({
   label,
   valeur,
@@ -281,22 +362,30 @@ export function SelecteurDate({
   onChange: (iso: string) => void;
 }) {
   const [ouvert, setOuvert] = useState(false);
+  const picker = (
+    <DateTimePicker
+      value={analyserDate(valeur)}
+      mode="date"
+      display={Platform.OS === 'ios' ? 'inline' : 'default'}
+      onChange={(evenement, date) => {
+        if (Platform.OS !== 'ios') setOuvert(false);
+        if (evenement.type === 'set' && date) onChange(dateISO(date));
+      }}
+    />
+  );
+
   return (
     <View style={styles.champ}>
       <Text style={styles.label}>{label}</Text>
-      <Pressable style={styles.saisieBoite} onPress={() => setOuvert((o) => !o)}>
+      <Pressable style={styles.saisieBoite} onPress={() => setOuvert(true)}>
         <Text style={styles.saisieTexte}>{formatDateLongue(valeur)}</Text>
       </Pressable>
-      {ouvert && (
-        <DateTimePicker
-          value={analyserDate(valeur)}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'inline' : 'default'}
-          onChange={(evenement, date) => {
-            if (Platform.OS !== 'ios') setOuvert(false);
-            if (evenement.type === 'set' && date) onChange(dateISO(date));
-          }}
-        />
+      {Platform.OS === 'ios' ? (
+        <FeuillePicker ouvert={ouvert} titre={label} onFermer={() => setOuvert(false)}>
+          {picker}
+        </FeuillePicker>
+      ) : (
+        ouvert && picker
       )}
     </View>
   );
@@ -312,29 +401,95 @@ export function SelecteurHeure({
   onChange: (heure: string) => void;
 }) {
   const [ouvert, setOuvert] = useState(false);
+  const picker = (
+    <DateTimePicker
+      value={combiner(dateISO(new Date()), valeur)}
+      mode="time"
+      is24Hour
+      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+      style={styles.pickerLarge}
+      onChange={(evenement, date) => {
+        if (Platform.OS !== 'ios') setOuvert(false);
+        if (evenement.type === 'set' && date) onChange(heureISO(date));
+      }}
+    />
+  );
+
   return (
     <View style={[styles.champ, styles.champCourt]}>
       <Text style={styles.label}>{label}</Text>
-      <Pressable style={styles.saisieBoite} onPress={() => setOuvert((o) => !o)}>
+      <Pressable style={styles.saisieBoite} onPress={() => setOuvert(true)}>
         <Text style={styles.saisieTexte}>{valeur}</Text>
       </Pressable>
-      {ouvert && (
-        <DateTimePicker
-          value={combiner(dateISO(new Date()), valeur)}
-          mode="time"
-          is24Hour
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(evenement, date) => {
-            if (Platform.OS !== 'ios') setOuvert(false);
-            if (evenement.type === 'set' && date) onChange(heureISO(date));
-          }}
-        />
+      {Platform.OS === 'ios' ? (
+        <FeuillePicker ouvert={ouvert} titre={label} onFermer={() => setOuvert(false)}>
+          {picker}
+        </FeuillePicker>
+      ) : (
+        ouvert && picker
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  ecran: {
+    flex: 1,
+  },
+  ecranContenu: {
+    padding: espace.l,
+    paddingBottom: espace.xxl,
+  },
+  voile: {
+    flex: 1,
+    backgroundColor: '#1E1B2288',
+    justifyContent: 'flex-end',
+  },
+  feuille: {
+    backgroundColor: couleurs.carte,
+    borderTopLeftRadius: rayon * 1.5,
+    borderTopRightRadius: rayon * 1.5,
+    paddingTop: espace.l,
+    paddingBottom: espace.xxl,
+    paddingHorizontal: espace.l,
+  },
+  feuilleTitre: {
+    fontSize: 13,
+    fontFamily: police.demi,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    color: couleurs.doux,
+    textAlign: 'center',
+  },
+  feuilleCorps: {
+    alignItems: 'stretch',
+    marginVertical: espace.s,
+  },
+  pickerLarge: {
+    width: '100%',
+  },
+  feuilleAction: {
+    alignSelf: 'center',
+    paddingVertical: espace.s,
+    paddingHorizontal: espace.xl,
+  },
+  feuilleTexte: {
+    fontSize: 17,
+    fontFamily: police.demi,
+  },
+  barreClavier: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    backgroundColor: couleurs.fond,
+    borderTopWidth: 1,
+    borderTopColor: couleurs.bordure,
+    paddingVertical: espace.s,
+    paddingHorizontal: espace.l,
+  },
+  barreTexte: {
+    fontSize: 16,
+    fontFamily: police.demi,
+  },
   titre: {
     fontSize: 24,
     fontFamily: police.gras,

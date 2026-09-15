@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 
 import { enregistrerFacture, prochainNumeroFacture } from '../src/db/factures';
 import { listerFraisPeriode } from '../src/db/frais';
@@ -19,6 +19,7 @@ import {
   Carte,
   Champ,
   Doux,
+  Ecran,
   Fondu,
   Interrupteur,
   Puce,
@@ -159,7 +160,7 @@ export default function GenererFacture() {
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.contenu} keyboardShouldPersistTaps="handled">
+    <Ecran>
       <SousTitre>Période</SousTitre>
       <View style={styles.puces}>
         <Puce texte="Ce mois-ci" actif={preset === 'mois'} onPress={() => setPreset('mois')} />
@@ -295,15 +296,11 @@ export default function GenererFacture() {
           />
         </Fondu>
       )}
-    </ScrollView>
+    </Ecran>
   );
 }
 
 const styles = StyleSheet.create({
-  contenu: {
-    padding: espace.l,
-    paddingBottom: espace.xxl,
-  },
   puces: {
     flexDirection: 'row',
     flexWrap: 'wrap',

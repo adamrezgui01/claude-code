@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { statutQuart } from '../db/quarts';
 import type { QuartDetaille } from '../db/types';
 import { formatJourCourt } from '../lib/dates';
 import { argent, heures } from '../lib/format';
@@ -22,11 +21,11 @@ export function LigneQuart({
   onPressPharmacie?: () => void;
 }) {
   const accent = useAccent();
-  const statut = statutQuart(quart);
   const duree = heuresTravaillees(quart);
   const debut = quart.heure_debut_reelle || quart.heure_debut;
   const fin = quart.heure_fin_reelle || quart.heure_fin;
-  const annule = statut === 'non_effectue';
+  const annule = !!quart.annule;
+  const corrige = !!quart.heure_debut_reelle || !!quart.heure_fin_reelle;
 
   return (
     <Pressable
@@ -58,14 +57,9 @@ export function LigneQuart({
             {quart.notes}
           </Text>
         )}
-        {statut === 'a_valider' && (
+        {corrige && !annule && (
           <View style={styles.etiquette}>
-            <Etiquette texte="À valider" ton="alerte" />
-          </View>
-        )}
-        {statut === 'valide' && (
-          <View style={styles.etiquette}>
-            <Etiquette texte="Validé" ton="succes" />
+            <Etiquette texte="Heures corrigées" ton="succes" />
           </View>
         )}
         {annule && (

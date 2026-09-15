@@ -1,15 +1,20 @@
 import { createContext, useContext } from 'react';
 
 /**
- * Quatre mauves poussiéreux, tous dans la même famille : moyens, grisés,
- * penchant vers le froid. L'usager choisit le sien dans Profil, sur son vrai
- * écran, parce qu'un mauve ne se juge pas sur papier.
+ * Quatre mauves francs. Tous à la même luminosité — celle d'un mauve ardoise,
+ * ni pâle ni presque noir — et tous nettement saturés : un mauve grisé devient
+ * fade, quasi pastel. Ce qui change d'une nuance à l'autre, c'est la teinte,
+ * du plus froid au plus chaud, jamais la clarté.
+ *
+ * L'usager choisit le sien dans Profil, sur son vrai écran, parce qu'un mauve
+ * ne se juge pas sur papier. Les quatre passent 5:1 de contraste avec du texte
+ * blanc, donc n'importe lequel reste lisible sur un bouton.
  */
 export const MAUVES = [
-  { cle: 'brume', nom: 'Brume', valeur: '#8A7CA8' },
-  { cle: 'ardoise', nom: 'Ardoise', valeur: '#7C7396' },
-  { cle: 'glycine', nom: 'Glycine', valeur: '#9B8BB4' },
-  { cle: 'encre', nom: 'Encre', valeur: '#6D6486' },
+  { cle: 'amethyste', nom: 'Améthyste', valeur: '#7847C2' },
+  { cle: 'iris', nom: 'Iris', valeur: '#7051B8' },
+  { cle: 'violette', nom: 'Violette', valeur: '#8547C2' },
+  { cle: 'prune', nom: 'Prune', valeur: '#8F51B8' },
 ] as const;
 
 export const ACCENT_DEFAUT: string = MAUVES[0].valeur;
@@ -23,7 +28,7 @@ export const couleurs = {
   bordure: '#E6E2E6',
   alerte: '#B4431F',
   alertePale: '#FBEAE3',
-  /** États de validation et de paiement : jamais touchés par l'esthétique. */
+  /** États de paiement et de correction : jamais touchés par l'esthétique. */
   succes: '#2F7D52',
   succesPale: '#E4F1E9',
   attente: '#8A8592',
@@ -70,9 +75,12 @@ export function useAccent(): string {
   return useContext(ContexteTheme).accent;
 }
 
-/** Teinte pâle dérivée de l'accent : c'est la luminosité qui change, pas la teinte. */
+/**
+ * Teinte pâle dérivée de l'accent. Seule la clarté change, jamais la teinte :
+ * ces variations font de l'ambiance et ne portent aucune information.
+ */
 export function accentPale(accent: string): string {
-  return `${accent}22`;
+  return `${accent}1E`;
 }
 
 export function accentMoyen(accent: string): string {

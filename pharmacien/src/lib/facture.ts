@@ -52,7 +52,8 @@ export function calculerTotaux(o: OptionsFacture): TotauxFacture {
   let honoraires = 0;
   let km = 0;
   let fixe = 0;
-  const jours = new Set<string>();
+  let perDiem = 0;
+  const joursAvecPerDiem = new Set<string>();
 
   for (const q of quartsFacturables(o.quarts)) {
     const duree = heuresTravaillees(q);
@@ -60,15 +61,19 @@ export function calculerTotaux(o: OptionsFacture): TotauxFacture {
     honoraires += duree * q.taux_horaire;
     km += q.kilometrage;
     fixe += q.montant_fixe_deplacement;
-    jours.add(q.date);
+    perDiem += q.per_diem_reclame;
+    if (q.per_diem_reclame > 0) joursAvecPerDiem.add(q.date);
   }
 
   const mode = o.inclureDeplacement ? o.pharmacie.mode_deplacement : 'aucun';
   const deplacementMontant =
     mode === 'km' ? km * o.pharmacie.taux_par_km : mode === 'fixe' ? fixe : 0;
 
-  const perDiemJours = o.inclurePerDiem ? jours.size : 0;
-  const perDiemMontant = perDiemJours * o.pharmacie.per_diem;
+  // Le per diem est réclamé quart par quart : une semaine dans le Nord peut
+  // porter le repas tous les jours et le trajet seulement à l'aller et au
+  // retour. On additionne donc les montants plutôt que de multiplier des jours.
+  const perDiemJours = o.inclurePerDiem ? joursAvecPerDiem.size : 0;
+  const perDiemMontant = o.inclurePerDiem ? perDiem : 0;
   const fraisExtra = o.inclureFrais ? o.frais.reduce((t, f) => t + f.montant, 0) : 0;
 
   return {
@@ -171,11 +176,7 @@ export function construireHtml(o: OptionsFacture): string {
           t.deplacementMontant
         )
       : ligneSiNonNulle('Déplacement', '', t.deplacementMontant),
-    ligneSiNonNulle(
-      'Per diem',
-      `${t.perDiemJours} j × ${argent(o.pharmacie.per_diem)}`,
-      t.perDiemMontant
-    ),
+    ligneSiNonNulle('Per diem', `${t.perDiemJours} jour${t.perDiemJours > 1 ? 's' : ''}`, t.perDiemMontant),
     ligneSiNonNulle('Hébergement', '', t.hebergement),
     o.inclureFrais ? lignesFrais(o.frais.filter((f) => f.montant !== 0)) : '',
   ].join('');

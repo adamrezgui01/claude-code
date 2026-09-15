@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   delaisSecondaires,
@@ -18,6 +18,7 @@ import {
   Bouton,
   Champ,
   Doux,
+  Ecran,
   Fondu,
   Interrupteur,
   Puce,
@@ -98,7 +99,7 @@ export default function Profil() {
   const delais = delaisSecondaires({ ...reglages, rappel_secondaire_actif: 1 });
 
   return (
-    <ScrollView contentContainerStyle={styles.contenu} keyboardShouldPersistTaps="handled">
+    <Ecran>
       <SousTitre>Formation continue</SousTitre>
       <Text style={styles.compteur}>
         {nombre(analyserNombre(heuresCompletees))} h / {nombre(analyserNombre(heuresRequises))} h
@@ -166,7 +167,7 @@ export default function Profil() {
 
       <SousTitre>Rappels</SousTitre>
       <Doux>
-        Un rappel part toujours 48 h avant un quart, et une demande de validation 2 h après sa fin.
+        Un rappel part toujours 48 h avant un quart, et un mémo 2 h après sa fin — celui-là ne demande rien, il rappelle seulement de corriger vos heures si elles ont changé.
       </Doux>
       <View style={styles.bloc}>
         <Interrupteur
@@ -262,15 +263,11 @@ export default function Profil() {
         </View>
         <Ionicons name="chevron-forward" size={18} color={couleurs.doux} />
       </Pressable>
-    </ScrollView>
+    </Ecran>
   );
 }
 
 const styles = StyleSheet.create({
-  contenu: {
-    padding: espace.l,
-    paddingBottom: espace.xxl,
-  },
   compteur: {
     fontSize: 17,
     fontFamily: police.demi,

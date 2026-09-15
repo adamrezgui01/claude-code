@@ -5,9 +5,18 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { listerPharmacies } from '../../src/db/pharmacies';
 import { obtenirReglages } from '../../src/db/profil';
-import { listerQuarts, statutQuart } from '../../src/db/quarts';
+import { listerQuarts } from '../../src/db/quarts';
 import type { Pharmacie, QuartDetaille } from '../../src/db/types';
-import { ajouterMois, aujourdhui, combiner, debutMois, formatDateLongue } from '../../src/lib/dates';
+import {
+  ajouterJours,
+  ajouterMois,
+  aujourdhui,
+  combiner,
+  debutMois,
+  formatDateLongue,
+  formatJourCourt,
+  semaineDe,
+} from '../../src/lib/dates';
 import {
   doitRappelerFactures,
   rappelFacturesTraite,
@@ -16,32 +25,34 @@ import {
 import { detecterChevauchements } from '../../src/lib/stats';
 import { Calendrier } from '../../src/ui/Calendrier';
 import { Bouton, Carte, Doux, Fondu, Puce, Vide } from '../../src/ui/composants';
-import { useCompteurs } from '../../src/ui/compteurs';
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 import { VueCarte, type PointCarte } from '../../src/ui/VueCarte';
+import { VueColonnes } from '../../src/ui/VueColonnes';
 
-type Vue = 'calendrier' | 'liste' | 'carte';
+type Vue = 'agenda' | 'liste' | 'carte';
+type Affichage = 'jour' | 'semaine' | 'mois';
 
 export default function Horaire() {
   const router = useRouter();
   const accent = useAccent();
-  const { aValider, rafraichir } = useCompteurs();
   const [quarts, setQuarts] = useState<QuartDetaille[]>([]);
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
-  const [vue, setVue] = useState<Vue>('calendrier');
+  const [vue, setVue] = useState<Vue>('agenda');
+  const [affichage, setAffichage] = useState<Affichage>('semaine');
   const [mois, setMois] = useState(() => debutMois(aujourdhui()));
   const [jour, setJour] = useState(() => aujourdhui());
   const [historiqueMois, setHistoriqueMois] = useState(1);
   const [rappelFactures, setRappelFactures] = useState(false);
+  /** Une duplication en cours prend le doigt : la page ne doit pas défiler. */
+  const [duplication, setDuplication] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       setQuarts(listerQuarts());
       setPharmacies(listerPharmacies());
       setRappelFactures(doitRappelerFactures(obtenirReglages()));
-      rafraichir();
-    }, [rafraichir])
+    }, [])
   );
 
   const chevauchements = useMemo(() => detecterChevauchements(quarts), [quarts]);
@@ -56,14 +67,9 @@ export default function Horaire() {
     return carte;
   }, [quarts]);
 
-  const enAttente = useMemo(
-    () => quarts.filter((q) => statutQuart(q) === 'a_valider'),
-    [quarts]
-  );
-
   const quartsDuJour = parJour.get(jour) ?? [];
   const aVenir = useMemo(
-    () => quarts.filter((q) => q.date >= aujourdhui() && statutQuart(q) !== 'non_effectue'),
+    () => quarts.filter((q) => q.date >= aujourdhui() && !q.annule),
     [quarts]
   );
 
@@ -74,7 +80,7 @@ export default function Horaire() {
     const placees = new Set<number>();
 
     for (const q of quarts) {
-      if (statutQuart(q) !== 'a_venir') continue;
+      if (q.annule) continue;
       if (q.pharmacie_latitude === null || q.pharmacie_longitude === null) continue;
       const debut = combiner(q.date, q.heure_debut).getTime();
       if (debut < maintenant) continue;
@@ -115,9 +121,14 @@ export default function Horaire() {
 
   const ouvrirQuart = (id: number) => router.push(`/quart/${id}`);
   const ouvrirPharmacie = (id: number) => router.push(`/pharmacie/${id}`);
+  const dupliquer = (id: number, date: string, heure: string) =>
+    router.push(`/quart/nouveau?duplique=${id}&date=${date}&heure=${heure}`);
+
+  const semaine = semaineDe(jour);
+  const pas = affichage === 'jour' ? 1 : 7;
 
   return (
-    <ScrollView contentContainerStyle={styles.contenu}>
+    <ScrollView contentContainerStyle={styles.contenu} scrollEnabled={!duplication}>
       {rappelFactures && (
         <Fondu>
           <Carte style={styles.bandeau}>
@@ -149,66 +160,81 @@ export default function Horaire() {
         </Fondu>
       )}
 
-      {aValider > 0 && (
-        <Fondu>
-          <Carte style={styles.aValider}>
-            <View style={styles.enteteValidation}>
-              <Ionicons name="time-outline" size={18} color={couleurs.alerte} />
-              <Text style={styles.titreValidation}>
-                {aValider} quart{aValider > 1 ? 's' : ''} à valider
-              </Text>
-            </View>
-            <Doux>Confirmez les heures pendant qu’elles sont fraîches.</Doux>
-            <View style={styles.listeValidation}>
-              {enAttente.slice(0, 3).map((q) => (
-                <Pressable
-                  key={q.id}
-                  onPress={() => router.push(`/validation/${q.id}`)}
-                  style={({ pressed }) => [styles.ligneValidation, pressed && { opacity: 0.6 }]}>
-                  <View style={styles.texteValidation}>
-                    <Text style={styles.nomValidation}>{q.pharmacie_nom}</Text>
-                    <Doux>
-                      {formatDateLongue(q.date)} · {q.heure_debut} à {q.heure_fin}
-                    </Doux>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={couleurs.doux} />
-                </Pressable>
-              ))}
-            </View>
-          </Carte>
-        </Fondu>
-      )}
-
       <View style={styles.bascule}>
-        <Puce texte="Calendrier" actif={vue === 'calendrier'} onPress={() => setVue('calendrier')} />
+        <Puce texte="Agenda" actif={vue === 'agenda'} onPress={() => setVue('agenda')} />
         <Puce texte="Liste" actif={vue === 'liste'} onPress={() => setVue('liste')} />
         <Puce texte="Carte" actif={vue === 'carte'} onPress={() => setVue('carte')} />
       </View>
 
-      {vue === 'calendrier' && (
+      {vue === 'agenda' && (
         <Fondu>
-          <Calendrier
-            mois={mois}
-            quartsParJour={parJour}
-            chevauchements={chevauchements}
-            jourSelectionne={jour}
-            onSelectionner={setJour}
-            onChangerMois={(delta) => setMois(ajouterMois(mois, delta))}
-          />
-          <Text style={styles.jour}>{formatDateLongue(jour)}</Text>
-          {quartsDuJour.length === 0 ? (
-            <Vide texte="Aucun quart ce jour-là." />
-          ) : (
-            quartsDuJour.map((q) => (
-              <LigneQuart
-                key={q.id}
-                quart={q}
-                enConflit={chevauchements.has(q.id)}
-                onPress={() => ouvrirQuart(q.id)}
-                onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
+          <View style={styles.sousChoix}>
+            {(['jour', 'semaine', 'mois'] as const).map((choix) => (
+              <Pressable key={choix} onPress={() => setAffichage(choix)} hitSlop={6}>
+                <Text
+                  style={[
+                    styles.sousChoixTexte,
+                    affichage === choix && { color: accent, fontFamily: police.demi },
+                  ]}>
+                  {choix[0].toUpperCase() + choix.slice(1)}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {affichage === 'mois' ? (
+            <>
+              <Calendrier
+                mois={mois}
+                quartsParJour={parJour}
+                chevauchements={chevauchements}
+                jourSelectionne={jour}
+                onSelectionner={setJour}
+                onChangerMois={(delta) => setMois(ajouterMois(mois, delta))}
               />
-            ))
+              <Text style={styles.jour}>{formatDateLongue(jour)}</Text>
+              {quartsDuJour.length === 0 ? (
+                <Vide texte="Aucun quart ce jour-là." />
+              ) : (
+                quartsDuJour.map((q) => (
+                  <LigneQuart
+                    key={q.id}
+                    quart={q}
+                    enConflit={chevauchements.has(q.id)}
+                    onPress={() => ouvrirQuart(q.id)}
+                    onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
+                  />
+                ))
+              )}
+            </>
+          ) : (
+            <>
+              <View style={styles.navigation}>
+                <Pressable onPress={() => setJour(ajouterJours(jour, -pas))} hitSlop={10}>
+                  <Ionicons name="chevron-back" size={22} color={accent} />
+                </Pressable>
+                <Text style={styles.periode}>
+                  {affichage === 'jour'
+                    ? formatDateLongue(jour)
+                    : `${formatJourCourt(semaine[0])} – ${formatJourCourt(semaine[6])}`}
+                </Text>
+                <Pressable onPress={() => setJour(ajouterJours(jour, pas))} hitSlop={10}>
+                  <Ionicons name="chevron-forward" size={22} color={accent} />
+                </Pressable>
+              </View>
+              <VueColonnes
+                jours={affichage === 'jour' ? [jour] : semaine}
+                quartsParJour={parJour}
+                onOuvrir={ouvrirQuart}
+                onDupliquer={dupliquer}
+                onArmer={setDuplication}
+              />
+              <Doux>
+                Touchez un bloc pour l’ouvrir. Restez appuyé pour en dupliquer une copie ailleurs.
+              </Doux>
+            </>
           )}
+
           <Bouton
             titre="Ajouter un quart"
             icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
@@ -337,45 +363,31 @@ const styles = StyleSheet.create({
     fontFamily: police.normal,
     color: couleurs.doux,
   },
-  aValider: {
-    borderColor: couleurs.alerte,
-    backgroundColor: couleurs.alertePale,
-  },
-  enteteValidation: {
+  bascule: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: espace.s,
-    marginBottom: espace.xs,
+    marginBottom: espace.s,
   },
-  titreValidation: {
-    fontSize: 16,
-    fontFamily: police.gras,
-    color: couleurs.alerte,
+  sousChoix: {
+    flexDirection: 'row',
+    gap: espace.l,
+    marginBottom: espace.m,
   },
-  listeValidation: {
-    marginTop: espace.m,
-    gap: espace.s,
+  sousChoixTexte: {
+    fontSize: 13,
+    fontFamily: police.normal,
+    color: couleurs.doux,
   },
-  ligneValidation: {
+  navigation: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: couleurs.carte,
-    borderRadius: rayon,
-    padding: espace.m,
-    gap: espace.m,
+    marginBottom: espace.s,
   },
-  texteValidation: {
-    flex: 1,
-  },
-  nomValidation: {
+  periode: {
     fontSize: 15,
     fontFamily: police.demi,
     color: couleurs.texte,
-  },
-  bascule: {
-    flexDirection: 'row',
-    marginBottom: espace.m,
+    textTransform: 'capitalize',
   },
   jour: {
     fontSize: 15,

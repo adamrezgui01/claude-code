@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   compterQuartsPharmacie,
@@ -30,6 +30,7 @@ import {
   Carte,
   Champ,
   Doux,
+  Ecran,
   Fondu,
   Interrupteur,
   Puce,
@@ -212,7 +213,7 @@ export default function FichePharmacie() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.contenu} keyboardShouldPersistTaps="handled">
+    <Ecran>
       <Stack.Screen options={{ title: nouvelle ? 'Nouvelle pharmacie' : nom || 'Pharmacie' }} />
 
       <Fondu>
@@ -261,7 +262,12 @@ export default function FichePharmacie() {
         />
 
         <Separateur />
-        <SousTitre>Conditions de facturation</SousTitre>
+        <SousTitre>Conditions habituelles</SousTitre>
+        <Doux>
+          Ces valeurs préremplissent chaque nouveau quart dans cette pharmacie. Les changer ici ne
+          touche pas aux quarts déjà entrés.
+        </Doux>
+        <View style={styles.espacement} />
         <Champ
           label="Taux horaire habituel ($/h)"
           valeur={tauxHoraire}
@@ -270,11 +276,12 @@ export default function FichePharmacie() {
           placeholder="0,00"
         />
         <Champ
-          label="Per diem ($/jour)"
+          label="Repas habituel ($/jour)"
           valeur={perDiem}
           onChange={setPerDiem}
           clavier="decimal-pad"
           placeholder="0,00"
+          aide="Réclamable quart par quart, et modifiable sur chacun."
         />
 
         <Text style={styles.label}>Pause repas habituelle</Text>
@@ -442,15 +449,11 @@ export default function FichePharmacie() {
           )}
         </View>
       </Fondu>
-    </ScrollView>
+    </Ecran>
   );
 }
 
 const styles = StyleSheet.create({
-  contenu: {
-    padding: espace.l,
-    paddingBottom: espace.xxl,
-  },
   enteteSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',

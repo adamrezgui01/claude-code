@@ -6,7 +6,7 @@ export const db = SQLite.openDatabaseSync('pharmacien.db');
  * Version du schéma. L'incrémenter recrée la base à neuf : l'application n'a
  * pas encore d'usagers dont il faudrait préserver les données.
  */
-const VERSION = 2;
+const VERSION = 3;
 
 const SCHEMA = `
   CREATE TABLE IF NOT EXISTS pharmacies (
@@ -43,16 +43,18 @@ const SCHEMA = `
     heure_fin TEXT NOT NULL,
     heure_debut_reelle TEXT NOT NULL DEFAULT '',
     heure_fin_reelle TEXT NOT NULL DEFAULT '',
-    statut TEXT NOT NULL DEFAULT 'a_venir',
+    annule INTEGER NOT NULL DEFAULT 0,
     taux_horaire REAL NOT NULL DEFAULT 0,
     kilometrage REAL NOT NULL DEFAULT 0,
     montant_fixe_deplacement REAL NOT NULL DEFAULT 0,
+    per_diem_reclame REAL NOT NULL DEFAULT 0,
     pause_minutes INTEGER NOT NULL DEFAULT 0,
     pause_payee INTEGER NOT NULL DEFAULT 0,
     notes TEXT NOT NULL DEFAULT '',
+    serie_id TEXT NOT NULL DEFAULT '',
     notification_id TEXT,
     notifications_secondaires TEXT NOT NULL DEFAULT '[]',
-    notification_validation TEXT
+    notification_memo TEXT
   );
 
   CREATE INDEX IF NOT EXISTS idx_quarts_date ON quarts(date);

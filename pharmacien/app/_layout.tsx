@@ -14,7 +14,6 @@ import { initialiserBase } from '../src/db';
 import { definirReglage, obtenirReglages } from '../src/db/profil';
 import { supprimerSecrets } from '../src/lib/codes';
 import { preparerNotifications } from '../src/lib/notifications';
-import { FournisseurCompteurs } from '../src/ui/compteurs';
 import { ACCENT_DEFAUT, couleurs, FournisseurTheme, police } from '../src/ui/theme';
 
 export default function Racine() {
@@ -41,11 +40,13 @@ export default function Racine() {
   const reponse = Notifications.useLastNotificationResponse();
   useEffect(() => {
     if (!pret) return;
+    // Le mémo ouvre directement le quart, heures déjà préremplies. L'usager
+    // ajuste ce qui a changé, ou ne fait rien.
     const donnees = reponse?.notification.request.content.data as
-      | { quartId?: number; validation?: boolean }
+      | { quartId?: number; memo?: boolean }
       | undefined;
-    if (donnees?.validation && donnees.quartId) {
-      router.push(`/validation/${donnees.quartId}`);
+    if (donnees?.memo && donnees.quartId) {
+      router.push(`/quart/${donnees.quartId}`);
     }
   }, [reponse, pret, router]);
 
@@ -66,7 +67,7 @@ export default function Racine() {
           setAccent(valeur);
         },
       }}>
-      <FournisseurCompteurs>
+      <>
         <StatusBar style="dark" />
         <Stack
           screenOptions={{
@@ -79,7 +80,6 @@ export default function Racine() {
           }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="quart/[id]" options={{ title: 'Quart' }} />
-          <Stack.Screen name="validation/[id]" options={{ title: 'Valider le quart' }} />
           <Stack.Screen name="frais/[id]" options={{ title: 'Frais' }} />
           <Stack.Screen name="pharmacie/[id]" options={{ title: 'Pharmacie' }} />
           <Stack.Screen name="document/[id]" options={{ title: 'Document' }} />
@@ -89,7 +89,7 @@ export default function Racine() {
           <Stack.Screen name="factures" options={{ title: 'Factures' }} />
           <Stack.Screen name="apparence" options={{ title: 'Apparence' }} />
         </Stack>
-      </FournisseurCompteurs>
+      </>
     </FournisseurTheme>
   );
 }

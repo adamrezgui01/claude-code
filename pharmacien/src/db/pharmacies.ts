@@ -74,11 +74,11 @@ export function modifierPharmacie(id: number, entree: EntreePharmacie) {
  * de notification à annuler.
  */
 export function supprimerPharmacie(id: number): string[] {
-  const colonnes = ['notification_id', 'notification_validation'] as const;
+  const colonnes = ['notification_id', 'notification_memo'] as const;
   const rappels: string[] = [];
   for (const q of db.getAllSync<{
     notification_id: string | null;
-    notification_validation: string | null;
+    notification_memo: string | null;
     notifications_secondaires: string;
   }>(
     `SELECT ${colonnes.join(', ')}, notifications_secondaires FROM quarts WHERE pharmacie_id = ?`,

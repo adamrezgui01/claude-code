@@ -1,12 +1,6 @@
 /** Comment la pharmacie rembourse les déplacements. */
 export type ModeDeplacement = 'aucun' | 'km' | 'fixe';
 
-/**
- * Cycle de vie d'un quart. `a_valider` n'est jamais écrit en base : il se
- * déduit de l'heure de fin passée. Voir `statutQuart`.
- */
-export type StatutQuart = 'a_venir' | 'a_valider' | 'valide' | 'non_effectue';
-
 /** Adresse postale canadienne, éclatée pour être fiable et localisable. */
 export type Adresse = {
   numero_civique: string;
@@ -51,20 +45,30 @@ export type Quart = {
   /** Heures prévues, format `HH:MM`. */
   heure_debut: string;
   heure_fin: string;
-  /** Heures réelles, vides tant que le quart n'est pas validé. */
+  /**
+   * Heures réelles. Vides dans la très grande majorité des cas : un quart est
+   * réputé travaillé selon ses heures prévues, sans geste de l'usager. Elles ne
+   * se remplissent que s'il corrige un quart qui s'est passé autrement.
+   */
   heure_debut_reelle: string;
   heure_fin_reelle: string;
-  statut: StatutQuart;
+  /** 1 si le quart n'a finalement pas eu lieu. */
+  annule: number;
   taux_horaire: number;
   kilometrage: number;
   montant_fixe_deplacement: number;
+  /** Per diem réclamé pour ce quart. Prérempli depuis la pharmacie. */
+  per_diem_reclame: number;
   pause_minutes: number;
   pause_payee: number;
   notes: string;
+  /** Relie les quarts créés d'un coup par récurrence. Vide sinon. */
+  serie_id: string;
   notification_id: string | null;
   /** Identifiants des rappels secondaires, encodés en JSON. */
   notifications_secondaires: string;
-  notification_validation: string | null;
+  /** Mémo deux heures après la fin. Ne demande aucune confirmation. */
+  notification_memo: string | null;
 };
 
 /** Un quart accompagné des données de sa pharmacie. */

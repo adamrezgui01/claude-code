@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-import { DELAI_VALIDATION_HEURES, finDuQuart } from '../db/quarts';
+import { DELAI_MEMO_HEURES, finDuQuart } from '../db/quarts';
 import type { DocumentProfessionnel, QuartDetaille } from '../db/types';
 import { analyserDate, combiner, formatDateCourte } from './dates';
 
@@ -81,7 +81,7 @@ export async function annulerRappels(ids: string[]) {
 export type RappelsQuart = {
   principal: string | null;
   secondaires: string[];
-  validation: string | null;
+  memo: string | null;
 };
 
 function delaiEnTexte(minutes: number): string {
@@ -92,7 +92,7 @@ function delaiEnTexte(minutes: number): string {
 
 /**
  * Programme les rappels d'un quart : le principal 48 h avant, les secondaires
- * choisis par l'usager, et la demande de validation deux heures après la fin.
+ * choisis par l'usager, et le mémo deux heures après la fin.
  */
 export async function planifierRappelsQuart(
   quart: QuartDetaille,
@@ -119,14 +119,16 @@ export async function planifierRappelsQuart(
     if (id) secondaires.push(id);
   }
 
-  const validation = await planifier(
-    'Valider votre quart',
-    `${quart.pharmacie_nom} — ${horaire}. Les heures étaient-elles les bonnes ?`,
-    new Date(finDuQuart(quart).getTime() + DELAI_VALIDATION_HEURES * 3600000),
-    { quartId: quart.id, validation: true }
+  // Un mémo, pas une demande. Le quart est déjà compté selon ses heures
+  // prévues ; l'ignorer ne coûte rien.
+  const memo = await planifier(
+    'Vos heures ont-elles changé ?',
+    `${quart.pharmacie_nom} — ${horaire}. Corrigez-les seulement si elles étaient différentes.`,
+    new Date(finDuQuart(quart).getTime() + DELAI_MEMO_HEURES * 3600000),
+    { quartId: quart.id, memo: true }
   );
 
-  return { principal, secondaires, validation };
+  return { principal, secondaires, memo };
 }
 
 /** Rappel à 9 h, le nombre de jours convenu avant l'expiration. */

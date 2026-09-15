@@ -1,16 +1,17 @@
 import { aujourdhui } from '../lib/dates';
 import { db } from './index';
-import type { Quart, QuartDetaille, StatutQuart } from './types';
+import type { Quart, QuartDetaille } from './types';
 
 export type EntreeQuart = Omit<
   Quart,
   | 'id'
   | 'notification_id'
   | 'notifications_secondaires'
-  | 'notification_validation'
+  | 'notification_memo'
   | 'heure_debut_reelle'
   | 'heure_fin_reelle'
-  | 'statut'
+  | 'annule'
+  | 'serie_id'
 >;
 
 const SELECT_DETAILLE = `
@@ -33,6 +34,7 @@ const CHAMPS = [
   'taux_horaire',
   'kilometrage',
   'montant_fixe_deplacement',
+  'per_diem_reclame',
   'pause_minutes',
   'pause_payee',
   'notes',
@@ -77,11 +79,11 @@ export function quartsDuJour(date: string): QuartDetaille[] {
   );
 }
 
-export function creerQuart(entree: EntreeQuart): number {
+export function creerQuart(entree: EntreeQuart, serieId = ''): number {
   const trous = CHAMPS.map(() => '?').join(', ');
   const r = db.runSync(
-    `INSERT INTO quarts (${CHAMPS.join(', ')}) VALUES (${trous})`,
-    valeurs(entree)
+    `INSERT INTO quarts (${CHAMPS.join(', ')}, serie_id) VALUES (${trous}, ?)`,
+    [...valeurs(entree), serieId]
   );
   return r.lastInsertRowId;
 }
@@ -99,22 +101,22 @@ export function enregistrerRappels(
   id: number,
   principal: string | null,
   secondaires: string[],
-  validation: string | null
+  memo: string | null
 ) {
   db.runSync(
     `UPDATE quarts
-     SET notification_id = ?, notifications_secondaires = ?, notification_validation = ?
+     SET notification_id = ?, notifications_secondaires = ?, notification_memo = ?
      WHERE id = ?`,
     principal,
     JSON.stringify(secondaires),
-    validation,
+    memo,
     id
   );
 }
 
 /** Rappels programmés pour ce quart, tous types confondus. */
 export function rappelsDuQuart(quart: Quart): string[] {
-  const ids = [quart.notification_id, quart.notification_validation].filter(
+  const ids = [quart.notification_id, quart.notification_memo].filter(
     (n): n is string => !!n
   );
   try {
@@ -125,62 +127,34 @@ export function rappelsDuQuart(quart: Quart): string[] {
   return ids;
 }
 
-/** Confirme le quart, avec des heures réelles éventuellement différentes. */
-export function validerQuart(id: number, heureDebut: string, heureFin: string) {
+/**
+ * Marque un quart comme n'ayant pas eu lieu, ou le remet en service. C'est la
+ * seule exception à la règle : un quart est travaillé selon ses heures prévues
+ * tant que personne ne dit le contraire.
+ */
+export function definirAnnule(id: number, annule: boolean) {
+  db.runSync('UPDATE quarts SET annule = ? WHERE id = ?', annule ? 1 : 0, id);
+}
+
+/** Corrige les heures d'un quart qui ne s'est pas passé comme prévu. */
+export function corrigerHeures(id: number, heureDebut: string, heureFin: string) {
   db.runSync(
-    `UPDATE quarts SET statut = 'valide', heure_debut_reelle = ?, heure_fin_reelle = ? WHERE id = ?`,
+    'UPDATE quarts SET heure_debut_reelle = ?, heure_fin_reelle = ? WHERE id = ?',
     heureDebut,
     heureFin,
     id
   );
 }
 
-export function marquerNonEffectue(id: number) {
-  db.runSync(
-    `UPDATE quarts SET statut = 'non_effectue', heure_debut_reelle = '', heure_fin_reelle = '' WHERE id = ?`,
-    id
-  );
-}
-
-/** Remet un quart validé en attente de validation. */
-export function annulerValidation(id: number) {
-  db.runSync(
-    `UPDATE quarts SET statut = 'a_venir', heure_debut_reelle = '', heure_fin_reelle = '' WHERE id = ?`,
-    id
-  );
-}
-
 export function quartsAVenir(): QuartDetaille[] {
   return db.getAllSync<QuartDetaille>(
-    `${SELECT_DETAILLE} WHERE q.date >= ? AND q.statut != 'non_effectue' ORDER BY q.date, q.heure_debut`,
+    `${SELECT_DETAILLE} WHERE q.date >= ? AND q.annule = 0 ORDER BY q.date, q.heure_debut`,
     aujourdhui()
   );
 }
 
-/** Quarts terminés depuis plus de deux heures et jamais confirmés. */
-export function quartsAValider(): QuartDetaille[] {
-  return listerQuarts().filter((q) => statutQuart(q) === 'a_valider');
-}
-
-export function compterAValider(): number {
-  return quartsAValider().length;
-}
-
-/** Délai après la fin d'un quart avant de demander sa validation. */
-export const DELAI_VALIDATION_HEURES = 2;
-
-/**
- * Statut effectif. Un quart ni validé ni annulé bascule de lui-même en
- * « à valider » deux heures après sa fin : la pastille reste juste même si la
- * notification n'est jamais arrivée.
- */
-export function statutQuart(quart: Quart, maintenant = new Date()): StatutQuart {
-  if (quart.statut === 'valide' || quart.statut === 'non_effectue') return quart.statut;
-  const fin = finDuQuart(quart);
-  return maintenant.getTime() >= fin.getTime() + DELAI_VALIDATION_HEURES * 3600000
-    ? 'a_valider'
-    : 'a_venir';
-}
+/** Délai après la fin d'un quart avant d'envoyer le mémo de correction. */
+export const DELAI_MEMO_HEURES = 2;
 
 /** Instant de fin prévu, en tenant compte des quarts qui passent minuit. */
 export function finDuQuart(quart: Quart): Date {

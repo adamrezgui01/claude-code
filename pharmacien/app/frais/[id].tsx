@@ -1,13 +1,21 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { creerFrais, modifierFrais, obtenirFrais, supprimerFrais } from '../../src/db/frais';
 import { obtenirQuart } from '../../src/db/quarts';
 import { analyserNombre } from '../../src/lib/format';
 import { choisirRecu, photographierRecu, supprimerRecu } from '../../src/lib/recus';
-import { Bouton, Carte, Champ, Doux, Fondu, SousTitre } from '../../src/ui/composants';
+import {
+  Bouton,
+  Carte,
+  Champ,
+  Doux,
+  Ecran,
+  Fondu,
+  SousTitre,
+} from '../../src/ui/composants';
 import { couleurs, espace, police, rayon } from '../../src/ui/theme';
 
 export default function FormulaireFrais() {
@@ -99,7 +107,7 @@ export default function FormulaireFrais() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.contenu} keyboardShouldPersistTaps="handled">
+    <Ecran>
       <Stack.Screen options={{ title: nouveau ? 'Frais extra' : 'Modifier le frais' }} />
 
       <Fondu>
@@ -166,15 +174,11 @@ export default function FormulaireFrais() {
           {!nouveau && <Bouton titre="Supprimer" variante="danger" onPress={retirer} />}
         </View>
       </Fondu>
-    </ScrollView>
+    </Ecran>
   );
 }
 
 const styles = StyleSheet.create({
-  contenu: {
-    padding: espace.l,
-    paddingBottom: espace.xxl,
-  },
   espacement: {
     marginTop: espace.m,
   },

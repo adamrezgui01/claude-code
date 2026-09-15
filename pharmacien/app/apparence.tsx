@@ -55,7 +55,7 @@ export default function Apparence() {
 
         <Doux>
           Les couleurs qui portent un sens ne changent pas : rouge, orange et jaune pour
-          l’échéance d’un quart sur la carte, gris et vert pour la validation et le paiement.
+          l’échéance d’un quart sur la carte, gris et vert pour le paiement des factures.
         </Doux>
       </Fondu>
     </ScrollView>

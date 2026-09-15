@@ -21,7 +21,7 @@ export function listerFraisPeriode(
     `SELECT f.*, q.pharmacie_id, q.date
      FROM frais_extra f
      JOIN quarts q ON q.id = f.quart_id
-     WHERE q.date BETWEEN ? AND ? AND q.statut != 'non_effectue'${filtre}
+     WHERE q.date BETWEEN ? AND ? AND q.annule = 0${filtre}
      ORDER BY q.date`,
     [debut, fin, ...(pharmacieIds ?? [])]
   );
