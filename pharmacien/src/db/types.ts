@@ -100,7 +100,19 @@ export type Reglages = {
   taux_par_km: number;
   nom: string;
   permis_opq: string;
-  adresse: string;
+  /**
+   * Adresse du pharmacien, éclatée comme celle d'une pharmacie : c'est la même
+   * saisie, la même autocomplétion, et les coordonnées évitent un géocodage à
+   * chaque calcul de distance.
+   */
+  adresse_numero_civique: string;
+  adresse_rue: string;
+  adresse_local: string;
+  adresse_code_postal: string;
+  adresse_ville: string;
+  adresse_province: string;
+  adresse_latitude: number | null;
+  adresse_longitude: number | null;
   telephone: string;
   courriel: string;
   /** Clé OpenRouteService : adresses et distances. Voir `lib/adresses`. */

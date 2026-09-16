@@ -59,6 +59,45 @@ export function adresseComplete(a: Adresse): string {
   return [ligneRue(a), ligneVille(a)].filter(Boolean).join('\n');
 }
 
+/** Champs d'adresse tels qu'ils vivent dans les réglages, sous un préfixe. */
+export type AdresseReglages = {
+  adresse_numero_civique: string;
+  adresse_rue: string;
+  adresse_local: string;
+  adresse_code_postal: string;
+  adresse_ville: string;
+  adresse_province: string;
+  adresse_latitude: number | null;
+  adresse_longitude: number | null;
+};
+
+/** Vue `Adresse` des réglages, pour réutiliser la même saisie et le même rendu. */
+export function adresseDesReglages(r: AdresseReglages): Adresse {
+  return {
+    numero_civique: r.adresse_numero_civique,
+    rue: r.adresse_rue,
+    local: r.adresse_local,
+    code_postal: r.adresse_code_postal,
+    ville: r.adresse_ville,
+    province: r.adresse_province,
+    latitude: r.adresse_latitude,
+    longitude: r.adresse_longitude,
+  };
+}
+
+export function champsAdresseReglages(a: Adresse): AdresseReglages {
+  return {
+    adresse_numero_civique: a.numero_civique,
+    adresse_rue: a.rue,
+    adresse_local: a.local,
+    adresse_code_postal: a.code_postal,
+    adresse_ville: a.ville,
+    adresse_province: a.province,
+    adresse_latitude: a.latitude,
+    adresse_longitude: a.longitude,
+  };
+}
+
 /** Adresse sur une ligne, pour un itinéraire ou un géocodage. */
 export function adresseUneLigne(a: Adresse): string {
   return [ligneRue(a), ligneVille(a)].filter(Boolean).join(', ');

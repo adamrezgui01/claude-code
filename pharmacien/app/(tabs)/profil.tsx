@@ -12,6 +12,13 @@ import {
   obtenirReglages,
 } from '../../src/db/profil';
 import type { DocumentProfessionnel, Reglages } from '../../src/db/types';
+import {
+  adresseDesReglages,
+  adresseRenseignee,
+  champsAdresseReglages,
+  estLocalisee,
+} from '../../src/lib/adresses';
+import { localiserAdresse } from '../../src/lib/adressesRecherche';
 import { aujourdhui, formatDateCourte, joursEntre } from '../../src/lib/dates';
 import { analyserNombre, argent, nombre } from '../../src/lib/format';
 import {
@@ -27,6 +34,7 @@ import {
   SousTitre,
   Vide,
 } from '../../src/ui/composants';
+import { SaisieAdresse } from '../../src/ui/SaisieAdresse';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 
 /** Délais proposés pour le rappel secondaire, en minutes. */
@@ -80,13 +88,23 @@ export default function Profil() {
     setAjusteFormation(false);
   }
 
-  function sauvegarderReglages() {
+  async function sauvegarderReglages() {
     if (!reglages) return;
+
+    // Une adresse saisie à la main n'a pas de coordonnées : on tente de la
+    // situer, sans jamais bloquer l'enregistrement si ça échoue. Les
+    // coordonnées évitent ensuite un géocodage à chaque calcul de distance.
+    let adresse = adresseDesReglages(reglages);
+    if (adresseRenseignee(adresse) && !estLocalisee(adresse)) {
+      const point = await localiserAdresse(adresse);
+      if (point) adresse = { ...adresse, ...point };
+    }
+
     enregistrerReglages({
       ...reglages,
+      ...champsAdresseReglages(adresse),
       nom: reglages.nom.trim(),
       permis_opq: reglages.permis_opq.trim(),
-      adresse: reglages.adresse.trim(),
       telephone: reglages.telephone.trim(),
       courriel: reglages.courriel.trim(),
       cle_itineraire: reglages.cle_itineraire.trim(),
@@ -179,11 +197,13 @@ export default function Profil() {
           valeur={reglages.permis_opq}
           onChange={(v) => modifier('permis_opq', v)}
         />
-        <Champ
-          label="Adresse"
-          valeur={reglages.adresse}
-          onChange={(v) => modifier('adresse', v)}
-          multiligne
+        <SaisieAdresse
+          adresse={adresseDesReglages(reglages)}
+          onChange={(a) => {
+            setReglages((actuels) => (actuels ? { ...actuels, ...champsAdresseReglages(a) } : actuels));
+            setEnregistre(false);
+          }}
+          cle={reglages.cle_itineraire}
         />
         <Champ
           label="Téléphone"

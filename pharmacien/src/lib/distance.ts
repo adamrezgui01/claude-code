@@ -1,6 +1,9 @@
 import * as Location from 'expo-location';
 import { Alert, Linking, Platform } from 'react-native';
 
+import type { Adresse } from '../db/types';
+import { adresseRenseignee, adresseUneLigne, estLocalisee } from './adresses';
+
 /**
  * Distance routière entre le domicile et une pharmacie, et ouverture d'un
  * itinéraire dans l'application de cartes du téléphone.
@@ -13,20 +16,30 @@ export type ResultatDistance = { ok: true; km: number } | { ok: false; raison: s
 
 const SERVICE = 'https://api.openrouteservice.org/v2/directions/driving-car';
 
-async function coordonnees(adresse: string): Promise<Location.LocationGeocodedLocation | null> {
-  const resultats = await Location.geocodeAsync(adresse);
-  return resultats[0] ?? null;
+type Point = { latitude: number; longitude: number };
+
+/**
+ * Coordonnées d'une adresse. Celles retenues à l'autocomplétion suffisent :
+ * on ne géocode que ce qui a été saisi à la main.
+ */
+async function coordonnees(adresse: Adresse): Promise<Point | null> {
+  if (estLocalisee(adresse)) {
+    return { latitude: adresse.latitude as number, longitude: adresse.longitude as number };
+  }
+  const resultats = await Location.geocodeAsync(adresseUneLigne(adresse));
+  const premier = resultats[0];
+  return premier ? { latitude: premier.latitude, longitude: premier.longitude } : null;
 }
 
 export async function calculerDistanceAllerRetour(
-  adresseDomicile: string,
-  adressePharmacie: string,
+  adresseDomicile: Adresse,
+  adressePharmacie: Adresse,
   cle: string
 ): Promise<ResultatDistance> {
-  if (!adresseDomicile.trim()) {
-    return { ok: false, raison: 'Votre adresse est absente des réglages.' };
+  if (!adresseRenseignee(adresseDomicile)) {
+    return { ok: false, raison: 'Votre adresse est absente de votre profil.' };
   }
-  if (!adressePharmacie.trim()) {
+  if (!adresseRenseignee(adressePharmacie)) {
     return { ok: false, raison: 'L’adresse de la pharmacie est vide.' };
   }
   if (!cle.trim()) {
@@ -34,7 +47,12 @@ export async function calculerDistanceAllerRetour(
   }
 
   try {
-    if (Platform.OS === 'android') {
+    // Le géocodeur d'Android exige la permission ; inutile quand les deux
+    // adresses portent déjà leurs coordonnées.
+    if (
+      Platform.OS === 'android' &&
+      (!estLocalisee(adresseDomicile) || !estLocalisee(adressePharmacie))
+    ) {
       const permission = await Location.requestForegroundPermissionsAsync();
       if (!permission.granted) {
         return {

@@ -5,7 +5,7 @@ import type {
   QuartDetaille,
   Reglages,
 } from '../db/types';
-import { adresseComplete } from './adresses';
+import { adresseComplete, adresseDesReglages } from './adresses';
 import { aujourdhui, dureeHeures, formatDateCourte } from './dates';
 import { argent, heures, nombre } from './format';
 import { heuresTravaillees, quartCompte } from './stats';
@@ -154,7 +154,7 @@ export function construireHtml(o: OptionsFacture): string {
 
   const coordonnees = [
     r.permis_opq ? `Permis OPQ ${r.permis_opq}` : '',
-    r.adresse,
+    ...adresseComplete(adresseDesReglages(r)).split('\n'),
     r.telephone,
     r.courriel,
   ]

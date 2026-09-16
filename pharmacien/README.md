@@ -92,6 +92,10 @@ base, ou une panne de réseau, se contournent en saisissant les champs à la mai
 Une adresse incomplète ou non localisée s'enregistre quand même : la pharmacie
 n'apparaît simplement pas sur la carte.
 
+C'est la même saisie pour une pharmacie et pour le pharmacien lui-même : son
+adresse, dans Profil, passe par le même champ de recherche et les mêmes champs
+structurés. Dans les réglages, elle vit sous le préfixe `adresse_`.
+
 `src/lib/adresses.ts` ne contient que la mise en forme, sans dépendance native.
 Le fournisseur — autocomplétion et géocodage — est isolé dans
 `src/lib/adressesRecherche.ts`.
@@ -367,7 +371,7 @@ de `{ libelle, valeur }`) et `identifiants_pharmacie_<id>`
 (`{ utilisateur, motDePasse }`). Supprimer une pharmacie supprime ses quarts en
 cascade, ses frais, ses secrets et les rappels associés.
 
-Le schéma est versionné par `PRAGMA user_version` (actuellement 4). Une base
+Le schéma est versionné par `PRAGMA user_version` (actuellement 5). Une base
 d'une version antérieure est **effacée et recréée** au démarrage, secrets
 compris : l'application n'a pas encore d'usagers dont il faudrait préserver les
 données, et une recréation vaut mieux qu'une migration à moitié juste. Passer
@@ -386,9 +390,10 @@ d'une version à l'autre veut donc dire ressaisir ses pharmacies.
 - `frais_extra` — quart, description, montant, chemin de la photo du reçu.
 - `factures` — une par pharmacie : numéro, période, totaux, statut de paiement
   et le HTML rendu.
-- `reglages` — coordonnées du pharmacien (nom, permis OPQ, adresse, téléphone,
-  courriel), taux par kilomètre par défaut, clé OpenRouteService, accent choisi,
-  rappels secondaires. Une seule ligne.
+- `reglages` — coordonnées du pharmacien (nom, permis OPQ, adresse structurée
+  sous le préfixe `adresse_`, téléphone, courriel), taux par kilomètre par
+  défaut, clé OpenRouteService, accent choisi, rappels secondaires. Une seule
+  ligne.
 - `formation_continue` — heures complétées, heures requises, fin de la période
   de référence. Une seule ligne.
 - `documents` — nom, date d'expiration, préavis, identifiant du rappel.
@@ -397,8 +402,9 @@ d'une version à l'autre veut donc dire ressaisir ses pharmacies.
 
 Dans la fiche d'une pharmacie, le bouton *Calculer la distance* :
 
-1. utilise les coordonnées venues de l'autocomplétion, ou géocode l'adresse avec
-   le géocodeur du système, sur l'appareil, sans clé ;
+1. utilise les coordonnées venues de l'autocomplétion — des deux côtés, votre
+   adresse comme celle de la pharmacie — et ne géocode que ce qui a été saisi à
+   la main, sur l'appareil, sans clé ;
 2. demande la distance routière à OpenRouteService avec la clé saisie dans
    Profil › Réglages ;
 3. inscrit l'aller-retour, arrondi au kilomètre. Le champ reste modifiable.

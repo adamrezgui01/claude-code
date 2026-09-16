@@ -9,10 +9,11 @@ import { Champ, Doux, Puce } from './composants';
 import { couleurs, espace, police, rayon, useAccent } from './theme';
 
 /**
- * Le chemin normal est l'autocomplétion : l'usager tape, touche la bonne
- * adresse, et tout se remplit. La saisie manuelle reste offerte, parce qu'une
- * pharmacie trop récente ou une panne de réseau ne doivent jamais empêcher
- * d'enregistrer un quart.
+ * La saisie d'adresse de l'application, la même pour une pharmacie et pour le
+ * pharmacien lui-même. Le chemin normal est l'autocomplétion : l'usager tape,
+ * touche la bonne adresse, et tout se remplit. La saisie manuelle reste
+ * offerte, parce qu'une adresse trop récente pour figurer dans la base ou une
+ * panne de réseau ne doivent jamais empêcher d'enregistrer.
  */
 export function SaisieAdresse({
   adresse,

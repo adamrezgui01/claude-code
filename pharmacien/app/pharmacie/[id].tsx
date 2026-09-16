@@ -15,7 +15,12 @@ import {
 } from '../../src/db/pharmacies';
 import { obtenirReglages } from '../../src/db/profil';
 import { LOGICIELS, type Adresse, type CodeAcces, type ModeDeplacement } from '../../src/db/types';
-import { adresseUneLigne, adresseVide, estLocalisee } from '../../src/lib/adresses';
+import {
+  adresseDesReglages,
+  adresseUneLigne,
+  adresseVide,
+  estLocalisee,
+} from '../../src/lib/adresses';
 import { localiserAdresse } from '../../src/lib/adressesRecherche';
 import {
   ecrireCodes,
@@ -149,8 +154,8 @@ export default function FichePharmacie() {
   async function calculer() {
     setCalculEnCours(true);
     const resultat = await calculerDistanceAllerRetour(
-      reglages.adresse,
-      adresseUneLigne(adresse),
+      adresseDesReglages(reglages),
+      adresse,
       reglages.cle_itineraire
     );
     setCalculEnCours(false);
