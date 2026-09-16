@@ -1,4 +1,4 @@
-import { aujourdhui } from '../lib/dates';
+import { analyserHeure, aujourdhui, dureeHeures } from '../lib/dates';
 import { db } from './index';
 import type { Quart, QuartDetaille } from './types';
 
@@ -134,6 +134,27 @@ export function rappelsDuQuart(quart: Quart): string[] {
  */
 export function definirAnnule(id: number, annule: boolean) {
   db.runSync('UPDATE quarts SET annule = ? WHERE id = ?', annule ? 1 : 0, id);
+}
+
+/**
+ * Déplace un quart à un autre jour et une autre heure, en gardant sa durée.
+ * Sert au glisser-déposer : le dépôt dit déjà où le quart atterrit, alors rien
+ * ne se rouvre pour le reconfirmer.
+ */
+export function deplacerQuart(id: number, date: string, heureDebut: string) {
+  const quart = obtenirQuart(id);
+  if (!quart) return;
+  const duree = dureeHeures(quart.heure_debut, quart.heure_fin);
+  const { h, min } = analyserHeure(heureDebut);
+  const finMinutes = Math.round(h * 60 + min + duree * 60) % (24 * 60);
+  const heureFin = `${`${Math.floor(finMinutes / 60)}`.padStart(2, '0')}:${`${finMinutes % 60}`.padStart(2, '0')}`;
+  db.runSync(
+    'UPDATE quarts SET date = ?, heure_debut = ?, heure_fin = ? WHERE id = ?',
+    date,
+    heureDebut,
+    heureFin,
+    id
+  );
 }
 
 /** Corrige les heures d'un quart qui ne s'est pas passé comme prévu. */

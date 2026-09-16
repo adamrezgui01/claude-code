@@ -165,39 +165,9 @@ export default function Profil() {
 
       <Separateur />
 
-      <SousTitre>Rappels</SousTitre>
-      <Doux>
-        Un rappel part toujours 48 h avant un quart, et un mémo 2 h après sa fin — celui-là ne demande rien, il rappelle seulement de corriger vos heures si elles ont changé.
-      </Doux>
-      <View style={styles.bloc}>
-        <Interrupteur
-          label="Rappel supplémentaire"
-          detail="Un second rappel, plus près du quart"
-          valeur={!!reglages.rappel_secondaire_actif}
-          onChange={(v) => modifier('rappel_secondaire_actif', v ? 1 : 0)}
-        />
-        {!!reglages.rappel_secondaire_actif && (
-          <Fondu>
-            <Text style={styles.label}>Combien de temps avant ?</Text>
-            <View style={styles.puces}>
-              {DELAIS.map((minutes) => (
-                <Puce
-                  key={minutes}
-                  texte={minutes < 60 ? `${minutes} min` : `${minutes / 60} h`}
-                  actif={delais.includes(minutes)}
-                  onPress={() => basculerDelai(minutes)}
-                />
-              ))}
-            </View>
-            <Doux>Vous pouvez en choisir plusieurs. Ils prennent effet aux prochains quarts.</Doux>
-          </Fondu>
-        )}
-      </View>
-
-      <Separateur />
-
-      <SousTitre>Vos coordonnées</SousTitre>
-      <Doux>Elles apparaissent en en-tête de chaque facture.</Doux>
+      {/* Ce qui décrit l'usager et ce qui part sur ses factures. */}
+      <SousTitre>Informations et facturation</SousTitre>
+      <Doux>Vos coordonnées apparaissent en en-tête de chaque facture.</Doux>
       <View style={styles.bloc}>
         <Champ
           label="Votre nom (pharmacien remplaçant)"
@@ -227,18 +197,54 @@ export default function Profil() {
           onChange={(v) => modifier('courriel', v)}
           clavier="email-address"
         />
+        <Champ
+          label="Taux par kilomètre par défaut ($/km)"
+          valeur={`${reglages.taux_par_km}`}
+          onChange={(v) => modifier('taux_par_km', analyserNombre(v))}
+          clavier="decimal-pad"
+          aide={`Préremplit une nouvelle fiche de pharmacie, à ${argent(reglages.taux_par_km)} le kilomètre. Le taux facturé reste celui de chaque pharmacie.`}
+        />
       </View>
 
       <Separateur />
 
-      <SousTitre>Réglages</SousTitre>
-      <Champ
-        label="Taux par kilomètre par défaut ($/km)"
-        valeur={`${reglages.taux_par_km}`}
-        onChange={(v) => modifier('taux_par_km', analyserNombre(v))}
-        clavier="decimal-pad"
-        aide={`Préremplit une nouvelle fiche de pharmacie, à ${argent(reglages.taux_par_km)} le kilomètre. Le taux facturé reste celui de chaque pharmacie.`}
-      />
+      {/*
+        Les paramètres ne portent que des réglages globaux. Un réglage qui ne
+        touche qu'un écran reste sur cet écran : le tri du répertoire est en
+        haut du répertoire, le sélecteur d'historique est sur la carte.
+      */}
+      <SousTitre>Paramètres</SousTitre>
+
+      <Text style={styles.label}>Rappels</Text>
+      <Doux>
+        Un rappel part toujours 48 h avant un quart, et un mémo 2 h après sa fin — celui-là ne
+        demande rien, il rappelle seulement de corriger vos heures si elles ont changé.
+      </Doux>
+      <View style={styles.bloc}>
+        <Interrupteur
+          label="Rappel supplémentaire"
+          detail="Un second rappel, plus près du quart"
+          valeur={!!reglages.rappel_secondaire_actif}
+          onChange={(v) => modifier('rappel_secondaire_actif', v ? 1 : 0)}
+        />
+        {!!reglages.rappel_secondaire_actif && (
+          <Fondu>
+            <Text style={styles.label}>Combien de temps avant ?</Text>
+            <View style={styles.puces}>
+              {DELAIS.map((minutes) => (
+                <Puce
+                  key={minutes}
+                  texte={minutes < 60 ? `${minutes} min` : `${minutes / 60} h`}
+                  actif={delais.includes(minutes)}
+                  onPress={() => basculerDelai(minutes)}
+                />
+              ))}
+            </View>
+            <Doux>Vous pouvez en choisir plusieurs. Ils prennent effet aux prochains quarts.</Doux>
+          </Fondu>
+        )}
+      </View>
+
       <Champ
         label="Clé OpenRouteService (facultative)"
         valeur={reglages.cle_itineraire}

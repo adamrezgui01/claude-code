@@ -1,9 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { SECTIONS, type Lien } from '../../src/content/liens';
-import { Carte, Doux, Fondu, SousTitre } from '../../src/ui/composants';
-import { couleurs, espace, police, useAccent } from '../../src/ui/theme';
+import { SECTIONS, type Lien } from '../src/content/liens';
+import { Carte, Doux, Fondu, SousTitre } from '../src/ui/composants';
+import { couleurs, espace, police, useAccent } from '../src/ui/theme';
 
 function ouvrir(lien: Lien) {
   const url = lien.type === 'tel' ? `tel:${lien.valeur.replace(/[^\d+]/g, '')}` : lien.valeur;

@@ -26,6 +26,8 @@ const CHAMPS = [
   'montant_fixe_deplacement',
   'pause_minutes',
   'pause_payee',
+  'favori',
+  'a_eviter',
 ] as const;
 
 function valeurs(e: EntreePharmacie) {
@@ -34,6 +36,43 @@ function valeurs(e: EntreePharmacie) {
 
 export function listerPharmacies(): Pharmacie[] {
   return db.getAllSync<Pharmacie>('SELECT * FROM pharmacies ORDER BY nom COLLATE NOCASE');
+}
+
+/**
+ * Pharmacies triées par fréquentation : la plus récemment travaillée d'abord,
+ * puis celles où l'usager n'est jamais allé, par ordre alphabétique.
+ */
+export function listerPharmaciesParFrequentation(): Pharmacie[] {
+  return db.getAllSync<Pharmacie>(
+    `SELECT p.*, MAX(q.date) AS dernier
+     FROM pharmacies p
+     LEFT JOIN quarts q ON q.pharmacie_id = p.id
+     GROUP BY p.id
+     ORDER BY dernier IS NULL, dernier DESC, p.nom COLLATE NOCASE`
+  );
+}
+
+/**
+ * Favori et « à éviter » s'excluent : marquer l'un efface l'autre. Une
+ * pharmacie ne peut pas être à la fois celle où l'on retourne volontiers et
+ * celle qu'on s'est promis de ne plus reprendre.
+ */
+export function definirFavori(id: number, favori: boolean) {
+  db.runSync(
+    'UPDATE pharmacies SET favori = ?, a_eviter = CASE WHEN ? THEN 0 ELSE a_eviter END WHERE id = ?',
+    favori ? 1 : 0,
+    favori ? 1 : 0,
+    id
+  );
+}
+
+export function definirAEviter(id: number, aEviter: boolean) {
+  db.runSync(
+    'UPDATE pharmacies SET a_eviter = ?, favori = CASE WHEN ? THEN 0 ELSE favori END WHERE id = ?',
+    aEviter ? 1 : 0,
+    aEviter ? 1 : 0,
+    id
+  );
 }
 
 /**
@@ -127,5 +166,7 @@ export function pharmacieVide(nom: string, tauxParKmDefaut: number): EntreePharm
     montant_fixe_deplacement: 0,
     pause_minutes: 0,
     pause_payee: 0,
+    favori: 0,
+    a_eviter: 0,
   };
 }

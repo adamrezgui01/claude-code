@@ -35,6 +35,10 @@ export type Pharmacie = Adresse & {
   pause_minutes: number;
   /** 1 si la pharmacie paie la pause. */
   pause_payee: number;
+  /** Remonte la pharmacie en tête du répertoire. Exclusif avec `a_eviter`. */
+  favori: number;
+  /** Rappel pour soi, jamais un blocage. Exclusif avec `favori`. */
+  a_eviter: number;
 };
 
 export type Quart = {

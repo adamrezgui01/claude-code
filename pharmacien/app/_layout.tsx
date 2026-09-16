@@ -83,8 +83,7 @@ export default function Racine() {
           <Stack.Screen name="frais/[id]" options={{ title: 'Frais' }} />
           <Stack.Screen name="pharmacie/[id]" options={{ title: 'Pharmacie' }} />
           <Stack.Screen name="document/[id]" options={{ title: 'Document' }} />
-          <Stack.Screen name="pharmacies" options={{ title: 'Pharmacies' }} />
-          <Stack.Screen name="statistiques" options={{ title: 'Statistiques' }} />
+          <Stack.Screen name="liens" options={{ title: 'Liens et infos utiles' }} />
           <Stack.Screen name="facture" options={{ title: 'Générer une facture' }} />
           <Stack.Screen name="factures" options={{ title: 'Factures' }} />
           <Stack.Screen name="apparence" options={{ title: 'Apparence' }} />

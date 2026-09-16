@@ -6,6 +6,8 @@ import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native'
 import {
   compterQuartsPharmacie,
   creerPharmacie,
+  definirAEviter,
+  definirFavori,
   modifierPharmacie,
   obtenirPharmacie,
   supprimerPharmacie,
@@ -38,7 +40,7 @@ import {
   SousTitre,
 } from '../../src/ui/composants';
 import { SaisieAdresse } from '../../src/ui/SaisieAdresse';
-import { couleurs, espace, police, useAccent } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 
 const MODES: { valeur: ModeDeplacement; texte: string }[] = [
   { valeur: 'aucun', texte: 'Aucun' },
@@ -80,6 +82,16 @@ export default function FichePharmacie() {
   const [codes, setCodes] = useState<CodeAcces[]>([]);
   const [secretsVisibles, setSecretsVisibles] = useState(false);
   const [nombreQuarts, setNombreQuarts] = useState(0);
+  const [favori, setFavori] = useState(false);
+  const [aEviter, setAEviter] = useState(false);
+
+  /**
+   * Ajouter une pharmacie n'arrive qu'une fois par pharmacie : la saisie se
+   * découpe en pages courtes plutôt qu'en un mur de champs. Consulter une fiche
+   * existante arrive souvent, alors on peut y sauter d'une page à l'autre au
+   * lieu de la parcourir en marche forcée.
+   */
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
     if (!pharmacieId) {
@@ -107,6 +119,8 @@ export default function FichePharmacie() {
       setPerDiem(p.per_diem ? `${p.per_diem}` : '');
       setPause(p.pause_minutes);
       setPausePayee(!!p.pause_payee);
+      setFavori(!!p.favori);
+      setAEviter(!!p.a_eviter);
       setMode(p.mode_deplacement);
       setDistance(p.distance_km ? `${p.distance_km}` : '');
       setTauxParKm(`${p.taux_par_km || reglages.taux_par_km}`);
@@ -180,6 +194,8 @@ export default function FichePharmacie() {
       distance_km: mode === 'km' ? analyserNombre(distance) : 0,
       taux_par_km: mode === 'km' ? analyserNombre(tauxParKm) : 0,
       montant_fixe_deplacement: mode === 'fixe' ? analyserNombre(montantFixe) : 0,
+      favori: favori ? 1 : 0,
+      a_eviter: aEviter ? 1 : 0,
     };
 
     const id = pharmacieId ?? creerPharmacie(entree);
@@ -212,232 +228,324 @@ export default function FichePharmacie() {
     );
   }
 
+  /** Bascule appliquée tout de suite : c'est un geste, pas un formulaire. */
+  function basculerFavori() {
+    const prochain = !favori;
+    setFavori(prochain);
+    if (prochain) setAEviter(false);
+    if (pharmacieId) definirFavori(pharmacieId, prochain);
+  }
+
+  function basculerAEviter() {
+    const prochain = !aEviter;
+    setAEviter(prochain);
+    if (prochain) setFavori(false);
+    if (pharmacieId) definirAEviter(pharmacieId, prochain);
+  }
+
+  const PAGES = ['Identité', 'Contact', 'Conditions'];
+  const derniere = page === PAGES.length - 1;
+
   return (
     <Ecran>
       <Stack.Screen options={{ title: nouvelle ? 'Nouvelle pharmacie' : nom || 'Pharmacie' }} />
 
-      <Fondu>
-        <Champ label="Nom" valeur={nom} onChange={setNom} placeholder="Nom de la pharmacie" />
-
-        <SaisieAdresse adresse={adresse} onChange={setAdresse} cle={reglages.cle_itineraire} />
-
-        {!nouvelle && !estLocalisee(adresse) && (
-          <Carte style={styles.avis}>
-            <Doux>
-              Cette adresse n’a pas pu être située : la pharmacie n’apparaît pas sur la carte.
-              Corrigez-la ci-dessus et enregistrez de nouveau.
-            </Doux>
-          </Carte>
-        )}
-        {estLocalisee(adresse) && (
-          <Bouton
-            titre="Obtenir un itinéraire"
-            variante="secondaire"
-            icone={<Ionicons name="navigate-outline" size={18} color={couleurs.texte} />}
-            onPress={() => ouvrirItineraireVers(adresseUneLigne(adresse))}
-          />
-        )}
-
-        <Separateur />
-        <SousTitre>Contact principal</SousTitre>
-        <Champ label="Nom de la personne contact" valeur={contactNom} onChange={setContactNom} />
-        <Champ
-          label="Téléphone"
-          valeur={contactTelephone}
-          onChange={setContactTelephone}
-          clavier="phone-pad"
-        />
-        {!!contactTelephone.trim() && (
-          <Pressable
-            onPress={() => Linking.openURL(`tel:${contactTelephone.replace(/[^\d+]/g, '')}`)}
-            hitSlop={8}>
-            <Text style={[styles.lien, { color: accent }]}>Appeler</Text>
-          </Pressable>
-        )}
-        <Champ
-          label="Courriel"
-          valeur={contactCourriel}
-          onChange={setContactCourriel}
-          clavier="email-address"
-        />
-
-        <Separateur />
-        <SousTitre>Conditions habituelles</SousTitre>
-        <Doux>
-          Ces valeurs préremplissent chaque nouveau quart dans cette pharmacie. Les changer ici ne
-          touche pas aux quarts déjà entrés.
-        </Doux>
-        <View style={styles.espacement} />
-        <Champ
-          label="Taux horaire habituel ($/h)"
-          valeur={tauxHoraire}
-          onChange={setTauxHoraire}
-          clavier="decimal-pad"
-          placeholder="0,00"
-        />
-        <Champ
-          label="Repas habituel ($/jour)"
-          valeur={perDiem}
-          onChange={setPerDiem}
-          clavier="decimal-pad"
-          placeholder="0,00"
-          aide="Réclamable quart par quart, et modifiable sur chacun."
-        />
-
-        <Text style={styles.label}>Pause repas habituelle</Text>
-        <View style={styles.puces}>
-          {PAUSES.map((minutes) => (
-            <Puce
-              key={minutes}
-              texte={minutes === 0 ? 'Aucune' : `${minutes} min`}
-              actif={pause === minutes}
-              onPress={() => setPause(minutes)}
-            />
+      {/* Sur une fiche existante, on saute à la page voulue : on vient souvent
+          chercher un code d'accès, pas remplir un formulaire. À la création,
+          aucun repère de progression — un « étape 1 sur 3 » donne une
+          impression de corvée. */}
+      {!nouvelle && (
+        <View style={styles.pages}>
+          {PAGES.map((titre, i) => (
+            <Puce key={titre} texte={titre} actif={page === i} onPress={() => setPage(i)} />
           ))}
         </View>
-        {pause > 0 && (
-          <Interrupteur
-            label="Pause payée"
-            detail={pausePayee ? 'Incluse dans les heures' : 'Déduite des heures facturées'}
-            valeur={pausePayee}
-            onChange={setPausePayee}
-          />
-        )}
+      )}
 
-        <Text style={styles.label}>Remboursement du déplacement</Text>
-        <View style={styles.puces}>
-          {MODES.map((m) => (
-            <Puce
-              key={m.valeur}
-              texte={m.texte}
-              actif={mode === m.valeur}
-              onPress={() => setMode(m.valeur)}
-            />
-          ))}
-        </View>
-
-        {mode === 'km' && (
+      <Fondu key={page}>
+        {page === 0 && (
           <>
+            <Champ label="Nom" valeur={nom} onChange={setNom} placeholder="Nom de la pharmacie" />
+
+            <SaisieAdresse adresse={adresse} onChange={setAdresse} cle={reglages.cle_itineraire} />
+
+            {!nouvelle && !estLocalisee(adresse) && (
+              <Carte style={styles.avis}>
+                <Doux>
+                  Cette adresse n’a pas pu être située : la pharmacie n’apparaît pas sur la carte.
+                  Corrigez-la ci-dessus et enregistrez de nouveau.
+                </Doux>
+              </Carte>
+            )}
+            {estLocalisee(adresse) && (
+              <Bouton
+                titre="Obtenir un itinéraire"
+                variante="secondaire"
+                icone={<Ionicons name="navigate-outline" size={18} color={couleurs.texte} />}
+                onPress={() => ouvrirItineraireVers(adresseUneLigne(adresse))}
+              />
+            )}
+
+            {!nouvelle && (
+              <>
+                <Separateur />
+                <View style={styles.reperes}>
+                  <Pressable
+                    onPress={basculerFavori}
+                    style={({ pressed }) => [
+                      styles.repere,
+                      favori && { borderColor: couleurs.favori, backgroundColor: couleurs.favoriPale },
+                      pressed && { opacity: 0.6 },
+                    ]}>
+                    <Ionicons
+                      name={favori ? 'star' : 'star-outline'}
+                      size={18}
+                      color={favori ? couleurs.favori : couleurs.doux}
+                    />
+                    <Text style={[styles.repereTexte, favori && { fontFamily: police.demi }]}>
+                      Favori
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={basculerAEviter}
+                    style={({ pressed }) => [
+                      styles.repere,
+                      aEviter && { borderColor: couleurs.attente },
+                      pressed && { opacity: 0.6 },
+                    ]}>
+                    <Ionicons
+                      name={aEviter ? 'remove-circle' : 'remove-circle-outline'}
+                      size={18}
+                      color={couleurs.doux}
+                    />
+                    <Text style={[styles.repereTexte, aEviter && { fontFamily: police.demi }]}>
+                      À éviter
+                    </Text>
+                  </Pressable>
+                </View>
+                <Doux>
+                  {aEviter
+                    ? 'Un rappel pour vous seul : ajouter un quart ici affichera un avertissement, sans jamais bloquer.'
+                    : 'Un favori remonte en haut du répertoire. Les deux repères s’excluent.'}
+                </Doux>
+              </>
+            )}
+          </>
+        )}
+
+        {page === 1 && (
+          <>
+            <SousTitre>Contact principal</SousTitre>
+            <Champ label="Nom de la personne contact" valeur={contactNom} onChange={setContactNom} />
             <Champ
-              label="Distance aller-retour (km)"
-              valeur={distance}
-              onChange={setDistance}
-              clavier="decimal-pad"
-              placeholder="0"
+              label="Téléphone"
+              valeur={contactTelephone}
+              onChange={setContactTelephone}
+              clavier="phone-pad"
             />
-            <Bouton
-              titre={calculEnCours ? 'Calcul…' : 'Calculer la distance'}
-              variante="secondaire"
-              onPress={calculer}
-              desactive={calculEnCours}
-            />
-            <Doux>
-              Le calcul envoie votre adresse et celle de la pharmacie au service d’itinéraire.
-            </Doux>
-            <View style={styles.espacement} />
+            {!!contactTelephone.trim() && (
+              <Pressable
+                onPress={() => Linking.openURL(`tel:${contactTelephone.replace(/[^\d+]/g, '')}`)}
+                hitSlop={8}>
+                <Text style={[styles.lien, { color: accent }]}>Appeler</Text>
+              </Pressable>
+            )}
             <Champ
-              label="Taux par kilomètre ($/km)"
-              valeur={tauxParKm}
-              onChange={setTauxParKm}
-              clavier="decimal-pad"
+              label="Courriel"
+              valeur={contactCourriel}
+              onChange={setContactCourriel}
+              clavier="email-address"
+            />
+
+            <Separateur />
+            <SousTitre>Notes générales</SousTitre>
+            <Champ
+              label="Fonctionnement, particularités, stationnement…"
+              valeur={notes}
+              onChange={setNotes}
+              multiligne
             />
           </>
         )}
 
-        {mode === 'fixe' && (
-          <Champ
-            label="Montant par quart ($)"
-            valeur={montantFixe}
-            onChange={setMontantFixe}
-            clavier="decimal-pad"
-            placeholder="0,00"
-          />
-        )}
-
-        <Separateur />
-        <SousTitre>Notes générales</SousTitre>
-        <Champ
-          label="Fonctionnement, particularités, stationnement…"
-          valeur={notes}
-          onChange={setNotes}
-          multiligne
-        />
-
-        <Separateur />
-        <View style={styles.enteteSection}>
-          <SousTitre>Accès</SousTitre>
-          <Pressable onPress={() => setSecretsVisibles((v) => !v)} hitSlop={8}>
-            <Text style={[styles.lien, { color: accent }]}>
-              {secretsVisibles ? 'Masquer' : 'Afficher'}
-            </Text>
-          </Pressable>
-        </View>
-
-        <Text style={styles.label}>Logiciel</Text>
-        <View style={styles.puces}>
-          {[...LOGICIELS, 'Autre'].map((l) => (
-            <Puce
-              key={l}
-              texte={l}
-              actif={logicielChoisi === l}
-              onPress={() => setLogicielChoisi(logicielChoisi === l ? '' : l)}
-            />
-          ))}
-        </View>
-        {logicielChoisi === 'Autre' && (
-          <Champ label="Nom du logiciel" valeur={logicielAutre} onChange={setLogicielAutre} />
-        )}
-
-        <Champ
-          label="Utilisateur"
-          valeur={utilisateur}
-          onChange={setUtilisateur}
-          masque={!secretsVisibles}
-        />
-        <Champ
-          label="Mot de passe"
-          valeur={motDePasse}
-          onChange={setMotDePasse}
-          masque={!secretsVisibles}
-        />
-        <Doux>
-          {logiciel
-            ? `Identifiants ${logiciel}. Conservés dans le trousseau sécurisé de l’appareil (Keychain), jamais dans la base de l’application.`
-            : 'Choisissez le logiciel utilisé dans cette pharmacie.'}
-        </Doux>
-
-        <View style={styles.espacement} />
-        <Text style={styles.label}>Codes d’accès (porte, alarme…)</Text>
-        {codes.map((code, i) => (
-          <View key={i}>
+        {page === 2 && (
+          <>
+            <SousTitre>Conditions habituelles</SousTitre>
+            <Doux>
+              Ces valeurs préremplissent chaque nouveau quart dans cette pharmacie. Les changer ici
+              ne touche pas aux quarts déjà entrés.
+            </Doux>
+            <View style={styles.espacement} />
             <Champ
-              label="Libellé"
-              valeur={code.libelle}
-              onChange={(v) => modifierCode(i, 'libelle', v)}
-              placeholder="Code de porte"
+              label="Taux horaire habituel ($/h)"
+              valeur={tauxHoraire}
+              onChange={setTauxHoraire}
+              clavier="decimal-pad"
+              placeholder="0,00"
             />
             <Champ
-              label="Valeur"
-              valeur={code.valeur}
-              onChange={(v) => modifierCode(i, 'valeur', v)}
+              label="Repas habituel ($/jour)"
+              valeur={perDiem}
+              onChange={setPerDiem}
+              clavier="decimal-pad"
+              placeholder="0,00"
+              aide="Réclamable quart par quart, et modifiable sur chacun."
+            />
+
+            <Text style={styles.label}>Pause repas habituelle</Text>
+            <View style={styles.puces}>
+              {PAUSES.map((minutes) => (
+                <Puce
+                  key={minutes}
+                  texte={minutes === 0 ? 'Aucune' : `${minutes} min`}
+                  actif={pause === minutes}
+                  onPress={() => setPause(minutes)}
+                />
+              ))}
+            </View>
+            {pause > 0 && (
+              <Interrupteur
+                label="Pause payée"
+                detail={pausePayee ? 'Incluse dans les heures' : 'Déduite des heures facturées'}
+                valeur={pausePayee}
+                onChange={setPausePayee}
+              />
+            )}
+
+            <Text style={styles.label}>Remboursement du déplacement</Text>
+            <View style={styles.puces}>
+              {MODES.map((m) => (
+                <Puce
+                  key={m.valeur}
+                  texte={m.texte}
+                  actif={mode === m.valeur}
+                  onPress={() => setMode(m.valeur)}
+                />
+              ))}
+            </View>
+
+            {mode === 'km' && (
+              <>
+                <Champ
+                  label="Distance aller-retour (km)"
+                  valeur={distance}
+                  onChange={setDistance}
+                  clavier="decimal-pad"
+                  placeholder="0"
+                />
+                <Bouton
+                  titre={calculEnCours ? 'Calcul…' : 'Calculer la distance'}
+                  variante="secondaire"
+                  onPress={calculer}
+                  desactive={calculEnCours}
+                />
+                <Doux>
+                  Le calcul envoie votre adresse et celle de la pharmacie au service d’itinéraire.
+                </Doux>
+                <View style={styles.espacement} />
+                <Champ
+                  label="Taux par kilomètre ($/km)"
+                  valeur={tauxParKm}
+                  onChange={setTauxParKm}
+                  clavier="decimal-pad"
+                />
+              </>
+            )}
+
+            {mode === 'fixe' && (
+              <Champ
+                label="Montant par quart ($)"
+                valeur={montantFixe}
+                onChange={setMontantFixe}
+                clavier="decimal-pad"
+                placeholder="0,00"
+              />
+            )}
+
+            <Separateur />
+            <View style={styles.enteteSection}>
+              <SousTitre>Accès</SousTitre>
+              <Pressable onPress={() => setSecretsVisibles((v) => !v)} hitSlop={8}>
+                <Text style={[styles.lien, { color: accent }]}>
+                  {secretsVisibles ? 'Masquer' : 'Afficher'}
+                </Text>
+              </Pressable>
+            </View>
+
+            <Text style={styles.label}>Logiciel</Text>
+            <View style={styles.puces}>
+              {[...LOGICIELS, 'Autre'].map((l) => (
+                <Puce
+                  key={l}
+                  texte={l}
+                  actif={logicielChoisi === l}
+                  onPress={() => setLogicielChoisi(logicielChoisi === l ? '' : l)}
+                />
+              ))}
+            </View>
+            {logicielChoisi === 'Autre' && (
+              <Champ label="Nom du logiciel" valeur={logicielAutre} onChange={setLogicielAutre} />
+            )}
+
+            <Champ
+              label="Utilisateur"
+              valeur={utilisateur}
+              onChange={setUtilisateur}
               masque={!secretsVisibles}
             />
-            <Pressable
-              onPress={() => setCodes((actuels) => actuels.filter((_, j) => j !== i))}
-              hitSlop={8}>
-              <Text style={styles.retirer}>Retirer</Text>
-            </Pressable>
-          </View>
-        ))}
-        <Bouton
-          titre="Ajouter un code"
-          variante="secondaire"
-          onPress={() => setCodes((actuels) => [...actuels, { libelle: '', valeur: '' }])}
-        />
+            <Champ
+              label="Mot de passe"
+              valeur={motDePasse}
+              onChange={setMotDePasse}
+              masque={!secretsVisibles}
+            />
+            <Doux>
+              {logiciel
+                ? `Identifiants ${logiciel}. Conservés dans le trousseau sécurisé de l’appareil (Keychain), jamais dans la base de l’application.`
+                : 'Choisissez le logiciel utilisé dans cette pharmacie.'}
+            </Doux>
+
+            <View style={styles.espacement} />
+            <Text style={styles.label}>Codes d’accès (porte, alarme…)</Text>
+            {codes.map((code, i) => (
+              <View key={i}>
+                <Champ
+                  label="Libellé"
+                  valeur={code.libelle}
+                  onChange={(v) => modifierCode(i, 'libelle', v)}
+                  placeholder="Code de porte"
+                />
+                <Champ
+                  label="Valeur"
+                  valeur={code.valeur}
+                  onChange={(v) => modifierCode(i, 'valeur', v)}
+                  masque={!secretsVisibles}
+                />
+                <Pressable
+                  onPress={() => setCodes((actuels) => actuels.filter((_, j) => j !== i))}
+                  hitSlop={8}>
+                  <Text style={styles.retirer}>Retirer</Text>
+                </Pressable>
+              </View>
+            ))}
+            <Bouton
+              titre="Ajouter un code"
+              variante="secondaire"
+              onPress={() => setCodes((actuels) => [...actuels, { libelle: '', valeur: '' }])}
+            />
+          </>
+        )}
 
         <View style={styles.actions}>
-          <Bouton titre="Enregistrer" onPress={enregistrer} />
-          {!nouvelle && (
+          {nouvelle && !derniere ? (
+            <Bouton titre="Suivant" onPress={() => setPage((p) => p + 1)} />
+          ) : (
+            <Bouton titre="Enregistrer" onPress={enregistrer} />
+          )}
+          {nouvelle && page > 0 && (
+            <Bouton titre="Retour" variante="secondaire" onPress={() => setPage((p) => p - 1)} />
+          )}
+          {!nouvelle && derniere && (
             <>
               <Bouton
                 titre="Ajouter un quart ici"
@@ -454,6 +562,32 @@ export default function FichePharmacie() {
 }
 
 const styles = StyleSheet.create({
+  pages: {
+    flexDirection: 'row',
+    marginBottom: espace.m,
+  },
+  reperes: {
+    flexDirection: 'row',
+    gap: espace.s,
+    marginBottom: espace.s,
+  },
+  repere: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: espace.s,
+    borderWidth: 1,
+    borderColor: couleurs.bordure,
+    backgroundColor: couleurs.carte,
+    borderRadius: rayon,
+    paddingVertical: espace.m,
+  },
+  repereTexte: {
+    fontSize: 14,
+    fontFamily: police.normal,
+    color: couleurs.texte,
+  },
   enteteSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',

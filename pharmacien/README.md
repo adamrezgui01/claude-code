@@ -37,18 +37,28 @@ compté sans elles, et le mémo de correction ne fait que rappeler une exception
 
 ## Écrans
 
+Quatre onglets, plus un menu à trois lignes dans l'en-tête.
+
 - **Horaire** — agenda, liste ou carte, toutes pharmacies confondues. Une fois
   par mois, la bannière des factures à faire s'affiche en haut. Un quart qui en
-  chevauche un autre est encadré en rouge. De là : statistiques, liste des
-  pharmacies, ajout et modification d'un quart.
-- **Liens et infos utiles** — numéros d'urgence, organismes, références
-  cliniques, information aux patients, rappels. Contenu écrit en dur dans
-  `src/content/liens.ts`.
-- **Profil** — compteur de formation continue, échéances des documents
-  professionnels, coordonnées imprimées sur les factures, apparence, réglages.
+  chevauche un autre est encadré en rouge.
+- **Répertoire** — toutes les pharmacies, façon liste de contacts : recherche,
+  tri, favoris en tête. Elles étaient auparavant enterrées sous l'agenda, alors
+  qu'on vient y chercher un code d'accès ou un numéro de téléphone souvent.
+- **Statistiques** — heures, kilométrage, per diem, frais, revenu estimé. Une
+  des choses les plus consultées, donc un onglet et non un sous-écran.
+- **Profil** — formation continue, documents professionnels, informations et
+  facturation, paramètres.
+
+Le menu à trois lignes ne porte que ce qu'on consulte trop rarement pour
+mériter un onglet — pour l'instant les liens et infos utiles (numéros
+d'urgence, organismes, références cliniques, écrits en dur dans
+`src/content/liens.ts`). Il doit le rester :
+un menu qui devient le fourre-tout de tout ce qu'on ne sait pas classer est un
+menu où plus personne ne retrouve rien.
 
 Sous-écrans : fiche par pharmacie, modification d'un quart, frais d'un quart,
-statistiques, génération de factures, historique des factures.
+génération de factures, historique des factures, apparence.
 
 ## La pharmacie porte ses conditions
 
@@ -94,16 +104,24 @@ affichages.
 
 | Affichage | Ce qu'il montre |
 | --- | --- |
-| Jour | une colonne, lisible même avec deux quarts dans la journée |
-| Semaine | sept colonnes, du lundi au dimanche |
 | Mois | la grille classique, une pastille sur les jours qui portent un quart |
+| Semaine | sept colonnes, du lundi au dimanche |
+| Jour | une colonne, puis les cartes des quarts en dessous |
+
+Le mois s'ouvre par défaut : c'est lui qui donne la vue d'ensemble. Toucher un
+jour bascule sur sa journée — on passe du survol au détail d'un seul geste.
 
 Jour et semaine sont des colonnes façon Google Agenda : chaque quart est un bloc
 vertical dont la hauteur correspond à ses heures, et les quarts qui se
-chevauchent se partagent la largeur. C'est ce qui rend visibles d'un coup d'œil
-les trous et les chevauchements d'une même journée entre deux pharmacies — ce
-qu'une liste ne montre pas. La plage d'heures affichée se resserre autour des
-quarts du jour, sans jamais descendre sous huit heures.
+chevauchent se partagent la largeur. Le quadrillé — lignes des heures et
+séparateurs entre les jours — n'est pas décoratif : sans lui les blocs
+paraissent pêle-mêle et on n'arrive pas à se situer. C'est ce qui rend visibles
+d'un coup d'œil les trous et les chevauchements d'une même journée entre deux
+pharmacies, ce qu'une liste ne montre pas. La plage d'heures affichée se
+resserre autour des quarts du jour, sans jamais descendre sous huit heures.
+
+La vue jour garde les cartes de quarts sous la timeline : elles portent le taux,
+les frais et les notes, que les blocs ne montrent pas.
 
 ## Créer plusieurs quarts d'un coup
 
@@ -116,11 +134,23 @@ complètent :
   modifiable seul : un contrat réel n'est jamais parfaitement régulier.
 - **Duplication.** Sur un quart existant, *Dupliquer ce quart* ouvre un
   formulaire prérempli ; il ne reste que la date à changer.
-- **Glisser-déposer.** Dans les vues jour et semaine, rester appuyé sur un bloc
-  arme une copie ; on la glisse vers un autre jour et une autre heure. Au dépôt,
-  l'heure s'aimante au quart d'heure le plus proche — sur un petit écran, 9 h 00
-  et 9 h 10 se jouent à quelques pixels — puis le formulaire s'ouvre pour
-  confirmer.
+- **Glisser-déposer.** Dans les vues jour et semaine, un maintien court sur un
+  bloc l'arme : il suit le doigt jusqu'à un autre jour et une autre heure. Au
+  dépôt, l'heure s'aimante au quart d'heure le plus proche — sur un petit écran,
+  9 h 00 et 9 h 10 se jouent à quelques pixels.
+
+Les deux gestes se distinguent par la durée du maintien, jamais par la pression
+(le 3D Touch d'Apple est abandonné depuis des années) :
+
+| Geste | Effet |
+| --- | --- |
+| Maintien court, puis glisser | déplace le quart, en silence |
+| Maintien prolongé, puis glisser | duplique, avec une vibration au basculement |
+
+Un déplacement ne rouvre aucun formulaire : le dépôt dit déjà le jour et
+l'heure, et rouvrir un écran pour reconfirmer le geste qu'on vient de faire
+serait de la friction pure. Une duplication, elle, ouvre le formulaire, parce
+qu'on veut souvent ajuster un détail sur la copie.
 
 Le calcul des dates vit dans `src/lib/recurrence.ts`, sans dépendance native.
 
@@ -138,6 +168,24 @@ et des noms de pharmacies.
 
 Une série est vérifiée sur chacune de ses dates : deux semaines de contrat
 peuvent tomber sur un quart déjà pris un seul de ces jours-là.
+
+## Favoris et pharmacies à éviter
+
+Un remplaçant accumule des dizaines de pharmacies. Deux repères, exclusifs l'un
+de l'autre, tiennent la liste utilisable :
+
+- **Favori** — une étoile jaune, et une section en tête du répertoire. La
+  pharmacie réapparaît ensuite à son rang alphabétique, l'étoile la rend
+  reconnaissable d'un coup d'œil. L'étoile se bascule d'un geste, depuis la
+  liste ou depuis la fiche.
+- **À éviter** — un point gris et un nom grisé, volontairement plus discret que
+  l'étoile. Ce n'est pas une punition affichée, juste un rappel pour soi.
+  Ajouter un quart dans une telle pharmacie affiche un avertissement doux, qui
+  ne bloque rien : il existe pour qu'on ne réaccepte pas par distraction.
+
+Le répertoire se trie par ordre alphabétique ou par fréquentation. Le bouton
+reste en haut de la liste, pas dans les paramètres : on veut changer le tri en
+regardant la liste.
 
 ## Carte
 
@@ -277,6 +325,24 @@ d'une seconde quand une série de quarts est créée ou une facture générée
 (`src/ui/Recompense.tsx`). Jamais au début d'un quart — la personne est pressée
 à ce moment-là.
 
+## Aérer les formulaires
+
+Un mur de champs décourage avant même qu'on commence. La façon d'aérer dépend de
+la fréquence de l'action :
+
+- **Action rare → plusieurs pages courtes.** Ajouter une pharmacie n'arrive
+  qu'une fois par pharmacie, alors la fiche se découpe en trois pages :
+  identité, contact et notes, conditions et accès. Aucun compteur d'étapes —
+  un « étape 1 sur 3 » donne une impression de corvée. Sur une fiche existante,
+  des onglets permettent de sauter directement à la page voulue : on vient
+  souvent y chercher un code d'accès, pas remplir un formulaire.
+- **Action fréquente → une page, le secondaire replié.** Ajouter un quart est le
+  geste le plus courant : seuls la pharmacie, la date et les heures sont
+  visibles. Le taux, la pause, les frais, les notes et la récurrence attendent
+  derrière « plus de détails », qui affiche un résumé d'une ligne quand il est
+  replié. Découper ça en pages serait une punition, chaque « suivant » étant un
+  geste de plus répété chaque fois.
+
 ## Détails d'interface qui comptent
 
 Deux comportements que rien ne signale mais que l'absence rendrait pénible :
@@ -301,7 +367,7 @@ de `{ libelle, valeur }`) et `identifiants_pharmacie_<id>`
 (`{ utilisateur, motDePasse }`). Supprimer une pharmacie supprime ses quarts en
 cascade, ses frais, ses secrets et les rappels associés.
 
-Le schéma est versionné par `PRAGMA user_version` (actuellement 3). Une base
+Le schéma est versionné par `PRAGMA user_version` (actuellement 4). Une base
 d'une version antérieure est **effacée et recréée** au démarrage, secrets
 compris : l'application n'a pas encore d'usagers dont il faudrait préserver les
 données, et une recréation vaut mieux qu'une migration à moitié juste. Passer
@@ -310,8 +376,8 @@ d'une version à l'autre veut donc dire ressaisir ses pharmacies.
 ## Modèle de données
 
 - `pharmacies` — nom, adresse structurée et coordonnées, contact (nom,
-  téléphone, courriel), notes, logiciel utilisé, et les conditions décrites plus
-  haut.
+  téléphone, courriel), notes, logiciel utilisé, repères favori et à éviter, et
+  les conditions décrites plus haut.
 - `quarts` — pharmacie, date, heures prévues et heures réelles, indicateur de
   quart annulé, taux horaire, kilométrage ou montant fixe de déplacement, repas
   réclamé, pause, notes, identifiant de série de récurrence, identifiants des

@@ -38,6 +38,9 @@ export const couleurs = {
   lointain: '#E9C46A',
   /** Historique : un vert discret qui ne compétitionne pas avec les trois autres. */
   historique: '#7C9B86',
+  /** Étoile des favoris. Le repère « à éviter » reste en gris, volontairement discret. */
+  favori: '#D9A21B',
+  favoriPale: '#FBF3DF',
 };
 
 /** Une seule valeur globale pour l'arrondi des cartes, boutons et champs. */

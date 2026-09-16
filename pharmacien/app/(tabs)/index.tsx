@@ -4,8 +4,14 @@ import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { listerPharmacies } from '../../src/db/pharmacies';
-import { obtenirReglages } from '../../src/db/profil';
-import { listerQuarts } from '../../src/db/quarts';
+import { delaisSecondaires, obtenirReglages } from '../../src/db/profil';
+import {
+  deplacerQuart,
+  enregistrerRappels,
+  listerQuarts,
+  obtenirQuart,
+  rappelsDuQuart,
+} from '../../src/db/quarts';
 import type { Pharmacie, QuartDetaille } from '../../src/db/types';
 import {
   ajouterJours,
@@ -22,6 +28,7 @@ import {
   rappelFacturesTraite,
   reporterRappelFactures,
 } from '../../src/lib/rappelFactures';
+import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
 import { detecterChevauchements } from '../../src/lib/stats';
 import { Calendrier } from '../../src/ui/Calendrier';
 import { Bouton, Carte, Doux, Fondu, Puce, Vide } from '../../src/ui/composants';
@@ -39,7 +46,8 @@ export default function Horaire() {
   const [quarts, setQuarts] = useState<QuartDetaille[]>([]);
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
   const [vue, setVue] = useState<Vue>('agenda');
-  const [affichage, setAffichage] = useState<Affichage>('semaine');
+  // Le mois s'ouvre en premier : c'est lui qui donne la vue d'ensemble.
+  const [affichage, setAffichage] = useState<Affichage>('mois');
   const [mois, setMois] = useState(() => debutMois(aujourdhui()));
   const [jour, setJour] = useState(() => aujourdhui());
   const [historiqueMois, setHistoriqueMois] = useState(1);
@@ -121,8 +129,29 @@ export default function Horaire() {
 
   const ouvrirQuart = (id: number) => router.push(`/quart/${id}`);
   const ouvrirPharmacie = (id: number) => router.push(`/pharmacie/${id}`);
+
   const dupliquer = (id: number, date: string, heure: string) =>
     router.push(`/quart/nouveau?duplique=${id}&date=${date}&heure=${heure}`);
+
+  /** Un déplacement se fait en silence : le dépôt dit déjà le jour et l'heure. */
+  const deplacer = (id: number, date: string, heure: string) => {
+    deplacerQuart(id, date, heure);
+    const quart = obtenirQuart(id);
+    if (quart) {
+      void (async () => {
+        await annulerRappels(rappelsDuQuart(quart));
+        const rappels = await planifierRappelsQuart(quart, delaisSecondaires(obtenirReglages()));
+        enregistrerRappels(id, rappels.principal, rappels.secondaires, rappels.memo);
+      })();
+    }
+    setQuarts(listerQuarts());
+  };
+
+  /** Toucher un jour du mois ouvre sa journée : survol, puis détail, en un geste. */
+  const choisirJour = (date: string) => {
+    setJour(date);
+    setAffichage('jour');
+  };
 
   const semaine = semaineDe(jour);
   const pas = affichage === 'jour' ? 1 : 7;
@@ -189,23 +218,10 @@ export default function Horaire() {
                 quartsParJour={parJour}
                 chevauchements={chevauchements}
                 jourSelectionne={jour}
-                onSelectionner={setJour}
+                onSelectionner={choisirJour}
                 onChangerMois={(delta) => setMois(ajouterMois(mois, delta))}
               />
-              <Text style={styles.jour}>{formatDateLongue(jour)}</Text>
-              {quartsDuJour.length === 0 ? (
-                <Vide texte="Aucun quart ce jour-là." />
-              ) : (
-                quartsDuJour.map((q) => (
-                  <LigneQuart
-                    key={q.id}
-                    quart={q}
-                    enConflit={chevauchements.has(q.id)}
-                    onPress={() => ouvrirQuart(q.id)}
-                    onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
-                  />
-                ))
-              )}
+              <Doux>Touchez un jour pour ouvrir sa journée.</Doux>
             </>
           ) : (
             <>
@@ -226,12 +242,35 @@ export default function Horaire() {
                 jours={affichage === 'jour' ? [jour] : semaine}
                 quartsParJour={parJour}
                 onOuvrir={ouvrirQuart}
+                onDeplacer={deplacer}
                 onDupliquer={dupliquer}
                 onArmer={setDuplication}
               />
               <Doux>
-                Touchez un bloc pour l’ouvrir. Restez appuyé pour en dupliquer une copie ailleurs.
+                Glissez un bloc pour le déplacer. Maintenez-le plus longtemps pour en dupliquer une
+                copie ailleurs.
               </Doux>
+
+              {/* La journée garde ses cartes sous la timeline : elles portent le
+                  taux, les frais et les notes, que les blocs ne montrent pas. */}
+              {affichage === 'jour' && (
+                <>
+                  <Text style={styles.jour}>{formatDateLongue(jour)}</Text>
+                  {quartsDuJour.length === 0 ? (
+                    <Vide texte="Aucun quart ce jour-là." />
+                  ) : (
+                    quartsDuJour.map((q) => (
+                      <LigneQuart
+                        key={q.id}
+                        quart={q}
+                        enConflit={chevauchements.has(q.id)}
+                        onPress={() => ouvrirQuart(q.id)}
+                        onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
+                      />
+                    ))
+                  )}
+                </>
+              )}
             </>
           )}
 
@@ -285,48 +324,7 @@ export default function Horaire() {
         </Fondu>
       )}
 
-      <View style={styles.acces}>
-        <LienAcces
-          icone="stats-chart-outline"
-          titre="Statistiques"
-          sousTitre="Heures, déplacement, revenu"
-          couleur={accent}
-          onPress={() => router.push('/statistiques')}
-        />
-        <LienAcces
-          icone="business-outline"
-          titre="Pharmacies"
-          sousTitre="Coordonnées, conditions, codes"
-          couleur={accent}
-          onPress={() => router.push('/pharmacies')}
-        />
-      </View>
     </ScrollView>
-  );
-}
-
-function LienAcces({
-  icone,
-  titre,
-  sousTitre,
-  couleur,
-  onPress,
-}: {
-  icone: keyof typeof Ionicons.glyphMap;
-  titre: string;
-  sousTitre: string;
-  couleur: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.lien, pressed && { opacity: 0.6 }]}>
-      <Ionicons name={icone} size={20} color={couleur} />
-      <View style={styles.lienTexte}>
-        <Text style={styles.lienTitre}>{titre}</Text>
-        <Text style={styles.lienSousTitre}>{sousTitre}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={18} color={couleurs.doux} />
-    </Pressable>
   );
 }
 
@@ -396,32 +394,5 @@ const styles = StyleSheet.create({
     marginBottom: espace.s,
     marginTop: espace.s,
     textTransform: 'capitalize',
-  },
-  acces: {
-    marginTop: espace.xl,
-    gap: espace.s,
-  },
-  lien: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: espace.m,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.l,
-  },
-  lienTexte: {
-    flex: 1,
-  },
-  lienTitre: {
-    fontSize: 15,
-    fontFamily: police.demi,
-    color: couleurs.texte,
-  },
-  lienSousTitre: {
-    fontSize: 13,
-    fontFamily: police.normal,
-    color: couleurs.doux,
   },
 });

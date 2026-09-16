@@ -2,14 +2,14 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { listerFraisPeriode } from '../src/db/frais';
-import { listerPharmacies, listerPharmaciesRecentes } from '../src/db/pharmacies';
-import { listerQuartsPeriode } from '../src/db/quarts';
-import type { Pharmacie } from '../src/db/types';
-import { aujourdhui, debutMois, formatDateCourte } from '../src/lib/dates';
-import { bornes, type Preset } from '../src/lib/periodes';
-import { argent, heures, nombre } from '../src/lib/format';
-import { calculerStatistiques } from '../src/lib/stats';
+import { listerFraisPeriode } from '../../src/db/frais';
+import { listerPharmacies, listerPharmaciesRecentes } from '../../src/db/pharmacies';
+import { listerQuartsPeriode } from '../../src/db/quarts';
+import type { Pharmacie } from '../../src/db/types';
+import { aujourdhui, debutMois, formatDateCourte } from '../../src/lib/dates';
+import { bornes, type Preset } from '../../src/lib/periodes';
+import { argent, heures, nombre } from '../../src/lib/format';
+import { calculerStatistiques } from '../../src/lib/stats';
 import {
   Bouton,
   Carte,
@@ -21,9 +21,9 @@ import {
   Separateur,
   SousTitre,
   Vide,
-} from '../src/ui/composants';
-import { SelecteurPharmacie } from '../src/ui/SelecteurPharmacie';
-import { couleurs, espace, police } from '../src/ui/theme';
+} from '../../src/ui/composants';
+import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
+import { couleurs, espace, police } from '../../src/ui/theme';
 
 export default function Statistiques() {
   const router = useRouter();

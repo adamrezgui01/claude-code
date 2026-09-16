@@ -90,8 +90,13 @@ export default function FormulaireQuart() {
   const [notes, setNotes] = useState('');
   const [frais, setFrais] = useState<FraisExtra[]>([]);
 
-  /** Les frais restent repliés : le cas normal ne demande aucun geste. */
-  const [fraisDeplies, setFraisDeplies] = useState(false);
+  /**
+   * Ajouter un quart est le geste le plus fréquent de l'application : on ne
+   * montre d'emblée que la pharmacie, la date et les heures. Tout le reste —
+   * pause, taux, frais, notes, récurrence — attend derrière « plus de détails ».
+   */
+  const [details, setDetails] = useState(false);
+  const [aEviter, setAEviter] = useState(false);
   const [annule, setAnnule] = useState(false);
   const [passe, setPasse] = useState(false);
   const [heuresPrevues, setHeuresPrevues] = useState<{ debut: string; fin: string } | null>(null);
@@ -111,6 +116,7 @@ export default function FormulaireQuart() {
       if (q) {
         setPharmacieId(q.pharmacie_id);
         setModeDeplacement(q.pharmacie_mode_deplacement);
+        setAEviter(!!obtenirPharmacie(q.pharmacie_id)?.a_eviter);
         setPause(q.pause_minutes);
         setPausePayee(!!q.pause_payee);
         setTaux(`${q.taux_horaire}`);
@@ -161,6 +167,7 @@ export default function FormulaireQuart() {
         : ''
     );
     setPerDiem(p.per_diem ? `${p.per_diem}` : '');
+    setAEviter(!!p.a_eviter);
   }
 
   const duree = dureePrevue(heureDebut, heureFin, pause, pausePayee);
@@ -169,16 +176,21 @@ export default function FormulaireQuart() {
   const datesSerie = repeter ? datesRecurrentes(date, joursRepetes, nbSemaines) : [date];
 
   /** Ce que la ligne repliée annonce, sans avoir à la déplier. */
-  function resumeFrais(): string {
+  function resumeDetails(): string {
     const morceaux: string[] = [];
+    const tauxHoraire = analyserNombre(taux);
     const km = analyserNombre(kilometrage);
     const fixe = analyserNombre(montantFixe);
     const repas = analyserNombre(perDiem);
+    if (tauxHoraire > 0) morceaux.push(`${argent(tauxHoraire)}/h`);
+    if (pause > 0) morceaux.push(`pause ${pause} min`);
     if (modeDeplacement === 'km' && km > 0) morceaux.push(`${km} km`);
     if (modeDeplacement === 'fixe' && fixe > 0) morceaux.push(argent(fixe));
     if (repas > 0) morceaux.push(`repas ${argent(repas)}`);
-    return morceaux.length > 0 ? morceaux.join(' · ') : 'Rien de réclamé';
+    if (datesSerie.length > 1) morceaux.push(`${datesSerie.length} quarts`);
+    return morceaux.length > 0 ? morceaux.join(' · ') : 'Aux valeurs habituelles';
   }
+
 
   function entreeDepuisFormulaire(idPharmacie: number, pourLaDate: string): EntreeQuart {
     // Sur un quart déjà passé, les sélecteurs portent les heures réelles : les
@@ -357,6 +369,19 @@ export default function FormulaireQuart() {
           </View>
         )}
 
+        {/* Un rappel de son propre drapeau, pour ne pas réaccepter par
+            distraction. Il n'empêche rien. */}
+        {aEviter && (
+          <Fondu>
+            <Carte style={styles.eviter}>
+              <Doux>
+                Vous avez marqué cette pharmacie « à éviter ». Rien ne vous en empêche, c’est
+                seulement un rappel.
+              </Doux>
+            </Carte>
+          </Fondu>
+        )}
+
         <Separateur />
 
         <SelecteurDate label="Date" valeur={date} onChange={setDate} />
@@ -370,54 +395,55 @@ export default function FormulaireQuart() {
           </Doux>
         )}
 
-        <Text style={styles.label}>Pause repas</Text>
-        <View style={styles.puces}>
-          {PAUSES.map((minutes) => (
-            <Puce
-              key={minutes}
-              texte={minutes === 0 ? 'Aucune' : `${minutes} min`}
-              actif={pause === minutes}
-              onPress={() => setPause(minutes)}
-            />
-          ))}
-        </View>
-        {pause > 0 && (
-          <Interrupteur
-            label="Pause payée"
-            detail={pausePayee ? 'Incluse dans les heures' : 'Déduite des heures facturées'}
-            valeur={pausePayee}
-            onChange={setPausePayee}
-          />
-        )}
-
         <Text style={styles.duree}>
           Durée facturable : {heures(duree)}
           {heureFin <= heureDebut ? ' (quart de nuit)' : ''}
         </Text>
 
-        <Champ
-          label="Taux horaire ($/h)"
-          valeur={taux}
-          onChange={setTaux}
-          clavier="decimal-pad"
-          placeholder="0,00"
-        />
-
-        <Pressable
-          style={styles.ligneFrais}
-          onPress={() => setFraisDeplies((d) => !d)}
-          hitSlop={6}>
-          <View style={styles.fraisTexte}>
-            <Text style={styles.fraisLabel}>Frais</Text>
-            <Text style={styles.fraisResume}>{resumeFrais()}</Text>
+        <Pressable style={styles.ligneDetails} onPress={() => setDetails((d) => !d)} hitSlop={6}>
+          <View style={styles.detailsTexte}>
+            <Text style={styles.detailsLabel}>Plus de détails</Text>
+            {!details && <Text style={styles.detailsResume}>{resumeDetails()}</Text>}
           </View>
-          <Text style={[styles.modifier, { color: accent }]}>
-            {fraisDeplies ? 'Replier' : 'Modifier'}
-          </Text>
+          <Ionicons
+            name={details ? 'chevron-up' : 'chevron-down'}
+            size={18}
+            color={accent}
+          />
         </Pressable>
 
-        {fraisDeplies && (
+        {details && (
           <Fondu>
+            <Champ
+              label="Taux horaire ($/h)"
+              valeur={taux}
+              onChange={setTaux}
+              clavier="decimal-pad"
+              placeholder="0,00"
+            />
+
+            <Text style={styles.label}>Pause repas</Text>
+            <View style={styles.puces}>
+              {PAUSES.map((minutes) => (
+                <Puce
+                  key={minutes}
+                  texte={minutes === 0 ? 'Aucune' : `${minutes} min`}
+                  actif={pause === minutes}
+                  onPress={() => setPause(minutes)}
+                />
+              ))}
+            </View>
+            {pause > 0 && (
+              <Interrupteur
+                label="Pause payée"
+                detail={pausePayee ? 'Incluse dans les heures' : 'Déduite des heures facturées'}
+                valeur={pausePayee}
+                onChange={setPausePayee}
+              />
+            )}
+
+            <Separateur />
+            <SousTitre>Frais du quart</SousTitre>
             {modeDeplacement === 'km' && (
               <Champ
                 label="Kilométrage (km)"
@@ -447,55 +473,56 @@ export default function FormulaireQuart() {
               clavier="decimal-pad"
               placeholder="0,00"
             />
-          </Fondu>
-        )}
 
-        <Champ label="Notes" valeur={notes} onChange={setNotes} multiligne />
-
-        {nouveau && (
-          <>
             <Separateur />
-            <Interrupteur
-              label="Répéter ce quart"
-              detail="Un contrat de deux semaines en un seul geste"
-              valeur={repeter}
-              onChange={setRepeter}
-            />
-            {repeter && (
-              <Fondu>
-                <Text style={styles.label}>Jours de la semaine</Text>
-                <View style={styles.puces}>
-                  {JOURS_SEMAINE.map((jour) => (
-                    <Puce
-                      key={jour.nom}
-                      texte={jour.court}
-                      actif={joursRepetes.includes(jour.indice)}
-                      onPress={() =>
-                        setJoursRepetes((actuels) =>
-                          actuels.includes(jour.indice)
-                            ? actuels.filter((i) => i !== jour.indice)
-                            : [...actuels, jour.indice]
-                        )
-                      }
-                    />
-                  ))}
-                </View>
-                <Champ
-                  label="Nombre de semaines"
-                  valeur={semaines}
-                  onChange={setSemaines}
-                  clavier="number-pad"
+            <Champ label="Notes" valeur={notes} onChange={setNotes} multiligne />
+
+            {nouveau && (
+              <>
+                <Separateur />
+                <Interrupteur
+                  label="Répéter ce quart"
+                  detail="Un contrat de deux semaines en un seul geste"
+                  valeur={repeter}
+                  onChange={setRepeter}
                 />
-                <Doux>{resumeSerie(datesSerie)}</Doux>
-                {joursRepetes.length === 0 && (
-                  <Doux>
-                    Sans jour coché, seul le {JOURS_SEMAINE[indiceJour(date)].nom} de la date
-                    choisie est créé.
-                  </Doux>
+                {repeter && (
+                  <Fondu>
+                    <Text style={styles.label}>Jours de la semaine</Text>
+                    <View style={styles.puces}>
+                      {JOURS_SEMAINE.map((jour) => (
+                        <Puce
+                          key={jour.nom}
+                          texte={jour.court}
+                          actif={joursRepetes.includes(jour.indice)}
+                          onPress={() =>
+                            setJoursRepetes((actuels) =>
+                              actuels.includes(jour.indice)
+                                ? actuels.filter((i) => i !== jour.indice)
+                                : [...actuels, jour.indice]
+                            )
+                          }
+                        />
+                      ))}
+                    </View>
+                    <Champ
+                      label="Nombre de semaines"
+                      valeur={semaines}
+                      onChange={setSemaines}
+                      clavier="number-pad"
+                    />
+                    <Doux>{resumeSerie(datesSerie)}</Doux>
+                    {joursRepetes.length === 0 && (
+                      <Doux>
+                        Sans jour coché, seul le {JOURS_SEMAINE[indiceJour(date)].nom} de la date
+                        choisie est créé.
+                      </Doux>
+                    )}
+                  </Fondu>
                 )}
-              </Fondu>
+              </>
             )}
-          </>
+          </Fondu>
         )}
 
         {!nouveau && (
@@ -596,27 +623,36 @@ const styles = StyleSheet.create({
     color: couleurs.texte,
     marginVertical: espace.m,
   },
-  ligneFrais: {
+  ligneDetails: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: espace.m,
-    paddingVertical: espace.s,
+    backgroundColor: couleurs.carte,
+    borderWidth: 1,
+    borderColor: couleurs.bordure,
+    borderRadius: rayon,
+    paddingVertical: espace.m,
+    paddingHorizontal: espace.l,
     marginBottom: espace.m,
   },
-  fraisLabel: {
+  detailsTexte: {
+    flex: 1,
+  },
+  detailsLabel: {
+    fontSize: 15,
+    fontFamily: police.demi,
+    color: couleurs.texte,
+  },
+  detailsResume: {
     fontSize: 13,
     fontFamily: police.normal,
     color: couleurs.doux,
+    marginTop: 2,
   },
-  fraisResume: {
-    fontSize: 15,
-    fontFamily: police.normal,
-    color: couleurs.texte,
-  },
-  modifier: {
-    fontSize: 14,
-    fontFamily: police.demi,
+  eviter: {
+    backgroundColor: couleurs.fond,
+    marginTop: espace.m,
   },
   frais: {
     flexDirection: 'row',

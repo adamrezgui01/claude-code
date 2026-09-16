@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
+import * as Haptics from 'expo-haptics';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   LayoutChangeEvent,
   PanResponder,
@@ -14,17 +15,23 @@ import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme'
 
 /**
  * Les vues jour et semaine, en colonnes façon Google Agenda : chaque quart est
- * un bloc dont la hauteur correspond à ses heures. C'est ce qui rend visibles
- * d'un coup d'œil les trous et les chevauchements d'une même journée entre deux
- * pharmacies — ce qu'une liste ne montre pas.
+ * un bloc dont la hauteur correspond à ses heures. Le quadrillé — lignes des
+ * heures et séparateurs entre les jours — n'est pas décoratif : sans lui, les
+ * blocs paraissent pêle-mêle et on n'arrive pas à se situer.
  */
 
 const LARGEUR_AXE = 44;
 const PX_PAR_HEURE = 56;
 /** Au dépôt, l'heure s'aimante : sur un petit écran, 9 h 00 et 9 h 10 se jouent à quelques pixels. */
 const AIMANT_MINUTES = 15;
+/** Maintien qui arme le déplacement. */
+const MAINTIEN_DEPLACER = 250;
+/** Maintien supplémentaire qui bascule en duplication. */
+const MAINTIEN_DUPLIQUER = 450;
 
 const JOURS_COURTS = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'];
+
+type Mode = 'deplacer' | 'dupliquer';
 
 type Bloc = {
   quart: QuartDetaille;
@@ -74,19 +81,26 @@ export function VueColonnes({
   jours,
   quartsParJour,
   onOuvrir,
+  onDeplacer,
   onDupliquer,
   onArmer,
 }: {
   jours: string[];
   quartsParJour: Map<string, QuartDetaille[]>;
   onOuvrir: (id: number) => void;
+  onDeplacer: (quartId: number, date: string, heure: string) => void;
   onDupliquer: (quartId: number, date: string, heure: string) => void;
   onArmer: (arme: boolean) => void;
 }) {
   const accent = useAccent();
   const [largeur, setLargeur] = useState(0);
   const [source, setSource] = useState<QuartDetaille | null>(null);
-  const [fantome, setFantome] = useState<{ x: number; y: number } | null>(null);
+  const [mode, setMode] = useState<Mode>('deplacer');
+  const [pointe, setPointe] = useState<{ x: number; y: number } | null>(null);
+
+  const grille = useRef<View>(null);
+  const origine = useRef({ x: 0, y: 0 });
+  const minuterie = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const visibles = useMemo(
     () => jours.flatMap((jour) => quartsParJour.get(jour) ?? []),
@@ -109,50 +123,81 @@ export function VueColonnes({
   const hauteur = (plage.fin - plage.debut) * pxParMinute;
   const largeurColonne = jours.length > 0 ? (largeur - LARGEUR_AXE) / jours.length : 0;
 
-  const etat = useRef({ source, largeurColonne, plage, pxParMinute });
-  etat.current = { source, largeurColonne, plage, pxParMinute };
+  const etat = useRef({ source, mode, largeurColonne, plage, pxParMinute, jours });
+  etat.current = { source, mode, largeurColonne, plage, pxParMinute, jours };
+
+  useEffect(() => () => {
+    if (minuterie.current) clearTimeout(minuterie.current);
+  }, []);
+
+  function desarmer() {
+    if (minuterie.current) clearTimeout(minuterie.current);
+    minuterie.current = null;
+    setSource(null);
+    setPointe(null);
+    setMode('deplacer');
+    onArmer(false);
+  }
+
+  /**
+   * Un maintien court arme le déplacement — le geste courant. Garder le doigt
+   * appuyé bascule en duplication, avec une vibration pour que l'usager le
+   * sente sans avoir à regarder l'écran.
+   */
+  function armer(quart: QuartDetaille) {
+    setSource(quart);
+    setMode('deplacer');
+    onArmer(true);
+    grille.current?.measureInWindow((x, y) => {
+      origine.current = { x, y };
+    });
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    minuterie.current = setTimeout(() => {
+      setMode('dupliquer');
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    }, MAINTIEN_DUPLIQUER);
+  }
+
+  function cible(pageX: number, pageY: number) {
+    const { largeurColonne: largeurCol, plage: p, pxParMinute: px, jours: j } = etat.current;
+    const x = pageX - origine.current.x;
+    const y = pageY - origine.current.y;
+    const colonne = Math.floor((x - LARGEUR_AXE) / Math.max(largeurCol, 1));
+    const jour = j[Math.min(Math.max(colonne, 0), j.length - 1)];
+    const brut = p.debut + y / px;
+    const aimante = Math.round(brut / AIMANT_MINUTES) * AIMANT_MINUTES;
+    return { jour, minutes: Math.min(Math.max(aimante, 0), 23 * 60 + 45) };
+  }
 
   const pan = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => !!etat.current.source,
-      onMoveShouldSetPanResponder: () => !!etat.current.source,
+      // Capture : une fois le bloc armé, c'est la grille qui suit le doigt,
+      // même si le geste a commencé sur le bloc.
+      onMoveShouldSetPanResponderCapture: () => !!etat.current.source,
       onPanResponderMove: (_, geste) => {
-        setFantome({ x: geste.moveX, y: geste.dy });
+        if (minuterie.current) {
+          // Le doigt bouge : on reste en déplacement plutôt que de basculer en
+          // duplication pendant le glissement.
+          clearTimeout(minuterie.current);
+          minuterie.current = null;
+        }
+        setPointe({ x: geste.moveX - origine.current.x, y: geste.moveY - origine.current.y });
       },
-      onPanResponderRelease: (evenement, geste) => {
-        const { source: quart, largeurColonne: largeurCol, plage: p, pxParMinute: px } =
-          etat.current;
-        if (!quart || largeurCol <= 0) {
-          setSource(null);
-          setFantome(null);
-          onArmer(false);
+      onPanResponderRelease: (_, geste) => {
+        const quart = etat.current.source;
+        const modeFinal = etat.current.mode;
+        if (!quart || etat.current.largeurColonne <= 0) {
+          desarmer();
           return;
         }
-        const x = evenement.nativeEvent.locationX;
-        const y = evenement.nativeEvent.locationY;
-        const colonne = Math.floor((x - LARGEUR_AXE) / largeurCol);
-        const jour = jours[Math.min(Math.max(colonne, 0), jours.length - 1)];
-        const brut = p.debut + y / px;
-        const aimante = Math.round(brut / AIMANT_MINUTES) * AIMANT_MINUTES;
-        const minutes = Math.min(Math.max(aimante, 0), 23 * 60 + 45);
-
-        setSource(null);
-        setFantome(null);
-        onArmer(false);
-        onDupliquer(quart.id, jour, formaterHeure(minutes));
+        const { jour, minutes } = cible(geste.moveX, geste.moveY);
+        desarmer();
+        if (modeFinal === 'dupliquer') onDupliquer(quart.id, jour, formaterHeure(minutes));
+        else onDeplacer(quart.id, jour, formaterHeure(minutes));
       },
-      onPanResponderTerminate: () => {
-        setSource(null);
-        setFantome(null);
-        onArmer(false);
-      },
+      onPanResponderTerminate: desarmer,
     })
   ).current;
-
-  function armer(quart: QuartDetaille) {
-    setSource(quart);
-    onArmer(true);
-  }
 
   const heuresAxe: number[] = [];
   for (let m = plage.debut; m <= plage.fin; m += 60) heuresAxe.push(m);
@@ -164,16 +209,10 @@ export function VueColonnes({
       {!!source && (
         <View style={[styles.consigne, { borderColor: accent }]}>
           <Text style={[styles.consigneTexte, { color: accent }]}>
-            Glissez la copie de {source.pharmacie_nom} où vous voulez.
+            {mode === 'dupliquer'
+              ? `Copie de ${source.pharmacie_nom} — relâchez pour la poser.`
+              : `${source.pharmacie_nom} — glissez pour déplacer, maintenez pour dupliquer.`}
           </Text>
-          <Pressable
-            onPress={() => {
-              setSource(null);
-              onArmer(false);
-            }}
-            hitSlop={8}>
-            <Text style={styles.consigneAnnuler}>Annuler</Text>
-          </Pressable>
         </View>
       )}
 
@@ -195,7 +234,7 @@ export function VueColonnes({
         })}
       </View>
 
-      <View style={[styles.grille, { height: hauteur }]} {...pan.panHandlers}>
+      <View ref={grille} style={[styles.grille, { height: hauteur }]} {...pan.panHandlers}>
         {heuresAxe.map((minutes) => (
           <View
             key={minutes}
@@ -204,6 +243,16 @@ export function VueColonnes({
             <View style={styles.trait} />
           </View>
         ))}
+
+        {/* Séparateurs verticaux : l'axe, puis un entre chaque jour. */}
+        {largeurColonne > 0 &&
+          jours.map((jour, index) => (
+            <View
+              key={`colonne-${jour}`}
+              pointerEvents="none"
+              style={[styles.separateur, { left: LARGEUR_AXE + index * largeurColonne }]}
+            />
+          ))}
 
         {jours.map((jour, index) =>
           disposer(quartsParJour.get(jour) ?? []).map((bloc) => {
@@ -214,19 +263,27 @@ export function VueColonnes({
                 key={bloc.quart.id}
                 onPress={() => onOuvrir(bloc.quart.id)}
                 onLongPress={() => armer(bloc.quart)}
-                delayLongPress={350}
+                onPressOut={() => {
+                  // Relâché sans avoir bougé : rien à déplacer.
+                  if (etat.current.source && !pointe) desarmer();
+                }}
+                delayLongPress={MAINTIEN_DEPLACER}
                 style={({ pressed }) => [
                   styles.bloc,
                   {
                     top: (bloc.debut - plage.debut) * pxParMinute,
                     height: Math.max(26, (bloc.fin - bloc.debut) * pxParMinute - 2),
-                    left: LARGEUR_AXE + index * largeurColonne + bloc.colonne * (largeurColonne / bloc.voies),
+                    left:
+                      LARGEUR_AXE +
+                      index * largeurColonne +
+                      bloc.colonne * (largeurColonne / bloc.voies) +
+                      1,
                     width: Math.max(24, largeurBloc),
                     backgroundColor: annule ? couleurs.fond : accentPale(accent),
                     borderLeftColor: annule ? couleurs.attente : accent,
                   },
                   pressed && { opacity: 0.6 },
-                  source?.id === bloc.quart.id && { opacity: 0.35 },
+                  source?.id === bloc.quart.id && { opacity: 0.3 },
                 ]}>
                 <Text
                   style={[styles.blocNom, annule && styles.barre]}
@@ -241,21 +298,25 @@ export function VueColonnes({
           })
         )}
 
-        {!!source && !!fantome && (
+        {!!source && !!pointe && (
           <View
             pointerEvents="none"
             style={[
               styles.fantome,
               {
                 borderColor: accent,
-                top: Math.max(0, (minutesDebut(source) - plage.debut) * pxParMinute + fantome.y),
+                borderStyle: mode === 'dupliquer' ? 'dashed' : 'solid',
+                top: Math.max(0, pointe.y - 12),
                 height: Math.max(26, (minutesFin(source) - minutesDebut(source)) * pxParMinute),
-                left: Math.max(LARGEUR_AXE, fantome.x - largeurColonne / 2),
+                left: Math.max(LARGEUR_AXE, pointe.x - largeurColonne / 2),
                 width: Math.max(24, largeurColonne - 2),
               },
             ]}>
             <Text style={[styles.blocNom, { color: accent }]} numberOfLines={1}>
-              {source.pharmacie_nom}
+              {mode === 'dupliquer' ? `Copie · ${source.pharmacie_nom}` : source.pharmacie_nom}
+            </Text>
+            <Text style={styles.blocHeure}>
+              {formaterHeure(cible(pointe.x + origine.current.x, pointe.y + origine.current.y).minutes)}
             </Text>
           </View>
         )}
@@ -275,23 +336,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   consigne: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: espace.m,
     borderBottomWidth: 2,
     paddingHorizontal: espace.m,
     paddingVertical: espace.s,
   },
   consigneTexte: {
-    flex: 1,
     fontSize: 13,
     fontFamily: police.demi,
-  },
-  consigneAnnuler: {
-    fontSize: 13,
-    fontFamily: police.normal,
-    color: couleurs.doux,
   },
   entetes: {
     flexDirection: 'row',
@@ -334,6 +385,13 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: couleurs.bordure,
   },
+  separateur: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 1,
+    backgroundColor: couleurs.bordure,
+  },
   bloc: {
     position: 'absolute',
     borderLeftWidth: 3,
@@ -359,10 +417,10 @@ const styles = StyleSheet.create({
   fantome: {
     position: 'absolute',
     borderWidth: 2,
-    borderStyle: 'dashed',
     borderRadius: rayon / 2,
     backgroundColor: couleurs.carte,
     paddingHorizontal: espace.s,
     paddingVertical: 3,
+    overflow: 'hidden',
   },
 });
