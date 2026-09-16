@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 
 import { PROVINCES, type Adresse } from '../db/types';
 import { codePostalValide, formaterCodePostal } from '../lib/adresses';
-import { chercherAdresses, type SuggestionAdresse } from '../lib/adressesRecherche';
+import { chercherAdresses, type Point, type SuggestionAdresse } from '../lib/adressesRecherche';
 import { Champ, Puce } from './composants';
 import { couleurs, espace, police, rayon, useAccent } from './theme';
 
@@ -19,12 +19,17 @@ export function SaisieAdresse({
   adresse,
   onChange,
   cle,
+  foyer,
 }: {
   adresse: Adresse;
   onChange: (a: Adresse) => void;
   cle: string;
+  /** Point de référence du classement : l'adresse de l'usager quand on la connaît. */
+  foyer?: Point;
 }) {
   const accent = useAccent();
+  const foyerLat = foyer?.lat;
+  const foyerLon = foyer?.lon;
   const [recherche, setRecherche] = useState('');
   const [suggestions, setSuggestions] = useState<SuggestionAdresse[]>([]);
   const [erreur, setErreur] = useState('');
@@ -42,14 +47,20 @@ export function SaisieAdresse({
     const appel = ++dernierAppel.current;
     setChargement(true);
     const minuterie = setTimeout(async () => {
-      const resultat = await chercherAdresses(recherche, cle);
+      const resultat = await chercherAdresses(
+        recherche,
+        cle,
+        foyerLat !== undefined && foyerLon !== undefined ? { lat: foyerLat, lon: foyerLon } : undefined
+      );
       if (appel !== dernierAppel.current) return;
       setSuggestions(resultat.suggestions);
       setErreur(resultat.erreur ?? '');
       setChargement(false);
     }, 350);
     return () => clearTimeout(minuterie);
-  }, [recherche, cle, manuel]);
+    // Des nombres, pas l'objet : un point recréé à chaque rendu relancerait le
+    // délai d'attente sans fin, et la recherche ne partirait jamais.
+  }, [recherche, cle, manuel, foyerLat, foyerLon]);
 
   function choisir(suggestion: SuggestionAdresse) {
     onChange({ ...suggestion.adresse, local: adresse.local });

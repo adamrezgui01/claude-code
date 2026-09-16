@@ -13,7 +13,7 @@ import { aujourdhui, debutMois, formatDateCourte } from '../src/lib/dates';
 import { calculerTotaux, quartsFacturables, type OptionsFacture } from '../src/lib/facture';
 import { bornes, type Preset } from '../src/lib/periodes';
 import { genererPdf } from '../src/lib/facturePdf';
-import { analyserNombre, argent, heures } from '../src/lib/format';
+import { analyserNombre, argent, heures, pluriel } from '../src/lib/format';
 import {
   Bouton,
   Carte,
@@ -24,11 +24,11 @@ import {
   Interrupteur,
   Puce,
   Rangee,
-  SelecteurDate,
   Separateur,
   SousTitre,
   Vide,
 } from '../src/ui/composants';
+import { SelecteurDate } from '../src/ui/Selecteurs';
 import { SelecteurPharmacie } from '../src/ui/SelecteurPharmacie';
 import { couleurs, espace, police } from '../src/ui/theme';
 
@@ -257,7 +257,7 @@ export default function GenererFacture() {
           </Carte>
 
           <SousTitre>
-            {groupes.length > 1 ? `${groupes.length} factures à générer` : 'Facture à générer'}
+            {groupes.length > 1 ? `${pluriel(groupes.length, 'facture')} à générer` : 'Facture à générer'}
           </SousTitre>
           {groupes.map((g) => {
             const t = calculerTotaux(options(g));
@@ -265,7 +265,7 @@ export default function GenererFacture() {
               <Carte key={g.pharmacie.id}>
                 <Rangee label={g.pharmacie.nom} valeur={argent(t.total)} accent />
                 <Doux>
-                  {g.quarts.length} quart{g.quarts.length > 1 ? 's' : ''} · {heures(t.totalHeures)} ·
+                  {pluriel(g.quarts.length, 'quart')} · {heures(t.totalHeures)} ·
                   honoraires {argent(t.honoraires)}
                   {t.deplacementMontant > 0 ? ` · déplacement ${argent(t.deplacementMontant)}` : ''}
                   {t.perDiemMontant > 0 ? ` · per diem ${argent(t.perDiemMontant)}` : ''}
@@ -288,7 +288,7 @@ export default function GenererFacture() {
               enCours
                 ? 'Génération…'
                 : groupes.length > 1
-                  ? `Générer les ${groupes.length} factures`
+                  ? `Générer les ${pluriel(groupes.length, 'facture')}`
                   : 'Générer la facture'
             }
             onPress={generer}

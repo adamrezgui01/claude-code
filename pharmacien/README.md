@@ -87,6 +87,13 @@ L'adresse est structurée : numéro civique, rue, local, code postal, ville,
 province. Le chemin normal est l'autocomplétion — l'usager tape, touche la bonne
 adresse, et tous les champs se remplissent, coordonnées comprises.
 
+Deux services sont interrogés dans l'ordre. `autocomplete` répond vite mais
+travaille par préfixe et rate des adresses complètes, surtout hors des grands
+centres ; `search` les retrouve. Le second n'est appelé que si le premier ne
+donne rien. La seule restriction est `boundary.country=CA` : le point de
+référence — l'adresse de l'usager quand on la connaît, Montréal sinon — ne fait
+que classer, il n'exclut jamais.
+
 Une recherche qui échoue le dit : clé absente, clé refusée avec son code HTTP,
 service muet, ou simplement aucune adresse trouvée. Une liste vide sans
 explication ne se diagnostique pas. La clé n'apparaît jamais dans les journaux.
@@ -121,12 +128,17 @@ jour bascule sur sa journée — on passe du survol au détail d'un seul geste.
 
 Jour et semaine sont des colonnes façon Google Agenda : chaque quart est un bloc
 vertical dont la hauteur correspond à ses heures, et les quarts qui se
-chevauchent se partagent la largeur. Le quadrillé — lignes des heures et
+chevauchent se partagent la largeur. La fenêtre d'heures se resserre autour du
+contenu, avec une demi-heure de marge de part et d'autre, puis s'étire sur la
+hauteur libre : un quart de 9 h à 17 h donne une vue de 8 h 30 à 17 h 30, sans
+défilement. L'échelle reste unique — un quart de huit heures reste deux fois
+plus haut qu'un quart de quatre — et quand l'amplitude dépasse ce que l'écran
+peut montrer lisiblement, la vue défile plutôt que d'écraser les blocs. Le
+calcul vit dans `src/lib/agenda.ts`, sans dépendance native. Le quadrillé — lignes des heures et
 séparateurs entre les jours — n'est pas décoratif : sans lui les blocs
 paraissent pêle-mêle et on n'arrive pas à se situer. C'est ce qui rend visibles
 d'un coup d'œil les trous et les chevauchements d'une même journée entre deux
-pharmacies, ce qu'une liste ne montre pas. La plage d'heures affichée se
-resserre autour des quarts du jour, sans jamais descendre sous huit heures.
+pharmacies, ce qu'une liste ne montre pas. Une journée sans quart retombe sur 8 h – 18 h.
 
 La vue jour garde les cartes de quarts sous la timeline : elles portent le taux,
 les frais et les notes, que les blocs ne montrent pas.
@@ -152,8 +164,18 @@ Les deux gestes se distinguent par la durée du maintien, jamais par la pression
 
 | Geste | Effet |
 | --- | --- |
-| Maintien court, puis glisser | déplace le quart, en silence |
-| Maintien prolongé, puis glisser | duplique, avec une vibration au basculement |
+| Maintien court (180 ms), puis glisser | déplace le quart, en silence |
+| Maintien immobile prolongé (650 ms) | bascule en duplication, seconde vibration plus marquée |
+
+Un doigt qui bouge avant le second seuil reste en déplacement pour toute la
+durée du geste : on ne bascule jamais en cours de glissement. Le double retour
+haptique est ce qui rend le geste apprenable — l'usager sent qu'il a changé de
+mode sans avoir à regarder.
+
+Tout le toucher vit dans un seul `PanResponder` posé sur la grille, et les blocs
+ne sont que des vues. Un `Pressable` par bloc gardait le doigt pour lui : la
+grille ne récupérait jamais le geste, l'indication changeait et rien ne
+bougeait.
 
 Un déplacement ne rouvre aucun formulaire : le dépôt dit déjà le jour et
 l'heure, et rouvrir un écran pour reconfirmer le geste qu'on vient de faire
@@ -355,18 +377,18 @@ la fréquence de l'action :
 
 Deux comportements que rien ne signale mais que l'absence rendrait pénible :
 
-- Les sélecteurs de date et d'heure s'ouvrent dans une feuille pleine largeur.
-  Posé dans une colonne à demi-largeur, un sélecteur iOS déborde de l'écran.
-- Ces mêmes sélecteurs reçoivent `themeVariant="light"`, `locale="fr-CA"`, leur
-  couleur de texte et l'accent. Le contrôle est natif et suit l'apparence du
-  système : sur un téléphone en mode sombre, il rendait son texte en blanc sur
-  la feuille blanche de l'application — rouleaux vides, calendrier sans
-  numéros, noms de jours en anglais. `userInterfaceStyle` vaut aussi `light`
-  dans `app.json`, mais Expo Go l'ignore, d'où le réglage au niveau du
-  composant.
+- Les sélecteurs de date et d'heure sont construits dans l'application
+  (`src/ui/Selecteurs.tsx`), pas pris au système. Le contrôle natif d'iOS
+  n'accepte qu'une couleur d'accent : ni sa barre de sélection grise, ni son
+  espacement, ni sa typographie ne se touchent, et il suivait l'apparence du
+  téléphone — en mode sombre, du texte blanc sur la feuille blanche de
+  l'application, donc des rouleaux vides et un calendrier sans numéros. Ce sont
+  deux des écrans les plus vus ; ils valent le code en plus.
 - Le bouton de retour affiche « Retour ». Sans `headerBackTitle`, il reprend le
   titre de l'écran précédent, soit `(tabs)` — un nom de route sous les yeux de
   l'usager.
+- Le contenu remonte quand le clavier s'ouvre : un champ en bas d'écran reste
+  visible pendant qu'on écrit dedans.
 - Le clavier se ferme au défilement, au toucher n'importe où en dehors d'un
   champ, et par une touche *Terminé* — un pavé numérique n'ayant pas de touche
   de retour sur iOS, une barre lui en donne une. Tout écran de saisie passe par

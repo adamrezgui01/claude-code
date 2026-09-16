@@ -29,11 +29,11 @@ import {
   Fondu,
   Interrupteur,
   Puce,
-  SelecteurDate,
   Separateur,
   SousTitre,
   Vide,
 } from '../../src/ui/composants';
+import { SelecteurDate } from '../../src/ui/Selecteurs';
 import { SaisieAdresse } from '../../src/ui/SaisieAdresse';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 

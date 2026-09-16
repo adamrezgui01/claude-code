@@ -29,8 +29,8 @@ import {
   lireIdentifiants,
   supprimerSecrets,
 } from '../../src/lib/codes';
-import { calculerDistanceAllerRetour, ouvrirItineraireVers } from '../../src/lib/distance';
-import { analyserNombre } from '../../src/lib/format';
+import { calculerDistance, ouvrirItineraireVers } from '../../src/lib/distance';
+import { analyserNombre, pluriel } from '../../src/lib/format';
 import { annulerRappels } from '../../src/lib/notifications';
 import {
   Bouton,
@@ -79,6 +79,8 @@ export default function FichePharmacie() {
   const [tauxParKm, setTauxParKm] = useState('');
   const [montantFixe, setMontantFixe] = useState('');
   const [calculEnCours, setCalculEnCours] = useState(false);
+  /** L'aller-retour reste la valeur par défaut : c'est le cas courant. */
+  const [allerRetour, setAllerRetour] = useState(true);
 
   const [logicielChoisi, setLogicielChoisi] = useState('');
   const [logicielAutre, setLogicielAutre] = useState('');
@@ -153,10 +155,11 @@ export default function FichePharmacie() {
 
   async function calculer() {
     setCalculEnCours(true);
-    const resultat = await calculerDistanceAllerRetour(
+    const resultat = await calculerDistance(
       adresseDesReglages(reglages),
       adresse,
-      reglages.cle_itineraire
+      reglages.cle_itineraire,
+      allerRetour
     );
     setCalculEnCours(false);
     if (resultat.ok) {
@@ -215,7 +218,7 @@ export default function FichePharmacie() {
     Alert.alert(
       'Supprimer cette pharmacie ?',
       nombreQuarts > 0
-        ? `Ses ${nombreQuarts} quarts, ses codes et ses identifiants seront supprimés aussi.`
+        ? `Ses ${pluriel(nombreQuarts, 'quart')}, ses codes et ses identifiants seront supprimés aussi.`
         : 'Ses codes et ses identifiants seront supprimés aussi.',
       [
         { text: 'Annuler', style: 'cancel' },
@@ -272,7 +275,17 @@ export default function FichePharmacie() {
           <>
             <Champ label="Nom" valeur={nom} onChange={setNom} placeholder="Nom de la pharmacie" />
 
-            <SaisieAdresse adresse={adresse} onChange={setAdresse} cle={reglages.cle_itineraire} />
+            {/* Les adresses proches de chez l'usager remontent en premier. */}
+            <SaisieAdresse
+              adresse={adresse}
+              onChange={setAdresse}
+              cle={reglages.cle_itineraire}
+              foyer={
+                reglages.adresse_latitude !== null && reglages.adresse_longitude !== null
+                  ? { lat: reglages.adresse_latitude, lon: reglages.adresse_longitude }
+                  : undefined
+              }
+            />
 
             {!nouvelle && !estLocalisee(adresse) && (
               <Carte style={styles.avis}>
@@ -432,11 +445,21 @@ export default function FichePharmacie() {
             {mode === 'km' && (
               <>
                 <Champ
-                  label="Distance aller-retour (km)"
+                  label={`Distance ${allerRetour ? 'aller-retour' : 'aller simple'} (km)`}
                   valeur={distance}
                   onChange={setDistance}
                   clavier="decimal-pad"
                   placeholder="0"
+                />
+                <Interrupteur
+                  label="Aller-retour"
+                  detail={
+                    allerRetour
+                      ? 'Le trajet est compté dans les deux sens'
+                      : 'Le trajet n’est compté qu’une fois'
+                  }
+                  valeur={allerRetour}
+                  onChange={setAllerRetour}
                 />
                 <Bouton
                   titre={calculEnCours ? 'Calcul…' : 'Calculer la distance'}

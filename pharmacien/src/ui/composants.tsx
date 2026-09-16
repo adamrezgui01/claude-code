@@ -1,9 +1,9 @@
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { ReactNode, useEffect, useId, useRef, useState } from 'react';
 import {
   Animated,
   InputAccessoryView,
   Keyboard,
+  KeyboardAvoidingView,
   KeyboardTypeOptions,
   Modal,
   Platform,
@@ -17,13 +17,13 @@ import {
   ViewStyle,
 } from 'react-native';
 
-import { analyserDate, combiner, dateISO, formatDateLongue, heureISO } from '../lib/dates';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 
 /**
- * Enveloppe de tout écran qui contient des champs. Le clavier se ferme au
- * défilement et au toucher n'importe où en dehors d'un champ, comme partout
- * ailleurs sur un téléphone.
+ * Enveloppe de tout écran qui contient des champs. Trois comportements que
+ * l'usager attend de n'importe quelle application : le contenu remonte quand le
+ * clavier s'ouvre, pour qu'un champ du bas reste visible ; le clavier se ferme
+ * au défilement ; et il se ferme au toucher n'importe où en dehors d'un champ.
  */
 export function Ecran({
   children,
@@ -33,15 +33,20 @@ export function Ecran({
   style?: ViewStyle;
 }) {
   return (
-    <ScrollView
+    <KeyboardAvoidingView
       style={styles.ecran}
-      contentContainerStyle={[styles.ecranContenu, style]}
-      keyboardShouldPersistTaps="handled"
-      keyboardDismissMode="on-drag">
-      <Pressable onPress={Keyboard.dismiss} accessible={false}>
-        {children}
-      </Pressable>
-    </ScrollView>
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView
+        style={styles.ecran}
+        contentContainerStyle={[styles.ecranContenu, style]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets>
+        <Pressable onPress={Keyboard.dismiss} accessible={false}>
+          {children}
+        </Pressable>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -229,6 +234,41 @@ export function Bouton({
   );
 }
 
+/**
+ * Rangée d'options en texte, précédée d'un libellé gris. Des options posées
+ * seules ne disent pas ce qu'elles règlent : « A – Z » à côté de
+ * « Fréquentation » ne dit pas qu'il s'agit du tri.
+ */
+export function ChoixDiscret<T extends string>({
+  libelle,
+  options,
+  valeur,
+  onChange,
+}: {
+  libelle: string;
+  options: { valeur: T; texte: string }[];
+  valeur: T;
+  onChange: (v: T) => void;
+}) {
+  const accent = useAccent();
+  return (
+    <View style={styles.choixDiscret}>
+      <Text style={styles.choixLibelle}>{libelle}</Text>
+      {options.map((option) => (
+        <Pressable key={option.valeur} onPress={() => onChange(option.valeur)} hitSlop={8}>
+          <Text
+            style={[
+              styles.choixTexte,
+              valeur === option.valeur && { color: accent, fontFamily: police.demi },
+            ]}>
+            {option.texte}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 export function Puce({
   texte,
   actif,
@@ -320,183 +360,32 @@ export function Rangee({
   );
 }
 
-/**
- * Le contrôle natif suit l'apparence du système : en mode sombre il rend son
- * texte en blanc, sur la feuille blanche de l'application — des rouleaux vides
- * et un calendrier sans numéros. On lui impose donc l'apparence claire, ses
- * couleurs et sa langue, à chaque endroit où il apparaît.
- */
-const PICKER_COMMUN = {
-  themeVariant: 'light' as const,
-  locale: 'fr-CA',
-  textColor: couleurs.texte,
-};
-
-/**
- * Feuille qui contient un sélecteur natif. Sur iOS, un sélecteur posé dans une
- * colonne à demi-largeur déborde de l'écran ; ici il a toute la largeur, quel
- * que soit l'endroit d'où on l'ouvre.
- */
-function FeuillePicker({
-  ouvert,
-  titre,
-  onFermer,
-  children,
-}: {
-  ouvert: boolean;
-  titre: string;
-  onFermer: () => void;
-  children: ReactNode;
-}) {
-  const accent = useAccent();
-  return (
-    <Modal visible={ouvert} transparent animationType="fade" onRequestClose={onFermer}>
-      <Pressable style={styles.voile} onPress={onFermer}>
-        <Pressable style={styles.feuille} onPress={() => {}}>
-          <Text style={styles.feuilleTitre}>{titre}</Text>
-          <View style={styles.feuilleCorps}>{children}</View>
-          <Pressable style={styles.feuilleAction} onPress={onFermer} hitSlop={8}>
-            <Text style={[styles.feuilleTexte, { color: accent }]}>Terminé</Text>
-          </Pressable>
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
-}
-
-export function SelecteurDate({
-  label,
-  valeur,
-  onChange,
-}: {
-  label: string;
-  valeur: string;
-  onChange: (iso: string) => void;
-}) {
-  const accent = useAccent();
-  const [ouvert, setOuvert] = useState(false);
-  const picker = (
-    <DateTimePicker
-      {...PICKER_COMMUN}
-      accentColor={accent}
-      value={analyserDate(valeur)}
-      mode="date"
-      display={Platform.OS === 'ios' ? 'inline' : 'default'}
-      onChange={(evenement, date) => {
-        if (Platform.OS !== 'ios') setOuvert(false);
-        if (evenement.type === 'set' && date) onChange(dateISO(date));
-      }}
-    />
-  );
-
-  return (
-    <View style={styles.champ}>
-      <Text style={styles.label}>{label}</Text>
-      <Pressable style={styles.saisieBoite} onPress={() => setOuvert(true)}>
-        <Text style={styles.saisieTexte}>{formatDateLongue(valeur)}</Text>
-      </Pressable>
-      {Platform.OS === 'ios' ? (
-        <FeuillePicker ouvert={ouvert} titre={label} onFermer={() => setOuvert(false)}>
-          {picker}
-        </FeuillePicker>
-      ) : (
-        ouvert && picker
-      )}
-    </View>
-  );
-}
-
-export function SelecteurHeure({
-  label,
-  valeur,
-  onChange,
-}: {
-  label: string;
-  valeur: string;
-  onChange: (heure: string) => void;
-}) {
-  const accent = useAccent();
-  const [ouvert, setOuvert] = useState(false);
-  const picker = (
-    <DateTimePicker
-      {...PICKER_COMMUN}
-      accentColor={accent}
-      value={combiner(dateISO(new Date()), valeur)}
-      mode="time"
-      is24Hour
-      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-      style={styles.pickerLarge}
-      onChange={(evenement, date) => {
-        if (Platform.OS !== 'ios') setOuvert(false);
-        if (evenement.type === 'set' && date) onChange(heureISO(date));
-      }}
-    />
-  );
-
-  return (
-    <View style={[styles.champ, styles.champCourt]}>
-      <Text style={styles.label}>{label}</Text>
-      <Pressable style={styles.saisieBoite} onPress={() => setOuvert(true)}>
-        <Text style={styles.saisieTexte}>{valeur}</Text>
-      </Pressable>
-      {Platform.OS === 'ios' ? (
-        <FeuillePicker ouvert={ouvert} titre={label} onFermer={() => setOuvert(false)}>
-          {picker}
-        </FeuillePicker>
-      ) : (
-        ouvert && picker
-      )}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
+  choixDiscret: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: espace.m,
+    marginBottom: espace.m,
+  },
+  choixLibelle: {
+    fontSize: 11,
+    fontFamily: police.normal,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    color: couleurs.doux,
+  },
+  choixTexte: {
+    fontSize: 14,
+    fontFamily: police.normal,
+    color: couleurs.doux,
+  },
   ecran: {
     flex: 1,
   },
   ecranContenu: {
     padding: espace.l,
     paddingBottom: espace.xxl,
-  },
-  voile: {
-    flex: 1,
-    backgroundColor: '#1E1B2288',
-    justifyContent: 'flex-end',
-  },
-  feuille: {
-    backgroundColor: couleurs.carte,
-    borderTopLeftRadius: rayon * 1.5,
-    borderTopRightRadius: rayon * 1.5,
-    paddingTop: espace.l,
-    paddingBottom: espace.xxl,
-    paddingHorizontal: espace.l,
-  },
-  feuilleTitre: {
-    fontSize: 13,
-    fontFamily: police.demi,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    color: couleurs.doux,
-    textAlign: 'center',
-  },
-  feuilleCorps: {
-    alignItems: 'stretch',
-    marginVertical: espace.s,
-    backgroundColor: couleurs.carte,
-    borderRadius: rayon,
-    overflow: 'hidden',
-  },
-  pickerLarge: {
-    width: '100%',
-  },
-  feuilleAction: {
-    alignSelf: 'center',
-    paddingVertical: espace.s,
-    paddingHorizontal: espace.xl,
-  },
-  feuilleTexte: {
-    fontSize: 17,
-    fontFamily: police.demi,
   },
   barreClavier: {
     flexDirection: 'row',
@@ -552,9 +441,6 @@ const styles = StyleSheet.create({
   },
   champ: {
     marginBottom: espace.m,
-  },
-  champCourt: {
-    flex: 1,
   },
   label: {
     fontSize: 13,

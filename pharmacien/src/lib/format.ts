@@ -22,6 +22,15 @@ export function nombre(valeur: number, decimales = 1): string {
   return texte.replace(/,0$/, '');
 }
 
+/**
+ * Accorde un compteur : « 0 quart », « 1 quart », « 2 quarts ». En français,
+ * zéro prend le singulier — contrairement à l'anglais. Le pluriel irrégulier se
+ * donne en troisième argument.
+ */
+export function pluriel(compte: number, singulier: string, pluriel = `${singulier}s`): string {
+  return `${compte} ${Math.abs(compte) < 2 ? singulier : pluriel}`;
+}
+
 /** Lit un montant saisi au clavier, en acceptant la virgule décimale. */
 export function analyserNombre(texte: string): number {
   const valeur = parseFloat(texte.replace(/\s/g, '').replace(',', '.'));

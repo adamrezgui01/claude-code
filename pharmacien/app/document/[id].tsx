@@ -18,8 +18,8 @@ import {
   Doux,
   Ecran,
   Fondu,
-  SelecteurDate,
 } from '../../src/ui/composants';
+import { SelecteurDate } from '../../src/ui/Selecteurs';
 import { espace } from '../../src/ui/theme';
 
 export default function FormulaireDocument() {

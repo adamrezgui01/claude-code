@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { listerFrais } from '../../src/db/frais';
@@ -16,6 +16,7 @@ import {
   corrigerHeures,
   creerQuart,
   definirAnnule,
+  listerQuarts,
   enregistrerRappels,
   finDuQuart,
   modifierQuart,
@@ -28,7 +29,7 @@ import {
 import type { FraisExtra, ModeDeplacement, Pharmacie } from '../../src/db/types';
 import { aujourdhui, dureeHeures } from '../../src/lib/dates';
 import { dureePrevue } from '../../src/lib/facture';
-import { analyserNombre, argent, heures } from '../../src/lib/format';
+import { analyserNombre, argent, heures, pluriel } from '../../src/lib/format';
 import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
 import {
   datesRecurrentes,
@@ -47,11 +48,10 @@ import {
   Fondu,
   Interrupteur,
   Puce,
-  SelecteurDate,
-  SelecteurHeure,
   Separateur,
   SousTitre,
 } from '../../src/ui/composants';
+import { SelecteurDate, SelecteurHeure } from '../../src/ui/Selecteurs';
 import { Recompense } from '../../src/ui/Recompense';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
@@ -170,6 +170,12 @@ export default function FormulaireQuart() {
     setAEviter(!!p.a_eviter);
   }
 
+  /** Les jours qui portent déjà un quart, marqués d'un point dans le calendrier. */
+  const joursOccupes = useMemo(
+    () => new Set(listerQuarts().filter((q) => q.id !== quartId).map((q) => q.date)),
+    [quartId]
+  );
+
   const duree = dureePrevue(heureDebut, heureFin, pause, pausePayee);
   const totalFrais = frais.reduce((t, f) => t + f.montant, 0);
   const nbSemaines = Math.max(1, Math.round(analyserNombre(semaines) || 1));
@@ -187,7 +193,7 @@ export default function FormulaireQuart() {
     if (modeDeplacement === 'km' && km > 0) morceaux.push(`${km} km`);
     if (modeDeplacement === 'fixe' && fixe > 0) morceaux.push(argent(fixe));
     if (repas > 0) morceaux.push(`repas ${argent(repas)}`);
-    if (datesSerie.length > 1) morceaux.push(`${datesSerie.length} quarts`);
+    if (datesSerie.length > 1) morceaux.push(pluriel(datesSerie.length, 'quart'));
     return morceaux.length > 0 ? morceaux.join(' · ') : 'Aux valeurs habituelles';
   }
 
@@ -242,7 +248,7 @@ export default function FormulaireQuart() {
     for (const id of identifiants) await programmerRappels(id);
 
     setRecompense(
-      identifiants.length > 1 ? `${identifiants.length} quarts ajoutés` : 'Quart ajouté'
+      identifiants.length > 1 ? `${pluriel(identifiants.length, 'quart')} ajoutés` : 'Quart ajouté'
     );
   }
 
@@ -384,7 +390,12 @@ export default function FormulaireQuart() {
 
         <Separateur />
 
-        <SelecteurDate label="Date" valeur={date} onChange={setDate} />
+        <SelecteurDate
+          label="Date"
+          valeur={date}
+          onChange={setDate}
+          joursMarques={joursOccupes}
+        />
         <View style={styles.rangee}>
           <SelecteurHeure label="Début" valeur={heureDebut} onChange={setHeureDebut} />
           <SelecteurHeure label="Fin" valeur={heureFin} onChange={setHeureFin} />

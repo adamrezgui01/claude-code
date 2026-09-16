@@ -16,8 +16,14 @@ import { adresseRenseignee, adresseUneLigne, formaterCodePostal } from './adress
  */
 
 const AUTOCOMPLETE = 'https://api.openrouteservice.org/geocode/autocomplete';
+const RECHERCHE = 'https://api.openrouteservice.org/geocode/search';
 
-/** Biais vers le Québec : Montréal sert de point de référence. */
+/**
+ * Point de référence par défaut, quand l'usager n'a pas encore d'adresse :
+ * Montréal. C'est un biais de classement, jamais un filtre — une adresse de
+ * Rouyn-Noranda remonte quand même, simplement plus bas dans la liste. La seule
+ * restriction est le pays.
+ */
 const FOYER = { lat: 45.5019, lon: -73.5674 };
 
 const REGIONS: Record<string, string> = {
@@ -77,35 +83,61 @@ function texte(valeur: unknown): string {
   return typeof valeur === 'string' ? valeur : '';
 }
 
-/** Adresses proposées pendant la frappe. */
+function construireUrl(service: string, recherche: string, cle: string, foyer: Point): string {
+  return (
+    `${service}?api_key=${encodeURIComponent(cle.trim())}` +
+    `&text=${encodeURIComponent(recherche.trim())}` +
+    `&boundary.country=CA&focus.point.lat=${foyer.lat}&focus.point.lon=${foyer.lon}&size=8`
+  );
+}
+
+/** La clé ne doit jamais se retrouver dans les journaux. */
+function sansCle(url: string): string {
+  return url.replace(/api_key=[^&]*/, 'api_key=…');
+}
+
+export type Point = { lat: number; lon: number };
+
+/**
+ * Adresses proposées pendant la frappe.
+ *
+ * Deux services sont interrogés dans l'ordre. `autocomplete` répond vite mais
+ * travaille par préfixe : il rate des adresses complètes, surtout hors des
+ * grands centres. `search` les retrouve. Le second n'est appelé que si le
+ * premier ne donne rien, donc le cas courant reste à un seul appel.
+ */
 export async function chercherAdresses(
   recherche: string,
-  cle: string
+  cle: string,
+  foyer: Point = FOYER
 ): Promise<ResultatRecherche> {
   if (recherche.trim().length < 4) return { suggestions: [] };
   if (!cle.trim()) {
     return { suggestions: [], erreur: 'Aucune clé OpenRouteService dans vos paramètres.' };
   }
 
-  const url =
-    `${AUTOCOMPLETE}?api_key=${encodeURIComponent(cle.trim())}` +
-    `&text=${encodeURIComponent(recherche.trim())}` +
-    `&boundary.country=CA&focus.point.lat=${FOYER.lat}&focus.point.lon=${FOYER.lon}&size=8`;
+  const premier = await interroger(construireUrl(AUTOCOMPLETE, recherche, cle, foyer));
+  if (premier.suggestions.length > 0 || premier.refus) return premier;
 
-  // La clé ne doit jamais se retrouver dans les journaux.
-  const urlSansCle = url.replace(/api_key=[^&]*/, 'api_key=…');
+  const second = await interroger(construireUrl(RECHERCHE, recherche, cle, foyer));
+  if (second.suggestions.length > 0) return second;
+  return second.erreur ? second : { suggestions: [], erreur: 'Aucune adresse trouvée.' };
+}
 
+/** Un appel à l'un des deux services de géocodage. */
+async function interroger(url: string): Promise<ResultatRecherche & { refus?: boolean }> {
   try {
     const reponse = await fetch(url);
     if (!reponse.ok) {
       const corps = await reponse.text().catch(() => '');
-      console.warn(`[adresses] ${reponse.status} ${urlSansCle} — ${corps.slice(0, 300)}`);
+      console.warn(`[adresses] ${reponse.status} ${sansCle(url)} — ${corps.slice(0, 300)}`);
+      const refus = reponse.status === 401 || reponse.status === 403;
       return {
         suggestions: [],
-        erreur:
-          reponse.status === 401 || reponse.status === 403
-            ? `Clé refusée par le service (${reponse.status}). Vérifiez-la dans Profil › Paramètres.`
-            : `Le service d’adresses a répondu ${reponse.status}.`,
+        refus,
+        erreur: refus
+          ? `Clé refusée par le service (${reponse.status}). Vérifiez-la dans Profil › Paramètres.`
+          : `Le service d’adresses a répondu ${reponse.status}.`,
       };
     }
     const donnees = await reponse.json();
@@ -135,12 +167,9 @@ export async function chercherAdresses(
       ];
     });
 
-    return {
-      suggestions,
-      erreur: suggestions.length === 0 ? 'Aucune adresse trouvée.' : undefined,
-    };
+    return { suggestions };
   } catch (e) {
-    console.warn(`[adresses] échec réseau ${urlSansCle} — ${String(e)}`);
+    console.warn(`[adresses] échec réseau ${sansCle(url)} — ${String(e)}`);
     return { suggestions: [], erreur: 'La recherche n’a pas abouti. Vérifiez votre connexion.' };
   }
 }

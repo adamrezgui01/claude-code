@@ -12,7 +12,7 @@ import {
 import type { Facture } from '../src/db/types';
 import { formatDateCourte } from '../src/lib/dates';
 import { partagerPdf, pdfDepuisHtml } from '../src/lib/facturePdf';
-import { argent, heures } from '../src/lib/format';
+import { argent, heures, pluriel } from '../src/lib/format';
 import { Bouton, Doux, Etiquette, Fondu, Vide } from '../src/ui/composants';
 import { Recompense } from '../src/ui/Recompense';
 import { couleurs, espace, police, rayon } from '../src/ui/theme';
@@ -76,8 +76,7 @@ export default function Factures() {
         {!nouvelles && enAttente.length > 0 && (
           <Fondu>
             <Text style={styles.resume}>
-              {argent(total)} en attente de paiement sur {enAttente.length} facture
-              {enAttente.length > 1 ? 's' : ''}
+              {argent(total)} en attente de paiement sur {pluriel(enAttente.length, 'facture')}
             </Text>
           </Fondu>
         )}

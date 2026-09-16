@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import {
   compterQuartsPharmacie,
@@ -11,15 +11,15 @@ import {
 } from '../../src/db/pharmacies';
 import type { Pharmacie } from '../../src/db/types';
 import { ligneVille } from '../../src/lib/adresses';
+import { pluriel } from '../../src/lib/format';
 import { normaliser } from '../../src/lib/texte';
-import { Bouton, Fondu, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { Bouton, ChoixDiscret, Ecran, Fondu, Vide } from '../../src/ui/composants';
+import { couleurs, espace, police, rayon } from '../../src/ui/theme';
 
 type Tri = 'alphabetique' | 'frequentation';
 
 export default function Repertoire() {
   const router = useRouter();
-  const accent = useAccent();
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
   const [recherche, setRecherche] = useState('');
   /** Le tri se change en regardant la liste, donc il reste sur la liste. */
@@ -49,7 +49,7 @@ export default function Repertoire() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.contenu} keyboardShouldPersistTaps="handled">
+    <Ecran>
       {pharmacies.length > 0 && (
         <>
           <View style={styles.recherche}>
@@ -70,24 +70,15 @@ export default function Repertoire() {
             )}
           </View>
 
-          <View style={styles.tri}>
-            {(
-              [
-                { valeur: 'alphabetique' as const, texte: 'A – Z' },
-                { valeur: 'frequentation' as const, texte: 'Fréquentation' },
-              ]
-            ).map((choix) => (
-              <Pressable key={choix.valeur} onPress={() => setTri(choix.valeur)} hitSlop={6}>
-                <Text
-                  style={[
-                    styles.triTexte,
-                    tri === choix.valeur && { color: accent, fontFamily: police.demi },
-                  ]}>
-                  {choix.texte}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          <ChoixDiscret
+            libelle="Trié par"
+            options={[
+              { valeur: 'alphabetique' as const, texte: 'A – Z' },
+              { valeur: 'frequentation' as const, texte: 'Fréquentation' },
+            ]}
+            valeur={tri}
+            onChange={setTri}
+          />
         </>
       )}
 
@@ -128,7 +119,7 @@ export default function Repertoire() {
       )}
 
       <Bouton titre="Ajouter une pharmacie" onPress={() => router.push('/pharmacie/nouvelle')} />
-    </ScrollView>
+    </Ecran>
   );
 }
 
@@ -166,16 +157,12 @@ function LignePharmacie({
           </Text>
         )}
       </View>
-      <Text style={styles.compte}>{compterQuartsPharmacie(pharmacie.id)} quarts</Text>
+      <Text style={styles.compte}>{pluriel(compterQuartsPharmacie(pharmacie.id), 'quart')}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  contenu: {
-    padding: espace.l,
-    paddingBottom: espace.xxl,
-  },
   recherche: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -194,16 +181,6 @@ const styles = StyleSheet.create({
     fontFamily: police.normal,
     color: couleurs.texte,
     paddingVertical: espace.s,
-  },
-  tri: {
-    flexDirection: 'row',
-    gap: espace.l,
-    marginBottom: espace.m,
-  },
-  triTexte: {
-    fontSize: 13,
-    fontFamily: police.normal,
-    color: couleurs.doux,
   },
   section: {
     fontSize: 12,

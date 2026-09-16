@@ -6,9 +6,10 @@ import type { Pharmacie } from '../db/types';
 import { ligneVille } from '../lib/adresses';
 import { normaliser } from '../lib/texte';
 import { Puce } from './composants';
-import { couleurs, espace, police, rayon, useAccent } from './theme';
+import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 
-const VISIBLES = 6;
+/** Au-delà, la liste devient un mur : le reste se déroule à la demande. */
+const VISIBLES = 5;
 
 /**
  * Choix d'une ou plusieurs pharmacies. Un remplaçant en fréquente des dizaines :
@@ -33,10 +34,13 @@ export function SelecteurPharmacie({
 
   const filtrees = useMemo(() => {
     const terme = normaliser(recherche.trim());
-    if (!terme) return pharmacies;
-    return pharmacies.filter(
-      (p) => normaliser(p.nom).includes(terme) || normaliser(ligneVille(p)).includes(terme)
-    );
+    const retenues = terme
+      ? pharmacies.filter(
+          (p) => normaliser(p.nom).includes(terme) || normaliser(ligneVille(p)).includes(terme)
+        )
+      : [...pharmacies];
+    // Les favorites en tête, le reste dans son ordre d'origine.
+    return retenues.sort((a, b) => (b.favori ? 1 : 0) - (a.favori ? 1 : 0));
   }, [pharmacies, recherche]);
 
   const cherche = recherche.trim().length > 0;
@@ -92,9 +96,10 @@ export function SelecteurPharmacie({
               onPress={() => onSelectionner(p.id)}
               style={({ pressed }) => [
                 styles.ligne,
-                choisie && { borderColor: accent, backgroundColor: `${accent}22` },
+                choisie && { borderColor: accent, backgroundColor: accentPale(accent) },
                 pressed && { opacity: 0.6 },
               ]}>
+              {!!p.favori && <Ionicons name="star" size={15} color={couleurs.favori} />}
               <View style={styles.texte}>
                 <Text
                   style={[styles.nom, choisie && { fontFamily: police.demi, color: accent }]}
@@ -113,9 +118,13 @@ export function SelecteurPharmacie({
         })
       )}
 
+      {/* Une flèche, pas une phrase : on la déroule ou on l'ignore. */}
       {restantes > 0 && (
-        <Pressable onPress={() => setToutAfficher(true)} hitSlop={8}>
-          <Text style={styles.lien}>Voir les {restantes} autres</Text>
+        <Pressable
+          onPress={() => setToutAfficher(true)}
+          hitSlop={10}
+          style={({ pressed }) => [styles.derouler, pressed && { opacity: 0.6 }]}>
+          <Ionicons name="chevron-down" size={20} color={accent} />
         </Pressable>
       )}
     </View>
@@ -123,6 +132,11 @@ export function SelecteurPharmacie({
 }
 
 const styles = StyleSheet.create({
+  derouler: {
+    alignSelf: 'center',
+    paddingVertical: espace.s,
+    paddingHorizontal: espace.xl,
+  },
   enTete: {
     flexDirection: 'row',
     flexWrap: 'wrap',

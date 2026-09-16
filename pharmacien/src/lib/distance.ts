@@ -5,8 +5,8 @@ import type { Adresse } from '../db/types';
 import { adresseRenseignee, adresseUneLigne, estLocalisee } from './adresses';
 
 /**
- * Distance routière entre le domicile et une pharmacie, et ouverture d'un
- * itinéraire dans l'application de cartes du téléphone.
+ * Distance routière vers une pharmacie, et ouverture d'un itinéraire dans
+ * l'application de cartes du téléphone.
  *
  * Le calcul passe par OpenRouteService, avec la clé des réglages — la même que
  * pour l'autocomplétion d'adresses. Tout le fournisseur est contenu ici.
@@ -31,10 +31,15 @@ async function coordonnees(adresse: Adresse): Promise<Point | null> {
   return premier ? { latitude: premier.latitude, longitude: premier.longitude } : null;
 }
 
-export async function calculerDistanceAllerRetour(
+/**
+ * Distance routière entre le domicile et une pharmacie. L'aller-retour est le
+ * cas courant, mais certaines ententes ne remboursent qu'un sens.
+ */
+export async function calculerDistance(
   adresseDomicile: Adresse,
   adressePharmacie: Adresse,
-  cle: string
+  cle: string,
+  allerRetour = true
 ): Promise<ResultatDistance> {
   if (!adresseRenseignee(adresseDomicile)) {
     return { ok: false, raison: 'Votre adresse est absente de votre profil.' };
@@ -86,7 +91,7 @@ export async function calculerDistanceAllerRetour(
       return { ok: false, raison: 'Aucun trajet routier trouvé entre les deux adresses.' };
     }
 
-    return { ok: true, km: Math.round((metres / 1000) * 2) };
+    return { ok: true, km: Math.round((metres / 1000) * (allerRetour ? 2 : 1)) };
   } catch {
     return { ok: false, raison: 'Le calcul a échoué. Vérifiez votre connexion.' };
   }

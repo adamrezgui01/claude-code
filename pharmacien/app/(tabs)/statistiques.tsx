@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { listerFraisPeriode } from '../../src/db/frais';
 import { listerPharmacies, listerPharmaciesRecentes } from '../../src/db/pharmacies';
@@ -8,20 +8,21 @@ import { listerQuartsPeriode } from '../../src/db/quarts';
 import type { Pharmacie } from '../../src/db/types';
 import { aujourdhui, debutMois, formatDateCourte } from '../../src/lib/dates';
 import { bornes, type Preset } from '../../src/lib/periodes';
-import { argent, heures, nombre } from '../../src/lib/format';
+import { argent, heures, nombre, pluriel } from '../../src/lib/format';
 import { calculerStatistiques } from '../../src/lib/stats';
 import {
   Bouton,
   Carte,
   Doux,
+  Ecran,
   Fondu,
   Puce,
   Rangee,
-  SelecteurDate,
   Separateur,
   SousTitre,
   Vide,
 } from '../../src/ui/composants';
+import { SelecteurDate } from '../../src/ui/Selecteurs';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
 import { couleurs, espace, police } from '../../src/ui/theme';
 
@@ -60,7 +61,7 @@ export default function Statistiques() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.contenu} keyboardShouldPersistTaps="handled">
+    <Ecran>
       <SousTitre>Période</SousTitre>
       <View style={styles.puces}>
         <Puce texte="Ce mois-ci" actif={preset === 'mois'} onPress={() => setPreset('mois')} />
@@ -120,7 +121,7 @@ export default function Statistiques() {
               valeur={argent(stats.montantDeplacement)}
             />
             <Rangee
-              label={`Per diem (${stats.joursTravailles} jours travaillés)`}
+              label={`Per diem (${pluriel(stats.joursTravailles, 'jour travaillé', 'jours travaillés')})`}
               valeur={argent(stats.montantPerDiem)}
             />
             <Rangee label="Frais extra" valeur={argent(stats.montantFraisExtra)} />
@@ -159,15 +160,11 @@ export default function Statistiques() {
           onPress={() => router.push('/factures')}
         />
       </View>
-    </ScrollView>
+    </Ecran>
   );
 }
 
 const styles = StyleSheet.create({
-  contenu: {
-    padding: espace.l,
-    paddingBottom: espace.xxl,
-  },
   puces: {
     flexDirection: 'row',
     flexWrap: 'wrap',

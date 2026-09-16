@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { listerPharmacies } from '../../src/db/pharmacies';
 import { delaisSecondaires, obtenirReglages } from '../../src/db/profil';
@@ -31,7 +31,7 @@ import {
 import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
 import { detecterChevauchements } from '../../src/lib/stats';
 import { Calendrier } from '../../src/ui/Calendrier';
-import { Bouton, Carte, Doux, Fondu, Puce, Vide } from '../../src/ui/composants';
+import { Bouton, Carte, ChoixDiscret, Doux, Fondu, Puce, Vide } from '../../src/ui/composants';
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 import { VueCarte, type PointCarte } from '../../src/ui/VueCarte';
@@ -43,6 +43,10 @@ type Affichage = 'jour' | 'semaine' | 'mois';
 export default function Horaire() {
   const router = useRouter();
   const accent = useAccent();
+  // Ce qui reste à l'agenda une fois l'en-tête, la barre d'onglets et le bouton
+  // d'ajout déduits : la vue s'y ajuste plutôt que d'imposer un défilement.
+  const { height } = useWindowDimensions();
+  const hauteurAgenda = Math.max(280, height - 400);
   const [quarts, setQuarts] = useState<QuartDetaille[]>([]);
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
   const [vue, setVue] = useState<Vue>('agenda');
@@ -189,6 +193,8 @@ export default function Horaire() {
         </Fondu>
       )}
 
+      {/* Une seule apparence pour la même fonction, et le sous-choix n'apparaît
+          que là où il a un sens : en agenda. */}
       <View style={styles.bascule}>
         <Puce texte="Agenda" actif={vue === 'agenda'} onPress={() => setVue('agenda')} />
         <Puce texte="Liste" actif={vue === 'liste'} onPress={() => setVue('liste')} />
@@ -197,19 +203,16 @@ export default function Horaire() {
 
       {vue === 'agenda' && (
         <Fondu>
-          <View style={styles.sousChoix}>
-            {(['jour', 'semaine', 'mois'] as const).map((choix) => (
-              <Pressable key={choix} onPress={() => setAffichage(choix)} hitSlop={6}>
-                <Text
-                  style={[
-                    styles.sousChoixTexte,
-                    affichage === choix && { color: accent, fontFamily: police.demi },
-                  ]}>
-                  {choix[0].toUpperCase() + choix.slice(1)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          <ChoixDiscret
+            libelle="Affichage"
+            options={[
+              { valeur: 'jour', texte: 'Jour' },
+              { valeur: 'semaine', texte: 'Semaine' },
+              { valeur: 'mois', texte: 'Mois' },
+            ]}
+            valeur={affichage}
+            onChange={setAffichage}
+          />
 
           {affichage === 'mois' ? (
             <>
@@ -241,6 +244,7 @@ export default function Horaire() {
               <VueColonnes
                 jours={affichage === 'jour' ? [jour] : semaine}
                 quartsParJour={parJour}
+                hauteurDisponible={hauteurAgenda}
                 onOuvrir={ouvrirQuart}
                 onDeplacer={deplacer}
                 onDupliquer={dupliquer}
@@ -321,6 +325,11 @@ export default function Horaire() {
               }
             />
           )}
+          <Bouton
+            titre="Ajouter un quart"
+            icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
+            onPress={() => router.push(`/quart/nouveau?date=${jour}`)}
+          />
         </Fondu>
       )}
 
@@ -363,17 +372,7 @@ const styles = StyleSheet.create({
   },
   bascule: {
     flexDirection: 'row',
-    marginBottom: espace.s,
-  },
-  sousChoix: {
-    flexDirection: 'row',
-    gap: espace.l,
-    marginBottom: espace.m,
-  },
-  sousChoixTexte: {
-    fontSize: 13,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    marginBottom: espace.xs,
   },
   navigation: {
     flexDirection: 'row',
