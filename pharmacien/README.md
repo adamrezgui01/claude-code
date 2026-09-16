@@ -87,6 +87,10 @@ L'adresse est structurée : numéro civique, rue, local, code postal, ville,
 province. Le chemin normal est l'autocomplétion — l'usager tape, touche la bonne
 adresse, et tous les champs se remplissent, coordonnées comprises.
 
+Une recherche qui échoue le dit : clé absente, clé refusée avec son code HTTP,
+service muet, ou simplement aucune adresse trouvée. Une liste vide sans
+explication ne se diagnostique pas. La clé n'apparaît jamais dans les journaux.
+
 Rien n'oblige à passer par là. Une pharmacie trop récente pour figurer dans la
 base, ou une panne de réseau, se contournent en saisissant les champs à la main.
 Une adresse incomplète ou non localisée s'enregistre quand même : la pharmacie
@@ -353,6 +357,16 @@ Deux comportements que rien ne signale mais que l'absence rendrait pénible :
 
 - Les sélecteurs de date et d'heure s'ouvrent dans une feuille pleine largeur.
   Posé dans une colonne à demi-largeur, un sélecteur iOS déborde de l'écran.
+- Ces mêmes sélecteurs reçoivent `themeVariant="light"`, `locale="fr-CA"`, leur
+  couleur de texte et l'accent. Le contrôle est natif et suit l'apparence du
+  système : sur un téléphone en mode sombre, il rendait son texte en blanc sur
+  la feuille blanche de l'application — rouleaux vides, calendrier sans
+  numéros, noms de jours en anglais. `userInterfaceStyle` vaut aussi `light`
+  dans `app.json`, mais Expo Go l'ignore, d'où le réglage au niveau du
+  composant.
+- Le bouton de retour affiche « Retour ». Sans `headerBackTitle`, il reprend le
+  titre de l'écran précédent, soit `(tabs)` — un nom de route sous les yeux de
+  l'usager.
 - Le clavier se ferme au défilement, au toucher n'importe où en dehors d'un
   champ, et par une touche *Terminé* — un pavé numérique n'ayant pas de touche
   de retour sur iOS, une barre lui en donne une. Tout écran de saisie passe par

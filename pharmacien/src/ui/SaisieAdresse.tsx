@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 import { PROVINCES, type Adresse } from '../db/types';
 import { codePostalValide, formaterCodePostal } from '../lib/adresses';
 import { chercherAdresses, type SuggestionAdresse } from '../lib/adressesRecherche';
-import { Champ, Doux, Puce } from './composants';
+import { Champ, Puce } from './composants';
 import { couleurs, espace, police, rayon, useAccent } from './theme';
 
 /**
@@ -27,6 +27,7 @@ export function SaisieAdresse({
   const accent = useAccent();
   const [recherche, setRecherche] = useState('');
   const [suggestions, setSuggestions] = useState<SuggestionAdresse[]>([]);
+  const [erreur, setErreur] = useState('');
   const [chargement, setChargement] = useState(false);
   const [manuel, setManuel] = useState(false);
   const [provinces, setProvinces] = useState(false);
@@ -35,14 +36,16 @@ export function SaisieAdresse({
   useEffect(() => {
     if (manuel || recherche.trim().length < 4) {
       setSuggestions([]);
+      setErreur('');
       return;
     }
     const appel = ++dernierAppel.current;
     setChargement(true);
     const minuterie = setTimeout(async () => {
-      const resultats = await chercherAdresses(recherche, cle);
+      const resultat = await chercherAdresses(recherche, cle);
       if (appel !== dernierAppel.current) return;
-      setSuggestions(resultats);
+      setSuggestions(resultat.suggestions);
+      setErreur(resultat.erreur ?? '');
       setChargement(false);
     }, 350);
     return () => clearTimeout(minuterie);
@@ -52,6 +55,7 @@ export function SaisieAdresse({
     onChange({ ...suggestion.adresse, local: adresse.local });
     setRecherche('');
     setSuggestions([]);
+    setErreur('');
   }
 
   function modifier<C extends keyof Adresse>(champ: C, valeur: Adresse[C]) {
@@ -93,11 +97,9 @@ export function SaisieAdresse({
             </Pressable>
           ))}
 
-          {!cle.trim() && (
-            <Doux>
-              Sans clé OpenRouteService dans les réglages, la recherche d’adresses ne fonctionne
-              pas. Vous pouvez entrer l’adresse à la main.
-            </Doux>
+          {/* Une recherche qui échoue le dit, et rappelle la porte de sortie. */}
+          {!!erreur && !chargement && (
+            <Text style={styles.erreur}>{erreur} Vous pouvez entrer l’adresse à la main.</Text>
           )}
         </View>
       )}
@@ -170,6 +172,12 @@ export function SaisieAdresse({
 }
 
 const styles = StyleSheet.create({
+  erreur: {
+    fontSize: 12,
+    fontFamily: police.normal,
+    color: couleurs.alerte,
+    marginTop: espace.xs,
+  },
   champ: {
     marginBottom: espace.s,
   },

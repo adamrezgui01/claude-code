@@ -8,6 +8,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
+      "userInterfaceStyle": "light",
       "supportsTablet": true,
       "bundleIdentifier": "com.pharmacien.remplacant",
       "infoPlist": {

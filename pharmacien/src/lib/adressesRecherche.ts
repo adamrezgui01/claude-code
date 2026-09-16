@@ -57,6 +57,17 @@ export type SuggestionAdresse = {
   adresse: Adresse;
 };
 
+/**
+ * Le résultat porte la raison d'un échec plutôt que de rendre une liste vide.
+ * Une recherche qui ne retourne rien sans rien dire est intestable : on ne sait
+ * pas si la clé manque, si le service a refusé, ou s'il n'y a simplement aucune
+ * adresse qui corresponde.
+ */
+export type ResultatRecherche = {
+  suggestions: SuggestionAdresse[];
+  erreur?: string;
+};
+
 function province(region: unknown): string {
   if (typeof region !== 'string') return 'Québec';
   return REGIONS[region.trim().toLowerCase()] ?? region;
@@ -66,25 +77,41 @@ function texte(valeur: unknown): string {
   return typeof valeur === 'string' ? valeur : '';
 }
 
-/** Adresses proposées pendant la frappe. Retourne une liste vide sans clé. */
+/** Adresses proposées pendant la frappe. */
 export async function chercherAdresses(
   recherche: string,
   cle: string
-): Promise<SuggestionAdresse[]> {
-  if (recherche.trim().length < 4 || !cle.trim()) return [];
+): Promise<ResultatRecherche> {
+  if (recherche.trim().length < 4) return { suggestions: [] };
+  if (!cle.trim()) {
+    return { suggestions: [], erreur: 'Aucune clé OpenRouteService dans vos paramètres.' };
+  }
 
   const url =
     `${AUTOCOMPLETE}?api_key=${encodeURIComponent(cle.trim())}` +
     `&text=${encodeURIComponent(recherche.trim())}` +
     `&boundary.country=CA&focus.point.lat=${FOYER.lat}&focus.point.lon=${FOYER.lon}&size=8`;
 
+  // La clé ne doit jamais se retrouver dans les journaux.
+  const urlSansCle = url.replace(/api_key=[^&]*/, 'api_key=…');
+
   try {
     const reponse = await fetch(url);
-    if (!reponse.ok) return [];
+    if (!reponse.ok) {
+      const corps = await reponse.text().catch(() => '');
+      console.warn(`[adresses] ${reponse.status} ${urlSansCle} — ${corps.slice(0, 300)}`);
+      return {
+        suggestions: [],
+        erreur:
+          reponse.status === 401 || reponse.status === 403
+            ? `Clé refusée par le service (${reponse.status}). Vérifiez-la dans Profil › Paramètres.`
+            : `Le service d’adresses a répondu ${reponse.status}.`,
+      };
+    }
     const donnees = await reponse.json();
     const entrees: unknown[] = Array.isArray(donnees?.features) ? donnees.features : [];
 
-    return entrees.flatMap((entree, index) => {
+    const suggestions = entrees.flatMap((entree, index) => {
       const p = (entree as { properties?: Record<string, unknown> })?.properties ?? {};
       const coordonnees = (entree as { geometry?: { coordinates?: number[] } })?.geometry
         ?.coordinates;
@@ -107,8 +134,14 @@ export async function chercherAdresses(
         },
       ];
     });
-  } catch {
-    return [];
+
+    return {
+      suggestions,
+      erreur: suggestions.length === 0 ? 'Aucune adresse trouvée.' : undefined,
+    };
+  } catch (e) {
+    console.warn(`[adresses] échec réseau ${urlSansCle} — ${String(e)}`);
+    return { suggestions: [], erreur: 'La recherche n’a pas abouti. Vérifiez votre connexion.' };
   }
 }
 

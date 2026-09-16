@@ -77,8 +77,11 @@ export default function Racine() {
             headerShadowVisible: false,
             contentStyle: { backgroundColor: couleurs.fond },
             animation: 'slide_from_right',
+            // Sans ça, le bouton de retour reprend le titre de l'écran
+            // précédent — donc « (tabs) », le nom technique de la route.
+            headerBackTitle: 'Retour',
           }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Horaire' }} />
           <Stack.Screen name="quart/[id]" options={{ title: 'Quart' }} />
           <Stack.Screen name="frais/[id]" options={{ title: 'Frais' }} />
           <Stack.Screen name="pharmacie/[id]" options={{ title: 'Pharmacie' }} />

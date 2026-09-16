@@ -321,6 +321,18 @@ export function Rangee({
 }
 
 /**
+ * Le contrôle natif suit l'apparence du système : en mode sombre il rend son
+ * texte en blanc, sur la feuille blanche de l'application — des rouleaux vides
+ * et un calendrier sans numéros. On lui impose donc l'apparence claire, ses
+ * couleurs et sa langue, à chaque endroit où il apparaît.
+ */
+const PICKER_COMMUN = {
+  themeVariant: 'light' as const,
+  locale: 'fr-CA',
+  textColor: couleurs.texte,
+};
+
+/**
  * Feuille qui contient un sélecteur natif. Sur iOS, un sélecteur posé dans une
  * colonne à demi-largeur déborde de l'écran ; ici il a toute la largeur, quel
  * que soit l'endroit d'où on l'ouvre.
@@ -361,9 +373,12 @@ export function SelecteurDate({
   valeur: string;
   onChange: (iso: string) => void;
 }) {
+  const accent = useAccent();
   const [ouvert, setOuvert] = useState(false);
   const picker = (
     <DateTimePicker
+      {...PICKER_COMMUN}
+      accentColor={accent}
       value={analyserDate(valeur)}
       mode="date"
       display={Platform.OS === 'ios' ? 'inline' : 'default'}
@@ -400,9 +415,12 @@ export function SelecteurHeure({
   valeur: string;
   onChange: (heure: string) => void;
 }) {
+  const accent = useAccent();
   const [ouvert, setOuvert] = useState(false);
   const picker = (
     <DateTimePicker
+      {...PICKER_COMMUN}
+      accentColor={accent}
       value={combiner(dateISO(new Date()), valeur)}
       mode="time"
       is24Hour
@@ -464,6 +482,9 @@ const styles = StyleSheet.create({
   feuilleCorps: {
     alignItems: 'stretch',
     marginVertical: espace.s,
+    backgroundColor: couleurs.carte,
+    borderRadius: rayon,
+    overflow: 'hidden',
   },
   pickerLarge: {
     width: '100%',
