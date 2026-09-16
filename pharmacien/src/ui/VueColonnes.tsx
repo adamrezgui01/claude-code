@@ -86,7 +86,19 @@ export function VueColonnes({
 
   const minuterieArmer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const minuterieDupliquer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const touche = useRef<{ quart: QuartDetaille; x: number; y: number } | null>(null);
+  /**
+   * Le bloc saisi, et l'écart entre le doigt et le coin du bloc au moment de la
+   * saisie. Sans cet écart, le bloc sauterait sous le doigt à l'instant où on
+   * l'attrape, et l'aimantation se calerait sur le doigt plutôt que sur le haut
+   * du bloc tel qu'on le voit.
+   */
+  const touche = useRef<{
+    quart: QuartDetaille;
+    dx: number;
+    dy: number;
+    largeur: number;
+    hauteur: number;
+  } | null>(null);
   const arme = useRef(false);
   // Le PanResponder est créé une seule fois : il ne verrait jamais un mode lu
   // dans le rendu. Il lui faut une référence.
@@ -142,18 +154,34 @@ export function VueColonnes({
 
   useEffect(() => desarmer, []);
 
-  function blocSous(x: number, y: number): QuartDetaille | null {
+  function rectangleSous(x: number, y: number): Rectangle | null {
     for (const r of etat.current.rectangles) {
-      if (x >= r.x && x <= r.x + r.largeur && y >= r.y && y <= r.y + r.hauteur) return r.quart;
+      if (x >= r.x && x <= r.x + r.largeur && y >= r.y && y <= r.y + r.hauteur) return r;
     }
     return null;
   }
 
-  function cible(x: number, y: number) {
+  /** Coin haut-gauche du bloc pendant le glissement, tel qu'il est dessiné. */
+  function coinDuBloc(doigt: { x: number; y: number }) {
+    const prise = touche.current;
+    return {
+      x: doigt.x - (prise?.dx ?? 0),
+      y: doigt.y - (prise?.dy ?? 0),
+    };
+  }
+
+  /**
+   * Jour et heure visés. Le point de référence est le haut du bloc tel qu'il
+   * apparaît à l'écran : déposer un bloc dont le haut est sur la ligne des 18 h
+   * le cale à 18 h 00, pas à 17 h 45.
+   */
+  function cible(doigt: { x: number; y: number }) {
     const { largeurColonne: largeurCol, plage: p, pxParMinute: px, jours: j } = etat.current;
-    const colonne = Math.floor((x - LARGEUR_AXE) / Math.max(largeurCol, 1));
+    const coin = coinDuBloc(doigt);
+    const centre = coin.x + (touche.current?.largeur ?? largeurCol) / 2;
+    const colonne = Math.floor((centre - LARGEUR_AXE) / Math.max(largeurCol, 1));
     const jour = j[Math.min(Math.max(colonne, 0), j.length - 1)];
-    const aimante = Math.round((p.debut + y / px) / AIMANT_MINUTES) * AIMANT_MINUTES;
+    const aimante = Math.round((p.debut + coin.y / px) / AIMANT_MINUTES) * AIMANT_MINUTES;
     return { jour, minutes: Math.min(Math.max(aimante, 0), 23 * 60 + 45) };
   }
 
@@ -161,7 +189,7 @@ export function VueColonnes({
     PanResponder.create({
       onStartShouldSetPanResponder: (e) => {
         const { locationX, locationY } = e.nativeEvent;
-        return !!blocSous(locationX, locationY);
+        return !!rectangleSous(locationX, locationY);
       },
       // Tant que le bloc n'est pas attaché au doigt, la page garde le droit de
       // défiler ; une fois armé, le geste nous appartient.
@@ -170,13 +198,20 @@ export function VueColonnes({
 
       onPanResponderGrant: (e) => {
         const { locationX, locationY } = e.nativeEvent;
-        const quart = blocSous(locationX, locationY);
-        if (!quart) return;
-        touche.current = { quart, x: locationX, y: locationY };
+        const rect = rectangleSous(locationX, locationY);
+        if (!rect) return;
+        touche.current = {
+          quart: rect.quart,
+          dx: locationX - rect.x,
+          dy: locationY - rect.y,
+          largeur: rect.largeur,
+          hauteur: rect.hauteur,
+        };
 
         minuterieArmer.current = setTimeout(() => {
           arme.current = true;
-          setSource(quart);
+          setSource(rect.quart);
+          // Le doigt n'a pas bougé : le bloc reste exactement où il était.
           setPointe({ x: locationX, y: locationY });
           onArmer(true);
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -221,7 +256,10 @@ export function VueColonnes({
           return;
         }
 
-        const { jour, minutes } = cible(e.nativeEvent.locationX, e.nativeEvent.locationY);
+        const { jour, minutes } = cible({
+          x: e.nativeEvent.locationX,
+          y: e.nativeEvent.locationY,
+        });
         const id = depart.quart.id;
         desarmer();
         if (modeFinal === 'dupliquer') onDupliquer(id, jour, formaterHeure(minutes));
@@ -331,20 +369,17 @@ export function VueColonnes({
                 borderColor: accent,
                 borderStyle: mode === 'dupliquer' ? 'dashed' : 'solid',
                 backgroundColor: mode === 'dupliquer' ? couleurs.carte : accentPale(accent),
-                top: Math.max(0, pointe.y - 14),
-                height: Math.max(
-                  28,
-                  (minutesFin(source) - minutesDebut(source)) * pxParMinute
-                ),
-                left: Math.max(LARGEUR_AXE + 2, pointe.x - largeurColonne / 2),
-                width: Math.max(24, largeurColonne - 4),
+                top: coinDuBloc(pointe).y,
+                height: touche.current?.hauteur ?? 28,
+                left: coinDuBloc(pointe).x,
+                width: touche.current?.largeur ?? Math.max(24, largeurColonne - 4),
               },
             ]}>
             <Text style={[styles.blocNom, { color: accent }]} numberOfLines={1}>
               {mode === 'dupliquer' ? `Copie · ${source.pharmacie_nom}` : source.pharmacie_nom}
             </Text>
             <Text style={[styles.blocHeure, { color: accent }]}>
-              {formaterHeure(cible(pointe.x, pointe.y).minutes)}
+              {formaterHeure(cible(pointe).minutes)}
             </Text>
           </View>
         )}

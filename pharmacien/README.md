@@ -177,6 +177,11 @@ ne sont que des vues. Un `Pressable` par bloc gardait le doigt pour lui : la
 grille ne récupérait jamais le geste, l'indication changeait et rien ne
 bougeait.
 
+La saisie retient l'écart entre le doigt et le coin du bloc. Sans lui, le bloc
+sautait sous le doigt à l'instant où on l'attrapait, et l'aimantation se calait
+sur le doigt plutôt que sur le haut du bloc tel qu'on le voit — déposer un bloc
+dont le haut est sur la ligne des 18 h donnait 17 h 45.
+
 Un déplacement ne rouvre aucun formulaire : le dépôt dit déjà le jour et
 l'heure, et rouvrir un écran pour reconfirmer le geste qu'on vient de faire
 serait de la friction pure. Une duplication, elle, ouvre le formulaire, parce
@@ -389,6 +394,9 @@ Deux comportements que rien ne signale mais que l'absence rendrait pénible :
   l'usager.
 - Le contenu remonte quand le clavier s'ouvre : un champ en bas d'écran reste
   visible pendant qu'on écrit dedans.
+- Les rangées d'onglets — vues de l'horaire, affichage de l'agenda, tri du
+  répertoire — passent par un seul composant (`Onglets`), où le trait mauve
+  glisse d'une option à l'autre en 220 ms au lieu de sauter.
 - Le clavier se ferme au défilement, au toucher n'importe où en dehors d'un
   champ, et par une touche *Terminé* — un pavé numérique n'ayant pas de touche
   de retour sur iOS, une barre lui en donne une. Tout écran de saisie passe par

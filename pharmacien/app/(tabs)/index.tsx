@@ -31,7 +31,7 @@ import {
 import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
 import { detecterChevauchements } from '../../src/lib/stats';
 import { Calendrier } from '../../src/ui/Calendrier';
-import { Bouton, Carte, ChoixDiscret, Doux, Fondu, Puce, Vide } from '../../src/ui/composants';
+import { Bouton, Carte, Doux, Fondu, Onglets, Vide } from '../../src/ui/composants';
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 import { VueCarte, type PointCarte } from '../../src/ui/VueCarte';
@@ -195,20 +195,24 @@ export default function Horaire() {
 
       {/* Une seule apparence pour la même fonction, et le sous-choix n'apparaît
           que là où il a un sens : en agenda. */}
-      <View style={styles.bascule}>
-        <Puce texte="Agenda" actif={vue === 'agenda'} onPress={() => setVue('agenda')} />
-        <Puce texte="Liste" actif={vue === 'liste'} onPress={() => setVue('liste')} />
-        <Puce texte="Carte" actif={vue === 'carte'} onPress={() => setVue('carte')} />
-      </View>
+      <Onglets
+        options={[
+          { valeur: 'agenda' as const, texte: 'Agenda' },
+          { valeur: 'liste' as const, texte: 'Liste' },
+          { valeur: 'carte' as const, texte: 'Carte' },
+        ]}
+        valeur={vue}
+        onChange={setVue}
+      />
 
       {vue === 'agenda' && (
         <Fondu>
-          <ChoixDiscret
+          <Onglets
             libelle="Affichage"
             options={[
-              { valeur: 'jour', texte: 'Jour' },
-              { valeur: 'semaine', texte: 'Semaine' },
-              { valeur: 'mois', texte: 'Mois' },
+              { valeur: 'jour' as const, texte: 'Jour' },
+              { valeur: 'semaine' as const, texte: 'Semaine' },
+              { valeur: 'mois' as const, texte: 'Mois' },
             ]}
             valeur={affichage}
             onChange={setAffichage}
@@ -369,10 +373,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: police.normal,
     color: couleurs.doux,
-  },
-  bascule: {
-    flexDirection: 'row',
-    marginBottom: espace.xs,
   },
   navigation: {
     flexDirection: 'row',

@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useId, useRef, useState } from 'react';
 import {
   Animated,
+  Easing,
   InputAccessoryView,
   Keyboard,
   KeyboardAvoidingView,
@@ -235,36 +236,108 @@ export function Bouton({
 }
 
 /**
- * Rangée d'options en texte, précédée d'un libellé gris. Des options posées
- * seules ne disent pas ce qu'elles règlent : « A – Z » à côté de
- * « Fréquentation » ne dit pas qu'il s'agit du tri.
+ * Rangée d'onglets. Le trait mauve glisse d'une option à l'autre au lieu de
+ * sauter, et le libellé actif prend la couleur en même temps que le trait
+ * arrive. Court et sobre : cette barre est touchée constamment, une animation
+ * plus longue fatiguerait à l'usage.
+ *
+ * Un seul composant pour toutes les rangées de l'application.
  */
-export function ChoixDiscret<T extends string>({
+export function Onglets<T extends string>({
   libelle,
   options,
   valeur,
   onChange,
 }: {
-  libelle: string;
+  /** Ce que la rangée règle. « A – Z » posé seul ne dit pas qu'il s'agit du tri. */
+  libelle?: string;
   options: { valeur: T; texte: string }[];
   valeur: T;
   onChange: (v: T) => void;
 }) {
   const accent = useAccent();
+  const actif = Math.max(0, options.findIndex((o) => o.valeur === valeur));
+  const [mesures, setMesures] = useState<{ x: number; largeur: number }[]>([]);
+  const position = useRef(new Animated.Value(actif)).current;
+
+  useEffect(() => {
+    Animated.timing(position, {
+      toValue: actif,
+      duration: 220,
+      // Départ et arrivée en douceur : c'est la courbe qui fait la fluidité,
+      // pas la durée.
+      easing: Easing.inOut(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [actif, position]);
+
+  // Un tableau rempli case par case peut avoir des trous : on vérifie chacune.
+  const pretes =
+    options.length > 1 &&
+    mesures.length === options.length &&
+    mesures.every((m) => m && m.largeur > 0);
+  const entrees = options.map((_, i) => i);
+
   return (
-    <View style={styles.choixDiscret}>
-      <Text style={styles.choixLibelle}>{libelle}</Text>
-      {options.map((option) => (
-        <Pressable key={option.valeur} onPress={() => onChange(option.valeur)} hitSlop={8}>
-          <Text
+    <View style={styles.ongletsBloc}>
+      {!!libelle && <Text style={styles.ongletsLibelle}>{libelle}</Text>}
+      <View style={styles.onglets}>
+        {options.map((option, i) => {
+          const couleur = pretes
+            ? position.interpolate({
+                inputRange: entrees,
+                outputRange: entrees.map((j) => (j === i ? accent : couleurs.doux)),
+              })
+            : i === actif
+              ? accent
+              : couleurs.doux;
+          return (
+            <Pressable
+              key={option.valeur}
+              onPress={() => onChange(option.valeur)}
+              onLayout={(e) => {
+                const { x, width } = e.nativeEvent.layout;
+                setMesures((actuelles) => {
+                  if (actuelles[i]?.x === x && actuelles[i]?.largeur === width) return actuelles;
+                  const suivantes = [...actuelles];
+                  suivantes[i] = { x, largeur: width };
+                  return suivantes;
+                });
+              }}
+              style={styles.onglet}
+              hitSlop={6}>
+              <Animated.Text
+                style={[
+                  styles.ongletTexte,
+                  { color: couleur },
+                  i === actif && { fontFamily: police.demi },
+                ]}>
+                {option.texte}
+              </Animated.Text>
+            </Pressable>
+          );
+        })}
+
+        {pretes && (
+          <Animated.View
+            pointerEvents="none"
             style={[
-              styles.choixTexte,
-              valeur === option.valeur && { color: accent, fontFamily: police.demi },
-            ]}>
-            {option.texte}
-          </Text>
-        </Pressable>
-      ))}
+              styles.trait,
+              {
+                backgroundColor: accent,
+                left: position.interpolate({
+                  inputRange: entrees,
+                  outputRange: entrees.map((j) => mesures[j]?.x ?? 0),
+                }),
+                width: position.interpolate({
+                  inputRange: entrees,
+                  outputRange: entrees.map((j) => mesures[j]?.largeur ?? 0),
+                }),
+              },
+            ]}
+          />
+        )}
+      </View>
     </View>
   );
 }
@@ -361,24 +434,35 @@ export function Rangee({
 }
 
 const styles = StyleSheet.create({
-  choixDiscret: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: espace.m,
+  ongletsBloc: {
     marginBottom: espace.m,
   },
-  choixLibelle: {
+  ongletsLibelle: {
     fontSize: 11,
     fontFamily: police.normal,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     color: couleurs.doux,
+    marginBottom: espace.xs,
   },
-  choixTexte: {
-    fontSize: 14,
+  onglets: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    paddingBottom: espace.s,
+  },
+  onglet: {
+    paddingHorizontal: espace.m,
+    paddingVertical: espace.xs,
+  },
+  ongletTexte: {
+    fontSize: 15,
     fontFamily: police.normal,
-    color: couleurs.doux,
+  },
+  trait: {
+    position: 'absolute',
+    bottom: 0,
+    height: 2.5,
+    borderRadius: 2,
   },
   ecran: {
     flex: 1,

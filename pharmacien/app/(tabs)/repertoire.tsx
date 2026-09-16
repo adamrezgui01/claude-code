@@ -13,7 +13,7 @@ import type { Pharmacie } from '../../src/db/types';
 import { ligneVille } from '../../src/lib/adresses';
 import { pluriel } from '../../src/lib/format';
 import { normaliser } from '../../src/lib/texte';
-import { Bouton, ChoixDiscret, Ecran, Fondu, Vide } from '../../src/ui/composants';
+import { Bouton, Ecran, Fondu, Onglets, Vide } from '../../src/ui/composants';
 import { couleurs, espace, police, rayon } from '../../src/ui/theme';
 
 type Tri = 'alphabetique' | 'frequentation';
@@ -70,7 +70,7 @@ export default function Repertoire() {
             )}
           </View>
 
-          <ChoixDiscret
+          <Onglets
             libelle="Trié par"
             options={[
               { valeur: 'alphabetique' as const, texte: 'A – Z' },
