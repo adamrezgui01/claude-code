@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
@@ -160,7 +160,9 @@ export default function FichePharmacie() {
     setCodes((actuels) => actuels.map((c, i) => (i === index ? { ...c, [champ]: valeur } : c)));
   }
 
-  const domicile = adresseDesReglages(reglages);
+  // Mémorisé : recréé à chaque rendu, il redonnerait un `calculer` neuf à
+  // chaque rendu, et l'effet plus bas tournerait sans fin.
+  const domicile = useMemo(() => adresseDesReglages(reglages), [reglages]);
   const sansDomicile = !adresseRenseignee(domicile);
 
   const calculer = useCallback(
@@ -196,15 +198,27 @@ export default function FichePharmacie() {
 
   /**
    * Dès que l'adresse suffit, la distance se calcule d'elle-même : c'est à
-   * l'application de le faire, pas à l'usager d'y penser.
+   * l'application de le faire, pas à l'usager d'y penser. Le calcul repart
+   * quand l'adresse change, et une seule fois par adresse — c'est ce repère,
+   * et non la distance obtenue, qui empêche l'effet de se rappeler lui-même.
    */
+  const adresseCalculee = useRef('');
+  const distanceActuelle = useRef(distance);
+  distanceActuelle.current = distance;
+
   useEffect(() => {
     if (mode !== 'km' || sansDomicile) return;
     if (!adresseRenseignee(adresse)) return;
-    if (distanceConnue(analyserNombre(distance))) return;
+    const repereAdresse = adresseUneLigne(adresse);
+    if (adresseCalculee.current === repereAdresse) return;
+    if (distanceConnue(analyserNombre(distanceActuelle.current))) {
+      // Distance déjà connue pour cette adresse : rien à refaire, mais on la
+      // retient pour qu'un changement d'adresse relance le calcul.
+      adresseCalculee.current = repereAdresse;
+      return;
+    }
+    adresseCalculee.current = repereAdresse;
     void calculer(true);
-    // `distance` est volontairement absent : le calcul la remplit, et la
-    // relancer sur son propre résultat bouclerait.
   }, [mode, adresse, sansDomicile, calculer]);
 
   async function enregistrer() {

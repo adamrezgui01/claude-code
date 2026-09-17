@@ -7,7 +7,7 @@ import {
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { initialiserBase } from '../src/db';
@@ -46,19 +46,33 @@ export default function Racine() {
     setPret(true);
   }, []);
 
+  /**
+   * Une seule redirection, jamais deux. `useRouter` rend un nouvel objet à
+   * chaque changement de navigation : sans ce garde, la redirection provoquait
+   * le changement qui relançait l'effet, qui redirigeait encore.
+   */
+  const redirige = useRef(false);
   useEffect(() => {
-    if (pret && bienvenue) router.replace('/bienvenue');
+    if (!pret || !bienvenue || redirige.current) return;
+    redirige.current = true;
+    router.replace('/bienvenue');
   }, [pret, bienvenue, router]);
 
   const reponse = Notifications.useLastNotificationResponse();
+  // Même garde que la redirection : naviguer change `router`, ce qui relancerait
+  // l'effet sur la même notification, indéfiniment.
+  const memoTraite = useRef('');
   useEffect(() => {
-    if (!pret) return;
+    if (!pret || !reponse) return;
+    const identifiant = reponse.notification.request.identifier;
+    if (memoTraite.current === identifiant) return;
     // Le mémo ouvre directement le quart, heures déjà préremplies. L'usager
     // ajuste ce qui a changé, ou ne fait rien.
-    const donnees = reponse?.notification.request.content.data as
+    const donnees = reponse.notification.request.content.data as
       | { quartId?: number; memo?: boolean }
       | undefined;
     if (donnees?.memo && donnees.quartId) {
+      memoTraite.current = identifiant;
       router.push(`/quart/${donnees.quartId}`);
     }
   }, [reponse, pret, router]);
