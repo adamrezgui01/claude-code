@@ -7,7 +7,7 @@ import {
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { initialiserBase } from '../src/db';
@@ -15,6 +15,7 @@ import { definirReglage, obtenirReglages } from '../src/db/profil';
 import { adresseDesReglages, adresseRenseignee } from '../src/lib/adresses';
 import { supprimerSecrets } from '../src/lib/codes';
 import { preparerNotifications } from '../src/lib/notifications';
+import { Bienvenue } from '../src/ui/Bienvenue';
 import { ACCENT_DEFAUT, couleurs, FournisseurTheme, police } from '../src/ui/theme';
 
 export default function Racine() {
@@ -46,21 +47,9 @@ export default function Racine() {
     setPret(true);
   }, []);
 
-  /**
-   * Une seule redirection, jamais deux. `useRouter` rend un nouvel objet à
-   * chaque changement de navigation : sans ce garde, la redirection provoquait
-   * le changement qui relançait l'effet, qui redirigeait encore.
-   */
-  const redirige = useRef(false);
-  useEffect(() => {
-    if (!pret || !bienvenue || redirige.current) return;
-    redirige.current = true;
-    router.replace('/bienvenue');
-  }, [pret, bienvenue, router]);
-
   const reponse = Notifications.useLastNotificationResponse();
-  // Même garde que la redirection : naviguer change `router`, ce qui relancerait
-  // l'effet sur la même notification, indéfiniment.
+  // La dernière réponse reste servie tant qu'aucune autre n'arrive : sans ce
+  // repère, tout nouveau rendu rouvrirait le même quart.
   const memoTraite = useRef('');
   useEffect(() => {
     if (!pret || !reponse) return;
@@ -77,6 +66,19 @@ export default function Racine() {
     }
   }, [reponse, pret, router]);
 
+  // Mémorisé : un objet neuf à chaque rendu rafraîchirait tous les écrans qui
+  // lisent l'accent, sans raison.
+  const theme = useMemo(
+    () => ({
+      accent,
+      definirAccent: (valeur: string) => {
+        definirReglage('accent', valeur);
+        setAccent(valeur);
+      },
+    }),
+    [accent]
+  );
+
   if (!pret || !policesPretes) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', backgroundColor: couleurs.fond }}>
@@ -86,16 +88,14 @@ export default function Racine() {
   }
 
   return (
-    <FournisseurTheme
-      value={{
-        accent,
-        definirAccent: (valeur) => {
-          definirReglage('accent', valeur);
-          setAccent(valeur);
-        },
-      }}>
+    <FournisseurTheme value={theme}>
       <>
         <StatusBar style="dark" />
+        {/* Tant que le nom ou l'adresse manquent, l'accueil prend toute la
+            place. Aucune navigation en jeu, donc aucune boucle possible. */}
+        {bienvenue ? (
+          <Bienvenue onTermine={() => setBienvenue(false)} />
+        ) : (
         <Stack
           screenOptions={{
             headerTintColor: accent,
@@ -113,12 +113,12 @@ export default function Racine() {
           <Stack.Screen name="frais/[id]" options={{ title: 'Frais' }} />
           <Stack.Screen name="pharmacie/[id]" options={{ title: 'Pharmacie' }} />
           <Stack.Screen name="document/[id]" options={{ title: 'Document' }} />
-          <Stack.Screen name="bienvenue" options={{ headerShown: false }} />
           <Stack.Screen name="liens" options={{ title: 'Liens et infos utiles' }} />
           <Stack.Screen name="facture" options={{ title: 'Générer une facture' }} />
           <Stack.Screen name="factures" options={{ title: 'Factures' }} />
           <Stack.Screen name="apparence" options={{ title: 'Apparence' }} />
         </Stack>
+        )}
       </>
     </FournisseurTheme>
   );
