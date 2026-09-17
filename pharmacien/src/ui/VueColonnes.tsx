@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LayoutChangeEvent, PanResponder, StyleSheet, Text, View } from 'react-native';
+import { Animated, LayoutChangeEvent, PanResponder, StyleSheet, Text, View } from 'react-native';
 
 import type { QuartDetaille } from '../db/types';
 import { fenetreHeures, minutesDebut, minutesFin, pixelsParHeure } from '../lib/agenda';
@@ -34,6 +34,10 @@ const MAINTIEN_DUPLIQUER = 650;
 /** Au-delà, le doigt glisse : on ne bascule plus en duplication. */
 const TOLERANCE_IMMOBILE = 8;
 const JOURS_COURTS = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'];
+/** Hauteur approximative du libellé d'heure, pour le centrer sur son trait. */
+const HAUTEUR_LIBELLE = 13;
+/** En deçà, le bloc ne porte que son heure de début. */
+const HAUTEUR_DEUX_HEURES = 58;
 
 type Mode = 'deplacer' | 'dupliquer';
 
@@ -49,6 +53,13 @@ function formaterHeure(minutes: number): string {
   const h = Math.floor(minutes / 60) % 24;
   const m = Math.round(minutes % 60);
   return `${`${h}`.padStart(2, '0')}:${`${m}`.padStart(2, '0')}`;
+}
+
+/** Sur sept colonnes, « 09:00 » se coupe. « 9h » tient. */
+function formaterHeureCourte(minutes: number): string {
+  const h = Math.floor(minutes / 60) % 24;
+  const m = Math.round(minutes % 60);
+  return m === 0 ? `${h}h` : `${h}h${`${m}`.padStart(2, '0')}`;
 }
 
 /** Répartit les quarts qui se chevauchent en voies côte à côte. */
@@ -69,6 +80,7 @@ export function VueColonnes({
   jours,
   quartsParJour,
   hauteurDisponible,
+  glissement,
   onOuvrir,
   onDeplacer,
   onDupliquer,
@@ -78,6 +90,8 @@ export function VueColonnes({
   quartsParJour: Map<string, QuartDetaille[]>;
   /** Hauteur que la vue peut occuper sans faire défiler la page. */
   hauteurDisponible: number;
+  /** Décalage du balayage. Seuls les quarts et les en-têtes le suivent. */
+  glissement?: Animated.Value;
   onOuvrir: (id: number) => void;
   onDeplacer: (quartId: number, date: string, heure: string) => void;
   onDupliquer: (quartId: number, date: string, heure: string) => void;
@@ -130,7 +144,10 @@ export function VueColonnes({
           x: LARGEUR_AXE + index * largeurColonne + voie * largeurVoie + 2,
           y: (minutesDebut(quart) - plage.debut) * pxParMinute,
           largeur: Math.max(24, largeurVoie - 4),
-          hauteur: Math.max(28, (minutesFin(quart) - minutesDebut(quart)) * pxParMinute - 2),
+          // Hauteur exacte, pour que le bas du bloc tombe sur la ligne de son
+          // heure de fin. Le plancher ne sert qu'aux quarts trop courts pour
+          // être lisibles autrement.
+          hauteur: Math.max(28, (minutesFin(quart) - minutesDebut(quart)) * pxParMinute),
         };
       })
     );
@@ -282,6 +299,12 @@ export function VueColonnes({
   const premiereHeure = Math.ceil(plage.debut / 60) * 60;
   for (let m = premiereHeure; m <= plage.fin; m += 60) heuresAxe.push(m);
 
+  const demiHeures: number[] = [];
+  const premiereDemie = Math.ceil((plage.debut - 30) / 60) * 60 + 30;
+  for (let m = premiereDemie; m <= plage.fin; m += 60) {
+    if (m >= plage.debut) demiHeures.push(m);
+  }
+
   const unSeulJour = jours.length === 1;
 
   return (
@@ -300,7 +323,8 @@ export function VueColonnes({
 
       {/* En vue jour, la date est déjà écrite juste au-dessus du cadre. */}
       {!unSeulJour && (
-        <View style={styles.entetes}>
+        <Animated.View
+          style={[styles.entetes, glissement ? { transform: [{ translateX: glissement }] } : null]}>
           <View style={{ width: LARGEUR_AXE }} />
           {jours.map((jour) => {
             const d = analyserDate(jour);
@@ -317,17 +341,36 @@ export function VueColonnes({
               </View>
             );
           })}
-        </View>
+        </Animated.View>
       )}
 
       <View style={[styles.grille, { height: hauteur }]} {...pan.panHandlers}>
-        {heuresAxe.map((minutes) => (
+        {/*
+          Le trait est posé à la position exacte de son heure, et le libellé
+          centré dessus à part. Dessinés dans une même rangée centrée
+          verticalement, les traits tombaient une demi-hauteur de texte plus bas
+          que les blocs, et tout l'agenda paraissait décalé.
+        */}
+        {heuresAxe.map((minutes) => {
+          const y = (minutes - plage.debut) * pxParMinute;
+          return (
+            <View key={minutes} pointerEvents="none">
+              <Text style={[styles.heureTexte, { top: y - HAUTEUR_LIBELLE / 2 }]}>
+                {formaterHeureCourte(minutes)}
+              </Text>
+              <View style={[styles.trait, { top: y }]} />
+            </View>
+          );
+        })}
+
+        {/* Les demi-heures montrent où un bloc va tomber : c'est là que
+            l'aimantation le pose. */}
+        {demiHeures.map((minutes) => (
           <View
-            key={minutes}
-            style={[styles.ligneHeure, { top: (minutes - plage.debut) * pxParMinute }]}>
-            <Text style={styles.heureTexte}>{formaterHeure(minutes)}</Text>
-            <View style={styles.trait} />
-          </View>
+            key={`demi-${minutes}`}
+            pointerEvents="none"
+            style={[styles.traitDemi, { top: (minutes - plage.debut) * pxParMinute }]}
+          />
         ))}
 
         {largeurColonne > 0 &&
@@ -339,6 +382,12 @@ export function VueColonnes({
             />
           ))}
 
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            glissement ? { transform: [{ translateX: glissement }] } : null,
+          ]}>
         {rectangles.map(({ quart, x, y, largeur: l, hauteur: h }) => {
           const annule = !!quart.annule;
           const enCours = source?.id === quart.id;
@@ -361,12 +410,28 @@ export function VueColonnes({
               <Text style={[styles.blocNom, annule && styles.barre]} numberOfLines={unSeulJour ? 1 : 2}>
                 {quart.pharmacie_nom}
               </Text>
-              <Text style={styles.blocHeure} numberOfLines={1}>
-                {formaterHeure(minutesDebut(quart))} – {formaterHeure(minutesFin(quart))}
-              </Text>
+              {unSeulJour ? (
+                <Text style={styles.blocHeure} numberOfLines={1}>
+                  {formaterHeure(minutesDebut(quart))} – {formaterHeure(minutesFin(quart))}
+                </Text>
+              ) : (
+                <>
+                  {/* Une heure tronquée vaut moins que pas d'heure du tout :
+                      la fin ne s'affiche que s'il y a la place. */}
+                  <Text style={styles.blocHeure} numberOfLines={1}>
+                    {formaterHeureCourte(minutesDebut(quart))}
+                  </Text>
+                  {h >= HAUTEUR_DEUX_HEURES && (
+                    <Text style={styles.blocHeure} numberOfLines={1}>
+                      {formaterHeureCourte(minutesFin(quart))}
+                    </Text>
+                  )}
+                </>
+              )}
             </View>
           );
         })}
+        </Animated.View>
 
         {!!source && !!pointe && (
           <View
@@ -438,24 +503,30 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginTop: espace.m,
   },
-  ligneHeure: {
+  heureTexte: {
     position: 'absolute',
     left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  heureTexte: {
     width: LARGEUR_AXE,
     fontSize: 10,
+    lineHeight: HAUTEUR_LIBELLE,
     fontFamily: police.normal,
     color: couleurs.doux,
     textAlign: 'center',
   },
   trait: {
-    flex: 1,
+    position: 'absolute',
+    left: LARGEUR_AXE,
+    right: 0,
     height: 1,
     backgroundColor: couleurs.bordure,
+  },
+  traitDemi: {
+    position: 'absolute',
+    left: LARGEUR_AXE,
+    right: 0,
+    borderTopWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: couleurs.bordurePale,
   },
   separateur: {
     position: 'absolute',

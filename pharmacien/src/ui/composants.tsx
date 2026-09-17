@@ -18,6 +18,7 @@ import {
   ViewStyle,
 } from 'react-native';
 
+import { formaterTelephone, formaterTelephoneSaisie } from '../lib/telephone';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 
 /**
@@ -29,13 +30,16 @@ import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme'
 export function Ecran({
   children,
   style,
+  fond,
 }: {
   children: ReactNode;
   style?: ViewStyle;
+  /** Écran hors navigation : il porte alors lui-même le fond de l'application. */
+  fond?: boolean;
 }) {
   return (
     <KeyboardAvoidingView
-      style={styles.ecran}
+      style={[styles.ecran, fond && { backgroundColor: couleurs.fond }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         style={styles.ecran}
@@ -113,6 +117,7 @@ export function Champ({
   aide,
   avertissement,
   auto,
+  nu,
 }: {
   label: string;
   valeur: string;
@@ -124,6 +129,8 @@ export function Champ({
   aide?: string;
   avertissement?: string;
   auto?: 'characters' | 'none' | 'sentences' | 'words';
+  /** Posé dans une section : le cadre est déjà là, le champ n'en remet pas un. */
+  nu?: boolean;
 }) {
   const accent = useAccent();
   const [actif, setActif] = useState(false);
@@ -136,14 +143,14 @@ export function Champ({
   const barre = Platform.OS === 'ios' && (numerique || multiligne);
 
   return (
-    <View style={styles.champ}>
+    <View style={[styles.champ, nu && styles.champNu]}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
         style={[
-          styles.saisieBoite,
+          nu ? styles.saisieNue : styles.saisieBoite,
           styles.saisieTexte,
           multiligne && styles.saisieMultiligne,
-          actif && { borderColor: accent },
+          !nu && actif && { borderColor: accent },
         ]}
         value={valeur}
         onChangeText={onChange}
@@ -171,6 +178,61 @@ export function Champ({
       )}
       {!!aide && <Text style={styles.aide}>{aide}</Text>}
       {!!avertissement && <Text style={styles.avertissement}>{avertissement}</Text>}
+    </View>
+  );
+}
+
+/**
+ * Champ de téléphone. Le masque vit ici : deux écrans saisissent un numéro, et
+ * aucun des deux n'a à se souvenir de la règle.
+ */
+export function ChampTelephone({
+  label,
+  valeur,
+  onChange,
+  aide,
+  nu,
+}: {
+  label: string;
+  valeur: string;
+  onChange: (v: string) => void;
+  aide?: string;
+  nu?: boolean;
+}) {
+  return (
+    <Champ
+      label={label}
+      valeur={formaterTelephone(valeur)}
+      onChange={(saisi) => onChange(formaterTelephoneSaisie(formaterTelephone(valeur), saisi))}
+      clavier="number-pad"
+      placeholder="(514) 968-7204"
+      aide={aide}
+      nu={nu}
+    />
+  );
+}
+
+/**
+ * Groupe de champs encadré, avec son titre au-dessus.
+ *
+ * Le défaut que ça corrige n'est pas le manque d'espace mais le manque de
+ * hiérarchie : dix champs du même poids visuel ne donnent à l'œil aucune prise.
+ * L'encadré fait le travail du contenant, alors les champs qu'il porte perdent
+ * le leur — sinon on empile des boîtes dans des boîtes et c'est pire qu'avant.
+ * L'écart entre deux sections est bien plus grand que celui entre deux champs :
+ * c'est lui qui crée le rythme.
+ */
+export function Section({
+  titre,
+  children,
+}: {
+  titre?: string;
+  children: ReactNode;
+}) {
+  return (
+    <View style={styles.sectionBloc}>
+      {!!titre && <Text style={styles.sectionTitre}>{titre}</Text>}
+      <View style={styles.sectionCadre}>{children}</View>
     </View>
   );
 }
@@ -434,6 +496,27 @@ export function Rangee({
 }
 
 const styles = StyleSheet.create({
+  sectionBloc: {
+    // Entre deux sections, bien plus d'air qu'entre deux champs.
+    marginBottom: espace.xxl,
+  },
+  sectionTitre: {
+    fontSize: 13,
+    fontFamily: police.demi,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    color: couleurs.doux,
+    marginBottom: espace.s,
+    marginLeft: espace.xs,
+  },
+  sectionCadre: {
+    backgroundColor: couleurs.carte,
+    borderWidth: 1,
+    borderColor: couleurs.bordure,
+    borderRadius: rayon,
+    paddingHorizontal: espace.l,
+    paddingVertical: espace.xs,
+  },
   ongletsBloc: {
     marginBottom: espace.m,
   },
@@ -469,7 +552,9 @@ const styles = StyleSheet.create({
   },
   ecranContenu: {
     padding: espace.l,
-    paddingBottom: espace.xxl,
+    // La barre d'onglets flotte au-dessus du contenu : sans cette marge, un
+    // bouton d'action en bas de page passe dessous et s'y fait couper.
+    paddingBottom: espace.xxl * 3,
   },
   barreClavier: {
     flexDirection: 'row',
@@ -531,6 +616,17 @@ const styles = StyleSheet.create({
     fontFamily: police.normal,
     color: couleurs.doux,
     marginBottom: espace.xs,
+  },
+  champNu: {
+    marginBottom: 0,
+    paddingVertical: espace.m,
+    borderBottomWidth: 1,
+    borderBottomColor: couleurs.bordurePale,
+  },
+  saisieNue: {
+    paddingVertical: espace.xs,
+    minHeight: 28,
+    justifyContent: 'center',
   },
   saisieBoite: {
     backgroundColor: couleurs.carte,

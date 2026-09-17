@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { QuartDetaille } from '../db/types';
 import { aujourdhui, formatMoisAnnee, grilleMois, JOURS_COURTS } from '../lib/dates';
@@ -12,6 +12,7 @@ export function Calendrier({
   jourSelectionne,
   onSelectionner,
   onChangerMois,
+  glissement,
 }: {
   mois: string;
   quartsParJour: Map<string, QuartDetaille[]>;
@@ -19,6 +20,8 @@ export function Calendrier({
   jourSelectionne: string;
   onSelectionner: (iso: string) => void;
   onChangerMois: (delta: number) => void;
+  /** Décalage du balayage. Le cadre et l'en-tête restent, les jours défilent. */
+  glissement?: Animated.Value;
 }) {
   const accent = useAccent();
   const semaines = grilleMois(mois);
@@ -44,6 +47,8 @@ export function Calendrier({
         ))}
       </View>
 
+      <Animated.View
+        style={glissement ? { transform: [{ translateX: glissement }] } : undefined}>
       {semaines.map((semaine, i) => (
         <View key={i} style={styles.ligne}>
           {semaine.map((iso, j) => {
@@ -82,6 +87,7 @@ export function Calendrier({
           })}
         </View>
       ))}
+      </Animated.View>
     </View>
   );
 }

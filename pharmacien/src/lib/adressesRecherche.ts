@@ -166,8 +166,11 @@ async function interroger(url: string): Promise<ResultatRecherche & { refus?: bo
       const coordonnees = (entree as { geometry?: { coordinates?: number[] } })?.geometry
         ?.coordinates;
       const nomLieu = texte(p.name);
-      const rue = texte(p.street) || nomLieu;
-      if (!rue) return [];
+      const rue = texte(p.street);
+      // Un commerce n'a pas toujours de rue ni de numéro dans OpenStreetMap.
+      // On garde ce qu'il y a et l'usager complète : écarter un résultat
+      // incomplet reviendrait à cacher la pharmacie qu'il cherche.
+      if (!rue && !nomLieu) return [];
       // C'est la couche qui dit ce qu'est le résultat. Le champ « name » ne le
       // dit pas : pour une simple adresse, il vaut le numéro suivi de la rue.
       const estCommerce = texte(p.layer) === 'venue';

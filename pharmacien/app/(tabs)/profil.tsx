@@ -24,11 +24,13 @@ import { analyserNombre, argent, nombre } from '../../src/lib/format';
 import {
   Bouton,
   Champ,
+  ChampTelephone,
   Doux,
   Ecran,
   Fondu,
   Interrupteur,
   Puce,
+  Section,
   Separateur,
   SousTitre,
   Vide,
@@ -186,17 +188,24 @@ export default function Profil() {
       {/* Ce qui décrit l'usager et ce qui part sur ses factures. */}
       <SousTitre>Informations et facturation</SousTitre>
       <Doux>Vos coordonnées apparaissent en en-tête de chaque facture.</Doux>
-      <View style={styles.bloc}>
+      <View style={styles.bloc} />
+
+      <Section titre="Identité">
         <Champ
+          nu
           label="Votre nom (pharmacien remplaçant)"
           valeur={reglages.nom}
           onChange={(v) => modifier('nom', v)}
         />
         <Champ
+          nu
           label="Numéro de permis OPQ"
           valeur={reglages.permis_opq}
           onChange={(v) => modifier('permis_opq', v)}
         />
+      </Section>
+
+      <Section titre="Adresse">
         <SaisieAdresse
           adresse={adresseDesReglages(reglages)}
           onChange={(a) => {
@@ -205,26 +214,31 @@ export default function Profil() {
           }}
           cle={reglages.cle_itineraire}
         />
-        <Champ
+      </Section>
+
+      <Section titre="Coordonnées">
+        <ChampTelephone
+          nu
           label="Téléphone"
           valeur={reglages.telephone}
           onChange={(v) => modifier('telephone', v)}
-          clavier="phone-pad"
         />
         <Champ
+          nu
           label="Courriel"
           valeur={reglages.courriel}
           onChange={(v) => modifier('courriel', v)}
           clavier="email-address"
         />
         <Champ
+          nu
           label="Taux par kilomètre par défaut ($/km)"
           valeur={`${reglages.taux_par_km}`}
           onChange={(v) => modifier('taux_par_km', analyserNombre(v))}
           clavier="decimal-pad"
-          aide={`Préremplit une nouvelle fiche de pharmacie, à ${argent(reglages.taux_par_km)} le kilomètre. Le taux facturé reste celui de chaque pharmacie.`}
+          aide={`Préremplit une nouvelle fiche de pharmacie, à ${argent(reglages.taux_par_km)} le kilomètre.`}
         />
-      </View>
+      </Section>
 
       <Separateur />
 

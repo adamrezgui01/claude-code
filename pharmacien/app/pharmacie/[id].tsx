@@ -41,6 +41,7 @@ import {
   Bouton,
   Carte,
   Champ,
+  ChampTelephone,
   Doux,
   Ecran,
   Fondu,
@@ -322,17 +323,36 @@ export default function FichePharmacie() {
       <Fondu key={page}>
         {page === 0 && (
           <>
-            <Champ label="Nom" valeur={nom} onChange={setNom} placeholder="Nom de la pharmacie" />
-
-            {/* Les adresses proches de chez l'usager remontent en premier. */}
+            {/*
+              Une seule barre, en haut, pour les commerces comme pour les
+              adresses. Choisir une pharmacie remplit l'adresse et propose son
+              nom ; le champ du nom reste libre, parce que la bannière
+              d'OpenStreetMap — « Jean Coutu » — n'est pas le nom légal, qui est
+              celui du pharmacien propriétaire et qui va sur la facture.
+              Les résultats proches de chez l'usager remontent en premier.
+            */}
             <SaisieAdresse
               adresse={adresse}
               onChange={setAdresse}
+              onNom={(trouve) => {
+                if (!nom.trim()) setNom(trouve);
+              }}
+              libelle="Rechercher"
+              invite="Nom de la pharmacie ou adresse"
               cle={reglages.cle_itineraire}
               foyer={
                 reglages.adresse_latitude !== null && reglages.adresse_longitude !== null
                   ? { lat: reglages.adresse_latitude, lon: reglages.adresse_longitude }
                   : undefined
+              }
+              apresRecherche={
+                <Champ
+                  label="Nom"
+                  valeur={nom}
+                  onChange={setNom}
+                  placeholder="Nom de la pharmacie"
+                  aide="Celui qui paraîtra sur vos factures."
+                />
               }
             />
 
@@ -404,11 +424,10 @@ export default function FichePharmacie() {
           <>
             <SousTitre>Contact principal</SousTitre>
             <Champ label="Nom de la personne contact" valeur={contactNom} onChange={setContactNom} />
-            <Champ
+            <ChampTelephone
               label="Téléphone"
               valeur={contactTelephone}
               onChange={setContactTelephone}
-              clavier="phone-pad"
             />
             {!!contactTelephone.trim() && (
               <Pressable

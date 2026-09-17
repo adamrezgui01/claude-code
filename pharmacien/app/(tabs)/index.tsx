@@ -221,14 +221,22 @@ export default function Horaire() {
 
           {affichage === 'mois' ? (
             <>
-              <Calendrier
-                mois={mois}
-                quartsParJour={parJour}
-                chevauchements={chevauchements}
-                jourSelectionne={jour}
-                onSelectionner={choisirJour}
-                onChangerMois={(delta) => setMois(ajouterMois(mois, delta))}
-              />
+              <Ruban
+                bloque={false}
+                onPrecedent={() => setMois(ajouterMois(mois, -1))}
+                onSuivant={() => setMois(ajouterMois(mois, 1))}>
+                {(glissement) => (
+                  <Calendrier
+                    mois={mois}
+                    quartsParJour={parJour}
+                    chevauchements={chevauchements}
+                    jourSelectionne={jour}
+                    onSelectionner={choisirJour}
+                    onChangerMois={(delta) => setMois(ajouterMois(mois, delta))}
+                    glissement={glissement}
+                  />
+                )}
+              </Ruban>
               <Doux>Touchez un jour pour ouvrir sa journée.</Doux>
             </>
           ) : (
@@ -250,15 +258,18 @@ export default function Horaire() {
                 bloque={duplication}
                 onPrecedent={() => setJour(ajouterJours(jour, -pas))}
                 onSuivant={() => setJour(ajouterJours(jour, pas))}>
-                <VueColonnes
-                  jours={affichage === 'jour' ? [jour] : semaine}
-                  quartsParJour={parJour}
-                  hauteurDisponible={hauteurAgenda}
-                  onOuvrir={ouvrirQuart}
-                  onDeplacer={deplacer}
-                  onDupliquer={dupliquer}
-                  onArmer={setDuplication}
-                />
+                {(glissement) => (
+                  <VueColonnes
+                    jours={affichage === 'jour' ? [jour] : semaine}
+                    quartsParJour={parJour}
+                    hauteurDisponible={hauteurAgenda}
+                    glissement={glissement}
+                    onOuvrir={ouvrirQuart}
+                    onDeplacer={deplacer}
+                    onDupliquer={dupliquer}
+                    onArmer={setDuplication}
+                  />
+                )}
               </Ruban>
               <Doux>
                 Balayez pour changer de {affichage === 'jour' ? 'jour' : 'semaine'}. Maintenez un
@@ -350,7 +361,9 @@ export default function Horaire() {
 const styles = StyleSheet.create({
   contenu: {
     padding: espace.l,
-    paddingBottom: espace.xxl,
+    // Même raison qu'ailleurs : le bouton d'ajout ne doit pas finir sous la
+    // barre d'onglets.
+    paddingBottom: espace.xxl * 3,
   },
   bandeau: {
     backgroundColor: couleurs.carte,

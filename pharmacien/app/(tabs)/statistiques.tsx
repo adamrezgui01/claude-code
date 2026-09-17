@@ -9,7 +9,9 @@ import type { Pharmacie } from '../../src/db/types';
 import { aujourdhui, debutMois, formatDateCourte } from '../../src/lib/dates';
 import { bornes, type Preset } from '../../src/lib/periodes';
 import { argent, heures, nombre, pluriel } from '../../src/lib/format';
+import { serieMensuelle, type Mesure } from '../../src/lib/mensuel';
 import { calculerStatistiques } from '../../src/lib/stats';
+import { Graphique } from '../../src/ui/Graphique';
 import {
   Bouton,
   Carte,
@@ -35,6 +37,7 @@ export default function Statistiques() {
   const [debutPerso, setDebutPerso] = useState(() => debutMois(aujourdhui()));
   const [finPerso, setFinPerso] = useState(() => aujourdhui());
   const [selection, setSelection] = useState<number[]>([]);
+  const [mesure, setMesure] = useState<Mesure>('argent');
 
   useFocusEffect(
     useCallback(() => {
@@ -53,6 +56,20 @@ export default function Statistiques() {
         listerFraisPeriode(debut, fin, filtre)
       ),
     [debut, fin, filtre]
+  );
+
+  /**
+   * Le graphique montre toujours les douze derniers mois, quel que soit le
+   * sélecteur de période : « Ce mois-ci » donnerait une barre unique, ce qui
+   * n'apprend rien. Le sélecteur gouverne les totaux chiffrés, pas la série.
+   */
+  const serie = useMemo(
+    () =>
+      serieMensuelle(([d, f]) => ({
+        quarts: listerQuartsPeriode(d, f, filtre),
+        frais: listerFraisPeriode(d, f, filtre),
+      })),
+    [filtre]
   );
 
   function basculerPharmacie(id: number) {
@@ -86,6 +103,24 @@ export default function Statistiques() {
           Du {formatDateCourte(debut)} au {formatDateCourte(fin)}
         </Doux>
       )}
+
+      <Separateur />
+
+      {/* Indépendant du sélecteur de période : une série mensuelle a besoin de
+          plusieurs mois. */}
+      <SousTitre>12 derniers mois</SousTitre>
+      <Onglets
+        options={[
+          { valeur: 'argent' as const, texte: 'Argent' },
+          { valeur: 'heures' as const, texte: 'Heures' },
+          { valeur: 'kilometres' as const, texte: 'Kilomètres' },
+        ]}
+        valeur={mesure}
+        onChange={setMesure}
+      />
+      <Graphique serie={serie} mesure={mesure} />
+
+      <Separateur />
 
       <View style={styles.section}>
         <SousTitre>Pharmacies</SousTitre>

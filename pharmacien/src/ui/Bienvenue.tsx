@@ -62,7 +62,7 @@ export function Bienvenue({ onTermine }: { onTermine: () => void }) {
   }
 
   return (
-    <Ecran>
+    <Ecran fond>
       <View style={styles.entete}>
         <Text style={styles.titre}>Bienvenue</Text>
         <Text style={styles.sousTitre}>

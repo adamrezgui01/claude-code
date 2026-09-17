@@ -147,6 +147,17 @@ affichages.
 Le mois s'ouvre par défaut : c'est lui qui donne la vue d'ensemble. Toucher un
 jour bascule sur sa journée — on passe du survol au détail d'un seul geste.
 
+Les lignes pointillées des demi-heures ne décorent pas : elles montrent où un
+bloc va tomber, puisque l'aimantation le pose là. Le trait de chaque heure est
+posé à sa position exacte et son libellé centré dessus à part ; dessinés dans
+une même rangée centrée verticalement, les traits tombaient une demi-hauteur de
+texte plus bas que les blocs et tout l'agenda paraissait décalé.
+
+Sur sept colonnes un bloc fait une quarantaine de points : le nom s'y coupe sur
+deux lignes et l'heure passe au format court, `9h` au-dessus de `17h`, la fin
+disparaissant quand le bloc est trop bas pour la porter. Une heure tronquée
+vaut moins que pas d'heure du tout.
+
 Jour et semaine sont des colonnes façon Google Agenda : chaque quart est un bloc
 vertical dont la hauteur correspond à ses heures, et les quarts qui se
 chevauchent se partagent la largeur. La fenêtre d'heures se resserre autour du
@@ -187,13 +198,19 @@ Les deux gestes se distinguent par la durée du maintien, jamais par la pression
 
 | Geste | Effet |
 | --- | --- |
-| Balayage horizontal | change de jour ou de semaine |
+| Balayage horizontal | change de jour, de semaine ou de mois |
 | Maintien court (180 ms), puis glisser | déplace le quart, en silence |
 | Maintien immobile prolongé (650 ms) | bascule en duplication, seconde vibration plus marquée |
 
 Le balayage ne capture un geste que tant qu'aucun bloc n'est attrapé : un
 maintien sur un bloc ne change jamais de jour, et un balayage franc sur la
 grille n'attrape jamais un bloc.
+
+Pendant le balayage, le quadrillé reste immobile — lignes, libellés d'heures,
+colonnes — et seuls les quarts et les en-têtes de colonnes glissent. L'effet
+visé est une grille fixe sur laquelle le contenu défile, pas une page qu'on
+pousse. Le geste vit dans `Ruban`, qui ne translate rien lui-même : il passe sa
+valeur d'animation au contenu, qui décide de ce qui bouge.
 
 Un doigt qui bouge avant le second seuil reste en déplacement pour toute la
 durée du geste : on ne bascule jamais en cours de glissement. Le double retour
@@ -421,7 +438,16 @@ Deux comportements que rien ne signale mais que l'absence rendrait pénible :
   titre de l'écran précédent, soit `(tabs)` — un nom de route sous les yeux de
   l'usager.
 - Le contenu remonte quand le clavier s'ouvre : un champ en bas d'écran reste
-  visible pendant qu'on écrit dedans.
+  visible pendant qu'on écrit dedans, et les boutons d'action gardent assez de
+  marge pour ne pas finir sous la barre d'onglets.
+- Les numéros de téléphone se mettent en forme à la frappe — `(514) 968-7204` —
+  en repartant chaque fois des chiffres seuls. Les séparateurs ne s'effacent
+  pas : ils disparaissent avec le chiffre qui les justifiait
+  (`src/lib/telephone.ts`).
+- Les formulaires groupent leurs champs en sections encadrées. À l'intérieur
+  d'un encadré, les champs perdent leur propre boîte — sinon ce sont des boîtes
+  dans des boîtes, plus chargé qu'avant. Le défaut corrigé n'est pas le manque
+  d'espace mais le manque de hiérarchie.
 - Les rangées d'onglets — vues de l'horaire, affichage de l'agenda, tri du
   répertoire — passent par un seul composant (`Onglets`), où le trait mauve
   glisse d'une option à l'autre en 220 ms au lieu de sauter.
@@ -429,6 +455,22 @@ Deux comportements que rien ne signale mais que l'absence rendrait pénible :
   champ, et par une touche *Terminé* — un pavé numérique n'ayant pas de touche
   de retour sur iOS, une barre lui en donne une. Tout écran de saisie passe par
   le composant `Ecran`, qui s'en charge.
+
+## Graphique mensuel
+
+Douze barres, un mois chacune, avec la valeur écrite au-dessus : personne ne
+devrait avoir à estimer une hauteur pour lire un chiffre. Trois mesures — argent,
+heures, kilomètres — sous les mêmes onglets glissants que partout.
+
+Le graphique montre toujours les douze derniers mois, quel que soit le sélecteur
+de période de l'écran. Celui-ci gouverne les totaux chiffrés ; le faire gouverner
+la série donnerait une barre unique sur « Ce mois-ci », ce qui n'apprend rien. Un
+mois sans quart garde sa place à zéro, jamais un trou dans la série.
+
+Les barres montent du sol à l'apparition, l'une après l'autre. Au changement de
+mesure elles se déforment vers leur nouvelle hauteur sans repartir du sol :
+rejouer la montée à chaque bascule deviendrait lassant. Le calcul vit dans
+`src/lib/mensuel.ts`, sans dépendance native.
 
 ## Stockage
 

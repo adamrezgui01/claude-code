@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { PROVINCES, type Adresse } from '../db/types';
@@ -21,6 +21,9 @@ export function SaisieAdresse({
   cle,
   foyer,
   onNom,
+  libelle = 'Adresse',
+  invite = 'Commencez à taper l’adresse',
+  apresRecherche,
 }: {
   adresse: Adresse;
   onChange: (a: Adresse) => void;
@@ -29,6 +32,10 @@ export function SaisieAdresse({
   foyer?: Point;
   /** Nom du commerce retenu, quand la suggestion en est un. */
   onNom?: (nom: string) => void;
+  libelle?: string;
+  invite?: string;
+  /** Glissé entre la barre de recherche et les champs qu'elle remplit. */
+  apresRecherche?: ReactNode;
 }) {
   const accent = useAccent();
   const foyerLat = foyer?.lat;
@@ -84,14 +91,14 @@ export function SaisieAdresse({
   return (
     <View>
       <View style={styles.champ}>
-          <Text style={styles.label}>Adresse</Text>
+          <Text style={styles.label}>{libelle}</Text>
           <View style={[styles.recherche, suggestions.length > 0 && { borderColor: accent }]}>
             <Ionicons name="search" size={16} color={couleurs.doux} />
             <TextInput
               style={styles.saisie}
               value={recherche}
               onChangeText={setRecherche}
-              placeholder="Commencez à taper l’adresse"
+              placeholder={invite}
               placeholderTextColor={couleurs.doux}
               autoCorrect={false}
             />
@@ -131,6 +138,8 @@ export function SaisieAdresse({
             <Text style={styles.erreur}>{erreur}</Text>
           )}
       </View>
+
+      {apresRecherche}
 
       <View style={styles.rangee}>
         <View style={styles.court}>

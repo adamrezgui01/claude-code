@@ -28,7 +28,12 @@ export function Ruban({
   bloque: boolean;
   onPrecedent: () => void;
   onSuivant: () => void;
-  children: ReactNode;
+  /**
+   * Le contenu décide lui-même ce qui glisse. Le quadrillé — lignes des heures,
+   * libellés, colonnes — doit rester immobile : c'est le contenu qui défile
+   * dessus, pas la page qu'on pousse.
+   */
+  children: (glissement: Animated.Value) => ReactNode;
 }) {
   const { width } = useWindowDimensions();
   const glissement = useRef(new Animated.Value(0)).current;
@@ -91,7 +96,7 @@ export function Ruban({
 
   return (
     <View style={styles.cadre} {...pan.panHandlers}>
-      <Animated.View style={{ transform: [{ translateX: glissement }] }}>{children}</Animated.View>
+      {children(glissement)}
     </View>
   );
 }

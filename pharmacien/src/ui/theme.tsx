@@ -26,6 +26,8 @@ export const couleurs = {
   texte: '#1E1B22',
   doux: '#6E6875',
   bordure: '#E6E2E6',
+  /** Encore plus pâle : les demi-heures suggèrent, les heures dominent. */
+  bordurePale: '#F1EEF1',
   alerte: '#B4431F',
   alertePale: '#FBEAE3',
   /** États de paiement et de correction : jamais touchés par l'esthétique. */
