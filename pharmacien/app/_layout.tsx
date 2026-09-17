@@ -12,6 +12,7 @@ import { ActivityIndicator, View } from 'react-native';
 
 import { initialiserBase } from '../src/db';
 import { definirReglage, obtenirReglages } from '../src/db/profil';
+import { adresseDesReglages, adresseRenseignee } from '../src/lib/adresses';
 import { supprimerSecrets } from '../src/lib/codes';
 import { preparerNotifications } from '../src/lib/notifications';
 import { ACCENT_DEFAUT, couleurs, FournisseurTheme, police } from '../src/ui/theme';
@@ -26,6 +27,8 @@ export default function Racine() {
     Nunito_700Bold,
   });
 
+  const [bienvenue, setBienvenue] = useState(false);
+
   useEffect(() => {
     const effacees = initialiserBase();
     // Un changement de schéma efface les pharmacies : leurs secrets doivent
@@ -33,9 +36,19 @@ export default function Racine() {
     // réutilise le même identifiant.
     effacees.forEach((id) => void supprimerSecrets(id));
     preparerNotifications();
-    setAccent(obtenirReglages().accent || ACCENT_DEFAUT);
+    const reglages = obtenirReglages();
+    setAccent(reglages.accent || ACCENT_DEFAUT);
+    // Premier lancement : sans nom ni adresse, l'application ne peut ni
+    // facturer ni calculer une distance.
+    setBienvenue(
+      !reglages.nom.trim() || !adresseRenseignee(adresseDesReglages(reglages))
+    );
     setPret(true);
   }, []);
+
+  useEffect(() => {
+    if (pret && bienvenue) router.replace('/bienvenue');
+  }, [pret, bienvenue, router]);
 
   const reponse = Notifications.useLastNotificationResponse();
   useEffect(() => {
@@ -86,6 +99,7 @@ export default function Racine() {
           <Stack.Screen name="frais/[id]" options={{ title: 'Frais' }} />
           <Stack.Screen name="pharmacie/[id]" options={{ title: 'Pharmacie' }} />
           <Stack.Screen name="document/[id]" options={{ title: 'Document' }} />
+          <Stack.Screen name="bienvenue" options={{ headerShown: false }} />
           <Stack.Screen name="liens" options={{ title: 'Liens et infos utiles' }} />
           <Stack.Screen name="facture" options={{ title: 'Générer une facture' }} />
           <Stack.Screen name="factures" options={{ title: 'Factures' }} />

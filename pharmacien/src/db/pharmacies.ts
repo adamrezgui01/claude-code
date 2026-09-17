@@ -134,6 +134,11 @@ export function supprimerPharmacie(id: number): string[] {
   return rappels;
 }
 
+/** Écrit la distance calculée sans toucher au reste de la fiche. */
+export function definirDistance(id: number, km: number) {
+  db.runSync('UPDATE pharmacies SET distance_km = ? WHERE id = ?', km, id);
+}
+
 export function compterQuartsPharmacie(id: number): number {
   const r = db.getFirstSync<{ n: number }>(
     'SELECT COUNT(*) AS n FROM quarts WHERE pharmacie_id = ?',

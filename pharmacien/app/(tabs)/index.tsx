@@ -35,6 +35,7 @@ import { Bouton, Carte, Doux, Fondu, Onglets, Vide } from '../../src/ui/composan
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 import { VueCarte, type PointCarte } from '../../src/ui/VueCarte';
+import { Ruban } from '../../src/ui/Ruban';
 import { VueColonnes } from '../../src/ui/VueColonnes';
 
 type Vue = 'agenda' | 'liste' | 'carte';
@@ -245,18 +246,23 @@ export default function Horaire() {
                   <Ionicons name="chevron-forward" size={22} color={accent} />
                 </Pressable>
               </View>
-              <VueColonnes
-                jours={affichage === 'jour' ? [jour] : semaine}
-                quartsParJour={parJour}
-                hauteurDisponible={hauteurAgenda}
-                onOuvrir={ouvrirQuart}
-                onDeplacer={deplacer}
-                onDupliquer={dupliquer}
-                onArmer={setDuplication}
-              />
+              <Ruban
+                bloque={duplication}
+                onPrecedent={() => setJour(ajouterJours(jour, -pas))}
+                onSuivant={() => setJour(ajouterJours(jour, pas))}>
+                <VueColonnes
+                  jours={affichage === 'jour' ? [jour] : semaine}
+                  quartsParJour={parJour}
+                  hauteurDisponible={hauteurAgenda}
+                  onOuvrir={ouvrirQuart}
+                  onDeplacer={deplacer}
+                  onDupliquer={dupliquer}
+                  onArmer={setDuplication}
+                />
+              </Ruban>
               <Doux>
-                Glissez un bloc pour le déplacer. Maintenez-le plus longtemps pour en dupliquer une
-                copie ailleurs.
+                Balayez pour changer de {affichage === 'jour' ? 'jour' : 'semaine'}. Maintenez un
+                bloc pour le déplacer, plus longtemps pour en dupliquer une copie.
               </Doux>
 
               {/* La journée garde ses cartes sous la timeline : elles portent le

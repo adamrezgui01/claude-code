@@ -147,3 +147,37 @@ export function ouvrirItineraire(depart: string, arrivee: string) {
       : `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(depart)}&destination=${encodeURIComponent(arrivee)}&travelmode=driving`;
   Linking.openURL(url);
 }
+
+/**
+ * Pourquoi la distance ne se demande plus.
+ *
+ * Zéro kilomètre et distance inconnue sont deux choses différentes : les
+ * confondre fausse les factures. Comme personne ne travaille à zéro kilomètre
+ * de chez soi, une distance nulle signifie « jamais calculée », et l'affichage
+ * doit le dire plutôt que d'imprimer un zéro qui a l'air d'une vraie valeur.
+ */
+export type EtatDistance =
+  | { etat: 'connue'; km: number }
+  | { etat: 'calcul' }
+  | { etat: 'inconnue' }
+  | { etat: 'sans_domicile' }
+  | { etat: 'echec'; raison: string };
+
+export function distanceConnue(km: number): boolean {
+  return km > 0;
+}
+
+/**
+ * Calcule la distance dès que les deux adresses suffisent, sans que personne
+ * ne le demande. Retourne `null` quand il manque une adresse : au rappel, c'est
+ * à l'écran d'expliquer laquelle.
+ */
+export async function calculerSiPossible(
+  domicile: Adresse,
+  pharmacie: Adresse,
+  cle: string,
+  allerRetour: boolean
+): Promise<ResultatDistance | null> {
+  if (!adresseRenseignee(domicile) || !adresseRenseignee(pharmacie)) return null;
+  return calculerDistance(domicile, pharmacie, cle, allerRetour);
+}

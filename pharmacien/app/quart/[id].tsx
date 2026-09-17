@@ -6,12 +6,15 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { listerFrais } from '../../src/db/frais';
 import {
   creerPharmacie,
+  definirDistance,
   listerPharmacies,
   listerPharmaciesRecentes,
   obtenirPharmacie,
   pharmacieVide,
 } from '../../src/db/pharmacies';
 import { delaisSecondaires, obtenirReglages } from '../../src/db/profil';
+import { calculerSiPossible, distanceConnue } from '../../src/lib/distance';
+import { adresseDesReglages, adresseRenseignee } from '../../src/lib/adresses';
 import {
   corrigerHeures,
   creerQuart,
@@ -27,7 +30,7 @@ import {
   type EntreeQuart,
 } from '../../src/db/quarts';
 import type { FraisExtra, ModeDeplacement, Pharmacie } from '../../src/db/types';
-import { aujourdhui, dureeHeures } from '../../src/lib/dates';
+import { aujourdhui, decalerHeure, dureeHeures } from '../../src/lib/dates';
 import { dureePrevue } from '../../src/lib/facture';
 import { analyserNombre, argent, heures, pluriel } from '../../src/lib/format';
 import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
@@ -97,6 +100,9 @@ export default function FormulaireQuart() {
    */
   const [details, setDetails] = useState(false);
   const [aEviter, setAEviter] = useState(false);
+  const [reglages] = useState(obtenirReglages);
+  const [calculKm, setCalculKm] = useState(false);
+  const [sansDomicile, setSansDomicile] = useState(false);
   const [annule, setAnnule] = useState(false);
   const [passe, setPasse] = useState(false);
   const [heuresPrevues, setHeuresPrevues] = useState<{ debut: string; fin: string } | null>(null);
@@ -105,6 +111,8 @@ export default function FormulaireQuart() {
   const [joursRepetes, setJoursRepetes] = useState<number[]>([]);
   const [semaines, setSemaines] = useState('2');
   const [recompense, setRecompense] = useState('');
+  const [ouvertDebut, setOuvertDebut] = useState(false);
+  const [ouvertFin, setOuvertFin] = useState(false);
 
   useEffect(() => {
     setPharmacies(listerPharmacies());
@@ -134,6 +142,12 @@ export default function FormulaireQuart() {
           setAnnule(!!q.annule);
           setPasse(finDuQuart(q).getTime() < Date.now());
           setHeuresPrevues({ debut: q.heure_debut, fin: q.heure_fin });
+        } else if (params.heure) {
+          // Copie déposée dans la grille : le début est celui du dépôt, et la
+          // fin suit pour que la durée ne bouge pas.
+          const duree = dureeHeures(q.heure_debut, q.heure_fin);
+          setHeureDebut(params.heure);
+          setHeureFin(decalerHeure(params.heure, duree));
         } else {
           setHeureDebut(q.heure_debut);
           setHeureFin(q.heure_fin);
@@ -168,6 +182,29 @@ export default function FormulaireQuart() {
     );
     setPerDiem(p.per_diem ? `${p.per_diem}` : '');
     setAEviter(!!p.a_eviter);
+
+    // Filet de sécurité : si la distance n'a jamais été calculée, on la calcule
+    // ici plutôt que d'envoyer l'usager au répertoire et de le faire revenir.
+    if (p.mode_deplacement === 'km' && !distanceConnue(p.distance_km)) {
+      void completerDistance(p);
+    }
+  }
+
+  async function completerDistance(p: Pharmacie) {
+    const domicile = adresseDesReglages(reglages);
+    if (!adresseRenseignee(domicile)) {
+      setSansDomicile(true);
+      return;
+    }
+    setSansDomicile(false);
+    setCalculKm(true);
+    const resultat = await calculerSiPossible(domicile, p, reglages.cle_itineraire, true);
+    setCalculKm(false);
+    if (resultat?.ok) {
+      setKilometrage(`${resultat.km}`);
+      // Retenue sur la fiche : le prochain quart n'aura plus à la recalculer.
+      definirDistance(p.id, resultat.km);
+    }
   }
 
   /** Les jours qui portent déjà un quart, marqués d'un point dans le calendrier. */
@@ -190,7 +227,13 @@ export default function FormulaireQuart() {
     const repas = analyserNombre(perDiem);
     if (tauxHoraire > 0) morceaux.push(`${argent(tauxHoraire)}/h`);
     if (pause > 0) morceaux.push(`pause ${pause} min`);
-    if (modeDeplacement === 'km' && km > 0) morceaux.push(`${km} km`);
+    if (modeDeplacement === 'km') {
+      // Zéro kilomètre et distance inconnue ne sont pas la même chose : on ne
+      // montre jamais un zéro qui aurait l'air d'une vraie valeur.
+      if (calculKm) morceaux.push('distance en calcul…');
+      else if (distanceConnue(km)) morceaux.push(`${km} km`);
+      else if (sansDomicile) morceaux.push('adresse du profil manquante');
+    }
     if (modeDeplacement === 'fixe' && fixe > 0) morceaux.push(argent(fixe));
     if (repas > 0) morceaux.push(`repas ${argent(repas)}`);
     if (datesSerie.length > 1) morceaux.push(pluriel(datesSerie.length, 'quart'));
@@ -397,8 +440,25 @@ export default function FormulaireQuart() {
           joursMarques={joursOccupes}
         />
         <View style={styles.rangee}>
-          <SelecteurHeure label="Début" valeur={heureDebut} onChange={setHeureDebut} />
-          <SelecteurHeure label="Fin" valeur={heureFin} onChange={setHeureFin} />
+          <SelecteurHeure
+            label="Début"
+            valeur={heureDebut}
+            onChange={setHeureDebut}
+            ouvert={ouvertDebut}
+            onOuvert={(v) => {
+              setOuvertDebut(v);
+              // À la création, la fin enchaîne d'elle-même. En modification,
+              // non : l'usager venait peut-être ne corriger que le début.
+              if (!v && nouveau) setOuvertFin(true);
+            }}
+          />
+          <SelecteurHeure
+            label="Fin"
+            valeur={heureFin}
+            onChange={setHeureFin}
+            ouvert={ouvertFin}
+            onOuvert={setOuvertFin}
+          />
         </View>
         {passe && (
           <Doux>
@@ -456,14 +516,26 @@ export default function FormulaireQuart() {
             <Separateur />
             <SousTitre>Frais du quart</SousTitre>
             {modeDeplacement === 'km' && (
-              <Champ
-                label="Kilométrage (km)"
-                valeur={kilometrage}
-                onChange={setKilometrage}
-                clavier="decimal-pad"
-                placeholder="0"
-                aide="Mettez zéro pour une journée où le trajet n’est pas remboursé."
-              />
+              <>
+                <Champ
+                  label="Kilométrage (km)"
+                  valeur={calculKm ? '' : kilometrage}
+                  onChange={setKilometrage}
+                  clavier="decimal-pad"
+                  placeholder={calculKm ? 'Calcul en cours…' : 'Pas encore calculée'}
+                  aide="Mettez zéro pour une journée où le trajet n’est pas remboursé."
+                />
+                {sansDomicile && (
+                  <Carte style={styles.eviter}>
+                    <Doux>
+                      Ajoutez votre adresse dans votre profil pour calculer les distances.
+                    </Doux>
+                    <Pressable onPress={() => router.push('/profil')} hitSlop={8}>
+                      <Text style={[styles.lien, { color: accent }]}>Ouvrir mon profil</Text>
+                    </Pressable>
+                  </Carte>
+                )}
+              </>
             )}
             {modeDeplacement === 'fixe' && (
               <Champ
@@ -660,6 +732,11 @@ const styles = StyleSheet.create({
     fontFamily: police.normal,
     color: couleurs.doux,
     marginTop: 2,
+  },
+  lien: {
+    fontSize: 14,
+    fontFamily: police.demi,
+    marginTop: espace.s,
   },
   eviter: {
     backgroundColor: couleurs.fond,

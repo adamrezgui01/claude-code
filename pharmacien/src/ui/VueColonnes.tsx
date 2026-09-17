@@ -20,8 +20,13 @@ import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme'
  */
 
 const LARGEUR_AXE = 44;
-/** Au dépôt, l'heure s'aimante : sur un petit écran, 9 h 00 et 9 h 10 se jouent à quelques pixels. */
-const AIMANT_MINUTES = 15;
+/**
+ * Au dépôt, le quart se cale sur l'heure pleine ou la demi-heure. Ce sont les
+ * deux seules positions possibles : l'usager fait un geste approximatif,
+ * l'application place proprement. Sur un petit écran, viser à la minute
+ * transformerait un geste simple en geste de précision.
+ */
+const AIMANT_MINUTES = 30;
 /** Maintien qui attache le bloc au doigt. */
 const MAINTIEN_DEPLACER = 180;
 /** Maintien immobile supplémentaire qui bascule en duplication. */
@@ -182,7 +187,10 @@ export function VueColonnes({
     const colonne = Math.floor((centre - LARGEUR_AXE) / Math.max(largeurCol, 1));
     const jour = j[Math.min(Math.max(colonne, 0), j.length - 1)];
     const aimante = Math.round((p.debut + coin.y / px) / AIMANT_MINUTES) * AIMANT_MINUTES;
-    return { jour, minutes: Math.min(Math.max(aimante, 0), 23 * 60 + 45) };
+    // La borne haute reste sur la grille : sinon un dépôt tout en bas
+    // atterrirait entre deux crans.
+    const dernier = 24 * 60 - AIMANT_MINUTES;
+    return { jour, minutes: Math.min(Math.max(aimante, 0), dernier) };
   }
 
   const pan = useRef(

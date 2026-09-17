@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
@@ -17,6 +17,7 @@ import { obtenirReglages } from '../../src/db/profil';
 import { LOGICIELS, type Adresse, type CodeAcces, type ModeDeplacement } from '../../src/db/types';
 import {
   adresseDesReglages,
+  adresseRenseignee,
   adresseUneLigne,
   adresseVide,
   estLocalisee,
@@ -29,7 +30,11 @@ import {
   lireIdentifiants,
   supprimerSecrets,
 } from '../../src/lib/codes';
-import { calculerDistance, ouvrirItineraireVers } from '../../src/lib/distance';
+import {
+  calculerSiPossible,
+  distanceConnue,
+  ouvrirItineraireVers,
+} from '../../src/lib/distance';
 import { analyserNombre, pluriel } from '../../src/lib/format';
 import { annulerRappels } from '../../src/lib/notifications';
 import {
@@ -40,6 +45,7 @@ import {
   Ecran,
   Fondu,
   Interrupteur,
+  Onglets,
   Puce,
   Separateur,
   SousTitre,
@@ -79,6 +85,7 @@ export default function FichePharmacie() {
   const [tauxParKm, setTauxParKm] = useState('');
   const [montantFixe, setMontantFixe] = useState('');
   const [calculEnCours, setCalculEnCours] = useState(false);
+  const [echecCalcul, setEchecCalcul] = useState('');
   /** L'aller-retour reste la valeur par défaut : c'est le cas courant. */
   const [allerRetour, setAllerRetour] = useState(true);
 
@@ -153,24 +160,52 @@ export default function FichePharmacie() {
     setCodes((actuels) => actuels.map((c, i) => (i === index ? { ...c, [champ]: valeur } : c)));
   }
 
-  async function calculer() {
-    setCalculEnCours(true);
-    const resultat = await calculerDistance(
-      adresseDesReglages(reglages),
-      adresse,
-      reglages.cle_itineraire,
-      allerRetour
-    );
-    setCalculEnCours(false);
-    if (resultat.ok) {
-      setDistance(`${resultat.km}`);
-      return;
-    }
-    Alert.alert('Distance non calculée', resultat.raison, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Ouvrir dans Plans', onPress: () => ouvrirItineraireVers(adresseUneLigne(adresse)) },
-    ]);
-  }
+  const domicile = adresseDesReglages(reglages);
+  const sansDomicile = !adresseRenseignee(domicile);
+
+  const calculer = useCallback(
+    async (silencieux: boolean) => {
+      if (sansDomicile) return;
+      setCalculEnCours(true);
+      setEchecCalcul('');
+      const resultat = await calculerSiPossible(
+        domicile,
+        adresse,
+        reglages.cle_itineraire,
+        allerRetour
+      );
+      setCalculEnCours(false);
+      if (!resultat) return;
+      if (resultat.ok) {
+        setDistance(`${resultat.km}`);
+        return;
+      }
+      // Un calcul lancé tout seul ne doit pas interrompre l'usager ; un calcul
+      // demandé, oui.
+      if (silencieux) {
+        setEchecCalcul(resultat.raison);
+        return;
+      }
+      Alert.alert('Distance non calculée', resultat.raison, [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Ouvrir dans Plans', onPress: () => ouvrirItineraireVers(adresseUneLigne(adresse)) },
+      ]);
+    },
+    [adresse, allerRetour, domicile, reglages.cle_itineraire, sansDomicile]
+  );
+
+  /**
+   * Dès que l'adresse suffit, la distance se calcule d'elle-même : c'est à
+   * l'application de le faire, pas à l'usager d'y penser.
+   */
+  useEffect(() => {
+    if (mode !== 'km' || sansDomicile) return;
+    if (!adresseRenseignee(adresse)) return;
+    if (distanceConnue(analyserNombre(distance))) return;
+    void calculer(true);
+    // `distance` est volontairement absent : le calcul la remplit, et la
+    // relancer sur son propre résultat bouclerait.
+  }, [mode, adresse, sansDomicile, calculer]);
 
   async function enregistrer() {
     if (!nom.trim()) {
@@ -263,11 +298,11 @@ export default function FichePharmacie() {
           aucun repère de progression — un « étape 1 sur 3 » donne une
           impression de corvée. */}
       {!nouvelle && (
-        <View style={styles.pages}>
-          {PAGES.map((titre, i) => (
-            <Puce key={titre} texte={titre} actif={page === i} onPress={() => setPage(i)} />
-          ))}
-        </View>
+        <Onglets
+          options={PAGES.map((titre, i) => ({ valeur: `${i}`, texte: titre }))}
+          valeur={`${page}`}
+          onChange={(v) => setPage(Number(v))}
+        />
       )}
 
       <Fondu key={page}>
@@ -446,10 +481,16 @@ export default function FichePharmacie() {
               <>
                 <Champ
                   label={`Distance ${allerRetour ? 'aller-retour' : 'aller simple'} (km)`}
-                  valeur={distance}
+                  valeur={
+                    calculEnCours
+                      ? ''
+                      : distanceConnue(analyserNombre(distance))
+                        ? distance
+                        : ''
+                  }
                   onChange={setDistance}
                   clavier="decimal-pad"
-                  placeholder="0"
+                  placeholder={calculEnCours ? 'Calcul en cours…' : 'Pas encore calculée'}
                 />
                 <Interrupteur
                   label="Aller-retour"
@@ -461,15 +502,30 @@ export default function FichePharmacie() {
                   valeur={allerRetour}
                   onChange={setAllerRetour}
                 />
-                <Bouton
-                  titre={calculEnCours ? 'Calcul…' : 'Calculer la distance'}
-                  variante="secondaire"
-                  onPress={calculer}
-                  desactive={calculEnCours}
-                />
-                <Doux>
-                  Le calcul envoie votre adresse et celle de la pharmacie au service d’itinéraire.
-                </Doux>
+                {sansDomicile ? (
+                  <Carte style={styles.avis}>
+                    <Doux>
+                      Ajoutez votre adresse dans votre profil pour calculer les distances.
+                    </Doux>
+                    <Pressable onPress={() => router.push('/profil')} hitSlop={8}>
+                      <Text style={[styles.lien, { color: accent }]}>Ouvrir mon profil</Text>
+                    </Pressable>
+                  </Carte>
+                ) : (
+                  <>
+                    {!!echecCalcul && <Doux>{echecCalcul}</Doux>}
+                    <Bouton
+                      titre={calculEnCours ? 'Calcul…' : 'Recalculer la distance'}
+                      variante="secondaire"
+                      onPress={() => void calculer(false)}
+                      desactive={calculEnCours}
+                    />
+                    <Doux>
+                      La distance se calcule d’elle-même dès que l’adresse suffit. Le calcul envoie
+                      votre adresse et celle de la pharmacie au service d’itinéraire.
+                    </Doux>
+                  </>
+                )}
                 <View style={styles.espacement} />
                 <Champ
                   label="Taux par kilomètre ($/km)"
@@ -590,10 +646,6 @@ export default function FichePharmacie() {
 }
 
 const styles = StyleSheet.create({
-  pages: {
-    flexDirection: 'row',
-    marginBottom: espace.m,
-  },
   reperes: {
     flexDirection: 'row',
     gap: espace.s,

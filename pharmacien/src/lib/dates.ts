@@ -156,6 +156,17 @@ export function dureeHeures(heureDebut: string, heureFin: string): number {
   return minutes / 60;
 }
 
+/**
+ * Heure décalée d'une durée en heures, en repassant par minuit au besoin.
+ * Sert au déplacement et à la duplication d'un quart : c'est la durée qui est
+ * conservée, jamais la fin calculée à part.
+ */
+export function decalerHeure(heure: string, dureeHeures: number): string {
+  const { h, min } = analyserHeure(heure);
+  const minutes = (Math.round(h * 60 + min + dureeHeures * 60) % (24 * 60) + 24 * 60) % (24 * 60);
+  return `${`${Math.floor(minutes / 60)}`.padStart(2, '0')}:${`${minutes % 60}`.padStart(2, '0')}`;
+}
+
 export function joursEntre(isoDebut: string, isoFin: string): number {
   const ms = analyserDate(isoFin).getTime() - analyserDate(isoDebut).getTime();
   return Math.round(ms / 86400000);

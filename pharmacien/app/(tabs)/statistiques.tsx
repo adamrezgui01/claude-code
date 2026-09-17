@@ -16,6 +16,7 @@ import {
   Doux,
   Ecran,
   Fondu,
+  Onglets,
   Puce,
   Rangee,
   Separateur,
@@ -62,25 +63,19 @@ export default function Statistiques() {
 
   return (
     <Ecran>
-      <SousTitre>Période</SousTitre>
-      <View style={styles.puces}>
-        <Puce texte="Ce mois-ci" actif={preset === 'mois'} onPress={() => setPreset('mois')} />
-        <Puce
-          texte="Mois dernier"
-          actif={preset === 'moisDernier'}
-          onPress={() => setPreset('moisDernier')}
-        />
-        <Puce
-          texte="3 derniers mois"
-          actif={preset === 'trimestre'}
-          onPress={() => setPreset('trimestre')}
-        />
-        <Puce
-          texte="Personnalisée"
-          actif={preset === 'personnalisee'}
-          onPress={() => setPreset('personnalisee')}
-        />
-      </View>
+      {/* Libellés courts : un trait qui glisse ne peut pas suivre sur deux
+          rangées, donc la rangée doit tenir sur une seule ligne. */}
+      <Onglets
+        libelle="Période"
+        options={[
+          { valeur: 'mois' as const, texte: 'Ce mois' },
+          { valeur: 'moisDernier' as const, texte: 'Mois dernier' },
+          { valeur: 'trimestre' as const, texte: '3 mois' },
+          { valeur: 'personnalisee' as const, texte: 'Autre' },
+        ]}
+        valeur={preset}
+        onChange={setPreset}
+      />
       {preset === 'personnalisee' ? (
         <>
           <SelecteurDate label="Du" valeur={debutPerso} onChange={setDebutPerso} />

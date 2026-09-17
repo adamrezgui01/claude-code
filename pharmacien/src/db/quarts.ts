@@ -1,4 +1,4 @@
-import { analyserHeure, aujourdhui, dureeHeures } from '../lib/dates';
+import { aujourdhui, decalerHeure, dureeHeures } from '../lib/dates';
 import { db } from './index';
 import type { Quart, QuartDetaille } from './types';
 
@@ -144,10 +144,7 @@ export function definirAnnule(id: number, annule: boolean) {
 export function deplacerQuart(id: number, date: string, heureDebut: string) {
   const quart = obtenirQuart(id);
   if (!quart) return;
-  const duree = dureeHeures(quart.heure_debut, quart.heure_fin);
-  const { h, min } = analyserHeure(heureDebut);
-  const finMinutes = Math.round(h * 60 + min + duree * 60) % (24 * 60);
-  const heureFin = `${`${Math.floor(finMinutes / 60)}`.padStart(2, '0')}:${`${finMinutes % 60}`.padStart(2, '0')}`;
+  const heureFin = decalerHeure(heureDebut, dureeHeures(quart.heure_debut, quart.heure_fin));
   db.runSync(
     'UPDATE quarts SET date = ?, heure_debut = ?, heure_fin = ? WHERE id = ?',
     date,

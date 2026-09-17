@@ -146,12 +146,22 @@ export function SelecteurHeure({
   label,
   valeur,
   onChange,
+  ouvert: ouvertPilote,
+  onOuvert,
 }: {
   label: string;
   valeur: string;
   onChange: (heure: string) => void;
+  /** Piloté de l'extérieur pour enchaîner deux sélecteurs. Sinon autonome. */
+  ouvert?: boolean;
+  onOuvert?: (v: boolean) => void;
 }) {
-  const [ouvert, setOuvert] = useState(false);
+  const [ouvertInterne, setOuvertInterne] = useState(false);
+  const ouvert = ouvertPilote ?? ouvertInterne;
+  const setOuvert = (v: boolean) => {
+    setOuvertInterne(v);
+    onOuvert?.(v);
+  };
   const { h, min } = analyserHeure(valeur);
 
   const heuresPossibles = useMemo(() => Array.from({ length: 24 }, (_, i) => i), []);

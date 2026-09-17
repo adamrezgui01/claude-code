@@ -81,6 +81,14 @@ qui sert à préremplir une nouvelle fiche.
 Partout où l'on choisit une pharmacie, la sélection se fait par recherche, avec
 les pharmacies récentes en premier et la liste complète en dessous.
 
+## Premier lancement
+
+Deux champs, une seule fois : le nom qui paraîtra sur les factures, et
+l'adresse qui sert à calculer les distances. Ce sont les deux seules
+informations sans lesquelles l'application ne peut pas fonctionner. Le permis,
+le taux, le per diem et les documents se remplissent dans le profil, quand
+l'usager en a besoin — un mur de dix champs au premier écran décourage.
+
 ## Adresses
 
 L'adresse est structurée : numéro civique, rue, local, code postal, ville,
@@ -103,9 +111,22 @@ base, ou une panne de réseau, se contournent en saisissant les champs à la mai
 Une adresse incomplète ou non localisée s'enregistre quand même : la pharmacie
 n'apparaît simplement pas sur la carte.
 
-C'est la même saisie pour une pharmacie et pour le pharmacien lui-même : son
-adresse, dans Profil, passe par le même champ de recherche et les mêmes champs
-structurés. Dans les réglages, elle vit sous le préfixe `adresse_`.
+C'est la même saisie partout — pharmacie, profil, premier lancement : le même
+champ de recherche et les mêmes champs structurés. Dans les réglages, l'adresse
+vit sous le préfixe `adresse_`.
+
+La recherche ramène aussi les commerces. La couche `venue` d'OpenStreetMap
+couvre les pharmacies, alors taper « Jean Coutu Sainte-Foy » sort la succursale
+et remplit son adresse. Une seule barre pour les deux : l'usager tape, il prend
+ce qui sort. Le nom du commerce préremplit le nom de la pharmacie, et reste
+modifiable — OpenStreetMap donne la bannière, alors que le nom légal d'une
+pharmacie au Québec est celui du pharmacien propriétaire, du type « Pharmacie
+Jean Grégoire Inc. ». C'est celui-là qui doit paraître sur la facture.
+
+Les champs manuels sont toujours visibles sous la barre : aucun basculement,
+aucun mode. Une recherche sans résultat n'est donc pas un échec — on remplit
+soi-même. La couverture d'OpenStreetMap est partielle hors des villes, et c'est
+attendu.
 
 `src/lib/adresses.ts` ne contient que la mise en forme, sans dépendance native.
 Le fournisseur — autocomplétion et géocodage — est isolé dans
@@ -156,16 +177,23 @@ complètent :
   formulaire prérempli ; il ne reste que la date à changer.
 - **Glisser-déposer.** Dans les vues jour et semaine, un maintien court sur un
   bloc l'arme : il suit le doigt jusqu'à un autre jour et une autre heure. Au
-  dépôt, l'heure s'aimante au quart d'heure le plus proche — sur un petit écran,
-  9 h 00 et 9 h 10 se jouent à quelques pixels.
+  dépôt, le quart se cale sur l'heure pleine ou la demi-heure, les deux seules
+  positions possibles. L'usager fait un geste approximatif, l'application place
+  proprement ; pour un horaire précis, il passe par le formulaire. La durée ne
+  change jamais : seul le début est aimanté, la fin suit.
 
 Les deux gestes se distinguent par la durée du maintien, jamais par la pression
 (le 3D Touch d'Apple est abandonné depuis des années) :
 
 | Geste | Effet |
 | --- | --- |
+| Balayage horizontal | change de jour ou de semaine |
 | Maintien court (180 ms), puis glisser | déplace le quart, en silence |
 | Maintien immobile prolongé (650 ms) | bascule en duplication, seconde vibration plus marquée |
+
+Le balayage ne capture un geste que tant qu'aucun bloc n'est attrapé : un
+maintien sur un bloc ne change jamais de jour, et un balayage franc sur la
+grille n'attrape jamais un bloc.
 
 Un doigt qui bouge avant le second seuil reste en déplacement pour toute la
 durée du geste : on ne bascule jamais en cours de glissement. Le double retour
@@ -451,7 +479,16 @@ Dans la fiche d'une pharmacie, le bouton *Calculer la distance* :
    la main, sur l'appareil, sans clé ;
 2. demande la distance routière à OpenRouteService avec la clé saisie dans
    Profil › Réglages ;
-3. inscrit l'aller-retour, arrondi au kilomètre. Le champ reste modifiable.
+3. inscrit la distance, arrondie au kilomètre. Un interrupteur choisit entre
+   aller simple et aller-retour, et le champ reste modifiable.
+
+Le calcul part de lui-même dès que l'adresse d'une pharmacie suffit, et un filet
+de sécurité le relance depuis l'écran d'ajout d'un quart si la distance n'est
+pas encore connue : l'usager n'a jamais à sortir de son écran pour aller la
+chercher. Zéro kilomètre et distance inconnue sont deux choses différentes — les
+confondre fausserait les factures — alors une distance jamais calculée s'affiche
+comme telle, jamais comme un zéro. Sans adresse au profil, l'application le dit
+et offre le lien vers le profil.
 
 Sans clé, ou si le service ne répond pas, l'application propose d'ouvrir
 l'itinéraire dans Plans ou Google Maps pour lire la distance soi-même.

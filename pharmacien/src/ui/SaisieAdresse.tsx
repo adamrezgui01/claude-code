@@ -20,12 +20,15 @@ export function SaisieAdresse({
   onChange,
   cle,
   foyer,
+  onNom,
 }: {
   adresse: Adresse;
   onChange: (a: Adresse) => void;
   cle: string;
   /** Point de référence du classement : l'adresse de l'usager quand on la connaît. */
   foyer?: Point;
+  /** Nom du commerce retenu, quand la suggestion en est un. */
+  onNom?: (nom: string) => void;
 }) {
   const accent = useAccent();
   const foyerLat = foyer?.lat;
@@ -34,12 +37,11 @@ export function SaisieAdresse({
   const [suggestions, setSuggestions] = useState<SuggestionAdresse[]>([]);
   const [erreur, setErreur] = useState('');
   const [chargement, setChargement] = useState(false);
-  const [manuel, setManuel] = useState(false);
   const [provinces, setProvinces] = useState(false);
   const dernierAppel = useRef(0);
 
   useEffect(() => {
-    if (manuel || recherche.trim().length < 4) {
+    if (recherche.trim().length < 4) {
       setSuggestions([]);
       setErreur('');
       return;
@@ -60,10 +62,11 @@ export function SaisieAdresse({
     return () => clearTimeout(minuterie);
     // Des nombres, pas l'objet : un point recréé à chaque rendu relancerait le
     // délai d'attente sans fin, et la recherche ne partirait jamais.
-  }, [recherche, cle, manuel, foyerLat, foyerLon]);
+  }, [recherche, cle, foyerLat, foyerLon]);
 
   function choisir(suggestion: SuggestionAdresse) {
     onChange({ ...suggestion.adresse, local: adresse.local });
+    if (suggestion.nom) onNom?.(suggestion.nom);
     setRecherche('');
     setSuggestions([]);
     setErreur('');
@@ -80,8 +83,7 @@ export function SaisieAdresse({
 
   return (
     <View>
-      {!manuel && (
-        <View style={styles.champ}>
+      <View style={styles.champ}>
           <Text style={styles.label}>Adresse</Text>
           <View style={[styles.recherche, suggestions.length > 0 && { borderColor: accent }]}>
             <Ionicons name="search" size={16} color={couleurs.doux} />
@@ -101,25 +103,34 @@ export function SaisieAdresse({
               key={s.cle}
               onPress={() => choisir(s)}
               style={({ pressed }) => [styles.suggestion, pressed && { opacity: 0.6 }]}>
-              <Ionicons name="location-outline" size={16} color={accent} />
-              <Text style={styles.suggestionTexte} numberOfLines={2}>
-                {s.libelle}
-              </Text>
+              <Ionicons
+                name={s.nom ? 'business-outline' : 'location-outline'}
+                size={16}
+                color={accent}
+              />
+              {/* Le nom d'abord, l'adresse en dessous : c'est elle qui permet de
+                  reconnaître la bonne succursale quand plusieurs se ressemblent. */}
+              <View style={styles.suggestionTexte}>
+                {!!s.nom && (
+                  <Text style={styles.suggestionNom} numberOfLines={1}>
+                    {s.nom}
+                  </Text>
+                )}
+                <Text
+                  style={s.nom ? styles.suggestionAdresse : styles.suggestionNom}
+                  numberOfLines={2}>
+                  {s.libelle}
+                </Text>
+              </View>
             </Pressable>
           ))}
 
-          {/* Une recherche qui échoue le dit, et rappelle la porte de sortie. */}
-          {!!erreur && !chargement && (
-            <Text style={styles.erreur}>{erreur} Vous pouvez entrer l’adresse à la main.</Text>
+          {/* Les champs restent là, alors une recherche sans résultat n'est pas
+              un échec : on remplit soi-même, sans avoir à basculer de mode. */}
+          {!!erreur && !chargement && erreur !== 'Aucune adresse trouvée.' && (
+            <Text style={styles.erreur}>{erreur}</Text>
           )}
-        </View>
-      )}
-
-      <Pressable onPress={() => setManuel((m) => !m)} hitSlop={8}>
-        <Text style={[styles.lien, { color: accent }]}>
-          {manuel ? 'Revenir à la recherche' : 'Entrer l’adresse à la main'}
-        </Text>
-      </Pressable>
+      </View>
 
       <View style={styles.rangee}>
         <View style={styles.court}>
@@ -183,6 +194,16 @@ export function SaisieAdresse({
 }
 
 const styles = StyleSheet.create({
+  suggestionNom: {
+    fontSize: 14,
+    fontFamily: police.demi,
+    color: couleurs.texte,
+  },
+  suggestionAdresse: {
+    fontSize: 12,
+    fontFamily: police.normal,
+    color: couleurs.doux,
+  },
   erreur: {
     fontSize: 12,
     fontFamily: police.normal,
@@ -229,15 +250,6 @@ const styles = StyleSheet.create({
   },
   suggestionTexte: {
     flex: 1,
-    fontSize: 14,
-    fontFamily: police.normal,
-    color: couleurs.texte,
-  },
-  lien: {
-    fontSize: 14,
-    fontFamily: police.demi,
-    paddingVertical: espace.s,
-    marginBottom: espace.s,
   },
   rangee: {
     flexDirection: 'row',

@@ -59,6 +59,12 @@ const REGIONS: Record<string, string> = {
 
 export type SuggestionAdresse = {
   cle: string;
+  /**
+   * Nom du commerce, quand le résultat en est un. C'est la bannière
+   * d'OpenStreetMap — « Jean Coutu » — pas le nom légal de la pharmacie, qui
+   * est celui du pharmacien propriétaire. L'usager le corrigera souvent.
+   */
+  nom: string;
   libelle: string;
   adresse: Adresse;
 };
@@ -83,11 +89,23 @@ function texte(valeur: unknown): string {
   return typeof valeur === 'string' ? valeur : '';
 }
 
+/**
+ * Couches interrogées. `venue` couvre les commerces d'OpenStreetMap, donc les
+ * pharmacies : taper « Jean Coutu Sainte-Foy » ramène la succursale et son
+ * adresse dans la même liste que les adresses. Une seule barre de recherche,
+ * jamais deux.
+ */
+const COUCHES = 'venue,address,street,locality';
+
+/** Six suffisent : au-delà, la liste demande de lire plutôt que de choisir. */
+const TAILLE = 6;
+
 function construireUrl(service: string, recherche: string, cle: string, foyer: Point): string {
   return (
     `${service}?api_key=${encodeURIComponent(cle.trim())}` +
     `&text=${encodeURIComponent(recherche.trim())}` +
-    `&boundary.country=CA&focus.point.lat=${foyer.lat}&focus.point.lon=${foyer.lon}&size=8`
+    `&layers=${COUCHES}` +
+    `&boundary.country=CA&focus.point.lat=${foyer.lat}&focus.point.lon=${foyer.lon}&size=${TAILLE}`
   );
 }
 
@@ -147,11 +165,16 @@ async function interroger(url: string): Promise<ResultatRecherche & { refus?: bo
       const p = (entree as { properties?: Record<string, unknown> })?.properties ?? {};
       const coordonnees = (entree as { geometry?: { coordinates?: number[] } })?.geometry
         ?.coordinates;
-      const rue = texte(p.street) || texte(p.name);
+      const nomLieu = texte(p.name);
+      const rue = texte(p.street) || nomLieu;
       if (!rue) return [];
+      // C'est la couche qui dit ce qu'est le résultat. Le champ « name » ne le
+      // dit pas : pour une simple adresse, il vaut le numéro suivi de la rue.
+      const estCommerce = texte(p.layer) === 'venue';
       return [
         {
           cle: `${texte(p.gid) || index}`,
+          nom: estCommerce ? nomLieu : '',
           libelle: texte(p.label) || rue,
           adresse: {
             numero_civique: texte(p.housenumber),
