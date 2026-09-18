@@ -8,6 +8,9 @@ import { calculerStatistiques } from './stats';
  */
 
 export type Mesure = 'argent' | 'heures' | 'kilometres';
+export type Forme = 'barres' | 'ligne';
+
+export const MESURES: Mesure[] = ['argent', 'heures', 'kilometres'];
 
 export type MoisChiffre = {
   /** Premier jour du mois, `AAAA-MM-01`. */
@@ -67,4 +70,17 @@ export function valeurDe(entree: MoisChiffre, mesure: Mesure): number {
 /** Plus haute valeur de la série, jamais nulle : une série vide garde son axe. */
 export function maximum(serie: MoisChiffre[], mesure: Mesure): number {
   return Math.max(1, ...serie.map((e) => valeurDe(e, mesure)));
+}
+
+/**
+ * Mois couverts par la période choisie. Le graphique garde ses douze mois — les
+ * réduire à « Ce mois-ci » donnerait une barre unique, qui ne montre rien — mais
+ * il met en valeur ceux que la période désigne.
+ */
+export function moisEnValeur(serie: MoisChiffre[], debut: string, fin: string): Set<string> {
+  return new Set(serie.filter((e) => e.mois <= fin && finDuMois(e.mois) >= debut).map((e) => e.mois));
+}
+
+function finDuMois(mois: string): string {
+  return bornesDuMois(mois)[1];
 }

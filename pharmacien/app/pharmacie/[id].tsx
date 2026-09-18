@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import {
   compterQuartsPharmacie,
@@ -36,6 +36,7 @@ import {
   ouvrirItineraireVers,
 } from '../../src/lib/distance';
 import { analyserNombre, pluriel } from '../../src/lib/format';
+import { deverrouiller } from '../../src/lib/deverrouillage';
 import { annulerRappels } from '../../src/lib/notifications';
 import {
   Bouton,
@@ -48,6 +49,7 @@ import {
   Interrupteur,
   Onglets,
   Puce,
+  Section,
   Separateur,
   SousTitre,
 } from '../../src/ui/composants';
@@ -94,8 +96,15 @@ export default function FichePharmacie() {
   const [logicielAutre, setLogicielAutre] = useState('');
   const [utilisateur, setUtilisateur] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
+  const [nip, setNip] = useState('');
   const [codes, setCodes] = useState<CodeAcces[]>([]);
+  /**
+   * Les identifiants restent masqués tant que l'usager ne s'est pas
+   * authentifié : ils ouvrent le dossier des patients. Le déverrouillage ne
+   * dure que le temps passé sur la fiche.
+   */
   const [secretsVisibles, setSecretsVisibles] = useState(false);
+  const [lieuDeploye, setLieuDeploye] = useState(false);
   const [nombreQuarts, setNombreQuarts] = useState(0);
   const [favori, setFavori] = useState(false);
   const [aEviter, setAEviter] = useState(false);
@@ -152,6 +161,7 @@ export default function FichePharmacie() {
     lireIdentifiants(pharmacieId).then((i) => {
       setUtilisateur(i.utilisateur);
       setMotDePasse(i.motDePasse);
+      setNip(i.nip);
     });
   }, [pharmacieId, reglages.taux_par_km]);
 
@@ -259,7 +269,7 @@ export default function FichePharmacie() {
     const id = pharmacieId ?? creerPharmacie(entree);
     if (pharmacieId) modifierPharmacie(pharmacieId, entree);
     await ecrireCodes(id, codes);
-    await ecrireIdentifiants(id, { utilisateur: utilisateur.trim(), motDePasse });
+    await ecrireIdentifiants(id, { utilisateur: utilisateur.trim(), motDePasse, nip: nip.trim() });
     router.back();
   }
 
@@ -580,13 +590,21 @@ export default function FichePharmacie() {
             )}
 
             <Separateur />
+
+            {/*
+              Une seule chose est vitale pour un remplaçant : ses identifiants
+              de connexion. C'est ce qu'il ouvre en arrivant, à chaque quart.
+              Les codes du lieu sont accessoires — sur place, c'est presque
+              toujours un technicien qui s'en occupe. La hiérarchie de l'écran
+              dit ça.
+            */}
             <View style={styles.enteteSection}>
-              <SousTitre>Accès</SousTitre>
-              <Pressable onPress={() => setSecretsVisibles((v) => !v)} hitSlop={8}>
-                <Text style={[styles.lien, { color: accent }]}>
-                  {secretsVisibles ? 'Masquer' : 'Afficher'}
-                </Text>
-              </Pressable>
+              <SousTitre>Codes d’accès (logiciel)</SousTitre>
+              {secretsVisibles && (
+                <Pressable onPress={() => setSecretsVisibles(false)} hitSlop={8}>
+                  <Text style={[styles.lien, { color: accent }]}>Masquer</Text>
+                </Pressable>
+              )}
             </View>
 
             <Text style={styles.label}>Logiciel</Text>
@@ -604,52 +622,99 @@ export default function FichePharmacie() {
               <Champ label="Nom du logiciel" valeur={logicielAutre} onChange={setLogicielAutre} />
             )}
 
-            <Champ
-              label="Utilisateur"
-              valeur={utilisateur}
-              onChange={setUtilisateur}
-              masque={!secretsVisibles}
-            />
-            <Champ
-              label="Mot de passe"
-              valeur={motDePasse}
-              onChange={setMotDePasse}
-              masque={!secretsVisibles}
-            />
-            <Doux>
-              {logiciel
-                ? `Identifiants ${logiciel}. Conservés dans le trousseau sécurisé de l’appareil (Keychain), jamais dans la base de l’application.`
-                : 'Choisissez le logiciel utilisé dans cette pharmacie.'}
-            </Doux>
+            {!secretsVisibles ? (
+              <Carte style={styles.verrou}>
+                <Ionicons name="lock-closed-outline" size={22} color={accent} />
+                <Doux>
+                  Ces identifiants ouvrent le dossier des patients. Ils sont conservés dans le
+                  trousseau sécurisé de l’appareil et ne s’affichent qu’après authentification.
+                </Doux>
+                <Bouton
+                  titre="Afficher"
+                  onPress={async () => {
+                    if (await deverrouiller()) setSecretsVisibles(true);
+                  }}
+                />
+              </Carte>
+            ) : (
+              <Fondu>
+                {/* Le NIP d'abord et en gros : le mot de passe sert une fois à
+                    l'ouverture, le NIP sert toute la journée. */}
+                <Section titre="NIP">
+                  <TextInput
+                    style={[styles.nip, { color: accent }]}
+                    value={nip}
+                    onChangeText={setNip}
+                    placeholder="—"
+                    placeholderTextColor={couleurs.bordure}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <Doux>Lettres et chiffres acceptés, aucune longueur imposée.</Doux>
+                </Section>
 
-            <View style={styles.espacement} />
-            <Text style={styles.label}>Codes d’accès (porte, alarme…)</Text>
-            {codes.map((code, i) => (
-              <View key={i}>
-                <Champ
-                  label="Libellé"
-                  valeur={code.libelle}
-                  onChange={(v) => modifierCode(i, 'libelle', v)}
-                  placeholder="Code de porte"
+                <Section titre="Connexion">
+                  <Champ nu label="Utilisateur" valeur={utilisateur} onChange={setUtilisateur} />
+                  <Champ nu label="Mot de passe" valeur={motDePasse} onChange={setMotDePasse} />
+                </Section>
+
+                <Doux>
+                  {logiciel
+                    ? `Identifiants ${logiciel}, conservés dans le trousseau sécurisé de l’appareil (Keychain), jamais dans la base de l’application.`
+                    : 'Choisissez le logiciel utilisé dans cette pharmacie.'}
+                </Doux>
+              </Fondu>
+            )}
+
+            <Separateur />
+
+            {/* Un code d'alarme ouvre une porte, pas un dossier de santé : il
+                n'a pas à être protégé, seulement rangé. */}
+            <Pressable
+              style={styles.enteteSection}
+              onPress={() => setLieuDeploye((d) => !d)}
+              hitSlop={6}>
+              <SousTitre>Accès au lieu</SousTitre>
+              <Ionicons
+                name={lieuDeploye ? 'chevron-up' : 'chevron-down'}
+                size={18}
+                color={accent}
+              />
+            </Pressable>
+
+            {lieuDeploye && (
+              <Fondu>
+                <Doux>Alarme, stationnement, porte — ce qu’il faut pour entrer.</Doux>
+                <View style={styles.espacement} />
+                {codes.map((code, i) => (
+                  <Section key={i}>
+                    <Champ
+                      nu
+                      label="Libellé"
+                      valeur={code.libelle}
+                      onChange={(v) => modifierCode(i, 'libelle', v)}
+                      placeholder="Code de porte"
+                    />
+                    <Champ
+                      nu
+                      label="Valeur"
+                      valeur={code.valeur}
+                      onChange={(v) => modifierCode(i, 'valeur', v)}
+                    />
+                    <Pressable
+                      onPress={() => setCodes((actuels) => actuels.filter((_, j) => j !== i))}
+                      hitSlop={8}>
+                      <Text style={styles.retirer}>Retirer</Text>
+                    </Pressable>
+                  </Section>
+                ))}
+                <Bouton
+                  titre="Ajouter un code"
+                  variante="secondaire"
+                  onPress={() => setCodes((actuels) => [...actuels, { libelle: '', valeur: '' }])}
                 />
-                <Champ
-                  label="Valeur"
-                  valeur={code.valeur}
-                  onChange={(v) => modifierCode(i, 'valeur', v)}
-                  masque={!secretsVisibles}
-                />
-                <Pressable
-                  onPress={() => setCodes((actuels) => actuels.filter((_, j) => j !== i))}
-                  hitSlop={8}>
-                  <Text style={styles.retirer}>Retirer</Text>
-                </Pressable>
-              </View>
-            ))}
-            <Bouton
-              titre="Ajouter un code"
-              variante="secondaire"
-              onPress={() => setCodes((actuels) => [...actuels, { libelle: '', valeur: '' }])}
-            />
+              </Fondu>
+            )}
           </>
         )}
 
@@ -695,6 +760,16 @@ const styles = StyleSheet.create({
     backgroundColor: couleurs.carte,
     borderRadius: rayon,
     paddingVertical: espace.m,
+  },
+  verrou: {
+    alignItems: 'flex-start',
+    gap: espace.m,
+  },
+  nip: {
+    fontSize: 34,
+    fontFamily: police.gras,
+    letterSpacing: 2,
+    paddingVertical: espace.s,
   },
   repereTexte: {
     fontSize: 14,

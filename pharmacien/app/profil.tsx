@@ -10,17 +10,17 @@ import {
   listerDocuments,
   obtenirFormation,
   obtenirReglages,
-} from '../../src/db/profil';
-import type { DocumentProfessionnel, Reglages } from '../../src/db/types';
+} from '../src/db/profil';
+import type { DocumentProfessionnel, Reglages } from '../src/db/types';
 import {
   adresseDesReglages,
   adresseRenseignee,
   champsAdresseReglages,
   estLocalisee,
-} from '../../src/lib/adresses';
-import { localiserAdresse } from '../../src/lib/adressesRecherche';
-import { aujourdhui, formatDateCourte, joursEntre } from '../../src/lib/dates';
-import { analyserNombre, argent, nombre } from '../../src/lib/format';
+} from '../src/lib/adresses';
+import { localiserAdresse } from '../src/lib/adressesRecherche';
+import { aujourdhui, formatDateCourte, joursEntre } from '../src/lib/dates';
+import { analyserNombre, argent, nombre } from '../src/lib/format';
 import {
   Bouton,
   Champ,
@@ -34,10 +34,10 @@ import {
   Separateur,
   SousTitre,
   Vide,
-} from '../../src/ui/composants';
-import { SelecteurDate } from '../../src/ui/Selecteurs';
-import { SaisieAdresse } from '../../src/ui/SaisieAdresse';
-import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+} from '../src/ui/composants';
+import { SelecteurDate } from '../src/ui/Selecteurs';
+import { SaisieAdresse } from '../src/ui/SaisieAdresse';
+import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
 
 /** Délais proposés pour le rappel secondaire, en minutes. */
 const DELAIS = [30, 60, 120, 180];
@@ -240,69 +240,6 @@ export default function Profil() {
         />
       </Section>
 
-      <Separateur />
-
-      {/*
-        Les paramètres ne portent que des réglages globaux. Un réglage qui ne
-        touche qu'un écran reste sur cet écran : le tri du répertoire est en
-        haut du répertoire, le sélecteur d'historique est sur la carte.
-      */}
-      <SousTitre>Paramètres</SousTitre>
-
-      <Text style={styles.label}>Rappels</Text>
-      <Doux>
-        Un rappel part toujours 48 h avant un quart, et un mémo 2 h après sa fin — celui-là ne
-        demande rien, il rappelle seulement de corriger vos heures si elles ont changé.
-      </Doux>
-      <View style={styles.bloc}>
-        <Interrupteur
-          label="Rappel supplémentaire"
-          detail="Un second rappel, plus près du quart"
-          valeur={!!reglages.rappel_secondaire_actif}
-          onChange={(v) => modifier('rappel_secondaire_actif', v ? 1 : 0)}
-        />
-        {!!reglages.rappel_secondaire_actif && (
-          <Fondu>
-            <Text style={styles.label}>Combien de temps avant ?</Text>
-            <View style={styles.puces}>
-              {DELAIS.map((minutes) => (
-                <Puce
-                  key={minutes}
-                  texte={minutes < 60 ? `${minutes} min` : `${minutes / 60} h`}
-                  actif={delais.includes(minutes)}
-                  onPress={() => basculerDelai(minutes)}
-                />
-              ))}
-            </View>
-            <Doux>Vous pouvez en choisir plusieurs. Ils prennent effet aux prochains quarts.</Doux>
-          </Fondu>
-        )}
-      </View>
-
-      <Champ
-        label="Clé OpenRouteService (facultative)"
-        valeur={reglages.cle_itineraire}
-        onChange={(v) => modifier('cle_itineraire', v)}
-        masque
-        aide="Sert à chercher les adresses et à calculer les distances. C’est la seule fonction qui envoie des données à l’extérieur de l’appareil."
-      />
-
-      <Bouton
-        titre={enregistre ? 'Enregistré' : 'Enregistrer'}
-        variante={enregistre ? 'secondaire' : 'principal'}
-        onPress={sauvegarderReglages}
-      />
-
-      <Pressable
-        onPress={() => router.push('/apparence')}
-        style={({ pressed }) => [styles.apparence, pressed && { opacity: 0.6 }]}>
-        <Ionicons name="color-palette-outline" size={20} color={accent} />
-        <View style={styles.apparenceTexte}>
-          <Text style={styles.apparenceTitre}>Apparence</Text>
-          <Doux>Choisir la couleur d’accent</Doux>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={couleurs.doux} />
-      </Pressable>
     </Ecran>
   );
 }

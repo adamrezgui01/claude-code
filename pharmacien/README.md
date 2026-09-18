@@ -37,7 +37,7 @@ compté sans elles, et le mémo de correction ne fait que rappeler une exception
 
 ## Écrans
 
-Quatre onglets, plus un menu à trois lignes dans l'en-tête.
+Quatre onglets.
 
 - **Horaire** — agenda, liste ou carte, toutes pharmacies confondues. Une fois
   par mois, la bannière des factures à faire s'affiche en haut. Un quart qui en
@@ -47,15 +47,10 @@ Quatre onglets, plus un menu à trois lignes dans l'en-tête.
   qu'on vient y chercher un code d'accès ou un numéro de téléphone souvent.
 - **Statistiques** — heures, kilométrage, per diem, frais, revenu estimé. Une
   des choses les plus consultées, donc un onglet et non un sous-écran.
-- **Profil** — formation continue, documents professionnels, informations et
-  facturation, paramètres.
-
-Le menu à trois lignes ne porte que ce qu'on consulte trop rarement pour
-mériter un onglet — pour l'instant les liens et infos utiles (numéros
-d'urgence, organismes, références cliniques, écrits en dur dans
-`src/content/liens.ts`). Il doit le rester :
-un menu qui devient le fourre-tout de tout ce qu'on ne sait pas classer est un
-menu où plus personne ne retrouve rien.
+- **Menu** — le moyeu : profil, liens et infos utiles, paramètres. Une barre de
+  recherche en haut ne filtre que les entrées du menu ; elle ne cherche ni les
+  quarts, ni les pharmacies, ni les signets. « Profil » était trop étroit pour
+  cet onglet, « Paramètres » l'aurait été dans l'autre sens.
 
 Sous-écrans : fiche par pharmacie, modification d'un quart, frais d'un quart,
 génération de factures, historique des factures, apparence.
@@ -175,15 +170,35 @@ pharmacies, ce qu'une liste ne montre pas. Une journée sans quart retombe sur 8
 La vue jour garde les cartes de quarts sous la timeline : elles portent le taux,
 les frais et les notes, que les blocs ne montrent pas.
 
+## Signets cliniques
+
+Les liens ne sont pas des portails d'accueil : au comptoir, la page d'accueil
+d'un organisme ne sert à rien. Ce sont les pages exactes qu'on consulte entre
+deux patients — protocoles de l'INESSS, guides de pratique, PIQ, base des
+produits de Santé Canada.
+
+Une liste de départ est semée au premier lancement, puis elle appartient à
+l'usager : il ajoute, modifie et supprime ce qu'il veut. La recherche porte
+aussi sur des mots-clés cachés, parce qu'on pense à la maladie et non au titre
+officiel : taper « cystite » trouve « infection urinaire non compliquée ».
+
+Les numéros d'urgence, eux, restent écrits en dur dans `src/content/liens.ts` :
+c'est le seul contenu de cet écran que l'usager n'a pas à gérer.
+
 ## Créer plusieurs quarts d'un coup
 
 Un contrat de deux semaines, ce sont dix quarts identiques. Le nombre de gestes
 ne doit pas grandir avec la durée du contrat, alors trois mécanismes se
 complètent :
 
-- **Récurrence.** À la création d'un quart, cocher des jours de la semaine et un
-  nombre de semaines crée toute la série d'un coup. Chaque quart reste ensuite
-  modifiable seul : un contrat réel n'est jamais parfaitement régulier.
+- **Répéter.** À la création d'un quart, un calendrier de sélection multiple :
+  on pointe les jours un à un, sans décrire de règle. « Tous les lundis » ne
+  décrit presque jamais l'horaire réel d'un remplaçant. Chaque jour coché crée
+  un quart **autonome**, copie de celui qu'on édite — il n'y a pas de série
+  liée, donc modifier ou supprimer l'un ne touche jamais les autres, et la
+  vieille question « que faire quand on modifie un seul quart d'une série » ne
+  se pose plus. Un jour qui porte déjà un quart aux mêmes heures s'affiche en
+  gris, reste cochable, et est sauté à la création avec un message qui le dit.
 - **Duplication.** Sur un quart existant, *Dupliquer ce quart* ouvre un
   formulaire prérempli ; il ne reste que la date à changer.
 - **Glisser-déposer.** Dans les vues jour et semaine, un maintien court sur un
@@ -263,9 +278,10 @@ de l'autre, tiennent la liste utilisable :
   Ajouter un quart dans une telle pharmacie affiche un avertissement doux, qui
   ne bloque rien : il existe pour qu'on ne réaccepte pas par distraction.
 
-Le répertoire se trie par ordre alphabétique ou par fréquentation. Le bouton
-reste en haut de la liste, pas dans les paramètres : on veut changer le tri en
-regardant la liste.
+Le répertoire se trie par ordre alphabétique ou par les pharmacies où l'on a
+travaillé le plus récemment — c'est le tri utile, puisqu'on retourne souvent là
+où l'on va ces temps-ci. Le bouton reste en haut de la liste, pas dans les
+paramètres : on veut changer le tri en regardant la liste.
 
 ## Carte
 
@@ -462,15 +478,49 @@ Douze barres, un mois chacune, avec la valeur écrite au-dessus : personne ne
 devrait avoir à estimer une hauteur pour lire un chiffre. Trois mesures — argent,
 heures, kilomètres — sous les mêmes onglets glissants que partout.
 
+Deux formes, choisies par deux icônes en bas à droite : des barres, ou une ligne
+brisée qui fait mieux sentir une tendance sur douze mois. La forme et la mesure
+sont deux questions distinctes, donc deux sélecteurs distincts. Un balayage
+horizontal change aussi de mesure.
+
 Le graphique montre toujours les douze derniers mois, quel que soit le sélecteur
 de période de l'écran. Celui-ci gouverne les totaux chiffrés ; le faire gouverner
-la série donnerait une barre unique sur « Ce mois-ci », ce qui n'apprend rien. Un
-mois sans quart garde sa place à zéro, jamais un trou dans la série.
+la série donnerait une barre unique sur « Ce mois-ci », ce qui n'apprend rien. Il
+agit plutôt par surbrillance : les mois de la période choisie passent en mauve
+plein, les autres en mauve pâle — tout reste connecté sans perdre le contexte
+des douze mois. Un mois sans quart garde sa place à zéro, jamais un trou dans la
+série, et la ligne descend jusqu'à l'axe plutôt que de sauter le mois : le creux
+est justement l'information utile.
 
-Les barres montent du sol à l'apparition, l'une après l'autre. Au changement de
-mesure elles se déforment vers leur nouvelle hauteur sans repartir du sol :
-rejouer la montée à chaque bascule deviendrait lassant. Le calcul vit dans
-`src/lib/mensuel.ts`, sans dépendance native.
+Les barres montent du sol à l'apparition, l'une après l'autre, et la montée
+rejoue au retour sur l'écran après une minute passée ailleurs — pas sur un
+aller-retour immédiat. Au changement de mesure, elles se déforment vers leur
+nouvelle hauteur sans repartir du sol. Au changement de forme, en revanche,
+l'animation rejoue chaque fois : ces deux règles différentes sur le même écran
+sont voulues. La ligne se dessine en deux temps, les points d'abord de gauche à
+droite, puis le trait qui les relie dans le même sens. Elle est faite de vues
+pivotées plutôt qu'en SVG : une dépendance native de moins. Le calcul vit dans
+`src/lib/mensuel.ts`.
+
+## Accès d'une pharmacie
+
+Deux sections, et leur différence de traitement est voulue.
+
+**Codes d'accès (logiciel)** — utilisateur, mot de passe, NIP. C'est la seule
+chose vitale pour un remplaçant : c'est ce qu'il ouvre en arrivant, à chaque
+quart. Protégée deux fois : les trois champs vivent dans le trousseau du
+système, et la section reste masquée jusqu'à une authentification locale
+(Face ID, avec repli sur le code de l'appareil géré par le système). Sans
+Face ID ni code configuré, la section s'affiche quand même — enfermer l'usager
+dehors de ses propres identifiants serait pire. Le déverrouillage ne dure que
+le temps passé sur la fiche.
+
+Une fois déverrouillé, le NIP s'affiche en premier et en gros : le mot de passe
+sert une fois à l'ouverture, le NIP sert toute la journée. Il accepte lettres et
+chiffres, sans longueur imposée ni clavier numérique — certains NIP en portent.
+
+**Accès au lieu** — alarme, stationnement, porte. Replié par défaut et non
+protégé : un code d'alarme ouvre une porte, pas un dossier de santé.
 
 ## Stockage
 
@@ -485,7 +535,10 @@ de `{ libelle, valeur }`) et `identifiants_pharmacie_<id>`
 (`{ utilisateur, motDePasse }`). Supprimer une pharmacie supprime ses quarts en
 cascade, ses frais, ses secrets et les rappels associés.
 
-Le schéma est versionné par `PRAGMA user_version` (actuellement 5). Une base
+Le schéma est versionné par `PRAGMA user_version` (actuellement 5). Une
+nouveauté qui n'a besoin que d'une table ou d'une colonne s'ajoute sans toucher
+au reste — `CREATE TABLE IF NOT EXISTS` et un ajout de colonne toléré — pour ne
+pas effacer les données de l'usager sans raison. Une base
 d'une version antérieure est **effacée et recréée** au démarrage, secrets
 compris : l'application n'a pas encore d'usagers dont il faudrait préserver les
 données, et une recréation vaut mieux qu'une migration à moitié juste. Passer

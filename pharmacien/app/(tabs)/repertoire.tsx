@@ -7,7 +7,7 @@ import {
   compterQuartsPharmacie,
   definirFavori,
   listerPharmacies,
-  listerPharmaciesParFrequentation,
+  listerPharmaciesRecemmentTravaillees,
 } from '../../src/db/pharmacies';
 import type { Pharmacie } from '../../src/db/types';
 import { ligneVille } from '../../src/lib/adresses';
@@ -16,7 +16,7 @@ import { normaliser } from '../../src/lib/texte';
 import { Bouton, Ecran, Fondu, Onglets, Vide } from '../../src/ui/composants';
 import { couleurs, espace, police, rayon } from '../../src/ui/theme';
 
-type Tri = 'alphabetique' | 'frequentation';
+type Tri = 'alphabetique' | 'recentes';
 
 export default function Repertoire() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function Repertoire() {
   const [tri, setTri] = useState<Tri>('alphabetique');
 
   const charger = useCallback(() => {
-    setPharmacies(tri === 'alphabetique' ? listerPharmacies() : listerPharmaciesParFrequentation());
+    setPharmacies(tri === 'alphabetique' ? listerPharmacies() : listerPharmaciesRecemmentTravaillees());
   }, [tri]);
 
   useFocusEffect(charger);
@@ -74,7 +74,7 @@ export default function Repertoire() {
             libelle="Trié par"
             options={[
               { valeur: 'alphabetique' as const, texte: 'A – Z' },
-              { valeur: 'frequentation' as const, texte: 'Fréquentation' },
+              { valeur: 'recentes' as const, texte: 'Récentes' },
             ]}
             valeur={tri}
             onChange={setTri}
@@ -94,7 +94,7 @@ export default function Repertoire() {
             />
           ))}
           <Text style={styles.section}>
-            {tri === 'alphabetique' ? 'Toutes les pharmacies' : 'Par fréquentation'}
+            {tri === 'alphabetique' ? 'Toutes les pharmacies' : 'Les plus récentes'}
           </Text>
         </Fondu>
       )}

@@ -130,6 +130,17 @@ const SCHEMA = `
     cree_le TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS liens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    titre TEXT NOT NULL,
+    url TEXT NOT NULL,
+    categorie TEXT NOT NULL DEFAULT '',
+    /* Ce à quoi l'usager pense, pas le titre officiel : « cystite » doit
+       trouver « infection urinaire non compliquée ». */
+    motsCles TEXT NOT NULL DEFAULT '',
+    rang INTEGER NOT NULL DEFAULT 0
+  );
+
   INSERT OR IGNORE INTO reglages (id) VALUES (1);
   INSERT OR IGNORE INTO formation_continue (id) VALUES (1);
 `;
@@ -156,8 +167,19 @@ export function initialiserBase(): number[] {
   }
 
   db.execSync(SCHEMA);
+  // Ajout de colonne toléré, pour ne pas effacer les données de l'usager quand
+  // une nouveauté n'a besoin de rien de plus qu'une colonne.
+  ajouterColonne('reglages', 'liens_amorces', 'INTEGER NOT NULL DEFAULT 0');
   db.execSync(`PRAGMA user_version = ${VERSION}`);
   return pharmaciesEffacees;
+}
+
+function ajouterColonne(table: string, colonne: string, definition: string) {
+  const colonnes = db
+    .getAllSync<{ name: string }>(`PRAGMA table_info(${table})`)
+    .map((c) => c.name);
+  if (colonnes.includes(colonne)) return;
+  db.execSync(`ALTER TABLE ${table} ADD COLUMN ${colonne} ${definition}`);
 }
 
 function tablesExistantes(): string[] {

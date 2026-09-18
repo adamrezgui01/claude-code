@@ -181,6 +181,12 @@ export type CodeAcces = {
 export type IdentifiantsLogiciel = {
   utilisateur: string;
   motDePasse: string;
+  /**
+   * Texte libre : certains NIP portent des lettres, et la longueur varie —
+   * quatre chiffres souvent, six parfois, davantage ailleurs. Aucun masque,
+   * aucun clavier numérique imposé.
+   */
+  nip: string;
 };
 
 export const LOGICIELS = ['RxPro', 'AssystRx', 'ReflexRx', 'Ubik', 'PrioRx'] as const;

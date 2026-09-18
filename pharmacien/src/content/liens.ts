@@ -1,9 +1,9 @@
 /**
- * Contenu statique de l'onglet « Liens et infos utiles ». Écrit en dur : pour
- * ajouter une entrée, ajoutez-la à la section voulue ci-dessous.
+ * Numéros d'urgence, écrits en dur. Ils ne s'ajoutent ni ne se suppriment :
+ * c'est le seul contenu de cet écran que l'usager n'a pas à gérer.
  *
- * N'inscrire que des adresses vérifiées. Un lien mort dans une application de
- * référence est pire qu'une absence de lien.
+ * Les signets cliniques, eux, vivent en base et lui appartiennent : voir
+ * `src/db/liens.ts`.
  */
 
 export type Lien = {
@@ -39,62 +39,6 @@ export const SECTIONS: Section[] = [
         detail: 'Intoxication, surdose, exposition',
         type: 'tel',
         valeur: '1 800 463-5060',
-      },
-    ],
-  },
-  {
-    titre: 'Organismes',
-    liens: [
-      {
-        libelle: 'Ordre des pharmaciens du Québec',
-        detail: 'Permis, normes de pratique, formation continue',
-        type: 'web',
-        valeur: 'https://www.opq.org',
-      },
-      {
-        libelle: 'RAMQ — professionnels de la santé',
-        detail: 'Facturation, listes de médicaments, codes',
-        type: 'web',
-        valeur: 'https://www.ramq.gouv.qc.ca/fr/professionnels',
-      },
-    ],
-  },
-  {
-    titre: 'Références cliniques',
-    liens: [
-      {
-        libelle: 'INESSS',
-        detail: 'Guides d’usage optimal, avis et recommandations',
-        type: 'web',
-        valeur: 'https://www.inesss.qc.ca',
-      },
-      {
-        libelle: 'INSPQ',
-        detail: 'Santé publique, immunisation, prévention',
-        type: 'web',
-        valeur: 'https://www.inspq.qc.ca',
-      },
-    ],
-  },
-  {
-    titre: 'Information aux patients',
-    liens: [
-      {
-        libelle: 'Naître et grandir',
-        detail: 'Grossesse, enfants, développement',
-        type: 'web',
-        valeur: 'https://naitreetgrandir.com',
-      },
-    ],
-  },
-  {
-    titre: 'Rappels et avis',
-    liens: [
-      {
-        libelle: 'Rappels et avis de sécurité',
-        detail: 'Gouvernement du Canada',
-        type: 'web',
-        valeur: 'https://recalls-rappels.canada.ca',
       },
     ],
   },

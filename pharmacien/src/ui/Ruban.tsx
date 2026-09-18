@@ -13,9 +13,13 @@ import { Animated, Easing, PanResponder, StyleSheet, useWindowDimensions, View }
  * plus rien.
  */
 
-const SEUIL = 24;
-/** Un mouvement est horizontal quand il l'est deux fois plus que vertical. */
-const RAPPORT = 1.6;
+/** Distance à partir de laquelle le geste est reconnu comme un balayage. */
+const SEUIL = 14;
+/** Un mouvement est horizontal quand il l'est nettement plus que vertical. */
+const RAPPORT = 1.2;
+/** Déclenchement au relâchement : soit assez loin, soit assez vite. */
+const FRACTION_ECRAN = 0.22;
+const VITESSE = 0.25;
 const DUREE = 200;
 
 export function Ruban({
@@ -69,7 +73,10 @@ export function Ruban({
       onPanResponderMove: (_, geste) => glissement.setValue(geste.dx),
       onPanResponderRelease: (_, geste) => {
         const { width: largeur, onPrecedent: precedent, onSuivant: suivant } = etat.current;
-        const franchi = Math.abs(geste.dx) > largeur / 4 || Math.abs(geste.vx) > 0.4;
+        // Un mouvement court mais vif compte autant qu'un long mouvement lent :
+        // sans le second critère, il fallait appuyer fort et longtemps.
+        const franchi =
+          Math.abs(geste.dx) > largeur * FRACTION_ECRAN || Math.abs(geste.vx) > VITESSE;
         if (!franchi) {
           Animated.timing(glissement, {
             toValue: 0,

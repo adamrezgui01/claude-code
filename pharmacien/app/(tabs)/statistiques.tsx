@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { listerFraisPeriode } from '../../src/db/frais';
@@ -9,7 +9,7 @@ import type { Pharmacie } from '../../src/db/types';
 import { aujourdhui, debutMois, formatDateCourte } from '../../src/lib/dates';
 import { bornes, type Preset } from '../../src/lib/periodes';
 import { argent, heures, nombre, pluriel } from '../../src/lib/format';
-import { serieMensuelle, type Mesure } from '../../src/lib/mensuel';
+import { MESURES, moisEnValeur, serieMensuelle, type Mesure } from '../../src/lib/mensuel';
 import { calculerStatistiques } from '../../src/lib/stats';
 import { Graphique } from '../../src/ui/Graphique';
 import {
@@ -29,6 +29,9 @@ import { SelecteurDate } from '../../src/ui/Selecteurs';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
 import { couleurs, espace, police } from '../../src/ui/theme';
 
+/** Une minute : de quoi distinguer un vrai départ d'un aller-retour immédiat. */
+const DELAI_REJEU = 60 * 1000;
+
 export default function Statistiques() {
   const router = useRouter();
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
@@ -38,11 +41,24 @@ export default function Statistiques() {
   const [finPerso, setFinPerso] = useState(() => aujourdhui());
   const [selection, setSelection] = useState<number[]>([]);
   const [mesure, setMesure] = useState<Mesure>('argent');
+  /**
+   * L'animation de montée rejoue quand on revient sur l'écran après y avoir
+   * passé un vrai moment ailleurs. Un aller-retour immédiat ne la rejoue pas :
+   * elle accompagne un changement, elle ne se répète pas pour rien.
+   */
+  const [rejouer, setRejouer] = useState(0);
+  const sortieLe = useRef(0);
 
   useFocusEffect(
     useCallback(() => {
       setPharmacies(listerPharmacies());
       setRecentes(listerPharmaciesRecentes());
+      if (sortieLe.current && Date.now() - sortieLe.current > DELAI_REJEU) {
+        setRejouer((n) => n + 1);
+      }
+      return () => {
+        sortieLe.current = Date.now();
+      };
     }, [])
   );
 
@@ -118,7 +134,16 @@ export default function Statistiques() {
         valeur={mesure}
         onChange={setMesure}
       />
-      <Graphique serie={serie} mesure={mesure} />
+      <Graphique
+        serie={serie}
+        mesure={mesure}
+        onMesure={(delta) => {
+          const i = MESURES.indexOf(mesure);
+          setMesure(MESURES[(i + delta + MESURES.length) % MESURES.length]);
+        }}
+        enValeur={moisEnValeur(serie, debut, fin)}
+        rejouer={rejouer}
+      />
 
       <Separateur />
 

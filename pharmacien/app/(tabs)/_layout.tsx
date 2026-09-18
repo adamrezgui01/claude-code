@@ -1,7 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router/js-tabs';
 
-import { MenuApp } from '../../src/ui/MenuApp';
 import { couleurs, police, useAccent } from '../../src/ui/theme';
 
 export default function DispositionOnglets() {
@@ -18,7 +17,6 @@ export default function DispositionOnglets() {
         headerStyle: { backgroundColor: couleurs.fond },
         headerShadowVisible: false,
         sceneStyle: { backgroundColor: couleurs.fond },
-        headerRight: () => <MenuApp />,
       }}>
       <Tabs.Screen
         name="index"
@@ -49,11 +47,11 @@ export default function DispositionOnglets() {
         }}
       />
       <Tabs.Screen
-        name="profil"
+        name="menu"
         options={{
-          title: 'Profil',
+          title: 'Menu',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" color={color} size={size} />
+            <Ionicons name="menu-outline" color={color} size={size} />
           ),
         }}
       />

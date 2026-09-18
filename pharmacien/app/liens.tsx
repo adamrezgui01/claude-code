@@ -1,9 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import {
+  filtrerLiens,
+  listerLiens,
+  parCategorie,
+  type Lien as LienSignet,
+} from '../src/db/liens';
 import { SECTIONS, type Lien } from '../src/content/liens';
-import { Carte, Doux, Fondu, SousTitre } from '../src/ui/composants';
-import { couleurs, espace, police, useAccent } from '../src/ui/theme';
+import { Bouton, Doux, Ecran, Fondu, SousTitre, Vide } from '../src/ui/composants';
+import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
 
 function ouvrir(lien: Lien) {
   const url = lien.type === 'tel' ? `tel:${lien.valeur.replace(/[^\d+]/g, '')}` : lien.valeur;
@@ -23,42 +31,146 @@ function LigneLien({ lien }: { lien: Lien }) {
       />
       <View style={styles.texte}>
         <Text style={styles.libelle}>{lien.libelle}</Text>
-        {!!lien.detail && <Doux>{lien.detail}</Doux>}
+        {!!lien.detail && <Text style={styles.detail}>{lien.detail}</Text>}
       </View>
-      <Text style={[styles.valeur, { color: accent }]}>
-        {lien.type === 'tel' ? lien.valeur : 'Ouvrir'}
-      </Text>
+      <Ionicons name="chevron-forward" size={16} color={couleurs.doux} />
+    </Pressable>
+  );
+}
+
+function LigneSignet({ signet, onModifier }: { signet: LienSignet; onModifier: () => void }) {
+  const accent = useAccent();
+  return (
+    <Pressable
+      onPress={() => Linking.openURL(signet.url)}
+      onLongPress={onModifier}
+      delayLongPress={400}
+      style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
+      <Ionicons name="open-outline" size={18} color={accent} />
+      <View style={styles.texte}>
+        <Text style={styles.libelle}>{signet.titre}</Text>
+      </View>
+      <Pressable onPress={onModifier} hitSlop={12}>
+        <Ionicons name="ellipsis-horizontal" size={18} color={couleurs.doux} />
+      </Pressable>
     </Pressable>
   );
 }
 
 export default function Liens() {
+  const router = useRouter();
+  const [signets, setSignets] = useState<LienSignet[]>([]);
+  const [recherche, setRecherche] = useState('');
+
+  useFocusEffect(
+    useCallback(() => {
+      setSignets(listerLiens());
+    }, [])
+  );
+
+  const cherche = recherche.trim().length > 0;
+  // La recherche porte aussi sur les mots-clés cachés : l'usager pense à la
+  // maladie, pas au titre officiel du document.
+  const groupes = useMemo(
+    () => parCategorie(filtrerLiens(signets, recherche)),
+    [signets, recherche]
+  );
+
   return (
-    <ScrollView contentContainerStyle={styles.contenu}>
-      {SECTIONS.map((section, i) => (
-        <Fondu key={section.titre} delai={i * 40}>
-          <SousTitre>{section.titre}</SousTitre>
-          <Carte>
+    <Ecran>
+      <View style={styles.recherche}>
+        <Ionicons name="search" size={16} color={couleurs.doux} />
+        <TextInput
+          style={styles.saisie}
+          value={recherche}
+          onChangeText={setRecherche}
+          placeholder="Chercher — cystite, vaccin, DIN…"
+          placeholderTextColor={couleurs.doux}
+          autoCorrect={false}
+          returnKeyType="search"
+        />
+        {cherche && (
+          <Pressable onPress={() => setRecherche('')} hitSlop={8}>
+            <Ionicons name="close-circle" size={16} color={couleurs.doux} />
+          </Pressable>
+        )}
+      </View>
+
+      {groupes.length === 0 ? (
+        <Vide texte="Aucun signet ne correspond." />
+      ) : (
+        groupes.map((groupe) => (
+          <Fondu key={groupe.categorie}>
+            <SousTitre>{groupe.categorie}</SousTitre>
+            {groupe.liens.map((signet) => (
+              <LigneSignet
+                key={signet.id}
+                signet={signet}
+                onModifier={() => router.push(`/lien/${signet.id}`)}
+              />
+            ))}
+            <View style={styles.espace} />
+          </Fondu>
+        ))
+      )}
+
+      <Bouton
+        titre="Ajouter un lien"
+        variante="secondaire"
+        icone={<Ionicons name="add" size={18} color={couleurs.texte} />}
+        onPress={() => router.push('/lien/nouveau')}
+      />
+      <Doux>Appui long sur un signet pour le modifier.</Doux>
+
+      {!cherche &&
+        SECTIONS.map((section) => (
+          <View key={section.titre} style={styles.section}>
+            <SousTitre>{section.titre}</SousTitre>
             {section.liens.map((lien) => (
               <LigneLien key={lien.libelle} lien={lien} />
             ))}
-          </Carte>
-        </Fondu>
-      ))}
-    </ScrollView>
+          </View>
+        ))}
+    </Ecran>
   );
 }
 
 const styles = StyleSheet.create({
-  contenu: {
-    padding: espace.l,
-    paddingBottom: espace.xxl,
+  recherche: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace.s,
+    backgroundColor: couleurs.carte,
+    borderWidth: 1,
+    borderColor: couleurs.bordure,
+    borderRadius: rayon,
+    paddingHorizontal: espace.m,
+    minHeight: 44,
+    marginBottom: espace.l,
+  },
+  saisie: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: police.normal,
+    color: couleurs.texte,
+    paddingVertical: espace.s,
+  },
+  section: {
+    marginTop: espace.xl,
+  },
+  espace: {
+    height: espace.m,
   },
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: espace.m,
-    paddingVertical: espace.s,
+    backgroundColor: couleurs.carte,
+    borderWidth: 1,
+    borderColor: couleurs.bordure,
+    borderRadius: rayon,
+    padding: espace.m,
+    marginBottom: espace.s,
   },
   texte: {
     flex: 1,
@@ -68,8 +180,9 @@ const styles = StyleSheet.create({
     fontFamily: police.demi,
     color: couleurs.texte,
   },
-  valeur: {
-    fontSize: 14,
-    fontFamily: police.demi,
+  detail: {
+    fontSize: 13,
+    fontFamily: police.normal,
+    color: couleurs.doux,
   },
 });

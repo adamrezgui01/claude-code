@@ -42,11 +42,12 @@ export async function ecrireCodes(pharmacieId: number, codes: CodeAcces[]): Prom
 }
 
 export async function lireIdentifiants(pharmacieId: number): Promise<IdentifiantsLogiciel> {
-  const vide: IdentifiantsLogiciel = { utilisateur: '', motDePasse: '' };
+  const vide: IdentifiantsLogiciel = { utilisateur: '', motDePasse: '', nip: '' };
   const identifiants = await lireJson<IdentifiantsLogiciel>(cleIdentifiants(pharmacieId), vide);
   return {
     utilisateur: identifiants.utilisateur ?? '',
     motDePasse: identifiants.motDePasse ?? '',
+    nip: identifiants.nip ?? '',
   };
 }
 
@@ -54,7 +55,11 @@ export async function ecrireIdentifiants(
   pharmacieId: number,
   identifiants: IdentifiantsLogiciel
 ): Promise<void> {
-  if (!identifiants.utilisateur.trim() && !identifiants.motDePasse.trim()) {
+  if (
+    !identifiants.utilisateur.trim() &&
+    !identifiants.motDePasse.trim() &&
+    !identifiants.nip.trim()
+  ) {
     await effacer(cleIdentifiants(pharmacieId));
     return;
   }

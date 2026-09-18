@@ -39,10 +39,12 @@ export function listerPharmacies(): Pharmacie[] {
 }
 
 /**
- * Pharmacies triées par fréquentation : la plus récemment travaillée d'abord,
- * puis celles où l'usager n'est jamais allé, par ordre alphabétique.
+ * Pharmacies où l'usager a travaillé le plus récemment, d'abord. C'est le tri
+ * utile : quand on ajoute un quart, c'est souvent dans un lieu où l'on retourne
+ * ces temps-ci. Celles où il n'est jamais allé ferment la liste, par ordre
+ * alphabétique.
  */
-export function listerPharmaciesParFrequentation(): Pharmacie[] {
+export function listerPharmaciesRecemmentTravaillees(): Pharmacie[] {
   return db.getAllSync<Pharmacie>(
     `SELECT p.*, MAX(q.date) AS dernier
      FROM pharmacies p

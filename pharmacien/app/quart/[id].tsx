@@ -30,17 +30,11 @@ import {
   type EntreeQuart,
 } from '../../src/db/quarts';
 import type { FraisExtra, ModeDeplacement, Pharmacie } from '../../src/db/types';
-import { aujourdhui, decalerHeure, dureeHeures } from '../../src/lib/dates';
+import { aujourdhui, decalerHeure, dureeHeures, formatJourCourt } from '../../src/lib/dates';
 import { dureePrevue } from '../../src/lib/facture';
 import { analyserNombre, argent, heures, pluriel } from '../../src/lib/format';
 import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
-import {
-  datesRecurrentes,
-  indiceJour,
-  JOURS_SEMAINE,
-  nouvelleSerie,
-  resumeSerie,
-} from '../../src/lib/recurrence';
+
 import { verifierQuart } from '../../src/lib/stats';
 import {
   Bouton,
@@ -56,6 +50,7 @@ import {
 } from '../../src/ui/composants';
 import { SelecteurDate, SelecteurHeure } from '../../src/ui/Selecteurs';
 import { Recompense } from '../../src/ui/Recompense';
+import { CalendrierMultiple } from '../../src/ui/CalendrierMultiple';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 
@@ -108,8 +103,8 @@ export default function FormulaireQuart() {
   const [heuresPrevues, setHeuresPrevues] = useState<{ debut: string; fin: string } | null>(null);
 
   const [repeter, setRepeter] = useState(false);
-  const [joursRepetes, setJoursRepetes] = useState<number[]>([]);
-  const [semaines, setSemaines] = useState('2');
+  /** Jours pointés un à un. Aucune règle : l'horaire est irrégulier. */
+  const [joursChoisis, setJoursChoisis] = useState<Set<string>>(new Set());
   const [recompense, setRecompense] = useState('');
   const [ouvertDebut, setOuvertDebut] = useState(false);
   const [ouvertFin, setOuvertFin] = useState(false);
@@ -207,16 +202,33 @@ export default function FormulaireQuart() {
     }
   }
 
-  /** Les jours qui portent déjà un quart, marqués d'un point dans le calendrier. */
-  const joursOccupes = useMemo(
+  /** Les jours qui portent un quart, marqués d'un point dans le sélecteur de date. */
+  const joursAvecQuart = useMemo(
     () => new Set(listerQuarts().filter((q) => q.id !== quartId).map((q) => q.date)),
     [quartId]
   );
 
   const duree = dureePrevue(heureDebut, heureFin, pause, pausePayee);
   const totalFrais = frais.reduce((t, f) => t + f.montant, 0);
-  const nbSemaines = Math.max(1, Math.round(analyserNombre(semaines) || 1));
-  const datesSerie = repeter ? datesRecurrentes(date, joursRepetes, nbSemaines) : [date];
+  const datesSerie = repeter ? [date, ...[...joursChoisis].filter((j) => j !== date)].sort() : [date];
+
+  /**
+   * Jours qui portent déjà un quart chevauchant les heures qu'on répète. Ils
+   * sont grisés dans le calendrier, restent cochables, et seront simplement
+   * sautés à la création : jamais de blocage, jamais d'écriture par-dessus.
+   */
+  const joursOccupes = useMemo(() => {
+    const occupes = new Set<string>();
+    for (const q of listerQuarts()) {
+      if (q.id === quartId || q.annule) continue;
+      const verif = verifierQuart(
+        { date: q.date, heure_debut: heureDebut, heure_fin: heureFin, pharmacie_id: -1 },
+        [q]
+      );
+      if (verif.type === 'chevauchement') occupes.add(q.date);
+    }
+    return occupes;
+  }, [quartId, heureDebut, heureFin]);
 
   /** Ce que la ligne repliée annonce, sans avoir à la déplier. */
   function resumeDetails(): string {
@@ -284,11 +296,23 @@ export default function FormulaireQuart() {
       return;
     }
 
-    const serie = datesSerie.length > 1 ? nouvelleSerie() : '';
-    const identifiants = datesSerie.map((jour) =>
-      creerQuart(entreeDepuisFormulaire(idPharmacie, jour), serie)
+    // Chaque jour crée un quart autonome : aucune série liée, donc modifier ou
+    // supprimer l'un ne touchera jamais les autres.
+    const retenus = datesSerie.filter((jour) => jour === date || !joursOccupes.has(jour));
+    const sautes = datesSerie.filter((jour) => jour !== date && joursOccupes.has(jour));
+
+    const identifiants = retenus.map((jour) =>
+      creerQuart(entreeDepuisFormulaire(idPharmacie, jour))
     );
     for (const id of identifiants) await programmerRappels(id);
+
+    if (sautes.length > 0) {
+      Alert.alert(
+        'Certains jours ont été sautés',
+        `${sautes.map(formatJourCourt).join(', ')} — un quart existait déjà à ces heures.`,
+        [{ text: 'Compris' }]
+      );
+    }
 
     setRecompense(
       identifiants.length > 1 ? `${pluriel(identifiants.length, 'quart')} ajoutés` : 'Quart ajouté'
@@ -437,7 +461,7 @@ export default function FormulaireQuart() {
           label="Date"
           valeur={date}
           onChange={setDate}
-          joursMarques={joursOccupes}
+          joursMarques={joursAvecQuart}
         />
         <View style={styles.rangee}>
           <SelecteurHeure
@@ -565,40 +589,32 @@ export default function FormulaireQuart() {
                 <Separateur />
                 <Interrupteur
                   label="Répéter ce quart"
-                  detail="Un contrat de deux semaines en un seul geste"
+                  detail="Pointez les jours voulus, un à un"
                   valeur={repeter}
                   onChange={setRepeter}
                 />
                 {repeter && (
                   <Fondu>
-                    <Text style={styles.label}>Jours de la semaine</Text>
-                    <View style={styles.puces}>
-                      {JOURS_SEMAINE.map((jour) => (
-                        <Puce
-                          key={jour.nom}
-                          texte={jour.court}
-                          actif={joursRepetes.includes(jour.indice)}
-                          onPress={() =>
-                            setJoursRepetes((actuels) =>
-                              actuels.includes(jour.indice)
-                                ? actuels.filter((i) => i !== jour.indice)
-                                : [...actuels, jour.indice]
-                            )
-                          }
-                        />
-                      ))}
-                    </View>
-                    <Champ
-                      label="Nombre de semaines"
-                      valeur={semaines}
-                      onChange={setSemaines}
-                      clavier="number-pad"
+                    <CalendrierMultiple
+                      depart={date}
+                      choisis={joursChoisis}
+                      occupes={joursOccupes}
+                      onBasculer={(iso) =>
+                        setJoursChoisis((actuels) => {
+                          const suivants = new Set(actuels);
+                          if (suivants.has(iso)) suivants.delete(iso);
+                          else suivants.add(iso);
+                          return suivants;
+                        })
+                      }
                     />
-                    <Doux>{resumeSerie(datesSerie)}</Doux>
-                    {joursRepetes.length === 0 && (
+                    <Doux>
+                      Chaque jour coché crée un quart indépendant, copie de celui-ci. Les modifier
+                      ou les supprimer ensuite ne touche jamais les autres.
+                    </Doux>
+                    {[...joursChoisis].some((j) => joursOccupes.has(j)) && (
                       <Doux>
-                        Sans jour coché, seul le {JOURS_SEMAINE[indiceJour(date)].nom} de la date
-                        choisie est créé.
+                        Les jours grisés portent déjà un quart à ces heures. Ils seront sautés.
                       </Doux>
                     )}
                   </Fondu>

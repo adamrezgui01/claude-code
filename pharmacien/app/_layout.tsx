@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { initialiserBase } from '../src/db';
+import { amorcerLiens } from '../src/db/liens';
 import { definirReglage, obtenirReglages } from '../src/db/profil';
 import { adresseDesReglages, adresseRenseignee } from '../src/lib/adresses';
 import { supprimerSecrets } from '../src/lib/codes';
@@ -36,6 +37,7 @@ export default function Racine() {
     // partir avec elles, sinon ils réapparaîtraient sur une pharmacie qui
     // réutilise le même identifiant.
     effacees.forEach((id) => void supprimerSecrets(id));
+    amorcerLiens();
     preparerNotifications();
     const reglages = obtenirReglages();
     setAccent(reglages.accent || ACCENT_DEFAUT);
@@ -113,7 +115,10 @@ export default function Racine() {
           <Stack.Screen name="frais/[id]" options={{ title: 'Frais' }} />
           <Stack.Screen name="pharmacie/[id]" options={{ title: 'Pharmacie' }} />
           <Stack.Screen name="document/[id]" options={{ title: 'Document' }} />
+          <Stack.Screen name="profil" options={{ title: 'Profil' }} />
+          <Stack.Screen name="parametres" options={{ title: 'Paramètres' }} />
           <Stack.Screen name="liens" options={{ title: 'Liens et infos utiles' }} />
+          <Stack.Screen name="lien/[id]" options={{ title: 'Lien' }} />
           <Stack.Screen name="facture" options={{ title: 'Générer une facture' }} />
           <Stack.Screen name="factures" options={{ title: 'Factures' }} />
           <Stack.Screen name="apparence" options={{ title: 'Apparence' }} />
