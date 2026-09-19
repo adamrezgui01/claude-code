@@ -11,12 +11,21 @@ export function LigneQuart({
   quart,
   enConflit,
   afficherDate,
+  verrouille,
+  enCours,
   onPress,
   onPressPharmacie,
 }: {
   quart: QuartDetaille;
   enConflit?: boolean;
   afficherDate?: boolean;
+  /** Effectué et facturé : consultable, plus modifiable. */
+  verrouille?: boolean;
+  /**
+   * Le quart de maintenant. Il n'a pas d'onglet à lui — il serait vide la
+   * quasi-totalité du temps — alors il s'épingle en haut, en rouge.
+   */
+  enCours?: boolean;
   onPress: () => void;
   onPressPharmacie?: () => void;
 }) {
@@ -33,9 +42,11 @@ export function LigneQuart({
       style={({ pressed }) => [
         styles.ligne,
         enConflit && styles.conflit,
+        enCours && styles.enCours,
         pressed && styles.presse,
       ]}>
       <View style={styles.gauche}>
+        {enCours && <Text style={styles.maintenant}>En cours</Text>}
         {afficherDate && <Text style={styles.date}>{formatJourCourt(quart.date)}</Text>}
         <Pressable onPress={onPressPharmacie} disabled={!onPressPharmacie} hitSlop={6}>
           <Text
@@ -67,6 +78,11 @@ export function LigneQuart({
             <Etiquette texte="N’a pas eu lieu" ton="attente" />
           </View>
         )}
+        {verrouille && !annule && (
+          <View style={styles.etiquette}>
+            <Etiquette texte={`Facturé · ${quart.numero_facture}`} ton="attente" />
+          </View>
+        )}
       </View>
       <View style={styles.droite}>
         <Text style={[styles.montant, annule && styles.barre]}>
@@ -95,6 +111,18 @@ const styles = StyleSheet.create({
   conflit: {
     borderColor: couleurs.alerte,
     backgroundColor: couleurs.alertePale,
+  },
+  enCours: {
+    borderColor: couleurs.urgent,
+    borderWidth: 2,
+  },
+  maintenant: {
+    fontSize: 11,
+    fontFamily: police.gras,
+    color: couleurs.urgent,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 2,
   },
   presse: {
     opacity: 0.6,

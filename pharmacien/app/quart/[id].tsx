@@ -25,14 +25,23 @@ import {
   modifierQuart,
   obtenirQuart,
   quartsDuJour,
+  quartVerrouille,
   rappelsDuQuart,
   supprimerQuart,
   type EntreeQuart,
 } from '../../src/db/quarts';
+import { factureParNumero } from '../../src/db/factures';
 import type { FraisExtra, ModeDeplacement, Pharmacie } from '../../src/db/types';
-import { aujourdhui, decalerHeure, dureeHeures, formatJourCourt } from '../../src/lib/dates';
+import {
+  aujourdhui,
+  decalerHeure,
+  dureeHeures,
+  formatDateLongue,
+  formatJourCourt,
+  traverseMinuit,
+} from '../../src/lib/dates';
 import { dureePrevue } from '../../src/lib/facture';
-import { analyserNombre, argent, heures, pluriel } from '../../src/lib/format';
+import { analyserNombre, argent, formaterDuree, heures, pluriel } from '../../src/lib/format';
 import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
 
 import { verifierQuart } from '../../src/lib/stats';
@@ -45,16 +54,18 @@ import {
   Fondu,
   Interrupteur,
   Puce,
+  Rangee,
   Separateur,
   SousTitre,
 } from '../../src/ui/composants';
-import { SelecteurDate, SelecteurHeure } from '../../src/ui/Selecteurs';
+import { SelecteurDate, SelecteurDuree, SelecteurHeure } from '../../src/ui/Selecteurs';
 import { Recompense } from '../../src/ui/Recompense';
 import { CalendrierMultiple } from '../../src/ui/CalendrierMultiple';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 
-const PAUSES = [0, 30, 45, 60];
+/** Durées de pause courantes. « Autre » ouvre la roulette. */
+const PAUSES = [30, 45, 60];
 
 export default function FormulaireQuart() {
   const router = useRouter();
@@ -108,6 +119,14 @@ export default function FormulaireQuart() {
   const [recompense, setRecompense] = useState('');
   const [ouvertDebut, setOuvertDebut] = useState(false);
   const [ouvertFin, setOuvertFin] = useState(false);
+  const [roulettePause, setRoulettePause] = useState(false);
+  /**
+   * Un quart effectué et facturé est immuable : la facture est partie chez le
+   * client. Il se consulte entièrement, mais ne se corrige qu'en supprimant sa
+   * facture.
+   */
+  const [verrouille, setVerrouille] = useState(false);
+  const [numeroFacture, setNumeroFacture] = useState('');
 
   useEffect(() => {
     setPharmacies(listerPharmacies());
@@ -137,6 +156,8 @@ export default function FormulaireQuart() {
           setAnnule(!!q.annule);
           setPasse(finDuQuart(q).getTime() < Date.now());
           setHeuresPrevues({ debut: q.heure_debut, fin: q.heure_fin });
+          setVerrouille(quartVerrouille(q));
+          setNumeroFacture(q.numero_facture);
         } else if (params.heure) {
           // Copie déposée dans la grille : le début est celui du dépôt, et la
           // fin suit pour que la durée ne bouge pas.
@@ -331,7 +352,10 @@ export default function FormulaireQuart() {
       return;
     }
     const retenue = idPharmacie;
-    if (dureeHeures(heureDebut, heureFin) === 0) {
+    // Une fin égale au début vaudrait vingt-quatre heures depuis que les
+    // quarts de nuit sont pris en charge : c'est une faute de frappe bien plus
+    // souvent qu'un vrai quart de vingt-quatre heures.
+    if (heureDebut === heureFin) {
       Alert.alert('Horaire invalide', 'L’heure de fin doit être différente de l’heure de début.');
       return;
     }
@@ -406,6 +430,81 @@ export default function FormulaireQuart() {
         },
       },
     ]);
+  }
+
+
+  /**
+   * Un quart effectué et facturé ne se modifie pas. La fiche s'ouvre quand
+   * même, entière et défilante : on vient souvent juste vérifier ce qu'on a
+   * facturé. Seule la porte de sortie est indiquée — supprimer la facture.
+   */
+  if (verrouille) {
+    const facture = numeroFacture ? factureParNumero(numeroFacture) : null;
+    const nomPharmacie = pharmacies.find((p) => p.id === pharmacieId)?.nom ?? 'Pharmacie';
+    const km = analyserNombre(kilometrage);
+    const fixe = analyserNombre(montantFixe);
+    const repas = analyserNombre(perDiem);
+    return (
+      <Ecran>
+        <Stack.Screen options={{ title: 'Quart facturé' }} />
+
+        <Carte style={styles.verrou}>
+          <View style={styles.verrouEntete}>
+            <Ionicons name="lock-closed-outline" size={20} color={couleurs.attente} />
+            <Text style={styles.verrouTitre}>Ce quart est facturé</Text>
+          </View>
+          <Doux>
+            Il a été effectué et porté sur la facture {numeroFacture}. Pour le modifier, il faut
+            annuler cette facture : la supprimer relibère ses quarts, qui redeviennent modifiables
+            et facturables.
+          </Doux>
+          {!!facture && (
+            <Bouton
+              titre="Voir la facture"
+              variante="secondaire"
+              icone={<Ionicons name="document-text-outline" size={18} color={couleurs.texte} />}
+              onPress={() => router.push(`/facture/${facture.id}`)}
+            />
+          )}
+        </Carte>
+
+        <SousTitre>Le quart</SousTitre>
+        <Carte>
+          <Rangee label="Pharmacie" valeur={nomPharmacie} accent />
+          <Rangee label="Date" valeur={formatDateLongue(date)} />
+          <Rangee
+            label="Horaire"
+            valeur={`${heureDebut} – ${heureFin}${traverseMinuit(heureDebut, heureFin) ? ' (nuit)' : ''}`}
+          />
+          <Rangee label="Durée facturable" valeur={heures(duree)} />
+          <Rangee label="Pause repas" valeur={`${formaterDuree(pause)}${pause > 0 ? (pausePayee ? ' · payée' : ' · non payée') : ''}`} />
+          <Rangee label="Taux horaire" valeur={`${argent(analyserNombre(taux))}/h`} />
+        </Carte>
+
+        <SousTitre>Frais du quart</SousTitre>
+        <Carte>
+          {modeDeplacement === 'km' && <Rangee label="Kilométrage" valeur={`${km} km`} />}
+          {modeDeplacement === 'fixe' && <Rangee label="Déplacement" valeur={argent(fixe)} />}
+          {modeDeplacement === 'aucun' && (
+            <Doux>Cette pharmacie ne rembourse pas les déplacements.</Doux>
+          )}
+          <Rangee label="Repas" valeur={argent(repas)} />
+          {frais.map((f) => (
+            <Rangee key={f.id} label={f.description || 'Frais'} valeur={argent(f.montant)} />
+          ))}
+          {totalFrais > 0 && <Rangee label="Total des frais" valeur={argent(totalFrais)} accent />}
+        </Carte>
+
+        {!!notes.trim() && (
+          <>
+            <SousTitre>Notes</SousTitre>
+            <Carte>
+              <Text style={styles.notesFigees}>{notes}</Text>
+            </Carte>
+          </>
+        )}
+      </Ecran>
+    );
   }
 
   return (
@@ -490,9 +589,11 @@ export default function FormulaireQuart() {
           </Doux>
         )}
 
+        {/* Un quart de nuit se termine le lendemain : la durée l'annonce,
+            faute de quoi la facture se tromperait en silence. */}
         <Text style={styles.duree}>
           Durée facturable : {heures(duree)}
-          {heureFin <= heureDebut ? ' (quart de nuit)' : ''}
+          {traverseMinuit(heureDebut, heureFin) ? ' · se termine le lendemain' : ''}
         </Text>
 
         <Pressable style={styles.ligneDetails} onPress={() => setDetails((d) => !d)} hitSlop={6}>
@@ -517,21 +618,33 @@ export default function FormulaireQuart() {
               placeholder="0,00"
             />
 
+            {/* Héritée de la pharmacie. On ne la change ici que pour un jour
+                qui s'est passé autrement. */}
             <Text style={styles.label}>Pause repas</Text>
             <View style={styles.puces}>
+              <Puce texte="Aucune" actif={pause === 0} onPress={() => setPause(0)} />
               {PAUSES.map((minutes) => (
                 <Puce
                   key={minutes}
-                  texte={minutes === 0 ? 'Aucune' : `${minutes} min`}
+                  texte={`${minutes} min`}
                   actif={pause === minutes}
                   onPress={() => setPause(minutes)}
                 />
               ))}
+              <Puce
+                texte={pause > 0 && !PAUSES.includes(pause) ? formaterDuree(pause) : 'Autre'}
+                actif={pause > 0 && !PAUSES.includes(pause)}
+                onPress={() => setRoulettePause(true)}
+              />
             </View>
             {pause > 0 && (
               <Interrupteur
                 label="Pause payée"
-                detail={pausePayee ? 'Incluse dans les heures' : 'Déduite des heures facturées'}
+                detail={
+                  pausePayee
+                    ? 'Incluse dans les heures facturées'
+                    : `Déduite des heures facturées (${formaterDuree(pause)})`
+                }
                 valeur={pausePayee}
                 onChange={setPausePayee}
               />
@@ -686,6 +799,15 @@ export default function FormulaireQuart() {
         </View>
       </Ecran>
 
+      <SelecteurDuree
+        titre="Durée de la pause"
+        minutes={pause || 30}
+        ouvert={roulettePause}
+        onChange={setPause}
+        onFermer={() => setRoulettePause(false)}
+        maxHeures={3}
+      />
+
       <Recompense
         visible={!!recompense}
         texte={recompense}
@@ -790,6 +912,27 @@ const styles = StyleSheet.create({
   },
   note: {
     marginTop: espace.l,
+  },
+  verrou: {
+    backgroundColor: couleurs.grisPale,
+    borderColor: couleurs.attente,
+    gap: espace.m,
+  },
+  verrouEntete: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace.s,
+  },
+  verrouTitre: {
+    fontSize: 16,
+    fontFamily: police.demi,
+    color: couleurs.texte,
+  },
+  notesFigees: {
+    fontSize: 15,
+    fontFamily: police.normal,
+    color: couleurs.texte,
+    lineHeight: 21,
   },
   actions: {
     marginTop: espace.m,

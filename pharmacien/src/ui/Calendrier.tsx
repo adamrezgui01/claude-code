@@ -1,30 +1,30 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { QuartDetaille } from '../db/types';
-import { aujourdhui, formatMoisAnnee, grilleMois, JOURS_COURTS } from '../lib/dates';
+import { ajouterMois, aujourdhui, formatMoisAnnee, grilleMois, JOURS_COURTS } from '../lib/dates';
+import { Pageur } from './Pageur';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 
 export function Calendrier({
   mois,
   quartsParJour,
   chevauchements,
+  verrouilles,
   jourSelectionne,
   onSelectionner,
   onChangerMois,
-  glissement,
 }: {
   mois: string;
   quartsParJour: Map<string, QuartDetaille[]>;
   chevauchements: Set<number>;
+  /** Quarts effectués et facturés : leur point passe au gris. */
+  verrouilles: Set<number>;
   jourSelectionne: string;
   onSelectionner: (iso: string) => void;
   onChangerMois: (delta: number) => void;
-  /** Décalage du balayage. Le cadre et l'en-tête restent, les jours défilent. */
-  glissement?: Animated.Value;
 }) {
   const accent = useAccent();
-  const semaines = grilleMois(mois);
   const ceJour = aujourdhui();
 
   return (
@@ -47,47 +47,53 @@ export function Calendrier({
         ))}
       </View>
 
-      <Animated.View
-        style={glissement ? { transform: [{ translateX: glissement }] } : undefined}>
-      {semaines.map((semaine, i) => (
-        <View key={i} style={styles.ligne}>
-          {semaine.map((iso, j) => {
-            if (!iso) return <View key={j} style={styles.case} />;
-            const quarts = quartsParJour.get(iso) ?? [];
-            const enConflit = quarts.some((q) => chevauchements.has(q.id));
-            const selectionne = iso === jourSelectionne;
-            return (
-              <Pressable
-                key={j}
-                onPress={() => onSelectionner(iso)}
-                style={[styles.case, selectionne && { backgroundColor: accentPale(accent) }]}>
-                <Text
-                  style={[
-                    styles.numero,
-                    iso === ceJour && { fontFamily: police.gras, color: accent },
-                    selectionne && styles.numeroSelectionne,
-                  ]}>
-                  {Number(iso.slice(8))}
-                </Text>
-                <View style={styles.points}>
-                  {quarts.slice(0, 3).map((q) => (
-                    <View
-                      key={q.id}
+      {/* L'en-tête et les initiales des jours restent en place ; seules les
+          semaines défilent. */}
+      <Pageur
+        cle={mois}
+        onPrecedent={() => onChangerMois(-1)}
+        onSuivant={() => onChangerMois(1)}
+        rendre={(decalage) =>
+          grilleMois(ajouterMois(mois, decalage)).map((semaine, i) => (
+            <View key={i} style={styles.ligne}>
+              {semaine.map((iso, j) => {
+                if (!iso) return <View key={j} style={styles.case} />;
+                const quarts = quartsParJour.get(iso) ?? [];
+                const enConflit = quarts.some((q) => chevauchements.has(q.id));
+                const selectionne = iso === jourSelectionne;
+                return (
+                  <Pressable
+                    key={j}
+                    onPress={() => onSelectionner(iso)}
+                    style={[styles.case, selectionne && { backgroundColor: accentPale(accent) }]}>
+                    <Text
                       style={[
-                        styles.point,
-                        { backgroundColor: accent },
-                        chevauchements.has(q.id) && styles.pointConflit,
-                      ]}
-                    />
-                  ))}
-                </View>
-                {enConflit && <View style={styles.bordureConflit} />}
-              </Pressable>
-            );
-          })}
-        </View>
-      ))}
-      </Animated.View>
+                        styles.numero,
+                        iso === ceJour && { fontFamily: police.gras, color: accent },
+                        selectionne && styles.numeroSelectionne,
+                      ]}>
+                      {Number(iso.slice(8))}
+                    </Text>
+                    <View style={styles.points}>
+                      {quarts.slice(0, 3).map((q) => (
+                        <View
+                          key={q.id}
+                          style={[
+                            styles.point,
+                            { backgroundColor: verrouilles.has(q.id) ? couleurs.attente : accent },
+                            chevauchements.has(q.id) && styles.pointConflit,
+                          ]}
+                        />
+                      ))}
+                    </View>
+                    {enConflit && <View style={styles.bordureConflit} />}
+                  </Pressable>
+                );
+              })}
+            </View>
+          ))
+        }
+      />
     </View>
   );
 }

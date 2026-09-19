@@ -20,6 +20,7 @@ import {
   grilleMois,
   JOURS_COURTS,
 } from '../lib/dates';
+import { Pageur } from './Pageur';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 
 /**
@@ -208,6 +209,64 @@ export function SelecteurHeure({
   );
 }
 
+/**
+ * Durée, pas heure d'horloge. La distinction n'est pas cosmétique : la même
+ * roulette doit produire « 1 h 45 » comme bloc de temps, jamais « 13 h 45 »
+ * comme moment de la journée. D'où deux colonnes à part, des heures qui
+ * commencent à zéro, et un libellé qui dit « h » et « min ».
+ */
+export function SelecteurDuree({
+  titre,
+  minutes,
+  ouvert,
+  onChange,
+  onFermer,
+  maxHeures = 12,
+}: {
+  titre: string;
+  minutes: number;
+  ouvert: boolean;
+  onChange: (minutes: number) => void;
+  onFermer: () => void;
+  maxHeures?: number;
+}) {
+  const heuresPossibles = useMemo(
+    () => Array.from({ length: maxHeures + 1 }, (_, i) => i),
+    [maxHeures]
+  );
+  const minutesPossibles = useMemo(
+    () => Array.from({ length: 60 / PAS_MINUTES }, (_, i) => i * PAS_MINUTES),
+    []
+  );
+
+  // La roulette s'ouvre déjà posée sur une valeur proche : l'usager ajuste,
+  // il ne part pas de zéro.
+  const h = Math.min(Math.floor(minutes / 60), maxHeures);
+  const reste = minutes - h * 60;
+  const m = minutesPossibles.reduce((a, b) => (Math.abs(b - reste) < Math.abs(a - reste) ? b : a));
+
+  return (
+    <Feuille ouvert={ouvert} titre={titre} onFermer={onFermer}>
+      <View style={styles.rouleaux}>
+        <Rouleau
+          valeurs={heuresPossibles}
+          valeur={h}
+          onChange={(v) => onChange(v * 60 + m)}
+          format={(v) => `${v}`}
+        />
+        <Text style={styles.unite}>h</Text>
+        <Rouleau
+          valeurs={minutesPossibles}
+          valeur={m}
+          onChange={(v) => onChange(h * 60 + v)}
+          format={(v) => `${v}`.padStart(2, '0')}
+        />
+        <Text style={styles.unite}>min</Text>
+      </View>
+    </Feuille>
+  );
+}
+
 export function SelecteurDate({
   label,
   valeur,
@@ -228,7 +287,6 @@ export function SelecteurDate({
     if (ouvert) setMois(valeur);
   }, [ouvert, valeur]);
 
-  const semaines = useMemo(() => grilleMois(mois), [mois]);
   const cejour = aujourdhui();
 
   return (
@@ -264,44 +322,53 @@ export function SelecteurDate({
           ))}
         </View>
 
-        {semaines.map((ligne, i) => (
-          <View key={i} style={styles.semaine}>
-            {ligne.map((jour, j) => {
-              if (!jour) return <View key={`v${j}`} style={styles.case} />;
-              const choisi = jour === valeur;
-              const cest = jour === cejour;
-              return (
-                <Pressable
-                  key={jour}
-                  onPress={() => {
-                    onChange(jour);
-                    setOuvert(false);
-                  }}
-                  style={({ pressed }) => [styles.case, pressed && { opacity: 0.6 }]}>
-                  <View
-                    style={[
-                      styles.pastille,
-                      choisi && { backgroundColor: accent },
-                      // Aujourd'hui se distingue du jour choisi : contour seul.
-                      !choisi && cest && { borderWidth: 1.5, borderColor: accent },
-                    ]}>
-                    <Text
-                      style={[
-                        styles.chiffre,
-                        choisi && { color: '#FFFFFF', fontFamily: police.gras },
-                        !choisi && cest && { color: accent, fontFamily: police.demi },
-                      ]}>
-                      {analyserDate(jour).getDate()}
-                    </Text>
-                  </View>
-                  {joursMarques?.has(jour) && !choisi && (
-                    <View style={[styles.point, { backgroundColor: accent }]} />
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
-        ))}
+        {/* Comme partout ailleurs, on change de mois au balayage. Les flèches
+            restent, pour qui préfère viser. */}
+        <Pageur
+          cle={mois}
+          onPrecedent={() => setMois(ajouterMois(mois, -1))}
+          onSuivant={() => setMois(ajouterMois(mois, 1))}
+          rendre={(decalage) =>
+            grilleMois(ajouterMois(mois, decalage)).map((ligne, i) => (
+              <View key={i} style={styles.semaine}>
+                {ligne.map((jour, j) => {
+                  if (!jour) return <View key={`v${j}`} style={styles.case} />;
+                  const choisi = jour === valeur;
+                  const cest = jour === cejour;
+                  return (
+                    <Pressable
+                      key={jour}
+                      onPress={() => {
+                        onChange(jour);
+                        setOuvert(false);
+                      }}
+                      style={({ pressed }) => [styles.case, pressed && { opacity: 0.6 }]}>
+                      <View
+                        style={[
+                          styles.pastille,
+                          choisi && { backgroundColor: accent },
+                          // Aujourd'hui se distingue du jour choisi : contour seul.
+                          !choisi && cest && { borderWidth: 1.5, borderColor: accent },
+                        ]}>
+                        <Text
+                          style={[
+                            styles.chiffre,
+                            choisi && { color: '#FFFFFF', fontFamily: police.gras },
+                            !choisi && cest && { color: accent, fontFamily: police.demi },
+                          ]}>
+                          {analyserDate(jour).getDate()}
+                        </Text>
+                      </View>
+                      {joursMarques?.has(jour) && !choisi && (
+                        <View style={[styles.point, { backgroundColor: accent }]} />
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))
+          }
+        />
 
         <Pressable onPress={() => setMois(dateISO(new Date()))} hitSlop={8}>
           <Text style={[styles.aujourdhui, { color: accent }]}>Aujourd’hui</Text>
@@ -383,6 +450,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: espace.s,
+  },
+  unite: {
+    fontSize: 16,
+    fontFamily: police.demi,
+    color: couleurs.doux,
+    marginBottom: 2,
   },
   deuxPoints: {
     fontSize: 28,

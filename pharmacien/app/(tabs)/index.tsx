@@ -1,18 +1,21 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { listerPharmacies } from '../../src/db/pharmacies';
-import { delaisSecondaires, obtenirReglages } from '../../src/db/profil';
+import { definirReglage, delaisSecondaires, obtenirReglages } from '../../src/db/profil';
 import {
   deplacerQuart,
   enregistrerRappels,
+  finDuQuart,
   listerQuarts,
   obtenirQuart,
+  quartVerrouille,
   rappelsDuQuart,
 } from '../../src/db/quarts';
 import type { Pharmacie, QuartDetaille } from '../../src/db/types';
+import { fenetreHeures, pixelsParHeure } from '../../src/lib/agenda';
 import {
   ajouterJours,
   ajouterMois,
@@ -31,18 +34,35 @@ import {
 import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
 import { detecterChevauchements } from '../../src/lib/stats';
 import { Calendrier } from '../../src/ui/Calendrier';
-import { Bouton, Carte, Doux, Fondu, Onglets, Vide } from '../../src/ui/composants';
+import {
+  BandeauAide,
+  Bouton,
+  Carte,
+  Doux,
+  FicheAide,
+  Fondu,
+  Onglets,
+  Vide,
+} from '../../src/ui/composants';
 import { LigneQuart } from '../../src/ui/LigneQuart';
-import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { Pageur } from '../../src/ui/Pageur';
+import { couleurs, espace, police, useAccent } from '../../src/ui/theme';
 import { VueCarte, type PointCarte } from '../../src/ui/VueCarte';
-import { Ruban } from '../../src/ui/Ruban';
 import { VueColonnes } from '../../src/ui/VueColonnes';
 
 type Vue = 'agenda' | 'liste' | 'carte';
 type Affichage = 'jour' | 'semaine' | 'mois';
+type Sens = 'aVenir' | 'anterieurs';
+
+/** Nombre d'ouvertures accompagnées du bandeau d'aide, avant qu'il ne se taise. */
+const OUVERTURES_AIDEES = 3;
+
+const TEXTE_AIDE =
+  'Glissez un bloc pour le déplacer. Maintenez-le sans bouger pour en déposer une copie. Balayez la grille pour changer de période.';
 
 export default function Horaire() {
   const router = useRouter();
+  const navigation = useNavigation();
   const accent = useAccent();
   // Ce qui reste à l'agenda une fois l'en-tête, la barre d'onglets et le bouton
   // d'ajout déduits : la vue s'y ajuste plutôt que d'imposer un défilement.
@@ -53,22 +73,55 @@ export default function Horaire() {
   const [vue, setVue] = useState<Vue>('agenda');
   // Le mois s'ouvre en premier : c'est lui qui donne la vue d'ensemble.
   const [affichage, setAffichage] = useState<Affichage>('mois');
+  const [sens, setSens] = useState<Sens>('aVenir');
   const [mois, setMois] = useState(() => debutMois(aujourdhui()));
   const [jour, setJour] = useState(() => aujourdhui());
   const [historiqueMois, setHistoriqueMois] = useState(1);
   const [rappelFactures, setRappelFactures] = useState(false);
-  /** Une duplication en cours prend le doigt : la page ne doit pas défiler. */
+  /** Une duplication en cours prend le doigt : rien d'autre ne doit bouger. */
   const [duplication, setDuplication] = useState(false);
+  const [aideOuverte, setAideOuverte] = useState(false);
+  const [bandeauAide, setBandeauAide] = useState(false);
+  /** Repère de temps, repris à chaque venue sur l'écran. */
+  const [maintenant, setMaintenant] = useState(() => Date.now());
 
   useFocusEffect(
     useCallback(() => {
       setQuarts(listerQuarts());
       setPharmacies(listerPharmacies());
-      setRappelFactures(doitRappelerFactures(obtenirReglages()));
+      setMaintenant(Date.now());
+      const reglages = obtenirReglages();
+      setRappelFactures(doitRappelerFactures(reglages));
+      // Le bandeau accompagne les trois premières ouvertures, puis ne revient
+      // plus : le débutant est guidé, l'habitué ne voit plus rien.
+      const vues = reglages.aide_horaire_vues;
+      setBandeauAide(vues < OUVERTURES_AIDEES);
+      if (vues < OUVERTURES_AIDEES) definirReglage('aide_horaire_vues', vues + 1);
     }, [])
   );
 
+  // L'icône d'aide vit dans l'en-tête, pas dans le flux : une explication de
+  // gestes se lit une fois et n'a pas à pousser le contenu vers le bas.
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable onPress={() => setAideOuverte(true)} hitSlop={12} style={styles.aide}>
+          <Ionicons name="help-circle-outline" size={24} color={accent} />
+        </Pressable>
+      ),
+    });
+  }, [navigation, accent]);
+
   const chevauchements = useMemo(() => detecterChevauchements(quarts), [quarts]);
+
+  /**
+   * Quarts effectués et facturés. Ils sont gris dans la grille, immuables dans
+   * leur fiche, et sourds au glisser-déposer.
+   */
+  const verrouilles = useMemo(
+    () => new Set(quarts.filter(quartVerrouille).map((q) => q.id)),
+    [quarts]
+  );
 
   const parJour = useMemo(() => {
     const carte = new Map<string, QuartDetaille[]>();
@@ -81,14 +134,40 @@ export default function Horaire() {
   }, [quarts]);
 
   const quartsDuJour = parJour.get(jour) ?? [];
+
+  const enCours = useMemo(
+    () =>
+      quarts.filter(
+        (q) =>
+          !q.annule &&
+          combiner(q.date, q.heure_debut).getTime() <= maintenant &&
+          finDuQuart(q).getTime() > maintenant
+      ),
+    // Le repère est repris à chaque venue sur l'écran : assez frais pour ne
+    // pas laisser un quart « en cours » une heure de trop, assez stable pour
+    // ne pas tout recalculer à chaque rendu.
+    [quarts, maintenant]
+  );
+  const enCoursIds = useMemo(() => new Set(enCours.map((q) => q.id)), [enCours]);
+
   const aVenir = useMemo(
-    () => quarts.filter((q) => q.date >= aujourdhui() && !q.annule),
-    [quarts]
+    () =>
+      quarts.filter((q) => q.date >= aujourdhui() && !q.annule && !enCoursIds.has(q.id)),
+    [quarts, enCoursIds]
+  );
+
+  /** Du plus récent au plus ancien : on cherche ce qu'on vient de faire. */
+  const anterieurs = useMemo(
+    () =>
+      quarts
+        .filter((q) => q.date < aujourdhui() && !enCoursIds.has(q.id))
+        .sort((a, b) => (a.date === b.date ? b.heure_debut.localeCompare(a.heure_debut) : b.date.localeCompare(a.date))),
+    [quarts, enCoursIds]
   );
 
   /** Quarts à venir d'abord, puis les pharmacies déjà fréquentées en vert. */
   const points = useMemo<PointCarte[]>(() => {
-    const maintenant = Date.now();
+    const instant = Date.now();
     const resultat: PointCarte[] = [];
     const placees = new Set<number>();
 
@@ -96,8 +175,8 @@ export default function Horaire() {
       if (q.annule) continue;
       if (q.pharmacie_latitude === null || q.pharmacie_longitude === null) continue;
       const debut = combiner(q.date, q.heure_debut).getTime();
-      if (debut < maintenant) continue;
-      const heures = (debut - maintenant) / 3600000;
+      if (debut < instant) continue;
+      const heures = (debut - instant) / 3600000;
       resultat.push({
         cle: `quart-${q.id}`,
         latitude: q.pharmacie_latitude,
@@ -158,8 +237,24 @@ export default function Horaire() {
     setAffichage('jour');
   };
 
-  const semaine = semaineDe(jour);
   const pas = affichage === 'jour' ? 1 : 7;
+  const joursDe = (depart: string) =>
+    affichage === 'jour' ? [depart] : semaineDe(depart);
+
+  /**
+   * Fenêtre d'heures calculée sur les trois pages du balayage à la fois. Sans
+   * ça, l'axe des heures sauterait d'une page à l'autre pendant le glissement,
+   * et deux semaines voisines ne se compareraient plus.
+   */
+  const { plage, pxParMinute } = useMemo(() => {
+    const jours = [-pas, 0, pas].flatMap((decalage) => joursDe(ajouterJours(jour, decalage)));
+    const visibles = jours.flatMap((j) => parJour.get(j) ?? []);
+    const fenetre = fenetreHeures(visibles);
+    return { plage: fenetre, pxParMinute: pixelsParHeure(fenetre, hauteurAgenda) / 60 };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jour, pas, parJour, hauteurAgenda, affichage]);
+
+  const semaine = semaineDe(jour);
 
   return (
     <ScrollView contentContainerStyle={styles.contenu} scrollEnabled={!duplication}>
@@ -219,26 +314,18 @@ export default function Horaire() {
             onChange={setAffichage}
           />
 
+          {bandeauAide && <BandeauAide texte={TEXTE_AIDE} />}
+
           {affichage === 'mois' ? (
-            <>
-              <Ruban
-                bloque={false}
-                onPrecedent={() => setMois(ajouterMois(mois, -1))}
-                onSuivant={() => setMois(ajouterMois(mois, 1))}>
-                {(glissement) => (
-                  <Calendrier
-                    mois={mois}
-                    quartsParJour={parJour}
-                    chevauchements={chevauchements}
-                    jourSelectionne={jour}
-                    onSelectionner={choisirJour}
-                    onChangerMois={(delta) => setMois(ajouterMois(mois, delta))}
-                    glissement={glissement}
-                  />
-                )}
-              </Ruban>
-              <Doux>Touchez un jour pour ouvrir sa journée.</Doux>
-            </>
+            <Calendrier
+              mois={mois}
+              quartsParJour={parJour}
+              chevauchements={chevauchements}
+              verrouilles={verrouilles}
+              jourSelectionne={jour}
+              onSelectionner={choisirJour}
+              onChangerMois={(delta) => setMois(ajouterMois(mois, delta))}
+            />
           ) : (
             <>
               <View style={styles.navigation}>
@@ -254,27 +341,25 @@ export default function Horaire() {
                   <Ionicons name="chevron-forward" size={22} color={accent} />
                 </Pressable>
               </View>
-              <Ruban
+              <Pageur
+                cle={jour}
                 bloque={duplication}
                 onPrecedent={() => setJour(ajouterJours(jour, -pas))}
-                onSuivant={() => setJour(ajouterJours(jour, pas))}>
-                {(glissement) => (
+                onSuivant={() => setJour(ajouterJours(jour, pas))}
+                rendre={(decalage) => (
                   <VueColonnes
-                    jours={affichage === 'jour' ? [jour] : semaine}
+                    jours={joursDe(ajouterJours(jour, decalage * pas))}
                     quartsParJour={parJour}
-                    hauteurDisponible={hauteurAgenda}
-                    glissement={glissement}
+                    plage={plage}
+                    pxParMinute={pxParMinute}
+                    verrouilles={verrouilles}
                     onOuvrir={ouvrirQuart}
                     onDeplacer={deplacer}
                     onDupliquer={dupliquer}
                     onArmer={setDuplication}
                   />
                 )}
-              </Ruban>
-              <Doux>
-                Balayez pour changer de {affichage === 'jour' ? 'jour' : 'semaine'}. Maintenez un
-                bloc pour le déplacer, plus longtemps pour en dupliquer une copie.
-              </Doux>
+              />
 
               {/* La journée garde ses cartes sous la timeline : elles portent le
                   taux, les frais et les notes, que les blocs ne montrent pas. */}
@@ -289,6 +374,8 @@ export default function Horaire() {
                         key={q.id}
                         quart={q}
                         enConflit={chevauchements.has(q.id)}
+                        verrouille={verrouilles.has(q.id)}
+                        enCours={enCoursIds.has(q.id)}
                         onPress={() => ouvrirQuart(q.id)}
                         onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
                       />
@@ -309,21 +396,66 @@ export default function Horaire() {
 
       {vue === 'liste' && (
         <Fondu>
-          <Text style={styles.jour}>À venir</Text>
-          {aVenir.length === 0 ? (
-            <Vide texte="Aucun quart à venir." />
+          {/*
+            Deux onglets, pas deux sections empilées : empilés, les quarts
+            passés s'accumuleraient sous les prochains et finiraient par les
+            noyer. Le quart en cours n'a pas d'onglet à lui — il serait vide la
+            quasi-totalité du temps — il s'épingle en haut de « À venir ».
+          */}
+          <Onglets
+            options={[
+              { valeur: 'aVenir' as const, texte: 'À venir' },
+              { valeur: 'anterieurs' as const, texte: 'Antérieurs' },
+            ]}
+            valeur={sens}
+            onChange={setSens}
+          />
+
+          {sens === 'aVenir' ? (
+            <>
+              {enCours.map((q) => (
+                <LigneQuart
+                  key={q.id}
+                  quart={q}
+                  enCours
+                  afficherDate
+                  verrouille={verrouilles.has(q.id)}
+                  onPress={() => ouvrirQuart(q.id)}
+                  onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
+                />
+              ))}
+              {aVenir.length === 0 && enCours.length === 0 ? (
+                <Vide texte="Aucun quart à venir." />
+              ) : (
+                aVenir.map((q) => (
+                  <LigneQuart
+                    key={q.id}
+                    quart={q}
+                    afficherDate
+                    enConflit={chevauchements.has(q.id)}
+                    verrouille={verrouilles.has(q.id)}
+                    onPress={() => ouvrirQuart(q.id)}
+                    onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
+                  />
+                ))
+              )}
+            </>
+          ) : anterieurs.length === 0 ? (
+            <Vide texte="Aucun quart antérieur." />
           ) : (
-            aVenir.map((q) => (
+            anterieurs.map((q) => (
               <LigneQuart
                 key={q.id}
                 quart={q}
                 afficherDate
                 enConflit={chevauchements.has(q.id)}
+                verrouille={verrouilles.has(q.id)}
                 onPress={() => ouvrirQuart(q.id)}
                 onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
               />
             ))
           )}
+
           <Bouton
             titre="Ajouter un quart"
             icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
@@ -354,6 +486,23 @@ export default function Horaire() {
         </Fondu>
       )}
 
+      <FicheAide ouvert={aideOuverte} titre="Les gestes de l’agenda" onFermer={() => setAideOuverte(false)}>
+        <Doux>
+          Balayez la grille vers la gauche ou la droite pour changer de jour, de semaine ou de mois.
+        </Doux>
+        <Doux>
+          Glissez un bloc de quart pour le déplacer : il se cale à l’heure pleine ou à la
+          demi-heure la plus proche.
+        </Doux>
+        <Doux>
+          Maintenez un bloc sans bouger le doigt pour en déposer une copie plutôt que de le
+          déplacer.
+        </Doux>
+        <Doux>
+          Un quart gris a été effectué et facturé : il se consulte, mais ne bouge plus. Supprimez
+          sa facture pour le rouvrir.
+        </Doux>
+      </FicheAide>
     </ScrollView>
   );
 }
@@ -364,6 +513,9 @@ const styles = StyleSheet.create({
     // Même raison qu'ailleurs : le bouton d'ajout ne doit pas finir sous la
     // barre d'onglets.
     paddingBottom: espace.xxl * 3,
+  },
+  aide: {
+    paddingHorizontal: espace.m,
   },
   bandeau: {
     backgroundColor: couleurs.carte,

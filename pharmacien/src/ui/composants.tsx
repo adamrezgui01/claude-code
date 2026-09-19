@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 
 import { formaterTelephone, formaterTelephoneSaisie } from '../lib/telephone';
-import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
+import { accentPale, couleurs, espace, ombre, police, rayon, useAccent } from './theme';
 
 /**
  * Enveloppe de tout écran qui contient des champs. Trois comportements que
@@ -95,7 +95,8 @@ export function Doux({ children }: { children: ReactNode }) {
 }
 
 export function Carte({ children, style }: { children: ReactNode; style?: ViewStyle }) {
-  return <View style={[styles.carte, style]}>{children}</View>;
+  const accent = useAccent();
+  return <View style={[styles.carte, ombre(accent, 'carte'), style]}>{children}</View>;
 }
 
 export function Separateur() {
@@ -237,6 +238,140 @@ export function Section({
   );
 }
 
+/**
+ * Ligne d'un encadré qui se déplie quand on l'active.
+ *
+ * Sert aux frais typiques d'une pharmacie : trois lignes serrées, dont seules
+ * celles qui servent occupent de la place. Plusieurs peuvent être ouvertes en
+ * même temps ; aucune ne l'est par défaut. Ce ne sont pas des rangées
+ * jumelles — chacune révèle ses propres commandes, et c'est voulu : un
+ * kilométrage se calcule, un per diem se saisit, un hébergement peut être
+ * simplement fourni.
+ */
+export function LigneDepliable({
+  label,
+  detail,
+  actif,
+  onChange,
+  premiere,
+  children,
+}: {
+  label: string;
+  detail?: string;
+  actif: boolean;
+  onChange: (v: boolean) => void;
+  /** La première ligne d'un encadré ne porte pas de filet au-dessus. */
+  premiere?: boolean;
+  children: ReactNode;
+}) {
+  const accent = useAccent();
+  return (
+    <View style={[styles.depliable, !premiere && styles.depliableSuivante]}>
+      <View style={styles.depliableEntete}>
+        <View style={styles.depliableTexte}>
+          <Text style={styles.interrupteurLabel}>{label}</Text>
+          {!!detail && <Doux>{detail}</Doux>}
+        </View>
+        <Switch
+          value={actif}
+          onValueChange={onChange}
+          trackColor={{ true: accent, false: couleurs.bordure }}
+        />
+      </View>
+      {actif && <Fondu style={styles.depliableCorps}>{children}</Fondu>}
+    </View>
+  );
+}
+
+/**
+ * Case à cocher sur une ligne. Distincte de l'interrupteur : l'interrupteur
+ * allume une fonction, la case note un fait.
+ */
+export function Case({
+  label,
+  detail,
+  valeur,
+  onChange,
+}: {
+  label: string;
+  detail?: string;
+  valeur: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  const accent = useAccent();
+  return (
+    <Pressable
+      onPress={() => onChange(!valeur)}
+      style={({ pressed }) => [styles.case, pressed && styles.attenue]}
+      hitSlop={6}>
+      <View
+        style={[
+          styles.caseCarre,
+          valeur && { backgroundColor: accent, borderColor: accent },
+        ]}>
+        {valeur && <Text style={styles.caseCoche}>✓</Text>}
+      </View>
+      <View style={styles.depliableTexte}>
+        <Text style={styles.caseLabel}>{label}</Text>
+        {!!detail && <Doux>{detail}</Doux>}
+      </View>
+    </Pressable>
+  );
+}
+
+/**
+ * Fiche explicative posée par-dessus l'écran. Une explication de gestes se lit
+ * une fois : elle n'a rien à faire en permanence dans le flux du contenu, où
+ * elle pousse tout le reste vers le bas.
+ */
+export function FicheAide({
+  ouvert,
+  titre,
+  onFermer,
+  children,
+}: {
+  ouvert: boolean;
+  titre: string;
+  onFermer: () => void;
+  children: ReactNode;
+}) {
+  const accent = useAccent();
+  return (
+    <Modal visible={ouvert} transparent animationType="fade" onRequestClose={onFermer}>
+      <Pressable style={styles.voile} onPress={onFermer}>
+        <Pressable style={styles.fiche} onPress={() => {}}>
+          <Text style={styles.ficheTitre}>{titre}</Text>
+          {children}
+          <Pressable
+            style={({ pressed }) => [
+              styles.ficheValider,
+              { backgroundColor: accent },
+              pressed && styles.attenue,
+            ]}
+            onPress={onFermer}>
+            <Text style={styles.boutonTexte}>Compris</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+/**
+ * Bandeau discret, montré les premières fois seulement. Le débutant est
+ * guidé, l'usager habitué ne voit plus rien.
+ */
+export function BandeauAide({ texte }: { texte: string }) {
+  const accent = useAccent();
+  return (
+    <Fondu>
+      <View style={[styles.bandeauAide, { borderColor: accent, backgroundColor: accentPale(accent) }]}>
+        <Text style={styles.bandeauAideTexte}>{texte}</Text>
+      </View>
+    </Fondu>
+  );
+}
+
 export function Bouton({
   titre,
   onPress,
@@ -270,6 +405,10 @@ export function Bouton({
           ? couleurs.alertePale
           : couleurs.carte;
 
+  // L'ombre accompagne l'action principale, pas les boutons de rappel : un
+  // écran où tout est en relief n'a plus de hiérarchie du tout.
+  const porte = variante === 'principal' || variante === 'succes';
+
   return (
     <Animated.View style={{ transform: [{ scale: echelle }] }}>
       <Pressable
@@ -280,6 +419,7 @@ export function Bouton({
         style={[
           styles.bouton,
           { backgroundColor: fond },
+          porte && !desactive && ombre(variante === 'succes' ? couleurs.succes : accent, 'bouton'),
           variante === 'secondaire' && styles.boutonSecondaire,
           desactive && styles.attenue,
         ]}>
@@ -496,6 +636,87 @@ export function Rangee({
 }
 
 const styles = StyleSheet.create({
+  depliable: {
+    paddingVertical: espace.s,
+  },
+  depliableSuivante: {
+    borderTopWidth: 1,
+    borderTopColor: couleurs.bordurePale,
+  },
+  depliableEntete: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: espace.m,
+  },
+  depliableTexte: {
+    flex: 1,
+  },
+  depliableCorps: {
+    marginTop: espace.m,
+  },
+  case: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace.m,
+    paddingVertical: espace.s,
+  },
+  caseCarre: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: couleurs.bordure,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  caseCoche: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: police.gras,
+    lineHeight: 18,
+  },
+  caseLabel: {
+    fontSize: 15,
+    fontFamily: police.normal,
+    color: couleurs.texte,
+  },
+  voile: {
+    flex: 1,
+    backgroundColor: '#1E1B2299',
+    justifyContent: 'center',
+    padding: espace.l,
+  },
+  fiche: {
+    backgroundColor: couleurs.carte,
+    borderRadius: rayon * 1.5,
+    padding: espace.xl,
+    gap: espace.m,
+  },
+  ficheTitre: {
+    fontSize: 18,
+    fontFamily: police.gras,
+    color: couleurs.texte,
+  },
+  ficheValider: {
+    borderRadius: rayon,
+    paddingVertical: espace.m,
+    alignItems: 'center',
+    marginTop: espace.s,
+  },
+  bandeauAide: {
+    borderWidth: 1,
+    borderRadius: rayon,
+    paddingVertical: espace.s,
+    paddingHorizontal: espace.m,
+    marginBottom: espace.m,
+  },
+  bandeauAideTexte: {
+    fontSize: 13,
+    fontFamily: police.normal,
+    color: couleurs.texte,
+    lineHeight: 18,
+  },
   sectionBloc: {
     // Entre deux sections, bien plus d'air qu'entre deux champs.
     marginBottom: espace.xxl,

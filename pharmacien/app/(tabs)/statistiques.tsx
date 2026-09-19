@@ -137,10 +137,8 @@ export default function Statistiques() {
       <Graphique
         serie={serie}
         mesure={mesure}
-        onMesure={(delta) => {
-          const i = MESURES.indexOf(mesure);
-          setMesure(MESURES[(i + delta + MESURES.length) % MESURES.length]);
-        }}
+        mesures={MESURES}
+        onMesure={setMesure}
         enValeur={moisEnValeur(serie, debut, fin)}
         rejouer={rejouer}
       />

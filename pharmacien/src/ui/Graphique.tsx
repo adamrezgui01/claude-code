@@ -4,7 +4,6 @@ import {
   Animated,
   Easing,
   LayoutChangeEvent,
-  PanResponder,
   Pressable,
   StyleSheet,
   Text,
@@ -19,15 +18,25 @@ import {
   type Mesure,
   type MoisChiffre,
 } from '../lib/mensuel';
+import { Pageur } from './Pageur';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 
 /**
  * Douze mois, deux lectures. Les barres disent le mois, la ligne dit la
  * tendance. La valeur est écrite au-dessus : personne ne devrait avoir à
  * estimer une hauteur pour lire un chiffre.
+ *
+ * La zone de tracé se mesure, elle ne se devine pas. C'est ce qui manquait
+ * quand le graphique a cessé de s'aligner : une hauteur fixée d'avance ne
+ * correspondait plus à la place que la mise en page laissait réellement, et
+ * les barres n'atteignaient plus la ligne qu'annonçait leur valeur. On ne
+ * calcule donc l'échelle qu'une fois une hauteur réelle obtenue, et on la
+ * recalcule si elle change — rotation, changement d'onglet, retour sur
+ * l'écran.
  */
 
-const HAUTEUR = 150;
+/** Hauteur visée pour la zone de tracé, avant mesure. */
+const HAUTEUR_VISEE = 150;
 const MONTEE = 380;
 /** Décalage d'une barre à l'autre : assez pour se sentir, trop court pour attendre. */
 const CASCADE = 22;
@@ -46,6 +55,7 @@ function Barre({
   entree,
   mesure,
   maxi,
+  hauteurZone,
   index,
   rejouer,
   enValeur,
@@ -53,13 +63,14 @@ function Barre({
   entree: MoisChiffre;
   mesure: Mesure;
   maxi: number;
+  hauteurZone: number;
   index: number;
   rejouer: number;
   enValeur: boolean;
 }) {
   const accent = useAccent();
   const valeur = valeurDe(entree, mesure);
-  const cible = (valeur / maxi) * HAUTEUR;
+  const cible = (valeur / maxi) * hauteurZone;
   const hauteur = useRef(new Animated.Value(0)).current;
   const premier = useRef(true);
 
@@ -86,9 +97,6 @@ function Barre({
 
   return (
     <View style={styles.colonne}>
-      <Text style={[styles.valeur, !enValeur && { color: couleurs.doux }]} numberOfLines={1}>
-        {formater(valeur, mesure)}
-      </Text>
       <Animated.View
         style={[
           styles.barre,
@@ -99,9 +107,6 @@ function Barre({
           },
         ]}
       />
-      <Text style={styles.mois} numberOfLines={1}>
-        {entree.libelle}
-      </Text>
     </View>
   );
 }
@@ -115,6 +120,7 @@ function Ligne({
   mesure,
   maxi,
   largeur,
+  hauteurZone,
   enValeur,
   rejouer,
 }: {
@@ -122,6 +128,7 @@ function Ligne({
   mesure: Mesure;
   maxi: number;
   largeur: number;
+  hauteurZone: number;
   enValeur: Set<string>;
   rejouer: number;
 }) {
@@ -135,9 +142,9 @@ function Ligne({
         x: pas * i + pas / 2,
         // Un mois à zéro descend jusqu'à l'axe : c'est une valeur réelle, et le
         // creux est justement ce qu'on veut repérer.
-        y: HAUTEUR - (valeurDe(entree, mesure) / maxi) * HAUTEUR,
+        y: hauteurZone - (valeurDe(entree, mesure) / maxi) * hauteurZone,
       })),
-    [serie, mesure, maxi, pas]
+    [serie, mesure, maxi, pas, hauteurZone]
   );
 
   const apparition = useRef(serie.map(() => new Animated.Value(0))).current;
@@ -175,7 +182,7 @@ function Ligne({
   }, [apparition, traces, mesure, rejouer]);
 
   return (
-    <View style={[styles.zoneLigne, { width: largeur }]}>
+    <View style={StyleSheet.absoluteFill}>
       {points.slice(1).map((point, i) => {
         const depart = points[i];
         const dx = point.x - depart.x;
@@ -218,95 +225,155 @@ function Ligne({
   );
 }
 
+/** Une mesure, dessinée. C'est ce qui glisse d'une page à l'autre. */
+function Page({
+  serie,
+  mesure,
+  forme,
+  enValeur,
+  rejouer,
+  largeur,
+  hauteurZone,
+  onMesurerZone,
+}: {
+  serie: MoisChiffre[];
+  mesure: Mesure;
+  forme: Forme;
+  enValeur: Set<string>;
+  rejouer: number;
+  largeur: number;
+  hauteurZone: number;
+  onMesurerZone: (hauteur: number) => void;
+}) {
+  const maxi = maximum(serie, mesure);
+
+  return (
+    <View>
+      <View style={styles.rangee}>
+        {serie.map((entree) => (
+          <Text
+            key={entree.mois}
+            style={[styles.valeur, !enValeur.has(entree.mois) && { color: couleurs.doux }]}
+            numberOfLines={1}>
+            {formater(valeurDe(entree, mesure), mesure)}
+          </Text>
+        ))}
+      </View>
+
+      {/*
+        La zone de tracé donne son échelle aux deux formes. Elle se mesure une
+        fois posée : tant que la hauteur vaut zéro, on ne dessine rien plutôt
+        que de figer l'échelle sur une valeur fausse.
+      */}
+      <View
+        style={styles.zone}
+        onLayout={(e: LayoutChangeEvent) => onMesurerZone(e.nativeEvent.layout.height)}>
+        {hauteurZone > 0 &&
+          (forme === 'barres' ? (
+            <View style={styles.barres}>
+              {serie.map((entree, i) => (
+                <Barre
+                  key={entree.mois}
+                  entree={entree}
+                  mesure={mesure}
+                  maxi={maxi}
+                  hauteurZone={hauteurZone}
+                  index={i}
+                  rejouer={rejouer}
+                  enValeur={enValeur.has(entree.mois)}
+                />
+              ))}
+            </View>
+          ) : (
+            largeur > 0 && (
+              <Ligne
+                serie={serie}
+                mesure={mesure}
+                maxi={maxi}
+                largeur={largeur}
+                hauteurZone={hauteurZone}
+                enValeur={enValeur}
+                rejouer={rejouer}
+              />
+            )
+          ))}
+      </View>
+
+      <View style={styles.axe} />
+
+      <View style={styles.rangee}>
+        {serie.map((entree) => (
+          <Text key={entree.mois} style={styles.mois} numberOfLines={1}>
+            {entree.libelle}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export function Graphique({
   serie,
   mesure,
+  mesures,
   onMesure,
   enValeur,
   rejouer,
 }: {
   serie: MoisChiffre[];
   mesure: Mesure;
-  /** Le balayage change de mesure, comme les onglets du haut. */
-  onMesure: (delta: number) => void;
+  /** L'ordre des mesures : c'est lui que le balayage parcourt, en boucle. */
+  mesures: Mesure[];
+  onMesure: (mesure: Mesure) => void;
   /** Mois couverts par la période choisie : en mauve plein, les autres pâles. */
   enValeur: Set<string>;
   /** Changer cette valeur rejoue l'animation d'apparition. */
   rejouer: number;
 }) {
   const accent = useAccent();
-  const maxi = maximum(serie, mesure);
   const [forme, setForme] = useState<Forme>('barres');
   const [largeur, setLargeur] = useState(0);
+  const [hauteurZone, setHauteurZone] = useState(0);
   // La bascule de forme rejoue l'animation à chaque fois, contrairement au
   // changement de mesure. Les deux règles sont voulues.
   const [rejeuForme, setRejeuForme] = useState(0);
 
-  const pan = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) =>
-        Math.abs(g.dx) > 14 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2,
-      onPanResponderRelease: (_, g) => {
-        if (Math.abs(g.dx) > 40 || Math.abs(g.vx) > 0.25) onMesure(g.dx < 0 ? 1 : -1);
-      },
-    })
-  ).current;
+  const index = Math.max(0, mesures.indexOf(mesure));
+  const voisine = (decalage: -1 | 0 | 1) =>
+    mesures[(index + decalage + mesures.length) % mesures.length];
+
+  function mesurerZone(hauteur: number) {
+    const arrondie = Math.round(hauteur);
+    if (arrondie > 0 && arrondie !== hauteurZone) setHauteurZone(arrondie);
+  }
 
   return (
     <View
       style={styles.cadre}
-      onLayout={(e: LayoutChangeEvent) => setLargeur(e.nativeEvent.layout.width - espace.s * 2)}
-      {...pan.panHandlers}>
-      {forme === 'barres' ? (
-        <View style={styles.barres}>
-          {serie.map((entree, i) => (
-            <Barre
-              key={entree.mois}
-              entree={entree}
-              mesure={mesure}
-              maxi={maxi}
-              index={i}
-              rejouer={rejouer}
-              enValeur={enValeur.has(entree.mois)}
-            />
-          ))}
-        </View>
-      ) : (
-        <View style={styles.barres}>
-          <View style={styles.valeursLigne}>
-            {serie.map((entree) => (
-              <Text
-                key={entree.mois}
-                style={[
-                  styles.valeur,
-                  !enValeur.has(entree.mois) && { color: couleurs.doux },
-                ]}
-                numberOfLines={1}>
-                {formater(valeurDe(entree, mesure), mesure)}
-              </Text>
-            ))}
-          </View>
-          {largeur > 0 && (
-            <Ligne
-              serie={serie}
-              mesure={mesure}
-              maxi={maxi}
-              largeur={largeur}
-              enValeur={enValeur}
-              rejouer={rejouer + rejeuForme}
-            />
-          )}
-          <View style={styles.moisLigne}>
-            {serie.map((entree) => (
-              <Text key={entree.mois} style={styles.mois} numberOfLines={1}>
-                {entree.libelle}
-              </Text>
-            ))}
-          </View>
-        </View>
-      )}
-
-      <View style={styles.axe} />
+      onLayout={(e: LayoutChangeEvent) => setLargeur(e.nativeEvent.layout.width - espace.s * 2)}>
+      {/*
+        Le balayage entre les mesures passe par la même liste paginée que les
+        calendriers. C'est ce qui règle le conflit avec le défilement vertical
+        de la page : le système arbitre les deux directions lui-même, au lieu
+        qu'un geste horizontal se fasse avaler avant d'arriver au graphique.
+      */}
+      <Pageur
+        cle={mesure}
+        onPrecedent={() => onMesure(voisine(-1))}
+        onSuivant={() => onMesure(voisine(1))}
+        rendre={(decalage) => (
+          <Page
+            serie={serie}
+            mesure={voisine(decalage)}
+            forme={forme}
+            enValeur={enValeur}
+            rejouer={rejouer + rejeuForme}
+            largeur={largeur}
+            hauteurZone={hauteurZone}
+            onMesurerZone={mesurerZone}
+          />
+        )}
+      />
 
       {/* Deux icônes, sans texte : la forme n'est pas la mesure, et les deux
           questions ne se mélangent pas dans le même sélecteur. */}
@@ -347,10 +414,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: espace.s,
     marginBottom: espace.m,
   },
+  /**
+   * Une seule rangée de douze colonnes égales, réutilisée pour les valeurs, les
+   * barres et les libellés. C'est ce qui garantit que la barre de septembre, sa
+   * valeur et son nom tombent exactement sur la même verticale.
+   */
+  rangee: {
+    flexDirection: 'row',
+  },
+  zone: {
+    height: HAUTEUR_VISEE,
+  },
   barres: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    height: HAUTEUR + 40,
+    height: '100%',
   },
   colonne: {
     flex: 1,
@@ -380,25 +458,6 @@ const styles = StyleSheet.create({
     marginBottom: espace.m,
     textAlign: 'center',
   },
-  valeursLigne: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-  },
-  moisLigne: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-  },
-  zoneLigne: {
-    height: HAUTEUR,
-    marginTop: 18,
-    marginBottom: 22,
-  },
   segment: {
     position: 'absolute',
     height: EPAISSEUR,
@@ -415,7 +474,6 @@ const styles = StyleSheet.create({
   axe: {
     height: 1,
     backgroundColor: couleurs.bordure,
-    marginBottom: espace.s,
   },
   formes: {
     flexDirection: 'row',

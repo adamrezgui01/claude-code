@@ -23,10 +23,29 @@ const CHAMPS = [
   'statut_paiement',
   'html',
   'date_generation',
+  'notification_relance',
 ] as const;
 
 export function listerFactures(): Facture[] {
   return db.getAllSync<Facture>('SELECT * FROM factures ORDER BY cree_le DESC');
+}
+
+export function obtenirFacture(id: number): Facture | null {
+  return db.getFirstSync<Facture>('SELECT * FROM factures WHERE id = ?', id);
+}
+
+export function factureParNumero(numero: string): Facture | null {
+  return db.getFirstSync<Facture>('SELECT * FROM factures WHERE numero = ?', numero);
+}
+
+export function facturesEnAttente(): Facture[] {
+  return db.getAllSync<Facture>(
+    "SELECT * FROM factures WHERE statut_paiement = 'en_attente' ORDER BY date_generation"
+  );
+}
+
+export function enregistrerRelance(id: number, notificationId: string | null) {
+  db.runSync('UPDATE factures SET notification_relance = ? WHERE id = ?', notificationId, id);
 }
 
 export function obtenirFactures(ids: number[]): Facture[] {
@@ -58,7 +77,15 @@ export function definirStatutPaiement(id: number, statut: StatutPaiement) {
   db.runSync('UPDATE factures SET statut_paiement = ? WHERE id = ?', statut, id);
 }
 
+/**
+ * Supprime la facture et relibère ses quarts : leur numéro repart à vide, ils
+ * redeviennent facturables et modifiables. Le numéro de facture suffit à les
+ * retrouver — aucun calcul de période n'entre en jeu.
+ */
 export function supprimerFacture(id: number) {
+  const facture = obtenirFacture(id);
+  if (!facture) return;
+  db.runSync("UPDATE quarts SET numero_facture = '' WHERE numero_facture = ?", facture.numero);
   db.runSync('DELETE FROM factures WHERE id = ?', id);
 }
 

@@ -36,3 +36,16 @@ export function analyserNombre(texte: string): number {
   const valeur = parseFloat(texte.replace(/\s/g, '').replace(',', '.'));
   return Number.isFinite(valeur) ? valeur : 0;
 }
+
+/**
+ * Une durée, pas une heure d'horloge : « 1 h 45 », « 45 min », « Aucune ».
+ * La distinction compte — la même roulette servirait à lire 13 h 45 comme un
+ * moment de la journée, ce qui n'a rien à voir avec un bloc de temps.
+ */
+export function formaterDuree(minutes: number): string {
+  if (minutes <= 0) return 'Aucune';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m} min`;
+  return m === 0 ? `${h} h` : `${h} h ${m}`;
+}

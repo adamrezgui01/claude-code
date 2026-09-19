@@ -20,6 +20,8 @@ const REGLAGES_VIDES: Reglages = {
   rappel_secondaire_actif: 0,
   rappel_delais: '[180]',
   dernier_rappel_factures: '',
+  delai_relance_factures: 30,
+  aide_horaire_vues: 0,
 };
 
 const CHAMPS = Object.keys(REGLAGES_VIDES) as (keyof Reglages)[];

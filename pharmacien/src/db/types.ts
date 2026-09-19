@@ -35,6 +35,13 @@ export type Pharmacie = Adresse & {
   pause_minutes: number;
   /** 1 si la pharmacie paie la pause. */
   pause_payee: number;
+  /** Hébergement payé par la pharmacie, par quart. */
+  hebergement_montant: number;
+  /**
+   * 1 quand la pharmacie loge le remplaçant elle-même. Rien n'est versé et
+   * rien n'est facturé : l'information ne sert qu'à s'en souvenir.
+   */
+  hebergement_fourni: number;
   /** Remonte la pharmacie en tête du répertoire. Exclusif avec `a_eviter`. */
   favori: number;
   /** Rappel pour soi, jamais un blocage. Exclusif avec `favori`. */
@@ -68,6 +75,12 @@ export type Quart = {
   notes: string;
   /** Relie les quarts créés d'un coup par récurrence. Vide sinon. */
   serie_id: string;
+  /**
+   * Numéro de la facture qui porte ce quart, vide s'il n'est pas facturé.
+   * Un quart effectué et facturé est verrouillé : il ne se rouvre qu'en
+   * supprimant sa facture.
+   */
+  numero_facture: string;
   notification_id: string | null;
   /** Identifiants des rappels secondaires, encodés en JSON. */
   notifications_secondaires: string;
@@ -124,6 +137,10 @@ export type Reglages = {
   rappel_delais: string;
   /** Date du dernier bandeau de vérification des factures. */
   dernier_rappel_factures: string;
+  /** Jours avant de relancer une facture restée en attente de paiement. */
+  delai_relance_factures: number;
+  /** Combien de fois le bandeau d'aide de l'horaire a déjà été montré. */
+  aide_horaire_vues: number;
 };
 
 export type FormationContinue = {
@@ -168,6 +185,8 @@ export type Facture = {
   html: string;
   /** Format `AAAA-MM-JJ`. */
   date_generation: string;
+  /** Rappel de relance programmé, annulé au paiement ou à la suppression. */
+  notification_relance: string | null;
   cree_le: string;
 };
 

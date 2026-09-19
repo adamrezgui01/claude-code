@@ -43,7 +43,7 @@ export async function demanderPermission(): Promise<boolean> {
   }
 }
 
-async function planifier(
+export async function planifierRappel(
   titre: string,
   corps: string,
   date: Date,
@@ -101,7 +101,7 @@ export async function planifierRappelsQuart(
   const debut = combiner(quart.date, quart.heure_debut);
   const horaire = `${quart.heure_debut} à ${quart.heure_fin}`;
 
-  const principal = await planifier(
+  const principal = await planifierRappel(
     'Quart dans 48 h',
     `${quart.pharmacie_nom} — ${horaire}`,
     new Date(debut.getTime() - RAPPEL_PRINCIPAL_HEURES * 3600000),
@@ -110,7 +110,7 @@ export async function planifierRappelsQuart(
 
   const secondaires: string[] = [];
   for (const minutes of delaisSecondaires) {
-    const id = await planifier(
+    const id = await planifierRappel(
       `Quart dans ${delaiEnTexte(minutes)}`,
       `${quart.pharmacie_nom} — ${horaire}`,
       new Date(debut.getTime() - minutes * 60000),
@@ -121,7 +121,7 @@ export async function planifierRappelsQuart(
 
   // Un mémo, pas une demande. Le quart est déjà compté selon ses heures
   // prévues ; l'ignorer ne coûte rien.
-  const memo = await planifier(
+  const memo = await planifierRappel(
     'Vos heures ont-elles changé ?',
     `${quart.pharmacie_nom} — ${horaire}. Corrigez-les seulement si elles étaient différentes.`,
     new Date(finDuQuart(quart).getTime() + DELAI_MEMO_HEURES * 3600000),
@@ -138,7 +138,7 @@ export async function planifierRappelDocument(
   const expiration = analyserDate(doc.date_expiration);
   const rappel = new Date(expiration.getTime() - doc.jours_avant_rappel * 86400000);
   rappel.setHours(9, 0, 0, 0);
-  return planifier(
+  return planifierRappel(
     'Document à renouveler',
     `${doc.nom} expire le ${formatDateCourte(doc.date_expiration)}.`,
     rappel

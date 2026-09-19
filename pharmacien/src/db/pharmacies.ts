@@ -26,6 +26,8 @@ const CHAMPS = [
   'montant_fixe_deplacement',
   'pause_minutes',
   'pause_payee',
+  'hebergement_montant',
+  'hebergement_fourni',
   'favori',
   'a_eviter',
 ] as const;
@@ -173,6 +175,8 @@ export function pharmacieVide(nom: string, tauxParKmDefaut: number): EntreePharm
     montant_fixe_deplacement: 0,
     pause_minutes: 0,
     pause_payee: 0,
+    hebergement_montant: 0,
+    hebergement_fourni: 0,
     favori: 0,
     a_eviter: 0,
   };

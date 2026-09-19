@@ -10,6 +10,7 @@ import {
   grilleMois,
   JOURS_COURTS,
 } from '../lib/dates';
+import { Pageur } from './Pageur';
 import { couleurs, espace, police, rayon, useAccent } from './theme';
 
 /**
@@ -31,7 +32,6 @@ export function CalendrierMultiple({
 }) {
   const accent = useAccent();
   const [mois, setMois] = useState(depart);
-  const semaines = grilleMois(mois);
   const ceJour = aujourdhui();
 
   return (
@@ -54,44 +54,57 @@ export function CalendrierMultiple({
         ))}
       </View>
 
-      {semaines.map((semaine, i) => (
-        <View key={i} style={styles.ligne}>
-          {semaine.map((iso, j) => {
-            if (!iso) return <View key={j} style={styles.case} />;
-            const choisi = choisis.has(iso);
-            const occupe = occupes.has(iso);
-            const cest = iso === ceJour;
-            return (
-              <Pressable
-                key={iso}
-                onPress={() => onBasculer(iso)}
-                style={({ pressed }) => [styles.case, pressed && { opacity: 0.6 }]}>
-                <View
-                  style={[
-                    styles.pastille,
-                    choisi && { backgroundColor: accent },
-                    // Le gris dit « indisponible » sans ajouter une troisième
-                    // couleur à interpréter.
-                    !choisi && occupe && { backgroundColor: couleurs.bordure },
-                    !choisi && !occupe && cest && { borderWidth: 1.5, borderColor: accent },
-                  ]}>
-                  {/* Le chiffre reste : l'usager doit voir quelle date il coche,
-                      pas seulement qu'elle est cochée. */}
-                  <Text
-                    style={[
-                      styles.chiffre,
-                      choisi && { color: '#FFFFFF', fontFamily: police.gras },
-                      !choisi && occupe && { color: couleurs.doux },
-                      !choisi && !occupe && cest && { color: accent, fontFamily: police.demi },
-                    ]}>
-                    {analyserDate(iso).getDate()}
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
-      ))}
+      {/*
+        Ce calendrier sert à cocher des jours, et il se navigue aussi au
+        balayage. La distinction doit rester nette : toucher coche, glisser
+        navigue. Le défilement paginé s'en charge de lui-même — un doigt qui
+        part en glissade ne déclenche jamais les touches qu'il traverse.
+      */}
+      <Pageur
+        cle={mois}
+        onPrecedent={() => setMois(ajouterMois(mois, -1))}
+        onSuivant={() => setMois(ajouterMois(mois, 1))}
+        rendre={(decalage) =>
+          grilleMois(ajouterMois(mois, decalage)).map((semaine, i) => (
+            <View key={i} style={styles.ligne}>
+              {semaine.map((iso, j) => {
+                if (!iso) return <View key={j} style={styles.case} />;
+                const choisi = choisis.has(iso);
+                const occupe = occupes.has(iso);
+                const cest = iso === ceJour;
+                return (
+                  <Pressable
+                    key={iso}
+                    onPress={() => onBasculer(iso)}
+                    style={({ pressed }) => [styles.case, pressed && { opacity: 0.6 }]}>
+                    <View
+                      style={[
+                        styles.pastille,
+                        choisi && { backgroundColor: accent },
+                        // Le gris dit « indisponible » sans ajouter une
+                        // troisième couleur à interpréter.
+                        !choisi && occupe && { backgroundColor: couleurs.bordure },
+                        !choisi && !occupe && cest && { borderWidth: 1.5, borderColor: accent },
+                      ]}>
+                      {/* Le chiffre reste : l'usager doit voir quelle date il
+                          coche, pas seulement qu'elle est cochée. */}
+                      <Text
+                        style={[
+                          styles.chiffre,
+                          choisi && { color: '#FFFFFF', fontFamily: police.gras },
+                          !choisi && occupe && { color: couleurs.doux },
+                          !choisi && !occupe && cest && { color: accent, fontFamily: police.demi },
+                        ]}>
+                        {analyserDate(iso).getDate()}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ))
+        }
+      />
     </View>
   );
 }

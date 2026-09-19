@@ -60,11 +60,18 @@ export default function Racine() {
     // Le mémo ouvre directement le quart, heures déjà préremplies. L'usager
     // ajuste ce qui a changé, ou ne fait rien.
     const donnees = reponse.notification.request.content.data as
-      | { quartId?: number; memo?: boolean }
+      | { quartId?: number; memo?: boolean; factureId?: number }
       | undefined;
     if (donnees?.memo && donnees.quartId) {
       memoTraite.current = identifiant;
       router.push(`/quart/${donnees.quartId}`);
+      return;
+    }
+    // La relance ouvre la facture concernée : on vient de lire qu'elle est
+    // impayée, la seule chose à faire ensuite est de la renvoyer.
+    if (donnees?.factureId) {
+      memoTraite.current = identifiant;
+      router.push(`/facture/${donnees.factureId}`);
     }
   }, [reponse, pret, router]);
 
@@ -120,6 +127,7 @@ export default function Racine() {
           <Stack.Screen name="liens" options={{ title: 'Liens et infos utiles' }} />
           <Stack.Screen name="lien/[id]" options={{ title: 'Lien' }} />
           <Stack.Screen name="facture" options={{ title: 'Générer une facture' }} />
+          <Stack.Screen name="facture/[id]" options={{ title: 'Facture' }} />
           <Stack.Screen name="factures" options={{ title: 'Factures' }} />
           <Stack.Screen name="apparence" options={{ title: 'Apparence' }} />
         </Stack>

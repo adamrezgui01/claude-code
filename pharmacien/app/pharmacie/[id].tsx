@@ -35,18 +35,20 @@ import {
   distanceConnue,
   ouvrirItineraireVers,
 } from '../../src/lib/distance';
-import { analyserNombre, pluriel } from '../../src/lib/format';
+import { analyserNombre, formaterDuree, pluriel } from '../../src/lib/format';
 import { deverrouiller } from '../../src/lib/deverrouillage';
 import { annulerRappels } from '../../src/lib/notifications';
 import {
   Bouton,
   Carte,
+  Case,
   Champ,
   ChampTelephone,
   Doux,
   Ecran,
   Fondu,
   Interrupteur,
+  LigneDepliable,
   Onglets,
   Puce,
   Section,
@@ -54,15 +56,11 @@ import {
   SousTitre,
 } from '../../src/ui/composants';
 import { SaisieAdresse } from '../../src/ui/SaisieAdresse';
+import { SelecteurDuree } from '../../src/ui/Selecteurs';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 
-const MODES: { valeur: ModeDeplacement; texte: string }[] = [
-  { valeur: 'aucun', texte: 'Aucun' },
-  { valeur: 'km', texte: 'Au kilomètre' },
-  { valeur: 'fixe', texte: 'Montant fixe' },
-];
-
-const PAUSES = [0, 30, 45, 60];
+/** Durées de pause courantes. « Autre » ouvre la roulette. */
+const PAUSES = [30, 45, 60];
 
 export default function FichePharmacie() {
   const router = useRouter();
@@ -83,6 +81,7 @@ export default function FichePharmacie() {
   const [perDiem, setPerDiem] = useState('');
   const [pause, setPause] = useState(0);
   const [pausePayee, setPausePayee] = useState(false);
+  const [rouletteePause, setRoulettePause] = useState(false);
   const [mode, setMode] = useState<ModeDeplacement>('aucun');
   const [distance, setDistance] = useState('');
   const [tauxParKm, setTauxParKm] = useState('');
@@ -91,6 +90,11 @@ export default function FichePharmacie() {
   const [echecCalcul, setEchecCalcul] = useState('');
   /** L'aller-retour reste la valeur par défaut : c'est le cas courant. */
   const [allerRetour, setAllerRetour] = useState(true);
+
+  const [hebergement, setHebergement] = useState('');
+  const [hebergementFourni, setHebergementFourni] = useState(false);
+  const [hebergementActif, setHebergementActif] = useState(false);
+  const [perDiemActif, setPerDiemActif] = useState(false);
 
   const [logicielChoisi, setLogicielChoisi] = useState('');
   const [logicielAutre, setLogicielAutre] = useState('');
@@ -141,8 +145,12 @@ export default function FichePharmacie() {
       setNotes(p.notes);
       setTauxHoraire(p.taux_horaire ? `${p.taux_horaire}` : '');
       setPerDiem(p.per_diem ? `${p.per_diem}` : '');
+      setPerDiemActif(p.per_diem > 0);
       setPause(p.pause_minutes);
       setPausePayee(!!p.pause_payee);
+      setHebergement(p.hebergement_montant ? `${p.hebergement_montant}` : '');
+      setHebergementFourni(!!p.hebergement_fourni);
+      setHebergementActif(p.hebergement_montant > 0 || !!p.hebergement_fourni);
       setFavori(!!p.favori);
       setAEviter(!!p.a_eviter);
       setMode(p.mode_deplacement);
@@ -255,9 +263,14 @@ export default function FichePharmacie() {
       notes: notes.trim(),
       logiciel,
       taux_horaire: analyserNombre(tauxHoraire),
-      per_diem: analyserNombre(perDiem),
+      per_diem: perDiemActif ? analyserNombre(perDiem) : 0,
       pause_minutes: pause,
       pause_payee: pausePayee ? 1 : 0,
+      // Hébergement fourni : rien n'est versé, donc aucun montant n'est
+      // conservé. C'est une note, pas une ligne de facture.
+      hebergement_montant:
+        hebergementActif && !hebergementFourni ? analyserNombre(hebergement) : 0,
+      hebergement_fourni: hebergementActif && hebergementFourni ? 1 : 0,
       mode_deplacement: mode,
       distance_km: mode === 'km' ? analyserNombre(distance) : 0,
       taux_par_km: mode === 'km' ? analyserNombre(tauxParKm) : 0,
@@ -313,6 +326,7 @@ export default function FichePharmacie() {
 
   const PAGES = ['Identité', 'Contact', 'Conditions'];
   const derniere = page === PAGES.length - 1;
+  const deplacementActif = mode !== 'aucun';
 
   return (
     <Ecran>
@@ -356,13 +370,16 @@ export default function FichePharmacie() {
                   : undefined
               }
               apresRecherche={
-                <Champ
-                  label="Nom"
-                  valeur={nom}
-                  onChange={setNom}
-                  placeholder="Nom de la pharmacie"
-                  aide="Celui qui paraîtra sur vos factures."
-                />
+                <Section titre="Identité">
+                  <Champ
+                    nu
+                    label="Nom"
+                    valeur={nom}
+                    onChange={setNom}
+                    placeholder="Nom de la pharmacie"
+                    aide="Celui qui paraîtra sur vos factures."
+                  />
+                </Section>
               }
             />
 
@@ -432,162 +449,244 @@ export default function FichePharmacie() {
 
         {page === 1 && (
           <>
-            <SousTitre>Contact principal</SousTitre>
-            <Champ label="Nom de la personne contact" valeur={contactNom} onChange={setContactNom} />
-            <ChampTelephone
-              label="Téléphone"
-              valeur={contactTelephone}
-              onChange={setContactTelephone}
-            />
+            <Section titre="Contact principal">
+              <Champ
+                nu
+                label="Nom de la personne contact"
+                valeur={contactNom}
+                onChange={setContactNom}
+              />
+              <ChampTelephone
+                nu
+                label="Téléphone"
+                valeur={contactTelephone}
+                onChange={setContactTelephone}
+              />
+              <Champ
+                nu
+                label="Courriel"
+                valeur={contactCourriel}
+                onChange={setContactCourriel}
+                clavier="email-address"
+              />
+            </Section>
             {!!contactTelephone.trim() && (
               <Pressable
                 onPress={() => Linking.openURL(`tel:${contactTelephone.replace(/[^\d+]/g, '')}`)}
-                hitSlop={8}>
+                hitSlop={8}
+                style={styles.lienBloc}>
                 <Text style={[styles.lien, { color: accent }]}>Appeler</Text>
               </Pressable>
             )}
-            <Champ
-              label="Courriel"
-              valeur={contactCourriel}
-              onChange={setContactCourriel}
-              clavier="email-address"
-            />
 
-            <Separateur />
-            <SousTitre>Notes générales</SousTitre>
-            <Champ
-              label="Fonctionnement, particularités, stationnement…"
-              valeur={notes}
-              onChange={setNotes}
-              multiligne
-            />
+            <Section titre="Notes générales">
+              <Champ
+                nu
+                label="Fonctionnement, particularités, stationnement…"
+                valeur={notes}
+                onChange={setNotes}
+                multiligne
+              />
+            </Section>
           </>
         )}
 
         {page === 2 && (
           <>
-            <SousTitre>Conditions habituelles</SousTitre>
             <Doux>
               Ces valeurs préremplissent chaque nouveau quart dans cette pharmacie. Les changer ici
               ne touche pas aux quarts déjà entrés.
             </Doux>
             <View style={styles.espacement} />
-            <Champ
-              label="Taux horaire habituel ($/h)"
-              valeur={tauxHoraire}
-              onChange={setTauxHoraire}
-              clavier="decimal-pad"
-              placeholder="0,00"
-            />
-            <Champ
-              label="Repas habituel ($/jour)"
-              valeur={perDiem}
-              onChange={setPerDiem}
-              clavier="decimal-pad"
-              placeholder="0,00"
-              aide="Réclamable quart par quart, et modifiable sur chacun."
-            />
 
-            <Text style={styles.label}>Pause repas habituelle</Text>
-            <View style={styles.puces}>
-              {PAUSES.map((minutes) => (
-                <Puce
-                  key={minutes}
-                  texte={minutes === 0 ? 'Aucune' : `${minutes} min`}
-                  actif={pause === minutes}
-                  onPress={() => setPause(minutes)}
-                />
-              ))}
-            </View>
-            {pause > 0 && (
-              <Interrupteur
-                label="Pause payée"
-                detail={pausePayee ? 'Incluse dans les heures' : 'Déduite des heures facturées'}
-                valeur={pausePayee}
-                onChange={setPausePayee}
-              />
-            )}
-
-            <Text style={styles.label}>Remboursement du déplacement</Text>
-            <View style={styles.puces}>
-              {MODES.map((m) => (
-                <Puce
-                  key={m.valeur}
-                  texte={m.texte}
-                  actif={mode === m.valeur}
-                  onPress={() => setMode(m.valeur)}
-                />
-              ))}
-            </View>
-
-            {mode === 'km' && (
-              <>
-                <Champ
-                  label={`Distance ${allerRetour ? 'aller-retour' : 'aller simple'} (km)`}
-                  valeur={
-                    calculEnCours
-                      ? ''
-                      : distanceConnue(analyserNombre(distance))
-                        ? distance
-                        : ''
-                  }
-                  onChange={setDistance}
-                  clavier="decimal-pad"
-                  placeholder={calculEnCours ? 'Calcul en cours…' : 'Pas encore calculée'}
-                />
-                <Interrupteur
-                  label="Aller-retour"
-                  detail={
-                    allerRetour
-                      ? 'Le trajet est compté dans les deux sens'
-                      : 'Le trajet n’est compté qu’une fois'
-                  }
-                  valeur={allerRetour}
-                  onChange={setAllerRetour}
-                />
-                {sansDomicile ? (
-                  <Carte style={styles.avis}>
-                    <Doux>
-                      Ajoutez votre adresse dans votre profil pour calculer les distances.
-                    </Doux>
-                    <Pressable onPress={() => router.push('/profil')} hitSlop={8}>
-                      <Text style={[styles.lien, { color: accent }]}>Ouvrir mon profil</Text>
-                    </Pressable>
-                  </Carte>
-                ) : (
-                  <>
-                    {!!echecCalcul && <Doux>{echecCalcul}</Doux>}
-                    <Bouton
-                      titre={calculEnCours ? 'Calcul…' : 'Recalculer la distance'}
-                      variante="secondaire"
-                      onPress={() => void calculer(false)}
-                      desactive={calculEnCours}
-                    />
-                    <Doux>
-                      La distance se calcule d’elle-même dès que l’adresse suffit. Le calcul envoie
-                      votre adresse et celle de la pharmacie au service d’itinéraire.
-                    </Doux>
-                  </>
-                )}
-                <View style={styles.espacement} />
-                <Champ
-                  label="Taux par kilomètre ($/km)"
-                  valeur={tauxParKm}
-                  onChange={setTauxParKm}
-                  clavier="decimal-pad"
-                />
-              </>
-            )}
-
-            {mode === 'fixe' && (
+            <Section titre="Honoraires">
               <Champ
-                label="Montant par quart ($)"
-                valeur={montantFixe}
-                onChange={setMontantFixe}
+                nu
+                label="Taux horaire habituel ($/h)"
+                valeur={tauxHoraire}
+                onChange={setTauxHoraire}
                 clavier="decimal-pad"
                 placeholder="0,00"
               />
-            )}
+            </Section>
+
+            {/*
+              La pause repas a sa propre section, séparée des frais. Le
+              kilométrage, le per diem et l'hébergement ajoutent de l'argent ;
+              une pause non payée retire des heures. Les mêler, avec la même
+              allure et le même geste, embrouillerait la lecture du calcul.
+            */}
+            <Section titre="Pause repas">
+              <View style={styles.champInterne}>
+                <Text style={styles.label}>Durée habituelle</Text>
+                <View style={styles.puces}>
+                  <Puce texte="Aucune" actif={pause === 0} onPress={() => setPause(0)} />
+                  {PAUSES.map((minutes) => (
+                    <Puce
+                      key={minutes}
+                      texte={`${minutes} min`}
+                      actif={pause === minutes}
+                      onPress={() => setPause(minutes)}
+                    />
+                  ))}
+                  <Puce
+                    texte={pause > 0 && !PAUSES.includes(pause) ? formaterDuree(pause) : 'Autre'}
+                    actif={pause > 0 && !PAUSES.includes(pause)}
+                    onPress={() => setRoulettePause(true)}
+                  />
+                </View>
+                {pause > 0 && (
+                  <Interrupteur
+                    label="Pause payée"
+                    detail={
+                      pausePayee
+                        ? 'Incluse dans les heures facturées'
+                        : `Déduite des heures facturées (${formaterDuree(pause)})`
+                    }
+                    valeur={pausePayee}
+                    onChange={setPausePayee}
+                  />
+                )}
+              </View>
+            </Section>
+
+            {/* Trois lignes serrées : seules celles qui servent occupent de la
+                place. Aucune n'est ouverte par défaut. */}
+            <Section titre="Frais typiques">
+              <LigneDepliable
+                premiere
+                label="Kilométrage"
+                detail={
+                  deplacementActif
+                    ? mode === 'km'
+                      ? 'Taux au kilomètre × distance'
+                      : 'Montant fixe par quart'
+                    : 'Aucun remboursement de déplacement'
+                }
+                actif={deplacementActif}
+                onChange={(v) => setMode(v ? 'km' : 'aucun')}>
+                <View style={styles.puces}>
+                  <Puce texte="Au kilomètre" actif={mode === 'km'} onPress={() => setMode('km')} />
+                  <Puce
+                    texte="Montant fixe"
+                    actif={mode === 'fixe'}
+                    onPress={() => setMode('fixe')}
+                  />
+                </View>
+
+                {mode === 'km' && (
+                  <>
+                    <Champ
+                      nu
+                      label={`Distance ${allerRetour ? 'aller-retour' : 'aller simple'} (km)`}
+                      valeur={
+                        calculEnCours
+                          ? ''
+                          : distanceConnue(analyserNombre(distance))
+                            ? distance
+                            : ''
+                      }
+                      onChange={setDistance}
+                      clavier="decimal-pad"
+                      placeholder={calculEnCours ? 'Calcul en cours…' : 'Pas encore calculée'}
+                    />
+                    <Interrupteur
+                      label="Aller-retour"
+                      detail={
+                        allerRetour
+                          ? 'Le trajet est compté dans les deux sens'
+                          : 'Le trajet n’est compté qu’une fois'
+                      }
+                      valeur={allerRetour}
+                      onChange={setAllerRetour}
+                    />
+                    <Champ
+                      nu
+                      label="Taux par kilomètre ($/km)"
+                      valeur={tauxParKm}
+                      onChange={setTauxParKm}
+                      clavier="decimal-pad"
+                    />
+                    {sansDomicile ? (
+                      <Doux>
+                        Ajoutez votre adresse dans votre profil pour calculer les distances.
+                      </Doux>
+                    ) : (
+                      <>
+                        {!!echecCalcul && <Doux>{echecCalcul}</Doux>}
+                        <View style={styles.espacement} />
+                        <Bouton
+                          titre={calculEnCours ? 'Calcul…' : 'Recalculer la distance'}
+                          variante="secondaire"
+                          onPress={() => void calculer(false)}
+                          desactive={calculEnCours}
+                        />
+                        <Doux>
+                          La distance se calcule d’elle-même dès que l’adresse suffit. Le calcul
+                          envoie votre adresse et celle de la pharmacie au service d’itinéraire.
+                        </Doux>
+                      </>
+                    )}
+                  </>
+                )}
+
+                {mode === 'fixe' && (
+                  <Champ
+                    nu
+                    label="Montant par quart ($)"
+                    valeur={montantFixe}
+                    onChange={setMontantFixe}
+                    clavier="decimal-pad"
+                    placeholder="0,00"
+                  />
+                )}
+              </LigneDepliable>
+
+              <LigneDepliable
+                label="Per diem"
+                detail="Montant que la pharmacie verse pour le repas"
+                actif={perDiemActif}
+                onChange={setPerDiemActif}>
+                <Champ
+                  nu
+                  label="Montant par jour ($)"
+                  valeur={perDiem}
+                  onChange={setPerDiem}
+                  clavier="decimal-pad"
+                  placeholder="0,00"
+                  aide="Réclamable quart par quart, et modifiable sur chacun."
+                />
+              </LigneDepliable>
+
+              <LigneDepliable
+                label="Hébergement"
+                detail="Un montant, ou un logement mis à disposition"
+                actif={hebergementActif}
+                onChange={setHebergementActif}>
+                <Case
+                  label="Hébergement fourni par la pharmacie"
+                  detail="Une note pour vous : rien n’est payé, donc rien n’est facturé ni compté."
+                  valeur={hebergementFourni}
+                  onChange={setHebergementFourni}
+                />
+                {!hebergementFourni && (
+                  <Champ
+                    nu
+                    label="Montant ($)"
+                    valeur={hebergement}
+                    onChange={setHebergement}
+                    clavier="decimal-pad"
+                    placeholder="0,00"
+                  />
+                )}
+              </LigneDepliable>
+            </Section>
+
+            <Doux>
+              Un frais ponctuel — stationnement, bonus d’un jour — se charge sur le quart lui-même,
+              avec sa description, son montant et sa photo de reçu.
+            </Doux>
+            <View style={styles.espacement} />
 
             <Separateur />
 
@@ -739,6 +838,15 @@ export default function FichePharmacie() {
           )}
         </View>
       </Fondu>
+
+      <SelecteurDuree
+        titre="Durée de la pause"
+        minutes={pause || 30}
+        ouvert={rouletteePause}
+        onChange={setPause}
+        onFermer={() => setRoulettePause(false)}
+        maxHeures={3}
+      />
     </Ecran>
   );
 }
@@ -781,6 +889,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  champInterne: {
+    paddingVertical: espace.m,
+  },
   label: {
     fontSize: 13,
     fontFamily: police.normal,
@@ -790,12 +901,15 @@ const styles = StyleSheet.create({
   puces: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: espace.m,
+    marginBottom: espace.s,
   },
   lien: {
     fontSize: 14,
     fontFamily: police.demi,
-    marginBottom: espace.s,
+  },
+  lienBloc: {
+    marginTop: -espace.xl,
+    marginBottom: espace.xl,
   },
   retirer: {
     fontSize: 13,

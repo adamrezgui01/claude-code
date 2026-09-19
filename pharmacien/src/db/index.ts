@@ -33,6 +33,10 @@ const SCHEMA = `
     montant_fixe_deplacement REAL NOT NULL DEFAULT 0,
     pause_minutes INTEGER NOT NULL DEFAULT 0,
     pause_payee INTEGER NOT NULL DEFAULT 0,
+    hebergement_montant REAL NOT NULL DEFAULT 0,
+    /* Logement mis à disposition en région éloignée : une note pour soi,
+       jamais un montant. Rien n'est payé, donc rien n'est calculé. */
+    hebergement_fourni INTEGER NOT NULL DEFAULT 0,
     favori INTEGER NOT NULL DEFAULT 0,
     a_eviter INTEGER NOT NULL DEFAULT 0
   );
@@ -54,6 +58,10 @@ const SCHEMA = `
     pause_payee INTEGER NOT NULL DEFAULT 0,
     notes TEXT NOT NULL DEFAULT '',
     serie_id TEXT NOT NULL DEFAULT '',
+    /* Numéro de la facture qui porte ce quart. Vide tant qu'il n'est pas
+       facturé. C'est ce lien — et jamais la période — qui dit si un quart a
+       déjà été facturé, et c'est lui qui le verrouille. */
+    numero_facture TEXT NOT NULL DEFAULT '',
     notification_id TEXT,
     notifications_secondaires TEXT NOT NULL DEFAULT '[]',
     notification_memo TEXT
@@ -88,7 +96,11 @@ const SCHEMA = `
     accent TEXT NOT NULL DEFAULT '',
     rappel_secondaire_actif INTEGER NOT NULL DEFAULT 0,
     rappel_delais TEXT NOT NULL DEFAULT '[180]',
-    dernier_rappel_factures TEXT NOT NULL DEFAULT ''
+    dernier_rappel_factures TEXT NOT NULL DEFAULT '',
+    /* Jours avant de relancer une facture restée en attente. */
+    delai_relance_factures INTEGER NOT NULL DEFAULT 30,
+    /* Ouvertures de l'onglet Horaire déjà accompagnées du bandeau d'aide. */
+    aide_horaire_vues INTEGER NOT NULL DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS formation_continue (
@@ -127,6 +139,8 @@ const SCHEMA = `
     statut_paiement TEXT NOT NULL DEFAULT 'en_attente',
     html TEXT NOT NULL DEFAULT '',
     date_generation TEXT NOT NULL DEFAULT '',
+    /* Rappel de relance programmé pour cette facture. */
+    notification_relance TEXT,
     cree_le TEXT NOT NULL
   );
 
@@ -170,6 +184,12 @@ export function initialiserBase(): number[] {
   // Ajout de colonne toléré, pour ne pas effacer les données de l'usager quand
   // une nouveauté n'a besoin de rien de plus qu'une colonne.
   ajouterColonne('reglages', 'liens_amorces', 'INTEGER NOT NULL DEFAULT 0');
+  ajouterColonne('reglages', 'delai_relance_factures', 'INTEGER NOT NULL DEFAULT 30');
+  ajouterColonne('reglages', 'aide_horaire_vues', 'INTEGER NOT NULL DEFAULT 0');
+  ajouterColonne('quarts', 'numero_facture', "TEXT NOT NULL DEFAULT ''");
+  ajouterColonne('pharmacies', 'hebergement_montant', 'REAL NOT NULL DEFAULT 0');
+  ajouterColonne('pharmacies', 'hebergement_fourni', 'INTEGER NOT NULL DEFAULT 0');
+  ajouterColonne('factures', 'notification_relance', 'TEXT');
   db.execSync(`PRAGMA user_version = ${VERSION}`);
   return pharmaciesEffacees;
 }

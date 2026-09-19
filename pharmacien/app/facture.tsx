@@ -2,18 +2,30 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
-import { enregistrerFacture, prochainNumeroFacture } from '../src/db/factures';
+import {
+  enregistrerFacture,
+  factureParNumero,
+  prochainNumeroFacture,
+} from '../src/db/factures';
 import { listerFraisPeriode } from '../src/db/frais';
 import { listerPharmacies, listerPharmaciesRecentes } from '../src/db/pharmacies';
 import { obtenirReglages } from '../src/db/profil';
-import { listerQuartsPeriode } from '../src/db/quarts';
+import { listerQuartsPeriode, rattacherAFacture } from '../src/db/quarts';
 import type { FraisExtra, Pharmacie, QuartDetaille } from '../src/db/types';
 import { adresseComplete } from '../src/lib/adresses';
 import { aujourdhui, debutMois, formatDateCourte } from '../src/lib/dates';
-import { calculerTotaux, quartsFacturables, type OptionsFacture } from '../src/lib/facture';
+import {
+  calculerTotaux,
+  facturesConcernees,
+  quartsDejaFactures,
+  quartsFacturables,
+  quartsNonFactures,
+  type OptionsFacture,
+} from '../src/lib/facture';
 import { bornes, type Preset } from '../src/lib/periodes';
 import { genererPdf } from '../src/lib/facturePdf';
 import { analyserNombre, argent, heures, pluriel } from '../src/lib/format';
+import { programmerRelance, supprimerFactureEtRappel } from '../src/lib/relanceFactures';
 import {
   Bouton,
   Carte,
@@ -22,6 +34,7 @@ import {
   Ecran,
   Fondu,
   Interrupteur,
+  Onglets,
   Puce,
   Rangee,
   Separateur,
@@ -31,6 +44,8 @@ import {
 import { SelecteurDate } from '../src/ui/Selecteurs';
 import { SelecteurPharmacie } from '../src/ui/SelecteurPharmacie';
 import { couleurs, espace, police } from '../src/ui/theme';
+
+type Groupe = { pharmacie: Pharmacie; quarts: QuartDetaille[]; frais: FraisExtra[] };
 
 export default function GenererFacture() {
   const router = useRouter();
@@ -64,31 +79,42 @@ export default function GenererFacture() {
   const quarts = useMemo(() => listerQuartsPeriode(debut, fin, filtre), [debut, fin, filtre]);
   const frais = useMemo(() => listerFraisPeriode(debut, fin, filtre), [debut, fin, filtre]);
 
-  /** Une facture par pharmacie : quarts et frais sont regroupés par pharmacie. */
-  const groupes = useMemo(() => {
+  const dejaFactures = useMemo(
+    () => quartsDejaFactures(quartsFacturables(quarts)),
+    [quarts]
+  );
+  const numerosConcernes = useMemo(() => facturesConcernees(quarts), [quarts]);
+
+  /**
+   * Une facture par pharmacie : quarts et frais sont regroupés par pharmacie.
+   * `sansDejaFactures` construit la variante qui laisse de côté les quarts
+   * déjà partis chez un client.
+   */
+  const grouper = (retenus: QuartDetaille[]): Groupe[] => {
     const carte = new Map<number, { quarts: QuartDetaille[]; frais: FraisExtra[] }>();
-    for (const q of quartsFacturables(quarts)) {
+    for (const q of retenus) {
       const entree = carte.get(q.pharmacie_id) ?? { quarts: [], frais: [] };
       entree.quarts.push(q);
       carte.set(q.pharmacie_id, entree);
     }
+    const idsRetenus = new Set(retenus.map((q) => q.id));
     for (const f of frais) {
+      if (!idsRetenus.has(f.quart_id)) continue;
       const entree = carte.get(f.pharmacie_id);
       if (entree) entree.frais.push(f);
     }
     return [...carte.entries()]
       .map(([id, entree]) => ({ pharmacie: pharmacies.find((p) => p.id === id), ...entree }))
-      .filter(
-        (g): g is { pharmacie: Pharmacie; quarts: QuartDetaille[]; frais: FraisExtra[] } =>
-          !!g.pharmacie
-      );
-  }, [quarts, frais, pharmacies]);
+      .filter((g): g is Groupe => !!g.pharmacie);
+  };
 
-  function options(groupe: {
-    pharmacie: Pharmacie;
-    quarts: QuartDetaille[];
-    frais: FraisExtra[];
-  }): OptionsFacture {
+  const groupes = useMemo(
+    () => grouper(quartsFacturables(quarts)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [quarts, frais, pharmacies]
+  );
+
+  function options(groupe: Groupe): OptionsFacture {
     return {
       numero: '—',
       reglages,
@@ -100,10 +126,18 @@ export default function GenererFacture() {
       inclureDeplacement,
       inclurePerDiem,
       inclureFrais,
-      hebergement: inclureHebergement
-        ? analyserNombre(hebergements[groupe.pharmacie.id] ?? '')
-        : 0,
+      hebergement: inclureHebergement ? montantHebergement(groupe.pharmacie) : 0,
     };
+  }
+
+  /**
+   * Hébergement fourni par la pharmacie : rien n'est versé, rien n'est
+   * facturé, donc rien n'entre dans le total. C'est une note, pas un montant.
+   */
+  function montantHebergement(pharmacie: Pharmacie): number {
+    if (pharmacie.hebergement_fourni) return 0;
+    const saisi = hebergements[pharmacie.id];
+    return saisi === undefined ? pharmacie.hebergement_montant : analyserNombre(saisi);
   }
 
   function basculerPharmacie(id: number) {
@@ -112,38 +146,46 @@ export default function GenererFacture() {
     );
   }
 
-  async function generer() {
-    if (groupes.length === 0) return;
+  async function ecrire(aGenerer: Groupe[]) {
     setEnCours(true);
     try {
       const ids: number[] = [];
-      for (const groupe of groupes) {
+      for (const groupe of aGenerer) {
         const o = { ...options(groupe), numero: prochainNumeroFacture() };
         const totaux = calculerTotaux(o);
         const { html } = await genererPdf(o);
-        ids.push(
-          enregistrerFacture({
-            numero: o.numero,
-            pharmacie_id: groupe.pharmacie.id,
-            pharmacie_nom: groupe.pharmacie.nom,
-            pharmacie_adresse: adresseComplete(groupe.pharmacie).replace('\n', ', '),
-            periode_debut: debut,
-            periode_fin: fin,
-            total_heures: totaux.totalHeures,
-            deplacement_mode: totaux.deplacementMode,
-            deplacement_km: totaux.deplacementKm,
-            deplacement_taux: totaux.deplacementTaux,
-            deplacement_montant: totaux.deplacementMontant,
-            per_diem_jours: totaux.perDiemJours,
-            per_diem_montant: totaux.perDiemMontant,
-            hebergement_montant: totaux.hebergement,
-            frais_extra_montant: totaux.fraisExtra,
-            total: totaux.total,
-            statut_paiement: 'en_attente',
-            html,
-            date_generation: aujourdhui(),
-          })
+        const id = enregistrerFacture({
+          numero: o.numero,
+          pharmacie_id: groupe.pharmacie.id,
+          pharmacie_nom: groupe.pharmacie.nom,
+          pharmacie_adresse: adresseComplete(groupe.pharmacie).replace('\n', ', '),
+          periode_debut: debut,
+          periode_fin: fin,
+          total_heures: totaux.totalHeures,
+          deplacement_mode: totaux.deplacementMode,
+          deplacement_km: totaux.deplacementKm,
+          deplacement_taux: totaux.deplacementTaux,
+          deplacement_montant: totaux.deplacementMontant,
+          per_diem_jours: totaux.perDiemJours,
+          per_diem_montant: totaux.perDiemMontant,
+          hebergement_montant: totaux.hebergement,
+          frais_extra_montant: totaux.fraisExtra,
+          total: totaux.total,
+          statut_paiement: 'en_attente',
+          html,
+          date_generation: aujourdhui(),
+          notification_relance: null,
+        });
+        // Chaque quart retient le numéro de sa facture. C'est ce lien qui le
+        // verrouille, et c'est lui qui le relibérera si la facture est
+        // supprimée.
+        rattacherAFacture(
+          groupe.quarts.map((q) => q.id),
+          o.numero
         );
+        const enregistree = factureParNumero(o.numero);
+        if (enregistree) await programmerRelance(enregistree, reglages.delai_relance_factures);
+        ids.push(id);
       }
       router.replace(`/factures?ids=${ids.join(',')}`);
     } catch (erreur) {
@@ -151,6 +193,52 @@ export default function GenererFacture() {
     } finally {
       setEnCours(false);
     }
+  }
+
+  /**
+   * La protection anti-doublon se joue quart par quart, jamais sur la période.
+   * Un propriétaire qui possède deux pharmacies facture légitimement la même
+   * quinzaine deux fois ; une vérification par dates le bloquerait à tort.
+   */
+  function generer() {
+    if (groupes.length === 0) return;
+    if (dejaFactures.length === 0) {
+      void ecrire(groupes);
+      return;
+    }
+
+    const restants = grouper(quartsNonFactures(quartsFacturables(quarts)));
+    Alert.alert(
+      'Des quarts sont déjà facturés',
+      `${pluriel(dejaFactures.length, 'quart')} de cette sélection ${
+        dejaFactures.length > 1 ? 'figurent' : 'figure'
+      } déjà sur ${numerosConcernes.length > 1 ? 'les factures' : 'la facture'} ${numerosConcernes.join(', ')}.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        ...(restants.length > 0
+          ? [
+              {
+                text: 'Exclure ces quarts',
+                onPress: () => void ecrire(restants),
+              },
+            ]
+          : []),
+        {
+          text: 'Remplacer',
+          style: 'destructive' as const,
+          onPress: () =>
+            void (async () => {
+              // Supprimer relibère les quarts : ils redeviennent facturables,
+              // et la nouvelle facture les reprend tous.
+              for (const numero of numerosConcernes) {
+                const ancienne = factureParNumero(numero);
+                if (ancienne) await supprimerFactureEtRappel(ancienne);
+              }
+              await ecrire(groupes);
+            })(),
+        },
+      ]
+    );
   }
 
   const enteteIncomplete = !reglages.nom.trim() || !reglages.permis_opq.trim();
@@ -161,25 +249,17 @@ export default function GenererFacture() {
 
   return (
     <Ecran>
-      <SousTitre>Période</SousTitre>
-      <View style={styles.puces}>
-        <Puce texte="Ce mois-ci" actif={preset === 'mois'} onPress={() => setPreset('mois')} />
-        <Puce
-          texte="Mois dernier"
-          actif={preset === 'moisDernier'}
-          onPress={() => setPreset('moisDernier')}
-        />
-        <Puce
-          texte="3 derniers mois"
-          actif={preset === 'trimestre'}
-          onPress={() => setPreset('trimestre')}
-        />
-        <Puce
-          texte="Personnalisée"
-          actif={preset === 'personnalisee'}
-          onPress={() => setPreset('personnalisee')}
-        />
-      </View>
+      <Onglets
+        libelle="Période"
+        options={[
+          { valeur: 'mois' as const, texte: 'Ce mois' },
+          { valeur: 'moisDernier' as const, texte: 'Mois dernier' },
+          { valeur: 'trimestre' as const, texte: '3 mois' },
+          { valeur: 'personnalisee' as const, texte: 'Autre' },
+        ]}
+        valeur={preset}
+        onChange={setPreset}
+      />
       {preset === 'personnalisee' ? (
         <>
           <SelecteurDate label="Du" valeur={debutPerso} onChange={setDebutPerso} />
@@ -210,6 +290,16 @@ export default function GenererFacture() {
         <Vide texte="Aucun quart dans cette période : rien à facturer." />
       ) : (
         <Fondu>
+          {dejaFactures.length > 0 && (
+            <Carte style={styles.avis}>
+              <Doux>
+                {pluriel(dejaFactures.length, 'quart')} de cette période {dejaFactures.length > 1 ? 'figurent' : 'figure'} déjà sur{' '}
+                {numerosConcernes.join(', ')}. À la génération, vous pourrez les exclure ou
+                remplacer la facture précédente.
+              </Doux>
+            </Carte>
+          )}
+
           <SousTitre>À inclure</SousTitre>
           <Carte>
             <Interrupteur
@@ -237,23 +327,29 @@ export default function GenererFacture() {
             <Separateur />
             <Interrupteur
               label="Hébergement"
-              detail="Montant saisi pour l’occasion"
+              detail="Prérempli depuis la fiche de chaque pharmacie"
               valeur={inclureHebergement}
               onChange={setInclureHebergement}
             />
             {inclureHebergement &&
-              groupes.map((g) => (
-                <Champ
-                  key={g.pharmacie.id}
-                  label={g.pharmacie.nom}
-                  valeur={hebergements[g.pharmacie.id] ?? ''}
-                  onChange={(v) =>
-                    setHebergements((actuels) => ({ ...actuels, [g.pharmacie.id]: v }))
-                  }
-                  clavier="decimal-pad"
-                  placeholder="0,00"
-                />
-              ))}
+              groupes.map((g) =>
+                g.pharmacie.hebergement_fourni ? (
+                  <Doux key={g.pharmacie.id}>
+                    {g.pharmacie.nom} : hébergement fourni par la pharmacie, rien à facturer.
+                  </Doux>
+                ) : (
+                  <Champ
+                    key={g.pharmacie.id}
+                    label={g.pharmacie.nom}
+                    valeur={hebergements[g.pharmacie.id] ?? `${g.pharmacie.hebergement_montant || ''}`}
+                    onChange={(v) =>
+                      setHebergements((actuels) => ({ ...actuels, [g.pharmacie.id]: v }))
+                    }
+                    clavier="decimal-pad"
+                    placeholder="0,00"
+                  />
+                )
+              )}
           </Carte>
 
           <SousTitre>
@@ -301,13 +397,13 @@ export default function GenererFacture() {
 }
 
 const styles = StyleSheet.create({
-  puces: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
   section: {
     marginTop: espace.l,
     marginBottom: espace.m,
+  },
+  avis: {
+    backgroundColor: couleurs.alertePale,
+    borderColor: couleurs.alerte,
   },
   avertissement: {
     color: couleurs.alerte,

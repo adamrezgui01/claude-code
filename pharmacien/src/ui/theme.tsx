@@ -34,6 +34,8 @@ export const couleurs = {
   succes: '#2F7D52',
   succesPale: '#E4F1E9',
   attente: '#8A8592',
+  /** Fond d'un quart verrouillé : facturé, donc figé. */
+  grisPale: '#EDEBEF',
   /** Échéance d'un quart sur la carte. */
   urgent: '#C94A3B',
   proche: '#E08A3C',
@@ -90,4 +92,27 @@ export function accentPale(accent: string): string {
 
 export function accentMoyen(accent: string): string {
   return `${accent}55`;
+}
+
+/**
+ * Ombre portée. Cadrée serré, sinon l'ensemble vieillit mal : douce et très
+ * diffuse, jamais dure, et teintée du mauve d'accent plutôt que noire — une
+ * ombre noire sur un fond chaud grise tout ce qu'elle touche.
+ *
+ * Réservée aux boutons d'action principaux et aux cartes. Jamais sur les
+ * champs de saisie, jamais sur les lignes de liste, jamais sur les sections
+ * encadrées : elles tirent leur relief de leur bordure, pas d'une ombre.
+ *
+ * Sur Android, `shadowColor` teinte l'ombre d'élévation à partir d'Android 9 ;
+ * en deçà elle reste grise, ce qui est acceptable.
+ */
+export function ombre(accent: string, poids: 'carte' | 'bouton') {
+  const bouton = poids === 'bouton';
+  return {
+    shadowColor: accent,
+    shadowOpacity: bouton ? 0.26 : 0.1,
+    shadowRadius: bouton ? 16 : 12,
+    shadowOffset: { width: 0, height: bouton ? 6 : 3 },
+    elevation: bouton ? 5 : 2,
+  };
 }

@@ -1,64 +1,37 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import {
-  definirStatutPaiement,
-  listerFactures,
-  obtenirFactures,
-  supprimerFacture,
-} from '../src/db/factures';
+import { listerFactures, obtenirFactures } from '../src/db/factures';
+import { obtenirReglages } from '../src/db/profil';
 import type { Facture } from '../src/db/types';
 import { formatDateCourte } from '../src/lib/dates';
-import { partagerPdf, pdfDepuisHtml } from '../src/lib/facturePdf';
 import { argent, heures, pluriel } from '../src/lib/format';
+import { ancienneteFacture, relanceDue } from '../src/lib/relanceFactures';
 import { Bouton, Doux, Etiquette, Fondu, Vide } from '../src/ui/composants';
-import { Recompense } from '../src/ui/Recompense';
-import { couleurs, espace, police, rayon } from '../src/ui/theme';
+import { couleurs, espace, ombre, police, rayon, useAccent } from '../src/ui/theme';
 
+/**
+ * Les factures déjà générées. Sans cette liste, l'usager ne sait jamais ce
+ * qu'il a facturé : une facture partait en PDF et l'application n'en gardait
+ * aucune trace.
+ */
 export default function Factures() {
   const router = useRouter();
+  const accent = useAccent();
   const params = useLocalSearchParams<{ ids?: string }>();
   const nouvelles = params.ids ? params.ids.split(',').map(Number) : null;
 
   const [factures, setFactures] = useState<Facture[]>([]);
-  const [recompense, setRecompense] = useState(false);
+  const [delai, setDelai] = useState(30);
 
   const recharger = useCallback(() => {
     setFactures(nouvelles ? obtenirFactures(nouvelles) : listerFactures());
+    setDelai(obtenirReglages().delai_relance_factures);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.ids]);
   useFocusEffect(recharger);
-
-  async function partager(facture: Facture) {
-    try {
-      const uri = await pdfDepuisHtml(facture.numero, facture.html);
-      await partagerPdf(uri);
-    } catch (erreur) {
-      Alert.alert('Partage impossible', `${erreur}`);
-    }
-  }
-
-  function basculerPaiement(facture: Facture) {
-    const paye = facture.statut_paiement === 'payee';
-    definirStatutPaiement(facture.id, paye ? 'en_attente' : 'payee');
-    recharger();
-    if (!paye) setRecompense(true);
-  }
-
-  function retirer(facture: Facture) {
-    Alert.alert('Supprimer cette facture ?', `Facture ${facture.numero}`, [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Supprimer',
-        style: 'destructive',
-        onPress: () => {
-          supprimerFacture(facture.id);
-          recharger();
-        },
-      },
-    ]);
-  }
 
   const enAttente = factures.filter((f) => f.statut_paiement === 'en_attente');
   const total = enAttente.reduce((t, f) => t + f.total, 0);
@@ -86,38 +59,40 @@ export default function Factures() {
         ) : (
           factures.map((f) => {
             const paye = f.statut_paiement === 'payee';
+            const enRetard = relanceDue(f, delai);
             return (
               <Fondu key={f.id}>
-                <View style={[styles.carte, paye && styles.cartePayee]}>
-                  <Pressable onLongPress={() => retirer(f)}>
-                    <View style={styles.entete}>
-                      <Text style={styles.pharmacie}>{f.pharmacie_nom}</Text>
-                      <Etiquette
-                        texte={paye ? 'Payée' : 'En attente'}
-                        ton={paye ? 'succes' : 'attente'}
-                      />
-                    </View>
-                    <Text style={styles.detail}>
-                      Facture {f.numero} · {formatDateCourte(f.periode_debut)} –{' '}
-                      {formatDateCourte(f.periode_fin)}
-                    </Text>
+                <Pressable
+                  onPress={() => router.push(`/facture/${f.id}`)}
+                  style={({ pressed }) => [
+                    styles.carte,
+                    ombre(accent, 'carte'),
+                    paye && styles.cartePayee,
+                    enRetard && styles.carteRetard,
+                    pressed && { opacity: 0.7 },
+                  ]}>
+                  <View style={styles.entete}>
+                    <Text style={styles.pharmacie}>{f.pharmacie_nom}</Text>
+                    <Etiquette
+                      texte={paye ? 'Payée' : enRetard ? 'Impayée' : 'En attente'}
+                      ton={paye ? 'succes' : enRetard ? 'alerte' : 'attente'}
+                    />
+                  </View>
+                  <Text style={styles.detail}>
+                    Facture {f.numero} · {formatDateCourte(f.periode_debut)} –{' '}
+                    {formatDateCourte(f.periode_fin)}
+                  </Text>
+                  <Text style={styles.detail}>
+                    Générée le {formatDateCourte(f.date_generation)}
+                    {!paye ? ` · ${pluriel(ancienneteFacture(f), 'jour')}` : ''}
+                  </Text>
+                  <View style={styles.bas}>
                     <Text style={styles.montant}>
                       {argent(f.total)} · {heures(f.total_heures)}
                     </Text>
-                  </Pressable>
-
-                  <View style={styles.actions}>
-                    <Bouton
-                      titre={paye ? 'Marquer en attente' : 'Marquer payée'}
-                      variante={paye ? 'secondaire' : 'succes'}
-                      icone={
-                        paye ? undefined : <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                      }
-                      onPress={() => basculerPaiement(f)}
-                    />
-                    <Bouton titre="Partager" variante="secondaire" onPress={() => partager(f)} />
+                    <Ionicons name="chevron-forward" size={18} color={couleurs.doux} />
                   </View>
-                </View>
+                </Pressable>
               </Fondu>
             );
           })
@@ -126,15 +101,14 @@ export default function Factures() {
         {nouvelles ? (
           <Bouton titre="Terminé" onPress={() => router.back()} />
         ) : (
-          factures.length > 0 && <Doux>Appui long sur une facture pour la supprimer.</Doux>
+          factures.length > 0 && (
+            <Doux>
+              Touchez une facture pour la revoir, la repartager ou la supprimer. Supprimer une
+              facture relibère ses quarts.
+            </Doux>
+          )
         )}
       </ScrollView>
-
-      <Recompense
-        visible={recompense}
-        texte="Facture payée"
-        onFini={() => setRecompense(false)}
-      />
     </View>
   );
 }
@@ -166,6 +140,9 @@ const styles = StyleSheet.create({
     borderColor: couleurs.succes,
     backgroundColor: couleurs.succesPale,
   },
+  carteRetard: {
+    borderColor: couleurs.alerte,
+  },
   entete: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -184,14 +161,15 @@ const styles = StyleSheet.create({
     fontFamily: police.normal,
     color: couleurs.doux,
   },
+  bas: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: espace.xs,
+  },
   montant: {
     fontSize: 15,
     fontFamily: police.demi,
     color: couleurs.texte,
-    marginTop: espace.xs,
-  },
-  actions: {
-    marginTop: espace.m,
-    gap: espace.s,
   },
 });

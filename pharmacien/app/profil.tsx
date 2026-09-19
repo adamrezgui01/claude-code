@@ -1,10 +1,8 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
-  delaisSecondaires,
   enregistrerFormation,
   enregistrerReglages,
   listerDocuments,
@@ -28,8 +26,6 @@ import {
   Doux,
   Ecran,
   Fondu,
-  Interrupteur,
-  Puce,
   Section,
   Separateur,
   SousTitre,
@@ -37,10 +33,7 @@ import {
 } from '../src/ui/composants';
 import { SelecteurDate } from '../src/ui/Selecteurs';
 import { SaisieAdresse } from '../src/ui/SaisieAdresse';
-import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
-
-/** Délais proposés pour le rappel secondaire, en minutes. */
-const DELAIS = [30, 60, 120, 180];
+import { couleurs, espace, police, useAccent } from '../src/ui/theme';
 
 export default function Profil() {
   const router = useRouter();
@@ -70,15 +63,6 @@ export default function Profil() {
   function modifier<C extends keyof Reglages>(champ: C, valeur: Reglages[C]) {
     setReglages((actuels) => (actuels ? { ...actuels, [champ]: valeur } : actuels));
     setEnregistre(false);
-  }
-
-  function basculerDelai(minutes: number) {
-    if (!reglages) return;
-    const actuels = delaisSecondaires({ ...reglages, rappel_secondaire_actif: 1 });
-    const suivants = actuels.includes(minutes)
-      ? actuels.filter((d) => d !== minutes)
-      : [...actuels, minutes].sort((a, b) => a - b);
-    modifier('rappel_delais', JSON.stringify(suivants));
   }
 
   function sauvegarderFormation() {
@@ -115,8 +99,6 @@ export default function Profil() {
   }
 
   if (!reglages) return null;
-
-  const delais = delaisSecondaires({ ...reglages, rappel_secondaire_actif: 1 });
 
   return (
     <Ecran>
@@ -240,6 +222,14 @@ export default function Profil() {
         />
       </Section>
 
+      {/* Ces champs ne partent nulle part tout seuls : sans ce bouton, le nom,
+          le permis et l'adresse saisis ici étaient perdus en quittant l'écran,
+          et l'en-tête des factures restait vide. */}
+      <Bouton
+        titre={enregistre ? 'Enregistré' : 'Enregistrer'}
+        variante={enregistre ? 'secondaire' : 'principal'}
+        onPress={() => void sauvegarderReglages()}
+      />
     </Ecran>
   );
 }
@@ -293,24 +283,5 @@ const styles = StyleSheet.create({
   expire: {
     color: couleurs.alerte,
     fontFamily: police.demi,
-  },
-  apparence: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: espace.m,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.l,
-    marginTop: espace.xl,
-  },
-  apparenceTexte: {
-    flex: 1,
-  },
-  apparenceTitre: {
-    fontSize: 15,
-    fontFamily: police.demi,
-    color: couleurs.texte,
   },
 });

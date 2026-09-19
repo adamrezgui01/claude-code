@@ -47,6 +47,31 @@ export function quartsFacturables(quarts: QuartDetaille[]): QuartDetaille[] {
   return quarts.filter(quartCompte);
 }
 
+/**
+ * Quarts de la sélection qui portent déjà un numéro de facture.
+ *
+ * La protection anti-doublon se joue ici, quart par quart, et jamais sur
+ * l'intervalle de dates. Une vérification par période se tromperait dans un cas
+ * réel et fréquent : un propriétaire qui possède deux pharmacies. Facturer la
+ * pharmacie A pour la première quinzaine de septembre, puis la pharmacie B pour
+ * la même quinzaine, ce sont deux factures légitimes portant des quarts
+ * entièrement différents. Le lien par quart les laisse passer et n'arrête que
+ * le vrai doublon : le même quart facturé deux fois.
+ */
+export function quartsDejaFactures(quarts: QuartDetaille[]): QuartDetaille[] {
+  return quarts.filter((q) => !!q.numero_facture);
+}
+
+/** Numéros des factures concernées par une sélection, sans répétition. */
+export function facturesConcernees(quarts: QuartDetaille[]): string[] {
+  return [...new Set(quartsDejaFactures(quarts).map((q) => q.numero_facture))].sort();
+}
+
+/** Ce qui reste à facturer une fois les quarts déjà facturés mis de côté. */
+export function quartsNonFactures(quarts: QuartDetaille[]): QuartDetaille[] {
+  return quarts.filter((q) => !q.numero_facture);
+}
+
 export function calculerTotaux(o: OptionsFacture): TotauxFacture {
   let totalHeures = 0;
   let honoraires = 0;

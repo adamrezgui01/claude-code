@@ -12,6 +12,7 @@ export type EntreeQuart = Omit<
   | 'heure_fin_reelle'
   | 'annule'
   | 'serie_id'
+  | 'numero_facture'
 >;
 
 const SELECT_DETAILLE = `
@@ -164,11 +165,47 @@ export function corrigerHeures(id: number, heureDebut: string, heureFin: string)
   );
 }
 
+/**
+ * Rattache des quarts à une facture. C'est ce lien, et lui seul, qui empêche
+ * de facturer deux fois : la période, elle, ne prouve rien — un propriétaire
+ * qui possède deux pharmacies facture la même quinzaine deux fois, avec des
+ * quarts entièrement différents.
+ */
+export function rattacherAFacture(ids: number[], numero: string) {
+  if (ids.length === 0) return;
+  const trous = ids.map(() => '?').join(', ');
+  db.runSync(`UPDATE quarts SET numero_facture = ? WHERE id IN (${trous})`, [numero, ...ids]);
+}
+
+/** Relibère les quarts d'une facture supprimée : ils redeviennent modifiables. */
+export function libererQuartsDeFacture(numero: string) {
+  db.runSync("UPDATE quarts SET numero_facture = '' WHERE numero_facture = ?", numero);
+}
+
+export function quartsDeFacture(numero: string): QuartDetaille[] {
+  return db.getAllSync<QuartDetaille>(
+    `${SELECT_DETAILLE} WHERE q.numero_facture = ? ORDER BY q.date, q.heure_debut`,
+    numero
+  );
+}
+
 export function quartsAVenir(): QuartDetaille[] {
   return db.getAllSync<QuartDetaille>(
     `${SELECT_DETAILLE} WHERE q.date >= ? AND q.annule = 0 ORDER BY q.date, q.heure_debut`,
     aujourdhui()
   );
+}
+
+/**
+ * Un quart à la fois effectué et facturé est immuable : la facture est partie
+ * chez le client, le chiffre est engagé. Il se rouvre en supprimant sa
+ * facture, jamais directement.
+ *
+ * Effectué mais pas encore facturé, il reste entièrement libre — c'est
+ * justement la fenêtre où le mémo de fin de quart invite à corriger les heures.
+ */
+export function quartVerrouille(quart: Quart): boolean {
+  return !!quart.numero_facture && !quart.annule && finDuQuart(quart).getTime() <= Date.now();
 }
 
 /** Délai après la fin d'un quart avant d'envoyer le mémo de correction. */

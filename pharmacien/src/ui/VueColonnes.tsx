@@ -1,9 +1,9 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, LayoutChangeEvent, PanResponder, StyleSheet, Text, View } from 'react-native';
+import { LayoutChangeEvent, PanResponder, StyleSheet, Text, View } from 'react-native';
 
 import type { QuartDetaille } from '../db/types';
-import { fenetreHeures, minutesDebut, minutesFin, pixelsParHeure } from '../lib/agenda';
+import { minutesDebut, minutesFin } from '../lib/agenda';
 import { analyserDate, aujourdhui } from '../lib/dates';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 
@@ -79,8 +79,9 @@ function disposer(quarts: QuartDetaille[]): { quart: QuartDetaille; voie: number
 export function VueColonnes({
   jours,
   quartsParJour,
-  hauteurDisponible,
-  glissement,
+  plage,
+  pxParMinute,
+  verrouilles,
   onOuvrir,
   onDeplacer,
   onDupliquer,
@@ -88,10 +89,19 @@ export function VueColonnes({
 }: {
   jours: string[];
   quartsParJour: Map<string, QuartDetaille[]>;
-  /** Hauteur que la vue peut occuper sans faire défiler la page. */
-  hauteurDisponible: number;
-  /** Décalage du balayage. Seuls les quarts et les en-têtes le suivent. */
-  glissement?: Animated.Value;
+  /**
+   * Fenêtre d'heures et échelle, calculées par l'appelant sur les trois pages
+   * du balayage à la fois. Sans ça, passer d'une semaine à l'autre ferait
+   * sauter l'axe des heures pendant le glissement.
+   */
+  plage: { debut: number; fin: number };
+  pxParMinute: number;
+  /**
+   * Quarts effectués et facturés. Ils s'affichent en gris et ne répondent à
+   * aucun geste : ni déplacement, ni duplication, et aucun signal — l'usager
+   * peut maintenir aussi longtemps qu'il veut, il ne se passe rien.
+   */
+  verrouilles: Set<number>;
   onOuvrir: (id: number) => void;
   onDeplacer: (quartId: number, date: string, heure: string) => void;
   onDupliquer: (quartId: number, date: string, heure: string) => void;
@@ -123,13 +133,6 @@ export function VueColonnes({
   // dans le rendu. Il lui faut une référence.
   const modeCourant = useRef<Mode>('deplacer');
 
-  const visibles = useMemo(
-    () => jours.flatMap((jour) => quartsParJour.get(jour) ?? []),
-    [jours, quartsParJour]
-  );
-
-  const plage = useMemo(() => fenetreHeures(visibles), [visibles]);
-  const pxParMinute = pixelsParHeure(plage, hauteurDisponible) / 60;
   const hauteur = (plage.fin - plage.debut) * pxParMinute;
   const largeurColonne = jours.length > 0 ? (largeur - LARGEUR_AXE) / jours.length : 0;
 
@@ -153,8 +156,8 @@ export function VueColonnes({
     );
   }, [jours, quartsParJour, largeurColonne, plage.debut, pxParMinute]);
 
-  const etat = useRef({ rectangles, largeurColonne, plage, pxParMinute, jours });
-  etat.current = { rectangles, largeurColonne, plage, pxParMinute, jours };
+  const etat = useRef({ rectangles, largeurColonne, plage, pxParMinute, jours, verrouilles });
+  etat.current = { rectangles, largeurColonne, plage, pxParMinute, jours, verrouilles };
 
   function arreterMinuteries() {
     if (minuterieArmer.current) clearTimeout(minuterieArmer.current);
@@ -232,6 +235,12 @@ export function VueColonnes({
           largeur: rect.largeur,
           hauteur: rect.hauteur,
         };
+
+        // Un quart verrouillé s'ouvre à la touche et ne fait rien d'autre :
+        // aucune minuterie, donc aucun accrochage, aucune vibration, aucun
+        // message. Volontairement silencieux — comme si le geste n'existait
+        // pas sur ce bloc-là.
+        if (etat.current.verrouilles.has(rect.quart.id)) return;
 
         minuterieArmer.current = setTimeout(() => {
           arme.current = true;
@@ -323,8 +332,7 @@ export function VueColonnes({
 
       {/* En vue jour, la date est déjà écrite juste au-dessus du cadre. */}
       {!unSeulJour && (
-        <Animated.View
-          style={[styles.entetes, glissement ? { transform: [{ translateX: glissement }] } : null]}>
+        <View style={styles.entetes}>
           <View style={{ width: LARGEUR_AXE }} />
           {jours.map((jour) => {
             const d = analyserDate(jour);
@@ -341,7 +349,7 @@ export function VueColonnes({
               </View>
             );
           })}
-        </Animated.View>
+        </View>
       )}
 
       <View style={[styles.grille, { height: hauteur }]} {...pan.panHandlers}>
@@ -382,14 +390,10 @@ export function VueColonnes({
             />
           ))}
 
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            glissement ? { transform: [{ translateX: glissement }] } : null,
-          ]}>
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         {rectangles.map(({ quart, x, y, largeur: l, hauteur: h }) => {
           const annule = !!quart.annule;
+          const verrouille = verrouilles.has(quart.id);
           const enCours = source?.id === quart.id;
           return (
             <View
@@ -402,8 +406,16 @@ export function VueColonnes({
                   left: x,
                   width: l,
                   height: h,
-                  backgroundColor: annule ? couleurs.fond : accentPale(accent),
-                  borderColor: annule ? couleurs.attente : accent,
+                  // Le gris ne dit qu'une chose : effectué et facturé, donc
+                  // figé. Un quart effectué mais pas encore facturé garde sa
+                  // couleur, bien vivante — les deux états ne doivent jamais
+                  // se confondre à l'œil.
+                  backgroundColor: annule
+                    ? couleurs.fond
+                    : verrouille
+                      ? couleurs.grisPale
+                      : accentPale(accent),
+                  borderColor: annule || verrouille ? couleurs.attente : accent,
                   opacity: enCours ? 0.3 : 1,
                 },
               ]}>
@@ -431,7 +443,7 @@ export function VueColonnes({
             </View>
           );
         })}
-        </Animated.View>
+        </View>
 
         {!!source && !!pointe && (
           <View

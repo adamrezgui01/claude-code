@@ -147,13 +147,29 @@ export function grilleMois(iso: string): (string | null)[][] {
   return semaines;
 }
 
-/** Durée en heures. Une heure de fin antérieure au début signifie un quart de nuit. */
+/**
+ * Durée en heures.
+ *
+ * Certaines pharmacies ouvrent vingt-quatre heures : un quart de nuit va de
+ * 22 h à 7 h et traverse minuit. Dès que l'heure de fin est inférieure ou
+ * égale à l'heure de début, le quart se termine le lendemain, et on ajoute
+ * vingt-quatre heures. Sans cette règle, une soustraction naïve donne une
+ * durée négative ou nulle, et fausse en silence la facture et les
+ * statistiques.
+ */
 export function dureeHeures(heureDebut: string, heureFin: string): number {
   const debut = analyserHeure(heureDebut);
   const fin = analyserHeure(heureFin);
   let minutes = fin.h * 60 + fin.min - (debut.h * 60 + debut.min);
-  if (minutes < 0) minutes += 24 * 60;
+  if (minutes <= 0) minutes += 24 * 60;
   return minutes / 60;
+}
+
+/** Vrai quand le quart se termine le lendemain. */
+export function traverseMinuit(heureDebut: string, heureFin: string): boolean {
+  const debut = analyserHeure(heureDebut);
+  const fin = analyserHeure(heureFin);
+  return fin.h * 60 + fin.min <= debut.h * 60 + debut.min;
 }
 
 /**
