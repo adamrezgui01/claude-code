@@ -28,7 +28,10 @@ const SCHEMA = `
     taux_horaire REAL NOT NULL DEFAULT 0,
     per_diem REAL NOT NULL DEFAULT 0,
     mode_deplacement TEXT NOT NULL DEFAULT 'aucun',
-    distance_km REAL NOT NULL DEFAULT 0,
+    /* Aller simple. Négatif : pas encore calculée. */
+    distance_km REAL NOT NULL DEFAULT -1,
+    /* Le trajet compte-t-il dans les deux sens ? C'est le cas courant. */
+    aller_retour INTEGER NOT NULL DEFAULT 1,
     taux_par_km REAL NOT NULL DEFAULT 0,
     montant_fixe_deplacement REAL NOT NULL DEFAULT 0,
     pause_minutes INTEGER NOT NULL DEFAULT 0,
@@ -51,7 +54,13 @@ const SCHEMA = `
     heure_fin_reelle TEXT NOT NULL DEFAULT '',
     annule INTEGER NOT NULL DEFAULT 0,
     taux_horaire REAL NOT NULL DEFAULT 0,
-    kilometrage REAL NOT NULL DEFAULT 0,
+    /* Aller simple, en kilomètres. Négatif tant que la distance n'a pas été
+       établie : zéro est une vraie valeur, pas un « je ne sais pas ». */
+    kilometrage REAL NOT NULL DEFAULT -1,
+    /* Figé à la création, depuis la pharmacie. Sans ça, changer le taux d'une
+       pharmacie réécrirait rétroactivement des quarts déjà facturés. */
+    taux_par_km REAL NOT NULL DEFAULT 0,
+    aller_retour INTEGER NOT NULL DEFAULT 1,
     montant_fixe_deplacement REAL NOT NULL DEFAULT 0,
     per_diem_reclame REAL NOT NULL DEFAULT 0,
     pause_minutes INTEGER NOT NULL DEFAULT 0,
@@ -141,6 +150,8 @@ const SCHEMA = `
     date_generation TEXT NOT NULL DEFAULT '',
     /* Rappel de relance programmé pour cette facture. */
     notification_relance TEXT,
+    /* Un seul rappel par facture : doux, sans répétition. */
+    relance_faite INTEGER NOT NULL DEFAULT 0,
     cree_le TEXT NOT NULL
   );
 
@@ -190,16 +201,65 @@ export function initialiserBase(): number[] {
   ajouterColonne('pharmacies', 'hebergement_montant', 'REAL NOT NULL DEFAULT 0');
   ajouterColonne('pharmacies', 'hebergement_fourni', 'INTEGER NOT NULL DEFAULT 0');
   ajouterColonne('factures', 'notification_relance', 'TEXT');
+  ajouterColonne('factures', 'relance_faite', 'INTEGER NOT NULL DEFAULT 0');
+
+  // Le taux au kilomètre descend sur le quart. Les quarts déjà en base
+  // reprennent celui de leur pharmacie : c'est celui qui les a facturés
+  // jusqu'ici, donc rien ne change pour eux.
+  if (ajouterColonne('quarts', 'taux_par_km', 'REAL NOT NULL DEFAULT 0')) {
+    db.execSync(`
+      UPDATE quarts
+      SET taux_par_km = COALESCE(
+        (SELECT p.taux_par_km FROM pharmacies p WHERE p.id = quarts.pharmacie_id), 0)
+    `);
+  }
+
+  ajouterColonne('pharmacies', 'aller_retour', 'INTEGER NOT NULL DEFAULT 1');
+  ajouterColonne('quarts', 'aller_retour', 'INTEGER NOT NULL DEFAULT 1');
+
+  // Les distances enregistrées jusqu'ici étaient déjà doublées : l'aller-retour
+  // n'était qu'un état d'écran, jamais conservé, et il valait toujours oui. On
+  // les ramène à l'aller simple, avec l'aller-retour activé — le montant
+  // facturé ne bouge donc pas d'un cent.
+  if (!dejaFait('distance_aller_simple')) {
+    db.execSync('UPDATE pharmacies SET distance_km = distance_km / 2.0 WHERE distance_km > 0');
+    db.execSync('UPDATE quarts SET kilometrage = kilometrage / 2.0 WHERE kilometrage > 0');
+    marquerFait('distance_aller_simple');
+  }
+
+  // Jusqu'ici, zéro kilomètre voulait dire « pas encore calculée » sur une
+  // fiche de pharmacie. On le réécrit une seule fois, pour que zéro puisse
+  // enfin vouloir dire zéro.
+  if (!dejaFait('distance_inconnue_negative')) {
+    db.execSync('UPDATE pharmacies SET distance_km = -1 WHERE distance_km = 0');
+    marquerFait('distance_inconnue_negative');
+  }
   db.execSync(`PRAGMA user_version = ${VERSION}`);
   return pharmaciesEffacees;
 }
 
-function ajouterColonne(table: string, colonne: string, definition: string) {
+/** Retourne vrai quand la colonne vient d'être ajoutée, pour la remplir. */
+function ajouterColonne(table: string, colonne: string, definition: string): boolean {
   const colonnes = db
     .getAllSync<{ name: string }>(`PRAGMA table_info(${table})`)
     .map((c) => c.name);
-  if (colonnes.includes(colonne)) return;
+  if (colonnes.includes(colonne)) return false;
   db.execSync(`ALTER TABLE ${table} ADD COLUMN ${colonne} ${definition}`);
+  return true;
+}
+
+/**
+ * Journal des reprises de données déjà passées. Une colonne s'ajoute une
+ * seule fois par nature ; une réécriture de valeurs, non — il faut donc se
+ * souvenir qu'on l'a faite.
+ */
+function dejaFait(repere: string): boolean {
+  db.execSync('CREATE TABLE IF NOT EXISTS reprises (repere TEXT PRIMARY KEY)');
+  return !!db.getFirstSync('SELECT repere FROM reprises WHERE repere = ?', repere);
+}
+
+function marquerFait(repere: string) {
+  db.runSync('INSERT OR IGNORE INTO reprises (repere) VALUES (?)', repere);
 }
 
 function tablesExistantes(): string[] {

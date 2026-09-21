@@ -16,6 +16,7 @@ import {
 } from '../../src/db/quarts';
 import type { Pharmacie, QuartDetaille } from '../../src/db/types';
 import { fenetreHeures, pixelsParHeure } from '../../src/lib/agenda';
+import { etatQuart, heuresAvant, urgenceQuart } from '../../src/lib/echeance';
 import {
   ajouterJours,
   ajouterMois,
@@ -58,7 +59,7 @@ type Sens = 'aVenir' | 'anterieurs';
 const OUVERTURES_AIDEES = 3;
 
 const TEXTE_AIDE =
-  'Glissez un bloc pour le déplacer. Maintenez-le sans bouger pour en déposer une copie. Balayez la grille pour changer de période.';
+  'Maintenez un bloc pour le déplacer, plus longtemps pour le dupliquer. Balayez la grille pour changer de période.';
 
 export default function Horaire() {
   const router = useRouter();
@@ -135,35 +136,32 @@ export default function Horaire() {
 
   const quartsDuJour = parJour.get(jour) ?? [];
 
-  const enCours = useMemo(
-    () =>
-      quarts.filter(
-        (q) =>
-          !q.annule &&
-          combiner(q.date, q.heure_debut).getTime() <= maintenant &&
-          finDuQuart(q).getTime() > maintenant
-      ),
-    // Le repère est repris à chaque venue sur l'écran : assez frais pour ne
-    // pas laisser un quart « en cours » une heure de trop, assez stable pour
-    // ne pas tout recalculer à chaque rendu.
-    [quarts, maintenant]
-  );
+  /**
+   * Un quart bascule dans « Antérieurs » quand il est fini, pas quand sa date
+   * est passée. À 18 h, un quart du jour même terminé à 17 h est derrière soi.
+   *
+   * Le repère de temps est repris à chaque venue sur l'écran : assez frais
+   * pour ne pas laisser un quart « en cours » une heure de trop, assez stable
+   * pour ne pas tout recalculer à chaque rendu.
+   */
+  const { enCours, aVenir, anterieurs } = useMemo(() => {
+    const enCours: QuartDetaille[] = [];
+    const aVenir: QuartDetaille[] = [];
+    const anterieurs: QuartDetaille[] = [];
+    for (const q of quarts) {
+      const etat = etatQuart(q, maintenant);
+      if (etat === 'enCours') enCours.push(q);
+      else if (etat === 'anterieur') anterieurs.push(q);
+      else if (!q.annule) aVenir.push(q);
+    }
+    // Du plus récent au plus ancien : on cherche ce qu'on vient de faire.
+    anterieurs.sort((a, b) =>
+      a.date === b.date ? b.heure_debut.localeCompare(a.heure_debut) : b.date.localeCompare(a.date)
+    );
+    return { enCours, aVenir, anterieurs };
+  }, [quarts, maintenant]);
+
   const enCoursIds = useMemo(() => new Set(enCours.map((q) => q.id)), [enCours]);
-
-  const aVenir = useMemo(
-    () =>
-      quarts.filter((q) => q.date >= aujourdhui() && !q.annule && !enCoursIds.has(q.id)),
-    [quarts, enCoursIds]
-  );
-
-  /** Du plus récent au plus ancien : on cherche ce qu'on vient de faire. */
-  const anterieurs = useMemo(
-    () =>
-      quarts
-        .filter((q) => q.date < aujourdhui() && !enCoursIds.has(q.id))
-        .sort((a, b) => (a.date === b.date ? b.heure_debut.localeCompare(a.heure_debut) : b.date.localeCompare(a.date))),
-    [quarts, enCoursIds]
-  );
 
   /** Quarts à venir d'abord, puis les pharmacies déjà fréquentées en vert. */
   const points = useMemo<PointCarte[]>(() => {
@@ -174,15 +172,14 @@ export default function Horaire() {
     for (const q of quarts) {
       if (q.annule) continue;
       if (q.pharmacie_latitude === null || q.pharmacie_longitude === null) continue;
-      const debut = combiner(q.date, q.heure_debut).getTime();
-      if (debut < instant) continue;
-      const heures = (debut - instant) / 3600000;
+      const restantes = heuresAvant(q, instant);
+      if (restantes < 0) continue;
+      const urgence = urgenceQuart(restantes);
       resultat.push({
         cle: `quart-${q.id}`,
         latitude: q.pharmacie_latitude,
         longitude: q.pharmacie_longitude,
-        couleur:
-          heures <= 48 ? couleurs.urgent : heures <= 14 * 24 ? couleurs.proche : couleurs.lointain,
+        couleur: couleurs[urgence],
         titre: q.pharmacie_nom,
         detail: `${formatDateLongue(q.date)} · ${q.heure_debut} à ${q.heure_fin}`,
         pharmacieId: q.pharmacie_id,
@@ -491,12 +488,12 @@ export default function Horaire() {
           Balayez la grille vers la gauche ou la droite pour changer de jour, de semaine ou de mois.
         </Doux>
         <Doux>
-          Glissez un bloc de quart pour le déplacer : il se cale à l’heure pleine ou à la
-          demi-heure la plus proche.
+          Maintenez un bloc de quart, puis glissez-le pour le déplacer : il se cale à l’heure
+          pleine ou à la demi-heure la plus proche.
         </Doux>
         <Doux>
-          Maintenez un bloc sans bouger le doigt pour en déposer une copie plutôt que de le
-          déplacer.
+          Maintenez-le plus longtemps, sans bouger le doigt : une vibration confirme le
+          basculement, et le glissement dépose alors une copie au lieu de déplacer le quart.
         </Doux>
         <Doux>
           Un quart gris a été effectué et facturé : il se consulte, mais ne bouge plus. Supprimez

@@ -1,8 +1,8 @@
-import { enregistrerRelance, supprimerFacture } from '../db/factures';
+import { enregistrerRelance, reinitialiserRelance, supprimerFacture } from '../db/factures';
 import type { Facture } from '../db/types';
-import { analyserDate } from './dates';
 import { argent } from './format';
 import { annulerRappel, planifierRappel } from './notifications';
+import { instantRelance, joursEnAttente, relanceDue } from './relance';
 
 /**
  * Relance des factures impayées.
@@ -12,26 +12,6 @@ import { annulerRappel, planifierRappel } from './notifications';
  * rappel unique, doux, part une fois le délai écoulé. Pas de répétition, pas
  * d'insistance.
  */
-
-/** Délai par défaut, en jours. Réglable dans Paramètres. */
-export const DELAI_RELANCE_DEFAUT = 30;
-
-/** Rappel à 9 h, le nombre de jours convenu après la génération. */
-function instantRelance(facture: Facture, delaiJours: number): Date {
-  const base = facture.date_generation
-    ? analyserDate(facture.date_generation)
-    : new Date(facture.cree_le);
-  const rappel = new Date(base.getTime() + delaiJours * 86400000);
-  rappel.setHours(9, 0, 0, 0);
-  return rappel;
-}
-
-function joursDepuis(facture: Facture): number {
-  const base = facture.date_generation
-    ? analyserDate(facture.date_generation)
-    : new Date(facture.cree_le);
-  return Math.max(0, Math.round((Date.now() - base.getTime()) / 86400000));
-}
 
 /**
  * Programme la relance d'une facture. Le rappel précédent est annulé d'abord :
@@ -59,7 +39,9 @@ export async function ajusterRelance(facture: Facture, delaiJours: number) {
     enregistrerRelance(facture.id, null);
     return;
   }
-  await programmerRelance(facture, delaiJours);
+  // Repassée en attente : elle a de nouveau droit à un rappel.
+  reinitialiserRelance(facture.id);
+  await programmerRelance({ ...facture, relance_faite: 0 }, delaiJours);
 }
 
 /**
@@ -73,13 +55,10 @@ export async function supprimerFactureEtRappel(facture: Facture) {
 
 /** Jours écoulés depuis la génération, pour l'afficher dans la liste. */
 export function ancienneteFacture(facture: Facture): number {
-  return joursDepuis(facture);
+  return joursEnAttente(facture);
 }
 
-/** Vrai quand le délai est dépassé et que rien n'est entré. */
-export function relanceDue(facture: Facture, delaiJours: number): boolean {
-  return facture.statut_paiement === 'en_attente' && joursDepuis(facture) >= delaiJours;
-}
+export { relanceDue };
 
 /** Réexpose l'annulation pour les écrans qui n'ont pas à connaître expo-notifications. */
 export async function annulerRelance(facture: Facture) {

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutChangeEvent, PanResponder, StyleSheet, Text, View } from 'react-native';
 
 import type { QuartDetaille } from '../db/types';
-import { minutesDebut, minutesFin } from '../lib/agenda';
+import { aimanter, minutesDebut, minutesEnHeure, minutesFin } from '../lib/agenda';
 import { analyserDate, aujourdhui } from '../lib/dates';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 
@@ -20,13 +20,6 @@ import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme'
  */
 
 const LARGEUR_AXE = 44;
-/**
- * Au dépôt, le quart se cale sur l'heure pleine ou la demi-heure. Ce sont les
- * deux seules positions possibles : l'usager fait un geste approximatif,
- * l'application place proprement. Sur un petit écran, viser à la minute
- * transformerait un geste simple en geste de précision.
- */
-const AIMANT_MINUTES = 30;
 /** Maintien qui attache le bloc au doigt. */
 const MAINTIEN_DEPLACER = 180;
 /** Maintien immobile supplémentaire qui bascule en duplication. */
@@ -48,12 +41,6 @@ type Rectangle = {
   largeur: number;
   hauteur: number;
 };
-
-function formaterHeure(minutes: number): string {
-  const h = Math.floor(minutes / 60) % 24;
-  const m = Math.round(minutes % 60);
-  return `${`${h}`.padStart(2, '0')}:${`${m}`.padStart(2, '0')}`;
-}
 
 /** Sur sept colonnes, « 09:00 » se coupe. « 9h » tient. */
 function formaterHeureCourte(minutes: number): string {
@@ -206,11 +193,7 @@ export function VueColonnes({
     const centre = coin.x + (touche.current?.largeur ?? largeurCol) / 2;
     const colonne = Math.floor((centre - LARGEUR_AXE) / Math.max(largeurCol, 1));
     const jour = j[Math.min(Math.max(colonne, 0), j.length - 1)];
-    const aimante = Math.round((p.debut + coin.y / px) / AIMANT_MINUTES) * AIMANT_MINUTES;
-    // La borne haute reste sur la grille : sinon un dépôt tout en bas
-    // atterrirait entre deux crans.
-    const dernier = 24 * 60 - AIMANT_MINUTES;
-    return { jour, minutes: Math.min(Math.max(aimante, 0), dernier) };
+    return { jour, minutes: aimanter(p.debut + coin.y / px) };
   }
 
   const pan = useRef(
@@ -296,8 +279,8 @@ export function VueColonnes({
         });
         const id = depart.quart.id;
         desarmer();
-        if (modeFinal === 'dupliquer') onDupliquer(id, jour, formaterHeure(minutes));
-        else onDeplacer(id, jour, formaterHeure(minutes));
+        if (modeFinal === 'dupliquer') onDupliquer(id, jour, minutesEnHeure(minutes));
+        else onDeplacer(id, jour, minutesEnHeure(minutes));
       },
 
       onPanResponderTerminate: desarmer,
@@ -424,7 +407,7 @@ export function VueColonnes({
               </Text>
               {unSeulJour ? (
                 <Text style={styles.blocHeure} numberOfLines={1}>
-                  {formaterHeure(minutesDebut(quart))} – {formaterHeure(minutesFin(quart))}
+                  {minutesEnHeure(minutesDebut(quart))} – {minutesEnHeure(minutesFin(quart))}
                 </Text>
               ) : (
                 <>
@@ -464,7 +447,7 @@ export function VueColonnes({
               {mode === 'dupliquer' ? `Copie · ${source.pharmacie_nom}` : source.pharmacie_nom}
             </Text>
             <Text style={[styles.blocHeure, { color: accent }]}>
-              {formaterHeure(cible(pointe).minutes)}
+              {minutesEnHeure(cible(pointe).minutes)}
             </Text>
           </View>
         )}

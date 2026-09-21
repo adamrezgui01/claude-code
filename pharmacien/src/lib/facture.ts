@@ -6,6 +6,9 @@ import type {
   Reglages,
 } from '../db/types';
 import { adresseComplete, adresseDesReglages } from './adresses';
+import { arrondirArgent, produitArgent, sommeArgent } from './argent';
+import { montantHebergement } from './defauts';
+import { lireDistance, montantKilometrage } from './deplacement';
 import { aujourdhui, dureeHeures, formatDateCourte } from './dates';
 import { argent, heures, nombre } from './format';
 import { heuresTravaillees, quartCompte } from './stats';
@@ -47,73 +50,88 @@ export function quartsFacturables(quarts: QuartDetaille[]): QuartDetaille[] {
   return quarts.filter(quartCompte);
 }
 
-/**
- * Quarts de la sélection qui portent déjà un numéro de facture.
- *
- * La protection anti-doublon se joue ici, quart par quart, et jamais sur
- * l'intervalle de dates. Une vérification par période se tromperait dans un cas
- * réel et fréquent : un propriétaire qui possède deux pharmacies. Facturer la
- * pharmacie A pour la première quinzaine de septembre, puis la pharmacie B pour
- * la même quinzaine, ce sont deux factures légitimes portant des quarts
- * entièrement différents. Le lien par quart les laisse passer et n'arrête que
- * le vrai doublon : le même quart facturé deux fois.
- */
-export function quartsDejaFactures(quarts: QuartDetaille[]): QuartDetaille[] {
-  return quarts.filter((q) => !!q.numero_facture);
-}
-
-/** Numéros des factures concernées par une sélection, sans répétition. */
-export function facturesConcernees(quarts: QuartDetaille[]): string[] {
-  return [...new Set(quartsDejaFactures(quarts).map((q) => q.numero_facture))].sort();
-}
-
-/** Ce qui reste à facturer une fois les quarts déjà facturés mis de côté. */
-export function quartsNonFactures(quarts: QuartDetaille[]): QuartDetaille[] {
-  return quarts.filter((q) => !q.numero_facture);
-}
-
 export function calculerTotaux(o: OptionsFacture): TotauxFacture {
-  let totalHeures = 0;
-  let honoraires = 0;
-  let km = 0;
-  let fixe = 0;
-  let perDiem = 0;
-  const joursAvecPerDiem = new Set<string>();
+  const quarts = quartsFacturables(o.quarts);
 
-  for (const q of quartsFacturables(o.quarts)) {
+  let totalHeures = 0;
+  const honoraires: number[] = [];
+  const kilometrages: number[] = [];
+  const fixes: number[] = [];
+  const perDiems: number[] = [];
+  const joursAvecPerDiem = new Set<string>();
+  let kmTotal = 0;
+  let distanceEtabliePourAuMoinsUn = false;
+
+  for (const q of quarts) {
     const duree = heuresTravaillees(q);
     totalHeures += duree;
-    honoraires += duree * q.taux_horaire;
-    km += q.kilometrage;
-    fixe += q.montant_fixe_deplacement;
-    perDiem += q.per_diem_reclame;
+    honoraires.push(produitArgent(duree, q.taux_horaire));
+
+    // Chaque quart porte son propre taux au kilomètre et sa propre bascule
+    // aller-retour, figés le jour de sa création. Une entente renégociée
+    // depuis ne réécrit pas ce qui est déjà parti chez le client.
+    const km = lireDistance(q.kilometrage);
+    const allerRetour = !!q.aller_retour;
+    const montant = montantKilometrage(km, q.taux_par_km, allerRetour);
+    if (montant !== null && km !== null) {
+      distanceEtabliePourAuMoinsUn = true;
+      kmTotal += km * (allerRetour ? 2 : 1);
+      kilometrages.push(montant);
+    }
+
+    fixes.push(q.montant_fixe_deplacement);
+    perDiems.push(q.per_diem_reclame);
     if (q.per_diem_reclame > 0) joursAvecPerDiem.add(q.date);
   }
 
   const mode = o.inclureDeplacement ? o.pharmacie.mode_deplacement : 'aucun';
   const deplacementMontant =
-    mode === 'km' ? km * o.pharmacie.taux_par_km : mode === 'fixe' ? fixe : 0;
+    mode === 'km' ? sommeArgent(kilometrages) : mode === 'fixe' ? sommeArgent(fixes) : 0;
 
   // Le per diem est réclamé quart par quart : une semaine dans le Nord peut
   // porter le repas tous les jours et le trajet seulement à l'aller et au
   // retour. On additionne donc les montants plutôt que de multiplier des jours.
   const perDiemJours = o.inclurePerDiem ? joursAvecPerDiem.size : 0;
-  const perDiemMontant = o.inclurePerDiem ? perDiem : 0;
-  const fraisExtra = o.inclureFrais ? o.frais.reduce((t, f) => t + f.montant, 0) : 0;
+  const perDiemMontant = o.inclurePerDiem ? sommeArgent(perDiems) : 0;
+  const fraisExtra = o.inclureFrais ? sommeArgent(o.frais.map((f) => f.montant)) : 0;
+  const hebergement = arrondirArgent(o.hebergement);
+  const totalHonoraires = sommeArgent(honoraires);
 
   return {
     totalHeures,
-    honoraires,
+    honoraires: totalHonoraires,
     deplacementMode: mode,
-    deplacementKm: mode === 'km' ? km : 0,
-    deplacementTaux: mode === 'km' ? o.pharmacie.taux_par_km : 0,
+    deplacementKm: mode === 'km' && distanceEtabliePourAuMoinsUn ? kmTotal : 0,
+    // Un taux par quart, donc plusieurs taux possibles sur une même facture.
+    // On n'en affiche un que s'ils concordent tous.
+    deplacementTaux: mode === 'km' ? tauxUnique(quarts) : 0,
     deplacementMontant,
     perDiemJours,
     perDiemMontant,
     fraisExtra,
-    hebergement: o.hebergement,
-    total: honoraires + deplacementMontant + perDiemMontant + fraisExtra + o.hebergement,
+    hebergement,
+    total: sommeArgent([
+      totalHonoraires,
+      deplacementMontant,
+      perDiemMontant,
+      fraisExtra,
+      hebergement,
+    ]),
   };
+}
+
+/** Le taux au kilomètre, s'il est le même sur tous les quarts. Sinon zéro. */
+function tauxUnique(quarts: QuartDetaille[]): number {
+  const taux = new Set(quarts.filter((q) => lireDistance(q.kilometrage) !== null).map((q) => q.taux_par_km));
+  return taux.size === 1 ? [...taux][0] : 0;
+}
+
+/**
+ * Hébergement à porter sur une facture pour cette pharmacie. Un logement
+ * fourni ne vaut rien : rien n'est payé, donc rien n'est facturé.
+ */
+export function hebergementDeLaPharmacie(pharmacie: Pharmacie): number {
+  return montantHebergement(pharmacie);
 }
 
 function echapper(texte: string): string {
@@ -197,7 +215,9 @@ export function construireHtml(o: OptionsFacture): string {
     t.deplacementMode === 'km'
       ? ligneSiNonNulle(
           'Kilométrage',
-          `${nombre(t.deplacementKm)} km × ${argent(t.deplacementTaux)}`,
+          t.deplacementTaux > 0
+            ? `${nombre(t.deplacementKm)} km × ${argent(t.deplacementTaux)}`
+            : `${nombre(t.deplacementKm)} km`,
           t.deplacementMontant
         )
       : ligneSiNonNulle('Déplacement', '', t.deplacementMontant),

@@ -1,3 +1,4 @@
+import { DISTANCE_INCONNUE } from '../lib/deplacement';
 import { db } from './index';
 import type { Pharmacie } from './types';
 
@@ -23,6 +24,7 @@ const CHAMPS = [
   'mode_deplacement',
   'distance_km',
   'taux_par_km',
+  'aller_retour',
   'montant_fixe_deplacement',
   'pause_minutes',
   'pause_payee',
@@ -170,7 +172,8 @@ export function pharmacieVide(nom: string, tauxParKmDefaut: number): EntreePharm
     taux_horaire: 0,
     per_diem: 0,
     mode_deplacement: 'aucun',
-    distance_km: 0,
+    distance_km: DISTANCE_INCONNUE,
+    aller_retour: 1,
     taux_par_km: tauxParKmDefaut,
     montant_fixe_deplacement: 0,
     pause_minutes: 0,

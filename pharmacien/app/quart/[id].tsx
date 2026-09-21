@@ -13,7 +13,16 @@ import {
   pharmacieVide,
 } from '../../src/db/pharmacies';
 import { delaisSecondaires, obtenirReglages } from '../../src/db/profil';
-import { calculerSiPossible, distanceConnue } from '../../src/lib/distance';
+import { calculerSiPossible } from '../../src/lib/distance';
+import { defautsQuart } from '../../src/lib/defauts';
+import { joursDeLaSerie, repartirRecurrence } from '../../src/lib/recurrence';
+import {
+  DISTANCE_INCONNUE,
+  distanceEtablie,
+  ecrireDistance,
+  lireDistance,
+  montantKilometrage,
+} from '../../src/lib/deplacement';
 import { adresseDesReglages, adresseRenseignee } from '../../src/lib/adresses';
 import {
   corrigerHeures,
@@ -94,6 +103,13 @@ export default function FormulaireQuart() {
   const [pausePayee, setPausePayee] = useState(false);
   const [taux, setTaux] = useState('');
   const [kilometrage, setKilometrage] = useState('');
+  /**
+   * Le taux au kilomètre et la bascule aller-retour appartiennent au quart,
+   * pas à la fiche. Renégocier une entente ne doit rien faire aux quarts déjà
+   * entrés — encore moins à ceux déjà facturés.
+   */
+  const [tauxParKm, setTauxParKm] = useState('');
+  const [allerRetour, setAllerRetour] = useState(true);
   const [montantFixe, setMontantFixe] = useState('');
   const [perDiem, setPerDiem] = useState('');
   const [notes, setNotes] = useState('');
@@ -142,7 +158,10 @@ export default function FormulaireQuart() {
         setPause(q.pause_minutes);
         setPausePayee(!!q.pause_payee);
         setTaux(`${q.taux_horaire}`);
-        setKilometrage(q.kilometrage ? `${q.kilometrage}` : '');
+        const kmQuart = lireDistance(q.kilometrage);
+        setKilometrage(kmQuart === null ? '' : `${kmQuart}`);
+        setTauxParKm(q.taux_par_km ? `${q.taux_par_km}` : '');
+        setAllerRetour(!!q.aller_retour);
         setMontantFixe(q.montant_fixe_deplacement ? `${q.montant_fixe_deplacement}` : '');
         setPerDiem(q.per_diem_reclame ? `${q.per_diem_reclame}` : '');
         setNotes(q.notes);
@@ -186,22 +205,22 @@ export default function FormulaireQuart() {
     setCreationPharmacie(false);
     const p = obtenirPharmacie(id);
     if (!p) return;
-    setModeDeplacement(p.mode_deplacement);
-    if (p.taux_horaire) setTaux(`${p.taux_horaire}`);
-    setPause(p.pause_minutes);
-    setPausePayee(!!p.pause_payee);
-    setKilometrage(p.mode_deplacement === 'km' && p.distance_km ? `${p.distance_km}` : '');
-    setMontantFixe(
-      p.mode_deplacement === 'fixe' && p.montant_fixe_deplacement
-        ? `${p.montant_fixe_deplacement}`
-        : ''
-    );
-    setPerDiem(p.per_diem ? `${p.per_diem}` : '');
+    // Un seul endroit décide de ce qu'un quart reprend de sa pharmacie.
+    const defauts = defautsQuart(p);
+    setModeDeplacement(defauts.mode_deplacement);
+    if (defauts.taux_horaire) setTaux(`${defauts.taux_horaire}`);
+    setPause(defauts.pause_minutes);
+    setPausePayee(!!defauts.pause_payee);
+    setKilometrage(defauts.kilometrage === null ? '' : `${defauts.kilometrage}`);
+    setTauxParKm(defauts.taux_par_km ? `${defauts.taux_par_km}` : '');
+    setAllerRetour(!!p.aller_retour);
+    setMontantFixe(defauts.montant_fixe_deplacement ? `${defauts.montant_fixe_deplacement}` : '');
+    setPerDiem(defauts.per_diem_reclame ? `${defauts.per_diem_reclame}` : '');
     setAEviter(!!p.a_eviter);
 
     // Filet de sécurité : si la distance n'a jamais été calculée, on la calcule
     // ici plutôt que d'envoyer l'usager au répertoire et de le faire revenir.
-    if (p.mode_deplacement === 'km' && !distanceConnue(p.distance_km)) {
+    if (p.mode_deplacement === 'km' && defauts.kilometrage === null) {
       void completerDistance(p);
     }
   }
@@ -231,7 +250,7 @@ export default function FormulaireQuart() {
 
   const duree = dureePrevue(heureDebut, heureFin, pause, pausePayee);
   const totalFrais = frais.reduce((t, f) => t + f.montant, 0);
-  const datesSerie = repeter ? [date, ...[...joursChoisis].filter((j) => j !== date)].sort() : [date];
+  const datesSerie = repeter ? joursDeLaSerie(date, joursChoisis) : [date];
 
   /**
    * Jours qui portent déjà un quart chevauchant les heures qu'on répète. Ils
@@ -255,7 +274,7 @@ export default function FormulaireQuart() {
   function resumeDetails(): string {
     const morceaux: string[] = [];
     const tauxHoraire = analyserNombre(taux);
-    const km = analyserNombre(kilometrage);
+    const kmSaisi = kilometrage.trim() === '' ? null : analyserNombre(kilometrage);
     const fixe = analyserNombre(montantFixe);
     const repas = analyserNombre(perDiem);
     if (tauxHoraire > 0) morceaux.push(`${argent(tauxHoraire)}/h`);
@@ -264,7 +283,7 @@ export default function FormulaireQuart() {
       // Zéro kilomètre et distance inconnue ne sont pas la même chose : on ne
       // montre jamais un zéro qui aurait l'air d'une vraie valeur.
       if (calculKm) morceaux.push('distance en calcul…');
-      else if (distanceConnue(km)) morceaux.push(`${km} km`);
+      else if (distanceEtablie(kmSaisi)) morceaux.push(`${kmSaisi} km`);
       else if (sansDomicile) morceaux.push('adresse du profil manquante');
     }
     if (modeDeplacement === 'fixe' && fixe > 0) morceaux.push(argent(fixe));
@@ -284,7 +303,14 @@ export default function FormulaireQuart() {
       heure_debut: corrige ? heuresPrevues.debut : heureDebut,
       heure_fin: corrige ? heuresPrevues.fin : heureFin,
       taux_horaire: analyserNombre(taux),
-      kilometrage: analyserNombre(kilometrage),
+      // Une case laissée vide veut dire « distance inconnue », pas zéro : zéro
+      // est une vraie valeur, celle d'un trajet qui ne se facture pas.
+      kilometrage:
+        modeDeplacement === 'km'
+          ? ecrireDistance(kilometrage.trim() === '' ? null : analyserNombre(kilometrage))
+          : DISTANCE_INCONNUE,
+      taux_par_km: analyserNombre(tauxParKm),
+      aller_retour: allerRetour ? 1 : 0,
       montant_fixe_deplacement: analyserNombre(montantFixe),
       per_diem_reclame: analyserNombre(perDiem),
       pause_minutes: pause,
@@ -319,8 +345,7 @@ export default function FormulaireQuart() {
 
     // Chaque jour crée un quart autonome : aucune série liée, donc modifier ou
     // supprimer l'un ne touchera jamais les autres.
-    const retenus = datesSerie.filter((jour) => jour === date || !joursOccupes.has(jour));
-    const sautes = datesSerie.filter((jour) => jour !== date && joursOccupes.has(jour));
+    const { retenus, sautes } = repartirRecurrence(datesSerie, joursOccupes, date);
 
     const identifiants = retenus.map((jour) =>
       creerQuart(entreeDepuisFormulaire(idPharmacie, jour))
@@ -441,8 +466,9 @@ export default function FormulaireQuart() {
   if (verrouille) {
     const facture = numeroFacture ? factureParNumero(numeroFacture) : null;
     const nomPharmacie = pharmacies.find((p) => p.id === pharmacieId)?.nom ?? 'Pharmacie';
-    const km = analyserNombre(kilometrage);
+    const kmSaisi = kilometrage.trim() === '' ? null : analyserNombre(kilometrage);
     const fixe = analyserNombre(montantFixe);
+    const tauxKm = analyserNombre(tauxParKm);
     const repas = analyserNombre(perDiem);
     return (
       <Ecran>
@@ -483,7 +509,18 @@ export default function FormulaireQuart() {
 
         <SousTitre>Frais du quart</SousTitre>
         <Carte>
-          {modeDeplacement === 'km' && <Rangee label="Kilométrage" valeur={`${km} km`} />}
+          {modeDeplacement === 'km' && (
+            <Rangee
+              label="Kilométrage"
+              valeur={
+                kmSaisi === null
+                  ? 'Distance inconnue'
+                  : `${kmSaisi * (allerRetour ? 2 : 1)} km · ${argent(
+                      montantKilometrage(kmSaisi, tauxKm, allerRetour) ?? 0
+                    )}`
+              }
+            />
+          )}
           {modeDeplacement === 'fixe' && <Rangee label="Déplacement" valeur={argent(fixe)} />}
           {modeDeplacement === 'aucun' && (
             <Doux>Cette pharmacie ne rembourse pas les déplacements.</Doux>
@@ -661,6 +698,27 @@ export default function FormulaireQuart() {
                   clavier="decimal-pad"
                   placeholder={calculKm ? 'Calcul en cours…' : 'Pas encore calculée'}
                   aide="Mettez zéro pour une journée où le trajet n’est pas remboursé."
+                />
+                <Interrupteur
+                  label="Aller-retour"
+                  detail={
+                    allerRetour
+                      ? 'Le trajet est compté dans les deux sens'
+                      : 'Le trajet n’est compté qu’une fois'
+                  }
+                  valeur={allerRetour}
+                  onChange={setAllerRetour}
+                />
+                {/* Repris de la pharmacie à la création, modifiable ici pour ce
+                    quart seul : une journée peut avoir été négociée autrement
+                    sans que l'entente habituelle change. */}
+                <Champ
+                  label="Taux par kilomètre ($/km)"
+                  valeur={tauxParKm}
+                  onChange={setTauxParKm}
+                  clavier="decimal-pad"
+                  placeholder="0,00"
+                  aide="Ne touche que ce quart. La fiche de la pharmacie reste inchangée."
                 />
                 {sansDomicile && (
                   <Carte style={styles.eviter}>

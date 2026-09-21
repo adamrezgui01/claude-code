@@ -1,5 +1,5 @@
 import type { Quart } from '../db/types';
-import { analyserHeure, dureeHeures } from './dates';
+import { analyserHeure, decalerHeure, dureeHeures } from './dates';
 
 /**
  * Calcul de la fenêtre d'heures des vues jour et semaine. Vit ici, sans
@@ -54,4 +54,43 @@ export function pixelsParHeure(
     PX_PAR_HEURE_MAX,
     Math.max(PX_PAR_HEURE_MIN, hauteurDisponible / heuresVisibles)
   );
+}
+
+/**
+ * Au dépôt, le quart se cale sur l'heure pleine ou la demi-heure. Ce sont les
+ * deux seules positions possibles : l'usager fait un geste approximatif,
+ * l'application place proprement. Sur un petit écran, viser à la minute
+ * transformerait un geste simple en geste de précision.
+ */
+export const AIMANT_MINUTES = 30;
+
+/** Dernier cran de la journée qui tombe encore sur la grille. */
+const DERNIER_CRAN = 24 * 60 - AIMANT_MINUTES;
+
+/** Minutes depuis minuit, ramenées au cran le plus proche et bornées au jour. */
+export function aimanter(minutes: number): number {
+  const cale = Math.round(minutes / AIMANT_MINUTES) * AIMANT_MINUTES;
+  return Math.min(Math.max(cale, 0), DERNIER_CRAN);
+}
+
+export function minutesEnHeure(minutes: number): string {
+  const h = Math.floor(minutes / 60) % 24;
+  const m = Math.round(minutes % 60);
+  return `${`${h}`.padStart(2, '0')}:${`${m}`.padStart(2, '0')}`;
+}
+
+/**
+ * Où atterrit un quart déposé. La durée ne bouge jamais : c'est elle qu'on
+ * conserve, et l'heure de fin s'en déduit. Déplacer un quart de huit heures
+ * doit donner un quart de huit heures, minuit traversé ou non.
+ */
+export function deposerQuart(
+  quart: { heure_debut: string; heure_fin: string },
+  minutesVisees: number
+): { heure_debut: string; heure_fin: string } {
+  const debut = aimanter(minutesVisees);
+  return {
+    heure_debut: minutesEnHeure(debut),
+    heure_fin: decalerHeure(minutesEnHeure(debut), dureeHeures(quart.heure_debut, quart.heure_fin)),
+  };
 }

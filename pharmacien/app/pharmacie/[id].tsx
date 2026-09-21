@@ -30,11 +30,13 @@ import {
   lireIdentifiants,
   supprimerSecrets,
 } from '../../src/lib/codes';
+import { calculerSiPossible, ouvrirItineraireVers } from '../../src/lib/distance';
 import {
-  calculerSiPossible,
-  distanceConnue,
-  ouvrirItineraireVers,
-} from '../../src/lib/distance';
+  DISTANCE_INCONNUE,
+  distanceEtablie,
+  ecrireDistance,
+  lireDistance,
+} from '../../src/lib/deplacement';
 import { analyserNombre, formaterDuree, pluriel } from '../../src/lib/format';
 import { deverrouiller } from '../../src/lib/deverrouillage';
 import { annulerRappels } from '../../src/lib/notifications';
@@ -154,7 +156,9 @@ export default function FichePharmacie() {
       setFavori(!!p.favori);
       setAEviter(!!p.a_eviter);
       setMode(p.mode_deplacement);
-      setDistance(p.distance_km ? `${p.distance_km}` : '');
+      const km = lireDistance(p.distance_km);
+      setDistance(km === null ? '' : `${km}`);
+      setAllerRetour(!!p.aller_retour);
       setTauxParKm(`${p.taux_par_km || reglages.taux_par_km}`);
       setMontantFixe(p.montant_fixe_deplacement ? `${p.montant_fixe_deplacement}` : '');
       if (LOGICIELS.includes(p.logiciel as (typeof LOGICIELS)[number])) {
@@ -230,7 +234,7 @@ export default function FichePharmacie() {
     if (!adresseRenseignee(adresse)) return;
     const repereAdresse = adresseUneLigne(adresse);
     if (adresseCalculee.current === repereAdresse) return;
-    if (distanceConnue(analyserNombre(distanceActuelle.current))) {
+    if (distanceEtablie(distanceSaisie(distanceActuelle.current))) {
       // Distance déjà connue pour cette adresse : rien à refaire, mais on la
       // retient pour qu'un changement d'adresse relance le calcul.
       adresseCalculee.current = repereAdresse;
@@ -272,7 +276,11 @@ export default function FichePharmacie() {
         hebergementActif && !hebergementFourni ? analyserNombre(hebergement) : 0,
       hebergement_fourni: hebergementActif && hebergementFourni ? 1 : 0,
       mode_deplacement: mode,
-      distance_km: mode === 'km' ? analyserNombre(distance) : 0,
+      // Une distance jamais établie reste inconnue : elle ne devient pas zéro,
+      // qui voudrait dire « le trajet ne vaut rien ».
+      distance_km:
+        mode === 'km' ? ecrireDistance(distanceSaisie(distance)) : DISTANCE_INCONNUE,
+      aller_retour: allerRetour ? 1 : 0,
       taux_par_km: mode === 'km' ? analyserNombre(tauxParKm) : 0,
       montant_fixe_deplacement: mode === 'fixe' ? analyserNombre(montantFixe) : 0,
       favori: favori ? 1 : 0,
@@ -307,6 +315,15 @@ export default function FichePharmacie() {
         },
       ]
     );
+  }
+
+  /**
+   * Une case vide veut dire « pas encore calculée ». Zéro, lui, est une vraie
+   * valeur : la pharmacie est au coin de la rue, ou le trajet ne se facture
+   * pas. Les deux ne doivent jamais se confondre.
+   */
+  function distanceSaisie(texte: string): number | null {
+    return texte.trim() === '' ? null : analyserNombre(texte);
   }
 
   /** Bascule appliquée tout de suite : c'est un geste, pas un formulaire. */
@@ -579,13 +596,7 @@ export default function FichePharmacie() {
                     <Champ
                       nu
                       label={`Distance ${allerRetour ? 'aller-retour' : 'aller simple'} (km)`}
-                      valeur={
-                        calculEnCours
-                          ? ''
-                          : distanceConnue(analyserNombre(distance))
-                            ? distance
-                            : ''
-                      }
+                      valeur={calculEnCours ? '' : distance}
                       onChange={setDistance}
                       clavier="decimal-pad"
                       placeholder={calculEnCours ? 'Calcul en cours…' : 'Pas encore calculée'}

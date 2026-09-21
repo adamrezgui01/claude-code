@@ -1,4 +1,5 @@
 import { aujourdhui, decalerHeure, dureeHeures } from '../lib/dates';
+import { quartVerrouille, QuartVerrouilleErreur } from '../lib/facturation';
 import { db } from './index';
 import type { Quart, QuartDetaille } from './types';
 
@@ -34,6 +35,8 @@ const CHAMPS = [
   'heure_fin',
   'taux_horaire',
   'kilometrage',
+  'taux_par_km',
+  'aller_retour',
   'montant_fixe_deplacement',
   'per_diem_reclame',
   'pause_minutes',
@@ -90,6 +93,7 @@ export function creerQuart(entree: EntreeQuart, serieId = ''): number {
 }
 
 export function modifierQuart(id: number, entree: EntreeQuart) {
+  refuserSiVerrouille(id);
   const affectations = CHAMPS.map((c) => `${c} = ?`).join(', ');
   db.runSync(`UPDATE quarts SET ${affectations} WHERE id = ?`, [...valeurs(entree), id]);
 }
@@ -134,6 +138,7 @@ export function rappelsDuQuart(quart: Quart): string[] {
  * tant que personne ne dit le contraire.
  */
 export function definirAnnule(id: number, annule: boolean) {
+  refuserSiVerrouille(id);
   db.runSync('UPDATE quarts SET annule = ? WHERE id = ?', annule ? 1 : 0, id);
 }
 
@@ -143,6 +148,7 @@ export function definirAnnule(id: number, annule: boolean) {
  * ne se rouvre pour le reconfirmer.
  */
 export function deplacerQuart(id: number, date: string, heureDebut: string) {
+  refuserSiVerrouille(id);
   const quart = obtenirQuart(id);
   if (!quart) return;
   const heureFin = decalerHeure(heureDebut, dureeHeures(quart.heure_debut, quart.heure_fin));
@@ -157,6 +163,7 @@ export function deplacerQuart(id: number, date: string, heureDebut: string) {
 
 /** Corrige les heures d'un quart qui ne s'est pas passé comme prévu. */
 export function corrigerHeures(id: number, heureDebut: string, heureFin: string) {
+  refuserSiVerrouille(id);
   db.runSync(
     'UPDATE quarts SET heure_debut_reelle = ?, heure_fin_reelle = ? WHERE id = ?',
     heureDebut,
@@ -197,16 +204,17 @@ export function quartsAVenir(): QuartDetaille[] {
 }
 
 /**
- * Un quart à la fois effectué et facturé est immuable : la facture est partie
- * chez le client, le chiffre est engagé. Il se rouvre en supprimant sa
- * facture, jamais directement.
- *
- * Effectué mais pas encore facturé, il reste entièrement libre — c'est
- * justement la fenêtre où le mémo de fin de quart invite à corriger les heures.
+ * Un quart effectué et facturé est immuable, et ce refus vit dans la logique,
+ * pas seulement dans l'écran. Masquer les champs suffirait tant que tous les
+ * chemins passent par la fiche — mais le glisser-déposer, la duplication et le
+ * mémo de fin de quart n'y passent pas.
  */
-export function quartVerrouille(quart: Quart): boolean {
-  return !!quart.numero_facture && !quart.annule && finDuQuart(quart).getTime() <= Date.now();
+function refuserSiVerrouille(id: number) {
+  const quart = obtenirQuart(id);
+  if (quart && quartVerrouille(quart)) throw new QuartVerrouilleErreur(quart.numero_facture);
 }
+
+export { quartVerrouille };
 
 /** Délai après la fin d'un quart avant d'envoyer le mémo de correction. */
 export const DELAI_MEMO_HEURES = 2;

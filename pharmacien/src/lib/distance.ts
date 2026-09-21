@@ -163,10 +163,6 @@ export type EtatDistance =
   | { etat: 'sans_domicile' }
   | { etat: 'echec'; raison: string };
 
-export function distanceConnue(km: number): boolean {
-  return km > 0;
-}
-
 /**
  * Calcule la distance dès que les deux adresses suffisent, sans que personne
  * ne le demande. Retourne `null` quand il manque une adresse : au rappel, c'est

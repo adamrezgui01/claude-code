@@ -14,14 +14,13 @@ import { listerQuartsPeriode, rattacherAFacture } from '../src/db/quarts';
 import type { FraisExtra, Pharmacie, QuartDetaille } from '../src/db/types';
 import { adresseComplete } from '../src/lib/adresses';
 import { aujourdhui, debutMois, formatDateCourte } from '../src/lib/dates';
+import { calculerTotaux, quartsFacturables, type OptionsFacture } from '../src/lib/facture';
 import {
-  calculerTotaux,
   facturesConcernees,
   quartsDejaFactures,
-  quartsFacturables,
   quartsNonFactures,
-  type OptionsFacture,
-} from '../src/lib/facture';
+} from '../src/lib/facturation';
+import { montantHebergement } from '../src/lib/defauts';
 import { bornes, type Preset } from '../src/lib/periodes';
 import { genererPdf } from '../src/lib/facturePdf';
 import { analyserNombre, argent, heures, pluriel } from '../src/lib/format';
@@ -126,7 +125,7 @@ export default function GenererFacture() {
       inclureDeplacement,
       inclurePerDiem,
       inclureFrais,
-      hebergement: inclureHebergement ? montantHebergement(groupe.pharmacie) : 0,
+      hebergement: inclureHebergement ? hebergementDe(groupe.pharmacie) : 0,
     };
   }
 
@@ -134,10 +133,10 @@ export default function GenererFacture() {
    * Hébergement fourni par la pharmacie : rien n'est versé, rien n'est
    * facturé, donc rien n'entre dans le total. C'est une note, pas un montant.
    */
-  function montantHebergement(pharmacie: Pharmacie): number {
+  function hebergementDe(pharmacie: Pharmacie): number {
     if (pharmacie.hebergement_fourni) return 0;
     const saisi = hebergements[pharmacie.id];
-    return saisi === undefined ? pharmacie.hebergement_montant : analyserNombre(saisi);
+    return saisi === undefined ? montantHebergement(pharmacie) : analyserNombre(saisi);
   }
 
   function basculerPharmacie(id: number) {
@@ -175,6 +174,7 @@ export default function GenererFacture() {
           html,
           date_generation: aujourdhui(),
           notification_relance: null,
+          relance_faite: 0,
         });
         // Chaque quart retient le numéro de sa facture. C'est ce lien qui le
         // verrouille, et c'est lui qui le relibérera si la facture est

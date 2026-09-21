@@ -27,9 +27,14 @@ export type Pharmacie = Adresse & {
   taux_horaire: number;
   per_diem: number;
   mode_deplacement: ModeDeplacement;
-  /** Distance aller-retour depuis le domicile, en kilomètres. */
+  /**
+   * Distance aller simple depuis le domicile, en kilomètres. Négative tant
+   * qu'elle n'a pas été calculée.
+   */
   distance_km: number;
   taux_par_km: number;
+  /** 1 quand le trajet compte dans les deux sens. */
+  aller_retour: number;
   montant_fixe_deplacement: number;
   /** Pause repas habituelle, en minutes. Sert à préremplir un quart. */
   pause_minutes: number;
@@ -66,7 +71,15 @@ export type Quart = {
   /** 1 si le quart n'a finalement pas eu lieu. */
   annule: number;
   taux_horaire: number;
+  /**
+   * Aller simple, en kilomètres. Négatif tant que la distance n'a pas été
+   * établie — zéro est une valeur à part entière, qui vaut 0,00 $.
+   */
   kilometrage: number;
+  /** Taux au kilomètre figé à la création, repris de la pharmacie. */
+  taux_par_km: number;
+  /** 1 quand le trajet compte dans les deux sens. Figé lui aussi. */
+  aller_retour: number;
   montant_fixe_deplacement: number;
   /** Per diem réclamé pour ce quart. Prérempli depuis la pharmacie. */
   per_diem_reclame: number;
@@ -187,6 +200,8 @@ export type Facture = {
   date_generation: string;
   /** Rappel de relance programmé, annulé au paiement ou à la suppression. */
   notification_relance: string | null;
+  /** 1 une fois le rappel parti. Il n'y en a jamais un second. */
+  relance_faite: number;
   cree_le: string;
 };
 

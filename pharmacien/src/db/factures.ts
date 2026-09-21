@@ -24,6 +24,7 @@ const CHAMPS = [
   'html',
   'date_generation',
   'notification_relance',
+  'relance_faite',
 ] as const;
 
 export function listerFactures(): Facture[] {
@@ -46,6 +47,16 @@ export function facturesEnAttente(): Facture[] {
 
 export function enregistrerRelance(id: number, notificationId: string | null) {
   db.runSync('UPDATE factures SET notification_relance = ? WHERE id = ?', notificationId, id);
+}
+
+/** Le rappel est parti. Il n'y en aura pas d'autre pour cette facture. */
+export function marquerRelanceFaite(id: number) {
+  db.runSync('UPDATE factures SET relance_faite = 1 WHERE id = ?', id);
+}
+
+/** Remettre une facture en attente rouvre le droit à un rappel. */
+export function reinitialiserRelance(id: number) {
+  db.runSync('UPDATE factures SET relance_faite = 0 WHERE id = ?', id);
 }
 
 export function obtenirFactures(ids: number[]): Facture[] {

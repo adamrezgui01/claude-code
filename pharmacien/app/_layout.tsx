@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { initialiserBase } from '../src/db';
+import { marquerRelanceFaite } from '../src/db/factures';
 import { amorcerLiens } from '../src/db/liens';
 import { definirReglage, obtenirReglages } from '../src/db/profil';
 import { adresseDesReglages, adresseRenseignee } from '../src/lib/adresses';
@@ -71,6 +72,9 @@ export default function Racine() {
     // impayée, la seule chose à faire ensuite est de la renvoyer.
     if (donnees?.factureId) {
       memoTraite.current = identifiant;
+      // Le rappel est parti et il a été vu : il n'y en aura pas d'autre pour
+      // cette facture. Un rappel doux ne se répète pas.
+      marquerRelanceFaite(donnees.factureId);
       router.push(`/facture/${donnees.factureId}`);
     }
   }, [reponse, pret, router]);

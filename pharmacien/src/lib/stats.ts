@@ -1,5 +1,7 @@
 import type { FraisExtra, Quart, QuartDetaille } from '../db/types';
+import { produitArgent, sommeArgent } from './argent';
 import { combiner, dureeHeures } from './dates';
+import { lireDistance, montantKilometrage } from './deplacement';
 
 /**
  * Heures effectivement travaillées : les heures réelles si l'usager les a
@@ -77,12 +79,18 @@ export function calculerStatistiques(
 
     stats.quarts += 1;
     stats.heures += duree;
-    stats.honoraires += duree * q.taux_horaire;
+    stats.honoraires = sommeArgent([stats.honoraires, produitArgent(duree, q.taux_horaire)]);
     if (q.pharmacie_mode_deplacement === 'km') {
-      stats.km += q.kilometrage;
-      stats.deplacement += q.kilometrage * q.pharmacie_taux_par_km;
+      // Le taux et la bascule aller-retour viennent du quart, pas de la fiche :
+      // ce sont ceux qui s'appliquaient le jour où il a été créé.
+      const km = lireDistance(q.kilometrage);
+      const montant = montantKilometrage(km, q.taux_par_km, !!q.aller_retour);
+      if (km !== null && montant !== null) {
+        stats.km += km * (q.aller_retour ? 2 : 1);
+        stats.deplacement = sommeArgent([stats.deplacement, montant]);
+      }
     } else if (q.pharmacie_mode_deplacement === 'fixe') {
-      stats.deplacement += q.montant_fixe_deplacement;
+      stats.deplacement = sommeArgent([stats.deplacement, q.montant_fixe_deplacement]);
     }
 
     const jours = joursParPharmacie.get(q.pharmacie_id) ?? new Set<string>();
@@ -91,13 +99,13 @@ export function calculerStatistiques(
     joursGlobaux.add(q.date);
 
     stats.jours = jours.size;
-    stats.perDiem += q.per_diem_reclame;
+    stats.perDiem = sommeArgent([stats.perDiem, q.per_diem_reclame]);
     parPharmacie.set(q.pharmacie_id, stats);
   }
 
   for (const f of frais) {
     const stats = parPharmacie.get(f.pharmacie_id);
-    if (stats) stats.fraisExtra += f.montant;
+    if (stats) stats.fraisExtra = sommeArgent([stats.fraisExtra, f.montant]);
   }
 
   let totalHeures = 0;
@@ -108,13 +116,20 @@ export function calculerStatistiques(
   let montantFraisExtra = 0;
 
   for (const stats of parPharmacie.values()) {
-    stats.revenu = stats.honoraires + stats.deplacement + stats.perDiem + stats.fraisExtra;
+    // L'hébergement n'apparaît nulle part ici : fourni, il ne vaut rien ;
+    // payé, il se règle facture par facture et n'est pas un revenu du quart.
+    stats.revenu = sommeArgent([
+      stats.honoraires,
+      stats.deplacement,
+      stats.perDiem,
+      stats.fraisExtra,
+    ]);
     totalHeures += stats.heures;
     totalKm += stats.km;
-    montantHoraire += stats.honoraires;
-    montantDeplacement += stats.deplacement;
-    montantPerDiem += stats.perDiem;
-    montantFraisExtra += stats.fraisExtra;
+    montantHoraire = sommeArgent([montantHoraire, stats.honoraires]);
+    montantDeplacement = sommeArgent([montantDeplacement, stats.deplacement]);
+    montantPerDiem = sommeArgent([montantPerDiem, stats.perDiem]);
+    montantFraisExtra = sommeArgent([montantFraisExtra, stats.fraisExtra]);
   }
 
   return {
@@ -126,11 +141,22 @@ export function calculerStatistiques(
     montantDeplacement,
     montantPerDiem,
     montantFraisExtra,
-    revenuEstime: montantHoraire + montantDeplacement + montantPerDiem + montantFraisExtra,
+    revenuEstime: sommeArgent([
+      montantHoraire,
+      montantDeplacement,
+      montantPerDiem,
+      montantFraisExtra,
+    ]),
     parPharmacie: [...parPharmacie.values()].sort((a, b) => b.heures - a.heures),
   };
 }
 
+/**
+ * Bornes d'un quart, en instants. Passer par la durée plutôt que par l'heure
+ * de fin est ce qui fait tenir les quarts de nuit : le quart de 22 h à 7 h
+ * s'étend jusqu'au lendemain matin, et un quart posé à 2 h le chevauche bel et
+ * bien.
+ */
 function intervalle(quart: Pick<Quart, 'date' | 'heure_debut' | 'heure_fin'>) {
   const debut = combiner(quart.date, quart.heure_debut).getTime();
   return { debut, fin: debut + dureeHeures(quart.heure_debut, quart.heure_fin) * 3600000 };
