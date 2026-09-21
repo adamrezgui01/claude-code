@@ -378,6 +378,7 @@ export default function FichePharmacie() {
               onNom={(trouve) => {
                 if (!nom.trim()) setNom(trouve);
               }}
+              portee="pharmacie"
               libelle="Rechercher"
               invite="Nom de la pharmacie ou adresse"
               cle={reglages.cle_itineraire}

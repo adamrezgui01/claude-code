@@ -4,7 +4,13 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 
 import { PROVINCES, type Adresse } from '../db/types';
 import { codePostalValide, formaterCodePostal } from '../lib/adresses';
-import { chercherAdresses, type Point, type SuggestionAdresse } from '../lib/adressesRecherche';
+import {
+  chercherAdresses,
+  type Point,
+  type Portee,
+  type SuggestionAdresse,
+} from '../lib/adressesRecherche';
+import { creerRechercheDifferee, MINIMUM_CARACTERES } from '../lib/frappe';
 import { Champ, Puce } from './composants';
 import { couleurs, espace, police, rayon, useAccent } from './theme';
 
@@ -15,6 +21,8 @@ import { couleurs, espace, police, rayon, useAccent } from './theme';
  * offerte, parce qu'une adresse trop récente pour figurer dans la base ou une
  * panne de réseau ne doivent jamais empêcher d'enregistrer.
  */
+type Resultat = Awaited<ReturnType<typeof chercherAdresses>>;
+
 export function SaisieAdresse({
   adresse,
   onChange,
@@ -24,6 +32,7 @@ export function SaisieAdresse({
   libelle = 'Adresse',
   invite = 'Commencez à taper l’adresse',
   apresRecherche,
+  portee = 'domicile',
 }: {
   adresse: Adresse;
   onChange: (a: Adresse) => void;
@@ -36,6 +45,12 @@ export function SaisieAdresse({
   invite?: string;
   /** Glissé entre la barre de recherche et les champs qu'elle remplit. */
   apresRecherche?: ReactNode;
+  /**
+   * Une pharmacie est forcément au Québec ; un domicile peut être partout au
+   * Canada. Par défaut, la portée la plus large : mieux vaut un résultat de
+   * trop qu'une adresse qu'on ne peut pas entrer.
+   */
+  portee?: Portee;
 }) {
   const accent = useAccent();
   const foyerLat = foyer?.lat;
@@ -45,31 +60,49 @@ export function SaisieAdresse({
   const [erreur, setErreur] = useState('');
   const [chargement, setChargement] = useState(false);
   const [provinces, setProvinces] = useState(false);
-  const dernierAppel = useRef(0);
-
+  /**
+   * Toute la discipline de la frappe — attendre une pause, ne pas partir sous
+   * trois caractères, abandonner la requête d'avant, jeter une réponse
+   * périmée — vit dans `lib/frappe`, où elle se vérifie sans écran.
+   */
+  const chercheur = useRef<ReturnType<typeof creerRechercheDifferee<Resultat>> | null>(null);
   useEffect(() => {
-    if (recherche.trim().length < 4) {
-      setSuggestions([]);
-      setErreur('');
-      return;
-    }
-    const appel = ++dernierAppel.current;
-    setChargement(true);
-    const minuterie = setTimeout(async () => {
-      const resultat = await chercherAdresses(
-        recherche,
-        cle,
-        foyerLat !== undefined && foyerLon !== undefined ? { lat: foyerLat, lon: foyerLon } : undefined
-      );
-      if (appel !== dernierAppel.current) return;
-      setSuggestions(resultat.suggestions);
-      setErreur(resultat.erreur ?? '');
-      setChargement(false);
-    }, 350);
-    return () => clearTimeout(minuterie);
+    const instance = creerRechercheDifferee<Resultat>({
+      executer: (texte, signal) =>
+        chercherAdresses(
+          texte,
+          cle,
+          foyerLat !== undefined && foyerLon !== undefined
+            ? { lat: foyerLat, lon: foyerLon }
+            : undefined,
+          portee,
+          signal
+        ),
+      surResultat: (resultat) => {
+        setSuggestions(resultat.suggestions);
+        setErreur(resultat.erreur ?? '');
+        setChargement(false);
+      },
+      surVide: () => {
+        setSuggestions([]);
+        setErreur('');
+        setChargement(false);
+      },
+    });
+    chercheur.current = instance;
+    return () => {
+      instance.arreter();
+      chercheur.current = null;
+    };
     // Des nombres, pas l'objet : un point recréé à chaque rendu relancerait le
     // délai d'attente sans fin, et la recherche ne partirait jamais.
-  }, [recherche, cle, foyerLat, foyerLon]);
+  }, [cle, foyerLat, foyerLon, portee]);
+
+  function taper(texte: string) {
+    setRecherche(texte);
+    setChargement(texte.trim().length >= MINIMUM_CARACTERES);
+    chercheur.current?.saisir(texte);
+  }
 
   function choisir(suggestion: SuggestionAdresse) {
     onChange({ ...suggestion.adresse, local: adresse.local });
@@ -77,6 +110,7 @@ export function SaisieAdresse({
     setRecherche('');
     setSuggestions([]);
     setErreur('');
+    chercheur.current?.saisir('');
   }
 
   function modifier<C extends keyof Adresse>(champ: C, valeur: Adresse[C]) {
@@ -97,7 +131,7 @@ export function SaisieAdresse({
             <TextInput
               style={styles.saisie}
               value={recherche}
-              onChangeText={setRecherche}
+              onChangeText={taper}
               placeholder={invite}
               placeholderTextColor={couleurs.doux}
               autoCorrect={false}

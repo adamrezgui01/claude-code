@@ -3,6 +3,10 @@ import { Platform } from 'react-native';
 
 import type { Adresse } from '../db/types';
 import { adresseRenseignee, adresseUneLigne, formaterCodePostal } from './adresses';
+import { estAuQuebec, FOYER_DEFAUT, parametresDePortee, type Point, type Portee } from './portee';
+
+// Réexportées : les écrans parlent de portée sans avoir à connaître `portee`.
+export type { Point, Portee };
 
 /**
  * Le côté réseau de la saisie d'adresses. Le chemin normal est
@@ -18,13 +22,7 @@ import { adresseRenseignee, adresseUneLigne, formaterCodePostal } from './adress
 const AUTOCOMPLETE = 'https://api.openrouteservice.org/geocode/autocomplete';
 const RECHERCHE = 'https://api.openrouteservice.org/geocode/search';
 
-/**
- * Point de référence par défaut, quand l'usager n'a pas encore d'adresse :
- * Montréal. C'est un biais de classement, jamais un filtre — une adresse de
- * Rouyn-Noranda remonte quand même, simplement plus bas dans la liste. La seule
- * restriction est le pays.
- */
-const FOYER = { lat: 45.5019, lon: -73.5674 };
+const FOYER = FOYER_DEFAUT;
 
 const REGIONS: Record<string, string> = {
   quebec: 'Québec',
@@ -97,24 +95,33 @@ function texte(valeur: unknown): string {
  */
 const COUCHES = 'venue,address,street,locality';
 
+/** Même seuil que la saisie différée : en deçà, la recherche n'apprend rien. */
+const MINIMUM_CARACTERES = 3;
+
 /** Six suffisent : au-delà, la liste demande de lire plutôt que de choisir. */
 const TAILLE = 6;
 
-function construireUrl(service: string, recherche: string, cle: string, foyer: Point): string {
-  return (
-    `${service}?api_key=${encodeURIComponent(cle.trim())}` +
-    `&text=${encodeURIComponent(recherche.trim())}` +
-    `&layers=${COUCHES}` +
-    `&boundary.country=CA&focus.point.lat=${foyer.lat}&focus.point.lon=${foyer.lon}&size=${TAILLE}`
-  );
+function construireUrl(
+  service: string,
+  recherche: string,
+  cle: string,
+  foyer: Point,
+  portee: Portee
+): string {
+  const parametres = new URLSearchParams({
+    api_key: cle.trim(),
+    text: recherche.trim(),
+    layers: COUCHES,
+    size: `${TAILLE}`,
+    ...parametresDePortee(portee, foyer),
+  });
+  return `${service}?${parametres.toString()}`;
 }
 
 /** La clé ne doit jamais se retrouver dans les journaux. */
 function sansCle(url: string): string {
   return url.replace(/api_key=[^&]*/, 'api_key=…');
 }
-
-export type Point = { lat: number; lon: number };
 
 /**
  * Adresses proposées pendant la frappe.
@@ -127,25 +134,39 @@ export type Point = { lat: number; lon: number };
 export async function chercherAdresses(
   recherche: string,
   cle: string,
-  foyer: Point = FOYER
+  foyer: Point = FOYER,
+  portee: Portee = 'domicile',
+  signal?: AbortSignal
 ): Promise<ResultatRecherche> {
-  if (recherche.trim().length < 4) return { suggestions: [] };
+  if (recherche.trim().length < MINIMUM_CARACTERES) return { suggestions: [] };
   if (!cle.trim()) {
     return { suggestions: [], erreur: 'Aucune clé OpenRouteService dans vos paramètres.' };
   }
 
-  const premier = await interroger(construireUrl(AUTOCOMPLETE, recherche, cle, foyer));
+  const premier = await interroger(
+    construireUrl(AUTOCOMPLETE, recherche, cle, foyer, portee),
+    portee,
+    signal
+  );
   if (premier.suggestions.length > 0 || premier.refus) return premier;
 
-  const second = await interroger(construireUrl(RECHERCHE, recherche, cle, foyer));
+  const second = await interroger(
+    construireUrl(RECHERCHE, recherche, cle, foyer, portee),
+    portee,
+    signal
+  );
   if (second.suggestions.length > 0) return second;
   return second.erreur ? second : { suggestions: [], erreur: 'Aucune adresse trouvée.' };
 }
 
 /** Un appel à l'un des deux services de géocodage. */
-async function interroger(url: string): Promise<ResultatRecherche & { refus?: boolean }> {
+async function interroger(
+  url: string,
+  portee: Portee,
+  signal?: AbortSignal
+): Promise<ResultatRecherche & { refus?: boolean }> {
   try {
-    const reponse = await fetch(url);
+    const reponse = await fetch(url, { signal });
     if (!reponse.ok) {
       const corps = await reponse.text().catch(() => '');
       console.warn(`[adresses] ${reponse.status} ${sansCle(url)} — ${corps.slice(0, 300)}`);
@@ -165,6 +186,9 @@ async function interroger(url: string): Promise<ResultatRecherche & { refus?: bo
       const p = (entree as { properties?: Record<string, unknown> })?.properties ?? {};
       const coordonnees = (entree as { geometry?: { coordinates?: number[] } })?.geometry
         ?.coordinates;
+      // Le rectangle envoyé au service déborde sur l'Ontario et le
+      // Nouveau-Brunswick : c'est ici qu'on tranche pour de bon.
+      if (portee === 'pharmacie' && !estAuQuebec(p)) return [];
       const nomLieu = texte(p.name);
       const rue = texte(p.street);
       // Un commerce n'a pas toujours de rue ni de numéro dans OpenStreetMap.
