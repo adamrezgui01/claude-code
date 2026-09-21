@@ -1,22 +1,18 @@
 import { normaliser } from '../lib/texte';
+import { filtrerLiens, parCategorie, titreDuLien, type EntreeLien, type Lien } from '../lib/liens';
 import { db } from './index';
+
+// Les règles vivent dans `lib/liens` ; ce fichier ne fait que le stockage.
+export { filtrerLiens, parCategorie, titreDuLien };
+export type { EntreeLien, Lien };
 
 /**
  * Signets cliniques. Une liste de départ est semée au premier lancement, puis
  * elle appartient à l'usager : il ajoute, modifie et supprime ce qu'il veut.
  */
 
-export type Lien = {
-  id: number;
-  titre: string;
-  url: string;
-  categorie: string;
-  /** Synonymes courants, séparés par des virgules. Jamais affichés. */
-  motsCles: string;
-  rang: number;
-};
 
-export type EntreeLien = Omit<Lien, 'id' | 'rang'>;
+
 
 /**
  * Des pages de consultation précises, pas des portails d'accueil : au comptoir,
@@ -25,56 +21,64 @@ export type EntreeLien = Omit<Lien, 'id' | 'rang'>;
  */
 const DEPART: EntreeLien[] = [
   {
+    cle: 'cystite',
     titre: 'Cystite — infection urinaire non compliquée',
     url: 'https://www.inesss.qc.ca/publications/repertoire-des-publications/publication/traitement-pharmacologique-de-la-cystite-non-compliquee.html',
     categorie: 'Protocoles de prescription',
-    motsCles: 'cystite, infection urinaire, urine, brûlement, IVU, prescrire',
+    motsCles: 'cystite, infection urinaire, urine, brûlement, IVU, prescrire, UTI, urinary tract infection, bladder infection, dysuria',
   },
   {
+    cle: 'pharyngite',
     titre: 'Pharyngite à streptocoque du groupe A',
     url: 'https://www.inesss.qc.ca/publications/repertoire-des-publications/publication/pharyngite-amygdalite-chez-lenfant-et-ladulte.html',
     categorie: 'Protocoles de prescription',
-    motsCles: 'pharyngite, amygdalite, gorge, strep, streptocoque, angine',
+    motsCles: 'pharyngite, amygdalite, gorge, strep, streptocoque, angine, strep throat, sore throat, pharyngitis, tonsillitis',
   },
   {
+    cle: 'conjonctivite',
     titre: 'Conjonctivite',
     url: 'https://www.inesss.qc.ca/publications/repertoire-des-publications/publication/conjonctivite-allergique-bacterienne-ou-virale.html',
     categorie: 'Protocoles de prescription',
-    motsCles: 'conjonctivite, oeil rouge, yeux, allergique, bactérienne',
+    motsCles: 'conjonctivite, oeil rouge, yeux, allergique, bactérienne, pink eye, conjunctivitis, red eye',
   },
   {
+    cle: 'ordonnances',
     titre: 'Ordonnances collectives et protocoles nationaux',
     url: 'https://www.inesss.qc.ca/publications/protocoles-medicaux-nationaux-et-ordonnances-associees.html',
     categorie: 'Protocoles de prescription',
-    motsCles: 'protocole national, ordonnance collective, prescrire, INESSS',
+    motsCles: 'protocole national, ordonnance collective, prescrire, INESSS, collective prescription, national protocol, prescribing',
   },
   {
+    cle: 'hypertension',
     titre: 'Hypertension Canada — recommandations',
     url: 'https://guidelines.hypertension.ca/',
     categorie: 'Guides de pratique',
-    motsCles: 'hypertension, HTA, pression, tension artérielle, antihypertenseur',
+    motsCles: 'hypertension, HTA, pression, tension artérielle, antihypertenseur, high blood pressure, blood pressure, BP',
   },
   {
+    cle: 'diabete',
     titre: 'Diabète Canada — lignes directrices',
     url: 'https://guidelines.diabetes.ca/',
     categorie: 'Guides de pratique',
-    motsCles: 'diabète, glycémie, insuline, metformine, HbA1c, sucre',
+    motsCles: 'diabète, glycémie, insuline, metformine, HbA1c, sucre, diabetes, blood sugar, insulin, metformin',
   },
   {
+    cle: 'piq',
     titre: 'Protocole d’immunisation du Québec (PIQ)',
     url: 'https://www.msss.gouv.qc.ca/professionnels/vaccination/protocole-d-immunisation-du-quebec-piq/',
     categorie: 'Vaccination',
-    motsCles: 'PIQ, vaccin, immunisation, calendrier vaccinal, injection',
+    motsCles: 'PIQ, vaccin, immunisation, calendrier vaccinal, injection, vaccination, immunization, vaccine, shot',
   },
   {
+    cle: 'bdpp',
     titre: 'Base de données des produits pharmaceutiques',
     url: 'https://health-products.canada.ca/dpd-bdpp/index-fra.jsp',
     categorie: 'Références produits',
-    motsCles: 'DIN, monographie, produit, Santé Canada, fabricant, ingrédient',
+    motsCles: 'DIN, monographie, produit, Santé Canada, fabricant, ingrédient, drug product database, monograph, Health Canada',
   },
 ];
 
-const CHAMPS = ['titre', 'url', 'categorie', 'motsCles'] as const;
+const CHAMPS = ['cle', 'titre', 'url', 'categorie', 'motsCles'] as const;
 
 export function listerLiens(): Lien[] {
   return db.getAllSync<Lien>('SELECT * FROM liens ORDER BY categorie, rang, titre COLLATE NOCASE');
@@ -105,6 +109,7 @@ export function obtenirLien(id: number): Lien | null {
   return db.getFirstSync<Lien>('SELECT * FROM liens WHERE id = ?', id);
 }
 
+
 export function categories(): string[] {
   return db
     .getAllSync<{ categorie: string }>(
@@ -127,21 +132,4 @@ export function amorcerLiens() {
   db.runSync('UPDATE reglages SET liens_amorces = 1 WHERE id = 1');
 }
 
-/** Cherche dans le titre, la catégorie et les mots-clés cachés. */
-export function filtrerLiens(liens: Lien[], recherche: string): Lien[] {
-  const terme = normaliser(recherche.trim());
-  if (!terme) return liens;
-  return liens.filter((l) =>
-    normaliser(`${l.titre} ${l.categorie} ${l.motsCles}`).includes(terme)
-  );
-}
 
-/** Regroupe pour l'affichage, en gardant l'ordre des catégories rencontrées. */
-export function parCategorie(liens: Lien[]): { categorie: string; liens: Lien[] }[] {
-  const groupes = new Map<string, Lien[]>();
-  for (const lien of liens) {
-    const cle = lien.categorie || 'Autres';
-    groupes.set(cle, [...(groupes.get(cle) ?? []), lien]);
-  }
-  return [...groupes.entries()].map(([categorie, liste]) => ({ categorie, liens: liste }));
-}

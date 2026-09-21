@@ -360,7 +360,7 @@ export default function FormulaireQuart() {
     if (sautes.length > 0) {
       Alert.alert(
         'Certains jours ont été sautés',
-        `${sautes.map(formatJourCourt).join(', ')} — un quart existait déjà à ces heures.`,
+        `${sautes.map((jour) => formatJourCourt(jour)).join(', ')} — un quart existait déjà à ces heures.`,
         [{ text: 'Compris' }]
       );
     }

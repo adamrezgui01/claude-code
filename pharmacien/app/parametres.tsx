@@ -3,11 +3,21 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { getLocales } from 'expo-localization';
+
 import { facturesEnAttente } from '../src/db/factures';
-import { delaisSecondaires, enregistrerReglages, obtenirReglages } from '../src/db/profil';
+import {
+  definirReglage,
+  delaisSecondaires,
+  enregistrerReglages,
+  obtenirReglages,
+} from '../src/db/profil';
 import type { Reglages } from '../src/db/types';
 import { analyserNombre } from '../src/lib/format';
+import { appliquerLangue, useTextes } from '../src/i18n';
+import { LANGUES, type ChoixLangue } from '../src/lib/langue';
 import { programmerRelance } from '../src/lib/relanceFactures';
+import { reprogrammerRappels } from '../src/lib/reprogrammer';
 import {
   Bouton,
   Champ,
@@ -32,6 +42,7 @@ const DELAIS = [30, 60, 120, 180];
 export default function Parametres() {
   const router = useRouter();
   const accent = useAccent();
+  const { t } = useTextes();
   const [reglages, setReglages] = useState<Reglages | null>(null);
   const [enregistre, setEnregistre] = useState(false);
 
@@ -67,6 +78,19 @@ export default function Parametres() {
     // leur relance, sinon un ancien rappel partirait à l'ancienne date.
     for (const facture of facturesEnAttente()) await programmerRelance(facture, delai);
     setEnregistre(true);
+  }
+
+  /**
+   * Le changement prend effet aussitôt, sans redémarrer. Les rappels déjà en
+   * file gardent la phrase qu'on leur a donnée : il faut les reprogrammer,
+   * sans quoi l'usager recevrait pendant des semaines des notifications dans
+   * la langue qu'il vient de quitter.
+   */
+  async function choisirLangue(choix: ChoixLangue) {
+    modifier('langue', choix);
+    definirReglage('langue', choix);
+    await appliquerLangue(choix, getLocales().map((l) => l.languageTag));
+    await reprogrammerRappels();
   }
 
   if (!reglages) return null;
@@ -134,7 +158,31 @@ export default function Parametres() {
         />
       </Section>
 
-      <Section titre="Service d’adresses">
+      <SousTitre>{t('parametres.langue')}</SousTitre>
+      <Doux>{t('parametres.langueAide')}</Doux>
+      <View style={styles.espacement} />
+      <Section>
+        <View style={styles.bloc}>
+          <View style={styles.puces}>
+            {(['auto', ...LANGUES] as ChoixLangue[]).map((choix) => (
+              <Puce
+                key={choix}
+                texte={t(
+                  choix === 'auto'
+                    ? 'parametres.langueAuto'
+                    : choix === 'fr'
+                      ? 'parametres.langueFr'
+                      : 'parametres.langueEn'
+                )}
+                actif={reglages.langue === choix}
+                onPress={() => void choisirLangue(choix)}
+              />
+            ))}
+          </View>
+        </View>
+      </Section>
+
+      <Section titre={t('parametres.serviceAdresses')}>
         <Champ
           nu
           label="Clé OpenRouteService (facultative)"

@@ -22,6 +22,8 @@ export default function FormulaireLien() {
   const [url, setUrl] = useState('');
   const [categorie, setCategorie] = useState('');
   const [motsCles, setMotsCles] = useState('');
+  /** Vide pour un lien de l'usager ; conservé pour un lien fourni qu'il modifie. */
+  const [cle, setCle] = useState('');
   const [existantes] = useState(categories);
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export default function FormulaireLien() {
     setUrl(l.url);
     setCategorie(l.categorie);
     setMotsCles(l.motsCles);
+    setCle(l.cle);
   }, [lienId]);
 
   function enregistrer() {
@@ -40,6 +43,9 @@ export default function FormulaireLien() {
       return;
     }
     const entree = {
+      // Un lien écrit par l'usager n'a pas de repère de traduction : son titre
+      // est le sien, et ne se traduit pas.
+      cle,
       titre: titre.trim(),
       url: url.trim(),
       categorie: categorie.trim(),

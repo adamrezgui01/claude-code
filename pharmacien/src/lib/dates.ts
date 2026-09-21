@@ -1,44 +1,18 @@
-export const JOURS_COURTS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+import { LANGUE_DEFAUT, localeDe, type Langue } from './langue';
 
-const JOURS = [
-  'dimanche',
-  'lundi',
-  'mardi',
-  'mercredi',
-  'jeudi',
-  'vendredi',
-  'samedi',
-];
+/**
+ * Initiales des jours, du lundi au dimanche. La semaine commence le lundi
+ * dans les deux langues : c'est la convention au Québec, et un calendrier qui
+ * changerait de pied selon la langue serait déroutant pour la même personne.
+ */
+export function joursCourts(langue: Langue = LANGUE_DEFAUT): string[] {
+  return langue === 'en'
+    ? ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+    : ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+}
 
-const MOIS = [
-  'janvier',
-  'février',
-  'mars',
-  'avril',
-  'mai',
-  'juin',
-  'juillet',
-  'août',
-  'septembre',
-  'octobre',
-  'novembre',
-  'décembre',
-];
-
-const MOIS_COURTS = [
-  'janv.',
-  'févr.',
-  'mars',
-  'avr.',
-  'mai',
-  'juin',
-  'juil.',
-  'août',
-  'sept.',
-  'oct.',
-  'nov.',
-  'déc.',
-];
+/** Conservé pour les appels qui n'ont pas de langue sous la main. */
+export const JOURS_COURTS = joursCourts();
 
 /** Date locale au format `AAAA-MM-JJ` (`toISOString` donnerait l'heure UTC). */
 export function dateISO(d: Date): string {
@@ -108,24 +82,68 @@ export function finMois(iso: string): string {
   return dateISO(new Date(d.getFullYear(), d.getMonth() + 1, 0));
 }
 
-export function formatDateLongue(iso: string): string {
-  const d = analyserDate(iso);
-  return `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}`;
+/**
+ * « lundi 12 octobre 2026 », « Monday, October 12, 2026 ». C'est la forme
+ * qu'on montre quand une erreur d'interprétation coûterait cher : le jour de
+ * la semaine et l'année sautent aux yeux.
+ */
+export function formatDateLongue(iso: string, langue: Langue = LANGUE_DEFAUT): string {
+  return new Intl.DateTimeFormat(localeDe(langue), {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(analyserDate(iso));
 }
 
-export function formatDateCourte(iso: string): string {
-  const d = analyserDate(iso);
-  return `${d.getDate()} ${MOIS_COURTS[d.getMonth()]} ${d.getFullYear()}`;
+export function formatDateCourte(iso: string, langue: Langue = LANGUE_DEFAUT): string {
+  return new Intl.DateTimeFormat(localeDe(langue), {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(analyserDate(iso));
 }
 
-export function formatJourCourt(iso: string): string {
-  const d = analyserDate(iso);
-  return `${JOURS[d.getDay()].slice(0, 3)} ${d.getDate()} ${MOIS_COURTS[d.getMonth()]}`;
+export function formatJourCourt(iso: string, langue: Langue = LANGUE_DEFAUT): string {
+  return new Intl.DateTimeFormat(localeDe(langue), {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  }).format(analyserDate(iso));
 }
 
-export function formatMoisAnnee(iso: string): string {
-  const d = analyserDate(iso);
-  return `${MOIS[d.getMonth()]} ${d.getFullYear()}`;
+export function formatMoisAnnee(iso: string, langue: Langue = LANGUE_DEFAUT): string {
+  return new Intl.DateTimeFormat(localeDe(langue), {
+    month: 'long',
+    year: 'numeric',
+  }).format(analyserDate(iso));
+}
+
+/**
+ * Une heure d'horloge : « 9 h 30 » en français, « 9:30 a.m. » en anglais.
+ */
+export function formatHeure(heure: string, langue: Langue = LANGUE_DEFAUT): string {
+  const { h, min } = analyserHeure(heure);
+  const d = new Date(2000, 0, 1, h, min);
+  return new Intl.DateTimeFormat(localeDe(langue), {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(d);
+}
+
+/**
+ * La forme courte des blocs de la vue semaine, où la place manque : « 9h »,
+ * « 17h » en français, « 9a », « 5p » en anglais. L'anglais ne doit jamais
+ * être plus large que le français, sinon le texte se coupe dans le bloc.
+ */
+export function formatHeureCourte(heure: string, langue: Langue = LANGUE_DEFAUT): string {
+  const { h, min } = analyserHeure(heure);
+  if (langue === 'en') {
+    const douze = h % 12 === 0 ? 12 : h % 12;
+    const moment = h < 12 ? 'a' : 'p';
+    return min === 0 ? `${douze}${moment}` : `${douze}:${`${min}`.padStart(2, '0')}${moment}`;
+  }
+  return min === 0 ? `${h}h` : `${h}h${`${min}`.padStart(2, '0')}`;
 }
 
 /**

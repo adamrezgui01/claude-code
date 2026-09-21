@@ -110,6 +110,8 @@ const SCHEMA = `
     accent TEXT NOT NULL DEFAULT '',
     rappel_secondaire_actif INTEGER NOT NULL DEFAULT 0,
     rappel_delais TEXT NOT NULL DEFAULT '[180]',
+    /* « auto », « fr » ou « en ». Automatique suit la langue du téléphone. */
+    langue TEXT NOT NULL DEFAULT 'auto',
     dernier_rappel_factures TEXT NOT NULL DEFAULT '',
     /* Jours avant de relancer une facture restée en attente. */
     delai_relance_factures INTEGER NOT NULL DEFAULT 30,
@@ -162,6 +164,8 @@ const SCHEMA = `
 
   CREATE TABLE IF NOT EXISTS liens (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    /* Repère de traduction, vide pour un lien ajouté par l'usager. */
+    cle TEXT NOT NULL DEFAULT '',
     titre TEXT NOT NULL,
     url TEXT NOT NULL,
     categorie TEXT NOT NULL DEFAULT '',
@@ -203,6 +207,23 @@ export function initialiserBase(): number[] {
   ajouterColonne('reglages', 'delai_relance_factures', 'INTEGER NOT NULL DEFAULT 30');
   ajouterColonne('reglages', 'aide_horaire_vues', 'INTEGER NOT NULL DEFAULT 0');
   ajouterColonne('reglages', 'per_diem', 'REAL NOT NULL DEFAULT 0');
+  ajouterColonne('reglages', 'langue', "TEXT NOT NULL DEFAULT 'auto'");
+  // Les liens fournis avec l'application gagnent un repère de traduction. Les
+  // anciens sont réappariés sur leur adresse, qui n'a pas changé.
+  if (ajouterColonne('liens', 'cle', "TEXT NOT NULL DEFAULT ''")) {
+    for (const [cle, fragment] of [
+      ['cystite', 'cystite-non-compliquee'],
+      ['pharyngite', 'pharyngite-amygdalite'],
+      ['conjonctivite', 'conjonctivite-allergique'],
+      ['ordonnances', 'protocoles-medicaux-nationaux'],
+      ['hypertension', 'guidelines.hypertension.ca'],
+      ['diabete', 'guidelines.diabetes.ca'],
+      ['piq', 'protocole-d-immunisation-du-quebec'],
+      ['bdpp', 'dpd-bdpp'],
+    ]) {
+      db.runSync('UPDATE liens SET cle = ? WHERE url LIKE ?', cle, `%${fragment}%`);
+    }
+  }
   ajouterColonne('quarts', 'numero_facture', "TEXT NOT NULL DEFAULT ''");
   ajouterColonne('pharmacies', 'hebergement_montant', 'REAL NOT NULL DEFAULT 0');
   ajouterColonne('pharmacies', 'hebergement_fourni', 'INTEGER NOT NULL DEFAULT 0');

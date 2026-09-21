@@ -5,6 +5,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/nunito';
 import * as Notifications from 'expo-notifications';
+import { getLocales } from 'expo-localization';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -16,6 +17,8 @@ import { amorcerLiens } from '../src/db/liens';
 import { definirReglage, obtenirReglages } from '../src/db/profil';
 import { adresseDesReglages, adresseRenseignee } from '../src/lib/adresses';
 import { supprimerSecrets } from '../src/lib/codes';
+import { preparerTraductions } from '../src/i18n';
+import { langueActive } from '../src/lib/langue';
 import { preparerNotifications } from '../src/lib/notifications';
 import { Bienvenue } from '../src/ui/Bienvenue';
 import { ACCENT_DEFAUT, couleurs, FournisseurTheme, police } from '../src/ui/theme';
@@ -41,6 +44,9 @@ export default function Racine() {
     amorcerLiens();
     preparerNotifications();
     const reglages = obtenirReglages();
+    // La langue s'applique avant le premier rendu : sinon l'application
+    // s'affiche une fraction de seconde en français avant de basculer.
+    preparerTraductions(langueActive(reglages.langue, getLocales().map((l) => l.languageTag)));
     setAccent(reglages.accent || ACCENT_DEFAUT);
     // Premier lancement : sans nom ni adresse, l'application ne peut ni
     // facturer ni calculer une distance.

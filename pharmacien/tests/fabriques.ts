@@ -95,6 +95,7 @@ export function desReglages(champs: Partial<Reglages> = {}): Reglages {
     accent: '',
     rappel_secondaire_actif: 0,
     rappel_delais: '[180]',
+    langue: 'auto',
     dernier_rappel_factures: '',
     delai_relance_factures: 30,
     aide_horaire_vues: 0,

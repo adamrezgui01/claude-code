@@ -1,3 +1,5 @@
+import type { ChoixLangue } from '../lib/langue';
+
 /** Comment la pharmacie rembourse les déplacements. */
 export type ModeDeplacement = 'aucun' | 'km' | 'fixe';
 
@@ -164,6 +166,8 @@ export type Reglages = {
   rappel_secondaire_actif: number;
   /** Délais des rappels secondaires en minutes, encodés en JSON. */
   rappel_delais: string;
+  /** Langue choisie : « auto », « fr » ou « en ». */
+  langue: ChoixLangue;
   /** Date du dernier bandeau de vérification des factures. */
   dernier_rappel_factures: string;
   /** Jours avant de relancer une facture restée en attente de paiement. */
