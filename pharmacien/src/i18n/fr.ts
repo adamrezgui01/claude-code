@@ -519,6 +519,18 @@ export const fr = {
     supprimerDocument: 'Supprimer le document',
   },
 
+  disponibilites: {
+    titre: 'Disponibilités',
+    periode: 'Période',
+    libre: 'Libre',
+    pris: 'Pris',
+    resume_one: '{{count}} jour libre sur la période.',
+    resume_other: '{{count}} jours libres sur la période.',
+    rienDePrive:
+      'L’image ne montre aucun nom de pharmacie, aucune heure et aucun montant.',
+    partager: 'Partager mes disponibilités',
+  },
+
   liensContenu: {
     cystite: 'Cystite — infection urinaire non compliquée',
     pharyngite: 'Pharyngite à streptocoque du groupe A',

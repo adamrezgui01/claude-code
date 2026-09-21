@@ -38,6 +38,7 @@
     "react-native-maps": "1.27.2",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
+    "react-native-view-shot": "^5.1.0",
     "supercluster": "^9.1.0"
   },
   "devDependencies": {

@@ -516,6 +516,17 @@ export const en: Dictionnaire = {
     supprimerDocument: 'Delete document',
   },
 
+  disponibilites: {
+    titre: 'Availability',
+    periode: 'Period',
+    libre: 'Free',
+    pris: 'Booked',
+    resume_one: '{{count}} free day in this period.',
+    resume_other: '{{count}} free days in this period.',
+    rienDePrive: 'The image shows no pharmacy name, no hours and no amounts.',
+    partager: 'Share my availability',
+  },
+
   liensContenu: {
     cystite: 'Cystitis — uncomplicated urinary tract infection',
     pharyngite: 'Group A streptococcal pharyngitis',

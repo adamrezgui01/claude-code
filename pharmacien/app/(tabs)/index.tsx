@@ -101,17 +101,28 @@ export default function Horaire() {
     }, [])
   );
 
-  // L'icône d'aide vit dans l'en-tête, pas dans le flux : une explication de
-  // gestes se lit une fois et n'a pas à pousser le contenu vers le bas.
+  /**
+   * Deux icônes dans l'en-tête, et pas une de plus : l'aide, qu'on lit une
+   * fois, et le partage des disponibilités, qu'on utilise chaque fois qu'un
+   * propriétaire demande « t'es libre quand ? ».
+   */
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Pressable onPress={() => setAideOuverte(true)} hitSlop={12} style={styles.aide}>
-          <Ionicons name="help-circle-outline" size={24} color={accent} />
-        </Pressable>
+        <View style={styles.enTete}>
+          <Pressable
+            onPress={() => router.push('/disponibilites')}
+            hitSlop={12}
+            style={styles.icone}>
+            <Ionicons name="share-outline" size={22} color={accent} />
+          </Pressable>
+          <Pressable onPress={() => setAideOuverte(true)} hitSlop={12} style={styles.icone}>
+            <Ionicons name="help-circle-outline" size={24} color={accent} />
+          </Pressable>
+        </View>
       ),
     });
-  }, [navigation, accent]);
+  }, [navigation, accent, router]);
 
   const chevauchements = useMemo(() => detecterChevauchements(quarts), [quarts]);
 
@@ -511,8 +522,12 @@ const styles = StyleSheet.create({
     // barre d'onglets.
     paddingBottom: espace.xxl * 3,
   },
-  aide: {
-    paddingHorizontal: espace.m,
+  enTete: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  icone: {
+    paddingHorizontal: espace.s,
   },
   bandeau: {
     backgroundColor: couleurs.carte,

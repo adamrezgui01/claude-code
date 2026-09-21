@@ -140,6 +140,7 @@ export default function Racine() {
           <Stack.Screen name="facture/[id]" options={{ title: 'Facture' }} />
           <Stack.Screen name="factures" options={{ title: 'Factures' }} />
           <Stack.Screen name="apparence" options={{ title: 'Apparence' }} />
+          <Stack.Screen name="disponibilites" options={{ title: 'Disponibilités' }} />
         </Stack>
         )}
       </>
