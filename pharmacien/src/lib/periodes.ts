@@ -18,3 +18,31 @@ export function bornes(preset: Preset, debut: string, fin: string): [string, str
       return [debut, fin];
   }
 }
+
+/**
+ * Un quart appartient à la date de son début, et à elle seule.
+ *
+ * La question se pose pour les quarts de nuit : celui du 31 octobre 22 h au
+ * 1er novembre 7 h pourrait se réclamer des deux mois. Le couper en deux
+ * obligerait à répartir neuf heures et un montant entre octobre et novembre,
+ * et une facture d'octobre ne pourrait plus le porter tel quel. Il compte donc
+ * en entier en octobre — le jour où l'usager s'est présenté au travail.
+ *
+ * Les bornes sont incluses des deux côtés.
+ */
+export function quartDansPeriode(
+  quart: { date: string },
+  debut: string,
+  fin: string
+): boolean {
+  return quart.date >= debut && quart.date <= fin;
+}
+
+/** Les quarts d'une période, filtrés en mémoire par la même règle. */
+export function quartsDeLaPeriode<T extends { date: string }>(
+  quarts: T[],
+  debut: string,
+  fin: string
+): T[] {
+  return quarts.filter((q) => quartDansPeriode(q, debut, fin));
+}

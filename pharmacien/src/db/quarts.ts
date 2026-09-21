@@ -53,6 +53,11 @@ export function listerQuarts(): QuartDetaille[] {
   return db.getAllSync<QuartDetaille>(`${SELECT_DETAILLE} ORDER BY q.date, q.heure_debut`);
 }
 
+/**
+ * Les quarts d'une période. Le filtre porte sur `q.date`, la date de début :
+ * un quart de nuit appartient au jour où il commence, jamais à cheval sur
+ * deux mois. La même règle est écrite et vérifiée dans `lib/periodes`.
+ */
 export function listerQuartsPeriode(
   debut: string,
   fin: string,

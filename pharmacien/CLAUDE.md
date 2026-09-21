@@ -23,6 +23,15 @@ ce que le code fait déjà, bogues compris, et passe toujours. Il ne prouve rien
 La réponse attendue se calcule à la main, depuis la spécification, avant
 d'ouvrir le fichier concerné.
 
+## Voir le test échouer d'abord
+
+Pour chaque bogue corrigé et chaque règle nouvelle : écrire le test, le lancer,
+**le voir échouer** sur le code actuel, puis écrire le code. Un test qu'on n'a
+jamais vu échouer ne prouve rien — il peut très bien ne rien vérifier du tout.
+
+La même chose vaut pour un test déjà écrit dont on doute : réintroduire le
+défaut qu'il est censé attraper, et vérifier qu'il tombe.
+
 ## Quand un test échoue
 
 On corrige le code. Jamais la valeur attendue.
@@ -62,3 +71,13 @@ qu'on ne les redécouvre pas trois fois.
 - Un quart bascule dans « Antérieurs » quand il est fini, pas quand sa date
   est passée.
 - Toute somme sortie d'un calcul est arrondie au cent avant d'être conservée.
+- Un montant facturable se calcule et s'arrondit **une seule fois**, sur le
+  quart. Factures et statistiques additionnent des montants déjà arrondis :
+  elles ne repartent jamais des taux et des distances.
+- Dans toute la hiérarchie des valeurs par défaut — réglages, pharmacie,
+  quart — zéro est une valeur, et seul le vide hérite du niveau au-dessus.
+- « Argent » compte tout ce qui se facture : honoraires, kilométrage, per
+  diem, hébergement payé, frais ponctuels. L'hébergement fourni par la
+  pharmacie n'est pas facturé, donc n'y entre pas.
+- Un quart appartient à la date de son début, quart de nuit compris.
+- Un dépôt aimante à la demi-heure la plus proche ; la demie exacte monte.
