@@ -1,4 +1,3 @@
-import { normaliser } from '../lib/texte';
 import { filtrerLiens, parCategorie, titreDuLien, type EntreeLien, type Lien } from '../lib/liens';
 import { db } from './index';
 

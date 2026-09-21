@@ -8,7 +8,6 @@ import { definirReglage, delaisSecondaires, obtenirReglages } from '../../src/db
 import {
   deplacerQuart,
   enregistrerRappels,
-  finDuQuart,
   listerQuarts,
   obtenirQuart,
   quartVerrouille,
@@ -21,7 +20,6 @@ import {
   ajouterJours,
   ajouterMois,
   aujourdhui,
-  combiner,
   debutMois,
   formatDateLongue,
   formatJourCourt,

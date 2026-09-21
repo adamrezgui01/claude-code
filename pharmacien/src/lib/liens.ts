@@ -1,3 +1,5 @@
+import { normaliser } from './texte';
+
 /**
  * Les règles des signets cliniques : la recherche, le titre affiché, le
  * regroupement. Rien ici n'ouvre la base — c'est ce qui permet de les
@@ -21,9 +23,6 @@ export type Lien = {
 
 export type EntreeLien = Omit<Lien, 'id' | 'rang'>;
 
-function normaliser(texte: string): string {
-  return texte.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-}
 
 /**
  * Cherche dans le titre, la catégorie et les mots-clés cachés.
