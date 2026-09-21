@@ -6,12 +6,13 @@ import type {
   Reglages,
 } from '../db/types';
 import { adresseComplete, adresseDesReglages } from './adresses';
-import { arrondirArgent, produitArgent, sommeArgent } from './argent';
+import { arrondirArgent, sommeArgent } from './argent';
 import { montantHebergement } from './defauts';
-import { lireDistance, montantKilometrage } from './deplacement';
+import { lireDistance } from './deplacement';
+import { fraisParQuart, montantsDuQuart } from './montants';
 import { aujourdhui, dureeHeures, formatDateCourte } from './dates';
 import { argent, heures, nombre } from './format';
-import { heuresTravaillees, quartCompte } from './stats';
+import { heuresTravaillees, quartCompte } from './heures';
 
 /**
  * Composition d'une facture. Une facture porte sur une seule pharmacie.
@@ -52,77 +53,60 @@ export function quartsFacturables(quarts: QuartDetaille[]): QuartDetaille[] {
 
 export function calculerTotaux(o: OptionsFacture): TotauxFacture {
   const quarts = quartsFacturables(o.quarts);
+  const parQuart = fraisParQuart(o.frais);
 
-  let totalHeures = 0;
-  const honoraires: number[] = [];
-  const kilometrages: number[] = [];
-  const fixes: number[] = [];
-  const perDiems: number[] = [];
-  const joursAvecPerDiem = new Set<string>();
-  let kmTotal = 0;
-  let distanceEtabliePourAuMoinsUn = false;
+  // Chaque quart a déjà chiffré ce qu'il vaut, au cent. On additionne, on ne
+  // recalcule pas : recalculer depuis les taux et les distances donnerait un
+  // total voisin mais différent de celui des statistiques.
+  const montants = quarts.map((q) => montantsDuQuart(q, parQuart.get(q.id) ?? []));
 
-  for (const q of quarts) {
-    const duree = heuresTravaillees(q);
-    totalHeures += duree;
-    honoraires.push(produitArgent(duree, q.taux_horaire));
-
-    // Chaque quart porte son propre taux au kilomètre et sa propre bascule
-    // aller-retour, figés le jour de sa création. Une entente renégociée
-    // depuis ne réécrit pas ce qui est déjà parti chez le client.
-    const km = lireDistance(q.kilometrage);
-    const allerRetour = !!q.aller_retour;
-    const montant = montantKilometrage(km, q.taux_par_km, allerRetour);
-    if (montant !== null && km !== null) {
-      distanceEtabliePourAuMoinsUn = true;
-      kmTotal += km * (allerRetour ? 2 : 1);
-      kilometrages.push(montant);
-    }
-
-    fixes.push(q.montant_fixe_deplacement);
-    perDiems.push(q.per_diem_reclame);
-    if (q.per_diem_reclame > 0) joursAvecPerDiem.add(q.date);
-  }
+  const totalHeures = montants.reduce((t, m) => t + m.heures, 0);
+  const honoraires = sommeArgent(montants.map((m) => m.honoraires));
 
   const mode = o.inclureDeplacement ? o.pharmacie.mode_deplacement : 'aucun';
   const deplacementMontant =
-    mode === 'km' ? sommeArgent(kilometrages) : mode === 'fixe' ? sommeArgent(fixes) : 0;
+    mode === 'km'
+      ? sommeArgent(montants.map((m) => m.kilometrage ?? 0))
+      : mode === 'fixe'
+        ? sommeArgent(montants.map((m) => m.deplacementFixe))
+        : 0;
 
   // Le per diem est réclamé quart par quart : une semaine dans le Nord peut
   // porter le repas tous les jours et le trajet seulement à l'aller et au
   // retour. On additionne donc les montants plutôt que de multiplier des jours.
-  const perDiemJours = o.inclurePerDiem ? joursAvecPerDiem.size : 0;
-  const perDiemMontant = o.inclurePerDiem ? sommeArgent(perDiems) : 0;
-  const fraisExtra = o.inclureFrais ? sommeArgent(o.frais.map((f) => f.montant)) : 0;
-  const hebergement = arrondirArgent(o.hebergement);
-  const totalHonoraires = sommeArgent(honoraires);
+  const joursAvecPerDiem = new Set(
+    quarts.filter((_, i) => montants[i].perDiem > 0).map((q) => q.date)
+  );
+  const perDiemMontant = o.inclurePerDiem ? sommeArgent(montants.map((m) => m.perDiem)) : 0;
+  const fraisExtra = o.inclureFrais ? sommeArgent(montants.map((m) => m.fraisExtra)) : 0;
+
+  // L'hébergement vient des quarts comme le reste. Le montant transmis par
+  // l'écran, s'il y en a un, le remplace pour cette facture-là.
+  const hebergementDesQuarts = sommeArgent(montants.map((m) => m.hebergement));
+  const hebergement = o.hebergement > 0 ? arrondirArgent(o.hebergement) : hebergementDesQuarts;
 
   return {
     totalHeures,
-    honoraires: totalHonoraires,
+    honoraires,
     deplacementMode: mode,
-    deplacementKm: mode === 'km' && distanceEtabliePourAuMoinsUn ? kmTotal : 0,
+    deplacementKm: mode === 'km' ? montants.reduce((t, m) => t + m.km, 0) : 0,
     // Un taux par quart, donc plusieurs taux possibles sur une même facture.
     // On n'en affiche un que s'ils concordent tous.
     deplacementTaux: mode === 'km' ? tauxUnique(quarts) : 0,
     deplacementMontant,
-    perDiemJours,
+    perDiemJours: o.inclurePerDiem ? joursAvecPerDiem.size : 0,
     perDiemMontant,
     fraisExtra,
     hebergement,
-    total: sommeArgent([
-      totalHonoraires,
-      deplacementMontant,
-      perDiemMontant,
-      fraisExtra,
-      hebergement,
-    ]),
+    total: sommeArgent([honoraires, deplacementMontant, perDiemMontant, fraisExtra, hebergement]),
   };
 }
 
 /** Le taux au kilomètre, s'il est le même sur tous les quarts. Sinon zéro. */
 function tauxUnique(quarts: QuartDetaille[]): number {
-  const taux = new Set(quarts.filter((q) => lireDistance(q.kilometrage) !== null).map((q) => q.taux_par_km));
+  const taux = new Set(
+    quarts.filter((q) => lireDistance(q.kilometrage) !== null).map((q) => q.taux_par_km)
+  );
   return taux.size === 1 ? [...taux][0] : 0;
 }
 

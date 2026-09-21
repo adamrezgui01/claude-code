@@ -1,5 +1,6 @@
 import type { ModeDeplacement, Pharmacie, Reglages } from '../db/types';
 import { DISTANCE_INCONNUE, lireDistance } from './deplacement';
+import { heriter, lireHeritable } from './heritage';
 
 /**
  * La chaîne des valeurs par défaut : réglages généraux, puis pharmacie, puis
@@ -14,11 +15,16 @@ import { DISTANCE_INCONNUE, lireDistance } from './deplacement';
  */
 
 /** Ce qu'une nouvelle fiche de pharmacie reprend des réglages généraux. */
-export function defautsPharmacie(reglages: Pick<Reglages, 'taux_par_km'>): {
+export function defautsPharmacie(reglages: Pick<Reglages, 'taux_par_km' | 'per_diem'>): {
   taux_par_km: number;
+  per_diem: number;
   distance_km: number;
 } {
-  return { taux_par_km: reglages.taux_par_km, distance_km: DISTANCE_INCONNUE };
+  return {
+    taux_par_km: reglages.taux_par_km,
+    per_diem: reglages.per_diem,
+    distance_km: DISTANCE_INCONNUE,
+  };
 }
 
 export type DefautsQuart = {
@@ -28,6 +34,8 @@ export type DefautsQuart = {
   kilometrage: number | null;
   montant_fixe_deplacement: number;
   per_diem_reclame: number;
+  /** Hébergement payé par la pharmacie. Fourni, il ne vaut rien. */
+  hebergement_reclame: number;
   pause_minutes: number;
   pause_payee: number;
   mode_deplacement: ModeDeplacement;
@@ -39,15 +47,21 @@ export type DefautsQuart = {
  * facturer, et une modification de la fiche changerait rétroactivement des
  * quarts vieux de plusieurs mois.
  */
-export function defautsQuart(pharmacie: Pharmacie): DefautsQuart {
+export function defautsQuart(
+  pharmacie: Pharmacie,
+  reglages: Pick<Reglages, 'taux_par_km' | 'per_diem'>
+): DefautsQuart {
   return {
     taux_horaire: pharmacie.taux_horaire,
-    taux_par_km: pharmacie.taux_par_km,
+    // Un zéro sur la fiche est un vrai taux : cette pharmacie ne rembourse
+    // pas. Seul un champ laissé vide va chercher le taux général.
+    taux_par_km: heriter(lireHeritable(pharmacie.taux_par_km), reglages.taux_par_km),
     kilometrage:
       pharmacie.mode_deplacement === 'km' ? lireDistance(pharmacie.distance_km) : null,
     montant_fixe_deplacement:
       pharmacie.mode_deplacement === 'fixe' ? pharmacie.montant_fixe_deplacement : 0,
-    per_diem_reclame: pharmacie.per_diem,
+    per_diem_reclame: heriter(lireHeritable(pharmacie.per_diem), reglages.per_diem),
+    hebergement_reclame: montantHebergement(pharmacie),
     pause_minutes: pharmacie.pause_minutes,
     pause_payee: pharmacie.pause_payee,
     mode_deplacement: pharmacie.mode_deplacement,

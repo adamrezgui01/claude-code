@@ -22,6 +22,7 @@ export function unQuart(champs: Partial<QuartDetaille> = {}): QuartDetaille {
     aller_retour: 1,
     montant_fixe_deplacement: 0,
     per_diem_reclame: 0,
+    hebergement_reclame: 0,
     pause_minutes: 0,
     pause_payee: 0,
     notes: '',
@@ -77,6 +78,7 @@ export function unePharmacie(champs: Partial<Pharmacie> = {}): Pharmacie {
 export function desReglages(champs: Partial<Reglages> = {}): Reglages {
   return {
     taux_par_km: 0.55,
+    per_diem: 0,
     nom: 'Pharmacien remplaçant',
     permis_opq: '12345',
     adresse_numero_civique: '',

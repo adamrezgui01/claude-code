@@ -1,25 +1,13 @@
 import type { FraisExtra, Quart, QuartDetaille } from '../db/types';
-import { produitArgent, sommeArgent } from './argent';
+import { sommeArgent } from './argent';
 import { combiner, dureeHeures } from './dates';
-import { lireDistance, montantKilometrage } from './deplacement';
+import { heuresTravaillees, quartCompte } from './heures';
+import { fraisParQuart, montantsDuQuart } from './montants';
 
-/**
- * Heures effectivement travaillées : les heures réelles si l'usager les a
- * corrigées, les heures prévues sinon, moins la pause repas si elle n'est pas
- * payée.
- */
-export function heuresTravaillees(quart: Quart): number {
-  if (quart.annule) return 0;
-  const debut = quart.heure_debut_reelle || quart.heure_debut;
-  const fin = quart.heure_fin_reelle || quart.heure_fin;
-  const brut = dureeHeures(debut, fin);
-  const pause = quart.pause_payee ? 0 : quart.pause_minutes / 60;
-  return Math.max(0, brut - pause);
-}
+// Réexportées : elles vivaient ici avant de descendre d'un étage, et une
+// douzaine d'écrans les appellent depuis cette adresse.
+export { heuresTravaillees, quartCompte };
 
-export function quartCompte(quart: Quart): boolean {
-  return !quart.annule;
-}
 
 export type StatsPharmacie = {
   pharmacie_id: number;
@@ -31,6 +19,7 @@ export type StatsPharmacie = {
   honoraires: number;
   deplacement: number;
   perDiem: number;
+  hebergement: number;
   fraisExtra: number;
   revenu: number;
 };
@@ -43,6 +32,7 @@ export type Statistiques = {
   montantHoraire: number;
   montantDeplacement: number;
   montantPerDiem: number;
+  montantHebergement: number;
   montantFraisExtra: number;
   revenuEstime: number;
   parPharmacie: StatsPharmacie[];
@@ -57,12 +47,16 @@ export function calculerStatistiques(
   frais: (FraisExtra & { pharmacie_id: number })[] = []
 ): Statistiques {
   const retenus = quarts.filter(quartCompte);
+  const parQuart = fraisParQuart(frais);
   const parPharmacie = new Map<number, StatsPharmacie>();
   const joursParPharmacie = new Map<number, Set<string>>();
   const joursGlobaux = new Set<string>();
 
   for (const q of retenus) {
-    const duree = heuresTravaillees(q);
+    // Le quart a déjà chiffré ce qu'il vaut. On additionne ses montants tels
+    // quels : c'est la seule façon pour que l'écran des statistiques et une
+    // facture couvrant les mêmes quarts tombent sur le même chiffre.
+    const m = montantsDuQuart(q, parQuart.get(q.id) ?? []);
     const stats = parPharmacie.get(q.pharmacie_id) ?? {
       pharmacie_id: q.pharmacie_id,
       nom: q.pharmacie_nom,
@@ -73,39 +67,33 @@ export function calculerStatistiques(
       honoraires: 0,
       deplacement: 0,
       perDiem: 0,
+      hebergement: 0,
       fraisExtra: 0,
       revenu: 0,
     };
 
     stats.quarts += 1;
-    stats.heures += duree;
-    stats.honoraires = sommeArgent([stats.honoraires, produitArgent(duree, q.taux_horaire)]);
+    stats.heures += m.heures;
+    stats.honoraires = sommeArgent([stats.honoraires, m.honoraires]);
     if (q.pharmacie_mode_deplacement === 'km') {
-      // Le taux et la bascule aller-retour viennent du quart, pas de la fiche :
-      // ce sont ceux qui s'appliquaient le jour où il a été créé.
-      const km = lireDistance(q.kilometrage);
-      const montant = montantKilometrage(km, q.taux_par_km, !!q.aller_retour);
-      if (km !== null && montant !== null) {
-        stats.km += km * (q.aller_retour ? 2 : 1);
-        stats.deplacement = sommeArgent([stats.deplacement, montant]);
-      }
+      stats.km += m.km;
+      stats.deplacement = sommeArgent([stats.deplacement, m.kilometrage ?? 0]);
     } else if (q.pharmacie_mode_deplacement === 'fixe') {
-      stats.deplacement = sommeArgent([stats.deplacement, q.montant_fixe_deplacement]);
+      stats.deplacement = sommeArgent([stats.deplacement, m.deplacementFixe]);
     }
 
     const jours = joursParPharmacie.get(q.pharmacie_id) ?? new Set<string>();
+    // Un quart appartient à la date de son début : celui de 22 h à 7 h compte
+    // le jour où il commence, jamais à cheval sur deux mois.
     jours.add(q.date);
     joursParPharmacie.set(q.pharmacie_id, jours);
     joursGlobaux.add(q.date);
 
     stats.jours = jours.size;
-    stats.perDiem = sommeArgent([stats.perDiem, q.per_diem_reclame]);
+    stats.perDiem = sommeArgent([stats.perDiem, m.perDiem]);
+    stats.hebergement = sommeArgent([stats.hebergement, m.hebergement]);
+    stats.fraisExtra = sommeArgent([stats.fraisExtra, m.fraisExtra]);
     parPharmacie.set(q.pharmacie_id, stats);
-  }
-
-  for (const f of frais) {
-    const stats = parPharmacie.get(f.pharmacie_id);
-    if (stats) stats.fraisExtra = sommeArgent([stats.fraisExtra, f.montant]);
   }
 
   let totalHeures = 0;
@@ -113,15 +101,17 @@ export function calculerStatistiques(
   let montantHoraire = 0;
   let montantDeplacement = 0;
   let montantPerDiem = 0;
+  let montantHebergement = 0;
   let montantFraisExtra = 0;
 
   for (const stats of parPharmacie.values()) {
-    // L'hébergement n'apparaît nulle part ici : fourni, il ne vaut rien ;
-    // payé, il se règle facture par facture et n'est pas un revenu du quart.
+    // « Argent » compte tout ce qui se facture. L'hébergement fourni par la
+    // pharmacie vaut déjà zéro sur le quart : il n'entre donc nulle part.
     stats.revenu = sommeArgent([
       stats.honoraires,
       stats.deplacement,
       stats.perDiem,
+      stats.hebergement,
       stats.fraisExtra,
     ]);
     totalHeures += stats.heures;
@@ -129,6 +119,7 @@ export function calculerStatistiques(
     montantHoraire = sommeArgent([montantHoraire, stats.honoraires]);
     montantDeplacement = sommeArgent([montantDeplacement, stats.deplacement]);
     montantPerDiem = sommeArgent([montantPerDiem, stats.perDiem]);
+    montantHebergement = sommeArgent([montantHebergement, stats.hebergement]);
     montantFraisExtra = sommeArgent([montantFraisExtra, stats.fraisExtra]);
   }
 
@@ -140,11 +131,13 @@ export function calculerStatistiques(
     montantHoraire,
     montantDeplacement,
     montantPerDiem,
+    montantHebergement,
     montantFraisExtra,
     revenuEstime: sommeArgent([
       montantHoraire,
       montantDeplacement,
       montantPerDiem,
+      montantHebergement,
       montantFraisExtra,
     ]),
     parPharmacie: [...parPharmacie.values()].sort((a, b) => b.heures - a.heures),

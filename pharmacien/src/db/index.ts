@@ -63,6 +63,9 @@ const SCHEMA = `
     aller_retour INTEGER NOT NULL DEFAULT 1,
     montant_fixe_deplacement REAL NOT NULL DEFAULT 0,
     per_diem_reclame REAL NOT NULL DEFAULT 0,
+    /* Hébergement payé par la pharmacie pour ce quart. Fourni, il vaut zéro :
+       rien n'est versé, donc rien n'est facturé. */
+    hebergement_reclame REAL NOT NULL DEFAULT 0,
     pause_minutes INTEGER NOT NULL DEFAULT 0,
     pause_payee INTEGER NOT NULL DEFAULT 0,
     notes TEXT NOT NULL DEFAULT '',
@@ -89,6 +92,8 @@ const SCHEMA = `
   CREATE TABLE IF NOT EXISTS reglages (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     taux_par_km REAL NOT NULL DEFAULT 0.55,
+    /* Per diem habituel, celui qu'une nouvelle pharmacie reprend. */
+    per_diem REAL NOT NULL DEFAULT 0,
     nom TEXT NOT NULL DEFAULT '',
     permis_opq TEXT NOT NULL DEFAULT '',
     adresse_numero_civique TEXT NOT NULL DEFAULT '',
@@ -197,11 +202,13 @@ export function initialiserBase(): number[] {
   ajouterColonne('reglages', 'liens_amorces', 'INTEGER NOT NULL DEFAULT 0');
   ajouterColonne('reglages', 'delai_relance_factures', 'INTEGER NOT NULL DEFAULT 30');
   ajouterColonne('reglages', 'aide_horaire_vues', 'INTEGER NOT NULL DEFAULT 0');
+  ajouterColonne('reglages', 'per_diem', 'REAL NOT NULL DEFAULT 0');
   ajouterColonne('quarts', 'numero_facture', "TEXT NOT NULL DEFAULT ''");
   ajouterColonne('pharmacies', 'hebergement_montant', 'REAL NOT NULL DEFAULT 0');
   ajouterColonne('pharmacies', 'hebergement_fourni', 'INTEGER NOT NULL DEFAULT 0');
   ajouterColonne('factures', 'notification_relance', 'TEXT');
   ajouterColonne('factures', 'relance_faite', 'INTEGER NOT NULL DEFAULT 0');
+  ajouterColonne('quarts', 'hebergement_reclame', 'REAL NOT NULL DEFAULT 0');
 
   // Le taux au kilomètre descend sur le quart. Les quarts déjà en base
   // reprennent celui de leur pharmacie : c'est celui qui les a facturés

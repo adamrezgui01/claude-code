@@ -54,6 +54,24 @@ describe('kilométrage', () => {
     expect(etatDistance(0)).toEqual({ connue: true, km: 0 });
   });
 
+  test('un zéro enregistré se relit comme un zéro, pas comme un inconnu', () => {
+    // La pharmacie est au coin de la rue, ou le trajet n'est pas remboursé :
+    // c'est un fait établi. Seul un nombre négatif dit « jamais calculée ».
+    expect(lireDistance(0)).toBe(0);
+    expect(distanceEtablie(lireDistance(0))).toBe(true);
+    expect(lireDistance(-1)).toBeNull();
+  });
+
+  test('un quart à zéro kilomètre facture 0,00 $ et reste une valeur établie', () => {
+    const pharmacie = unePharmacie({ mode_deplacement: 'km' });
+    const t = totauxDe([unQuart({ kilometrage: 0, taux_par_km: 0.55 })], pharmacie);
+    expect(t.deplacementMontant).toBe(0);
+    expect(t.deplacementKm).toBe(0);
+    // Et la facture porte bien une ligne de kilométrage, contrairement au cas
+    // d'une distance inconnue.
+    expect(etatDistance(lireDistance(0))).toEqual({ connue: true, km: 0 });
+  });
+
   test('une distance inconnue est un état à part, et ne vaut jamais 0 $', () => {
     expect(lireDistance(-1)).toBeNull();
     expect(distanceEtablie(null)).toBe(false);

@@ -3,6 +3,7 @@ import type { DocumentProfessionnel, FormationContinue, Reglages } from './types
 
 const REGLAGES_VIDES: Reglages = {
   taux_par_km: 0.55,
+  per_diem: 0,
   nom: '',
   permis_opq: '',
   adresse_numero_civique: '',

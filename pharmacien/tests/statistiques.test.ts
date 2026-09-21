@@ -82,11 +82,17 @@ describe('heures et pause', () => {
 describe('hébergement', () => {
   test('un hébergement fourni est absent de tous les totaux', () => {
     const pharmacie = unePharmacie({ hebergement_montant: 120, hebergement_fourni: 1 });
+    // Fourni, il ne vaut rien : le quart hérite donc de zéro, et zéro entre
+    // partout sans rien changer.
     expect(montantHebergement(pharmacie)).toBe(0);
-    // Les statistiques ne portent aucune ligne d'hébergement : ce n'est pas un
-    // revenu du quart, et fourni, ce n'est pas un revenu du tout.
-    const stats = calculerStatistiques([unQuart()]);
-    expect(Object.keys(stats)).not.toContain('montantHebergement');
+    const stats = calculerStatistiques([unQuart({ hebergement_reclame: 0 })]);
+    expect(stats.montantHebergement).toBe(0);
+  });
+
+  test('un hébergement payé entre dans « Argent »', () => {
+    const stats = calculerStatistiques([unQuart({ taux_horaire: 0, hebergement_reclame: 120 })]);
+    expect(stats.montantHebergement).toBe(120);
+    expect(stats.revenuEstime).toBe(120);
   });
 });
 

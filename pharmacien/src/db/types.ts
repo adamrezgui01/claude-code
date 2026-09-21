@@ -25,6 +25,11 @@ export type Pharmacie = Adresse & {
   /** Logiciel de pharmacie utilisé sur place. Vide si non renseigné. */
   logiciel: string;
   taux_horaire: number;
+  /**
+   * Per diem de cette pharmacie. Zéro veut dire « elle n'en paie pas » ;
+   * un nombre négatif veut dire « rien de réglé ici », et le per diem général
+   * s'applique alors.
+   */
   per_diem: number;
   mode_deplacement: ModeDeplacement;
   /**
@@ -32,6 +37,10 @@ export type Pharmacie = Adresse & {
    * qu'elle n'a pas été calculée.
    */
   distance_km: number;
+  /**
+   * Taux au kilomètre de cette pharmacie. Zéro veut dire « elle ne rembourse
+   * pas » ; un nombre négatif veut dire « rien de réglé ici ».
+   */
   taux_par_km: number;
   /** 1 quand le trajet compte dans les deux sens. */
   aller_retour: number;
@@ -83,6 +92,11 @@ export type Quart = {
   montant_fixe_deplacement: number;
   /** Per diem réclamé pour ce quart. Prérempli depuis la pharmacie. */
   per_diem_reclame: number;
+  /**
+   * Hébergement réclamé pour ce quart. Prérempli depuis la pharmacie ; un
+   * logement fourni vaut zéro, puisque rien n'est versé.
+   */
+  hebergement_reclame: number;
   pause_minutes: number;
   pause_payee: number;
   notes: string;
@@ -124,6 +138,8 @@ export type FraisExtra = {
 export type Reglages = {
   /** Sert à préremplir une nouvelle fiche de pharmacie. */
   taux_par_km: number;
+  /** Per diem habituel. Une pharmacie qui laisse son champ vide le reprend. */
+  per_diem: number;
   nom: string;
   permis_opq: string;
   /**

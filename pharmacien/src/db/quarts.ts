@@ -39,6 +39,7 @@ const CHAMPS = [
   'aller_retour',
   'montant_fixe_deplacement',
   'per_diem_reclame',
+  'hebergement_reclame',
   'pause_minutes',
   'pause_payee',
   'notes',

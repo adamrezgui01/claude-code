@@ -21,21 +21,21 @@ describe('valeurs par défaut', () => {
 
   test('un nouveau quart reprend le taux au kilomètre de sa pharmacie', () => {
     const pharmacie = unePharmacie({ mode_deplacement: 'km', taux_par_km: 0.6, distance_km: 40 });
-    const defauts = defautsQuart(pharmacie);
+    const defauts = defautsQuart(pharmacie, desReglages());
     expect(defauts.taux_par_km).toBeCloseTo(0.6, 4);
     expect(defauts.kilometrage).toBe(40);
   });
 
   test('un nouveau quart hérite de la pause repas de sa pharmacie', () => {
     const pharmacie = unePharmacie({ pause_minutes: 60, pause_payee: 0 });
-    const defauts = defautsQuart(pharmacie);
+    const defauts = defautsQuart(pharmacie, desReglages());
     expect(defauts.pause_minutes).toBe(60);
     expect(defauts.pause_payee).toBe(0);
   });
 
   test('un quart modifié à 0,70 $/km ne touche pas sa pharmacie', () => {
     const pharmacie = unePharmacie({ mode_deplacement: 'km', taux_par_km: 0.6, distance_km: 40 });
-    const quart = unQuart({ ...defautsQuart(pharmacie), kilometrage: 40, taux_par_km: 0.7 });
+    const quart = unQuart({ ...defautsQuart(pharmacie, desReglages()), kilometrage: 40, taux_par_km: 0.7 });
     expect(montantKilometrage(40, quart.taux_par_km, true)).toBeCloseTo(56, 2);
     // La fiche n'a pas bougé.
     expect(pharmacie.taux_par_km).toBeCloseTo(0.6, 4);
@@ -47,7 +47,7 @@ describe('valeurs par défaut', () => {
 
     // L'entente est renégociée.
     const renegociee = { ...pharmacie, taux_par_km: 0.65 };
-    const nouveau = unQuart({ id: 2, ...defautsQuart(renegociee), kilometrage: 40 });
+    const nouveau = unQuart({ id: 2, ...defautsQuart(renegociee, desReglages()), kilometrage: 40 });
 
     const facture = (quart: typeof ancien) =>
       calculerTotaux({

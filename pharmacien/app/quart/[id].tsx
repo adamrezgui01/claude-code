@@ -112,6 +112,8 @@ export default function FormulaireQuart() {
   const [allerRetour, setAllerRetour] = useState(true);
   const [montantFixe, setMontantFixe] = useState('');
   const [perDiem, setPerDiem] = useState('');
+  /** Hérité de la pharmacie ; fourni par elle, il vaut zéro. */
+  const [hebergement, setHebergement] = useState('');
   const [notes, setNotes] = useState('');
   const [frais, setFrais] = useState<FraisExtra[]>([]);
 
@@ -164,6 +166,7 @@ export default function FormulaireQuart() {
         setAllerRetour(!!q.aller_retour);
         setMontantFixe(q.montant_fixe_deplacement ? `${q.montant_fixe_deplacement}` : '');
         setPerDiem(q.per_diem_reclame ? `${q.per_diem_reclame}` : '');
+        setHebergement(q.hebergement_reclame ? `${q.hebergement_reclame}` : '');
         setNotes(q.notes);
 
         if (quartId) {
@@ -206,7 +209,7 @@ export default function FormulaireQuart() {
     const p = obtenirPharmacie(id);
     if (!p) return;
     // Un seul endroit décide de ce qu'un quart reprend de sa pharmacie.
-    const defauts = defautsQuart(p);
+    const defauts = defautsQuart(p, reglages);
     setModeDeplacement(defauts.mode_deplacement);
     if (defauts.taux_horaire) setTaux(`${defauts.taux_horaire}`);
     setPause(defauts.pause_minutes);
@@ -216,6 +219,7 @@ export default function FormulaireQuart() {
     setAllerRetour(!!p.aller_retour);
     setMontantFixe(defauts.montant_fixe_deplacement ? `${defauts.montant_fixe_deplacement}` : '');
     setPerDiem(defauts.per_diem_reclame ? `${defauts.per_diem_reclame}` : '');
+    setHebergement(defauts.hebergement_reclame ? `${defauts.hebergement_reclame}` : '');
     setAEviter(!!p.a_eviter);
 
     // Filet de sécurité : si la distance n'a jamais été calculée, on la calcule
@@ -313,6 +317,7 @@ export default function FormulaireQuart() {
       aller_retour: allerRetour ? 1 : 0,
       montant_fixe_deplacement: analyserNombre(montantFixe),
       per_diem_reclame: analyserNombre(perDiem),
+      hebergement_reclame: analyserNombre(hebergement),
       pause_minutes: pause,
       pause_payee: pausePayee ? 1 : 0,
       notes: notes.trim(),
@@ -748,6 +753,15 @@ export default function FormulaireQuart() {
               label="Repas ($)"
               valeur={perDiem}
               onChange={setPerDiem}
+              clavier="decimal-pad"
+              placeholder="0,00"
+            />
+            {/* Repris de la pharmacie. Un logement qu'elle fournit ne se
+                facture pas, et arrive donc ici à zéro. */}
+            <Champ
+              label="Hébergement ($)"
+              valeur={hebergement}
+              onChange={setHebergement}
               clavier="decimal-pad"
               placeholder="0,00"
             />
