@@ -124,7 +124,8 @@ l'exige (art. 57) et que les clients sont des pharmacies québécoises.
 | {{count}} quarts de cette sélection figurent déjà sur {{factures}}. | {{count}} shifts in this selection already appear on {{factures}}. \* |
 | la facture {{liste}} | invoice {{liste}} \* |
 | les factures {{liste}} | invoices {{liste}} \* |
-| {{quarts}} de cette période figurent déjà sur {{factures}}. À la génération, vous pourrez les exclure ou remplacer la facture précédente. | {{quarts}} in this period already appear on {{factures}}. When generating, you can exclude them or replace the previous invoice. \* |
+| Un quart de cette période figure déjà sur {{factures}}. À la génération, vous pourrez l’exclure ou remplacer la facture précédente. | One shift in this period already appears on {{factures}}. When generating, you can exclude it or replace the previous invoice. \* |
+| {{count}} quarts de cette période figurent déjà sur {{factures}}. À la génération, vous pourrez les exclure ou remplacer la facture précédente. | {{count}} shifts in this period already appear on {{factures}}. When generating, you can exclude them or replace the previous invoice. \* |
 | Exclure ces quarts | Exclude those shifts \* |
 | Remplacer | Replace |
 | Envoyez chaque facture à sa pharmacie. Elles restent accessibles depuis Statistiques. | Send each invoice to its pharmacy. They stay available from Statistics. \* |
@@ -702,4 +703,4 @@ l'exige (art. 57) et que les clients sont des pharmacies québécoises.
 
 ---
 
-571 textes, dont 185 marqués à relire.
+572 textes, dont 186 marqués à relire.

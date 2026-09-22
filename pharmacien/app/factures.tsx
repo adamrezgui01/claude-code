@@ -7,7 +7,7 @@ import { listerFactures, obtenirFactures } from '../src/db/factures';
 import { obtenirReglages } from '../src/db/profil';
 import type { Facture } from '../src/db/types';
 import { formatDateCourte } from '../src/lib/dates';
-import { argent, heures, pluriel } from '../src/lib/format';
+import { argent, heures } from '../src/lib/format';
 import { ancienneteFacture, relanceDue } from '../src/lib/relanceFactures';
 import { Bouton, Doux, Etiquette, Fondu, Vide } from '../src/ui/composants';
 import { couleurs, espace, ombre, police, rayon, useAccent } from '../src/ui/theme';
@@ -49,7 +49,10 @@ export default function Factures() {
         {!nouvelles && enAttente.length > 0 && (
           <Fondu>
             <Text style={styles.resume}>
-              {argent(total)} en attente de paiement sur {pluriel(enAttente.length, 'facture')}
+              {t('facture.enAttenteResume', {
+                montant: argent(total),
+                factures: t('compteur.facture', { count: enAttente.length }),
+              })}
             </Text>
           </Fondu>
         )}

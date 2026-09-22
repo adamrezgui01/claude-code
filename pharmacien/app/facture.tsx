@@ -23,7 +23,7 @@ import {
 import { montantHebergement } from '../src/lib/defauts';
 import { bornes, type Preset } from '../src/lib/periodes';
 import { genererPdf } from '../src/lib/facturePdf';
-import { analyserNombre, argent, heures, pluriel } from '../src/lib/format';
+import { analyserNombre, argent, heures } from '../src/lib/format';
 import { programmerRelance, supprimerFactureEtRappel } from '../src/lib/relanceFactures';
 import {
   Bouton,
@@ -299,9 +299,10 @@ export default function GenererFacture() {
           {dejaFactures.length > 0 && (
             <Carte style={styles.avis}>
               <Doux>
-                {pluriel(dejaFactures.length, 'quart')} de cette période {dejaFactures.length > 1 ? 'figurent' : 'figure'} déjà sur{' '}
-                {numerosConcernes.join(', ')}. À la génération, vous pourrez les exclure ou
-                remplacer la facture précédente.
+                {t('facture.doublonAvis', {
+                  count: dejaFactures.length,
+                  factures: numerosConcernes.join(', '),
+                })}
               </Doux>
             </Carte>
           )}

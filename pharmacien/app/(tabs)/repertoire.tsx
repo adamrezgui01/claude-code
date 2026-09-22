@@ -11,7 +11,6 @@ import {
 } from '../../src/db/pharmacies';
 import type { Pharmacie } from '../../src/db/types';
 import { ligneVille } from '../../src/lib/adresses';
-import { pluriel } from '../../src/lib/format';
 import { normaliser } from '../../src/lib/texte';
 import { Bouton, Ecran, Fondu, Onglets, Vide } from '../../src/ui/composants';
 import { couleurs, espace, police, rayon } from '../../src/ui/theme';
@@ -134,6 +133,7 @@ function LignePharmacie({
   onPress: () => void;
   onEtoile: () => void;
 }) {
+  const { t } = useTextes();
   const aEviter = !!pharmacie.a_eviter;
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
@@ -159,7 +159,9 @@ function LignePharmacie({
           </Text>
         )}
       </View>
-      <Text style={styles.compte}>{pluriel(compterQuartsPharmacie(pharmacie.id), 'quart')}</Text>
+      <Text style={styles.compte}>
+        {t('compteur.quart', { count: compterQuartsPharmacie(pharmacie.id) })}
+      </Text>
     </Pressable>
   );
 }

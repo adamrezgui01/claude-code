@@ -9,7 +9,7 @@ import { quartsDeFacture } from '../../src/db/quarts';
 import type { Facture, QuartDetaille } from '../../src/db/types';
 import { formatDateCourte } from '../../src/lib/dates';
 import { partagerPdf, pdfDepuisHtml } from '../../src/lib/facturePdf';
-import { argent, heures, pluriel } from '../../src/lib/format';
+import { argent, heures } from '../../src/lib/format';
 import { ajusterRelance, ancienneteFacture, supprimerFactureEtRappel } from '../../src/lib/relanceFactures';
 import {
   Bouton,

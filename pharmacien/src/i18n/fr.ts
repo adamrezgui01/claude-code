@@ -368,8 +368,10 @@ export const fr = {
     doublonDetail_other: '{{count}} quarts de cette sélection figurent déjà sur {{factures}}.',
     surFacture_one: 'la facture {{liste}}',
     surFacture_other: 'les factures {{liste}}',
-    doublonAvis:
-      '{{quarts}} de cette période figurent déjà sur {{factures}}. À la génération, vous pourrez les exclure ou remplacer la facture précédente.',
+    doublonAvis_one:
+      'Un quart de cette période figure déjà sur {{factures}}. À la génération, vous pourrez l’exclure ou remplacer la facture précédente.',
+    doublonAvis_other:
+      '{{count}} quarts de cette période figurent déjà sur {{factures}}. À la génération, vous pourrez les exclure ou remplacer la facture précédente.',
     exclure: 'Exclure ces quarts',
     remplacer: 'Remplacer',
     envoyerChacune:

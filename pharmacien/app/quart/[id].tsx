@@ -50,7 +50,7 @@ import {
   traverseMinuit,
 } from '../../src/lib/dates';
 import { dureePrevue } from '../../src/lib/facture';
-import { analyserNombre, argent, formaterDuree, heures, pluriel } from '../../src/lib/format';
+import { analyserNombre, argent, formaterDuree, heures } from '../../src/lib/format';
 import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
 
 import { verifierQuart } from '../../src/lib/stats';
@@ -321,7 +321,7 @@ export default function FormulaireQuart() {
     }
     if (modeDeplacement === 'fixe' && fixe > 0) morceaux.push(argent(fixe));
     if (repas > 0) morceaux.push(`repas ${argent(repas)}`);
-    if (datesSerie.length > 1) morceaux.push(pluriel(datesSerie.length, 'quart'));
+    if (datesSerie.length > 1) morceaux.push(t('compteur.quart', { count: datesSerie.length }));
     return morceaux.length > 0 ? morceaux.join(' · ') : 'Aux valeurs habituelles';
   }
 

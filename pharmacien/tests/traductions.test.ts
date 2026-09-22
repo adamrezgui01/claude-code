@@ -74,6 +74,14 @@ describe('les écrans n’appellent que des clés existantes', () => {
     expect(manquantes).toEqual([]);
   });
 
+  test('aucun écran ne fabrique un pluriel lui-même', () => {
+    // `pluriel(n, 'quart')` grave la grammaire française dans un écran : elle
+    // est fausse en anglais, où zéro prend le pluriel. Les comptes passent par
+    // la section « compteur », qu'i18next accorde selon la langue.
+    const fautes = SOURCES.filter((fichier) => /\bpluriel\b/.test(readFileSync(fichier, 'utf8')));
+    expect(fautes).toEqual([]);
+  });
+
   test('plus aucun texte français en dur dans un écran', () => {
     // Les accents ne mentent pas : un « é » dans une chaîne d'écran est du
     // texte pour l'usager, pas un identifiant.

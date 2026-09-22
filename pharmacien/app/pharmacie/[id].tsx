@@ -37,7 +37,7 @@ import {
   ecrireDistance,
   lireDistance,
 } from '../../src/lib/deplacement';
-import { analyserNombre, formaterDuree, pluriel } from '../../src/lib/format';
+import { analyserNombre, formaterDuree } from '../../src/lib/format';
 import { deverrouiller } from '../../src/lib/deverrouillage';
 import { annulerRappels } from '../../src/lib/notifications';
 import {

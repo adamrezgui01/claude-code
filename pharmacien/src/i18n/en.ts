@@ -368,8 +368,10 @@ export const en: Dictionnaire = {
     doublonDetail_other: '{{count}} shifts in this selection already appear on {{factures}}.',
     surFacture_one: 'invoice {{liste}}',
     surFacture_other: 'invoices {{liste}}',
-    doublonAvis:
-      '{{quarts}} in this period already appear on {{factures}}. When generating, you can exclude them or replace the previous invoice.',
+    doublonAvis_one:
+      'One shift in this period already appears on {{factures}}. When generating, you can exclude it or replace the previous invoice.',
+    doublonAvis_other:
+      '{{count}} shifts in this period already appear on {{factures}}. When generating, you can exclude them or replace the previous invoice.',
     exclure: 'Exclude those shifts',
     remplacer: 'Replace',
     envoyerChacune:

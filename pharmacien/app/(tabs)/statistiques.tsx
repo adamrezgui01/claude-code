@@ -8,7 +8,7 @@ import { listerQuartsPeriode } from '../../src/db/quarts';
 import type { Pharmacie } from '../../src/db/types';
 import { aujourdhui, debutMois, formatDateCourte } from '../../src/lib/dates';
 import { bornes, type Preset } from '../../src/lib/periodes';
-import { argent, heures, nombre, pluriel } from '../../src/lib/format';
+import { argent, heures, nombre } from '../../src/lib/format';
 import { MESURES, moisEnValeur, serieMensuelle, type Mesure } from '../../src/lib/mensuel';
 import { calculerStatistiques } from '../../src/lib/stats';
 import { Graphique } from '../../src/ui/Graphique';
