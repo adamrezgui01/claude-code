@@ -317,6 +317,10 @@ export function initialiserBase() {
   ajouterColonne('reglages', 'veille_consultation_source', 'INTEGER NOT NULL DEFAULT 0');
   ajouterColonne('reglages', 'veille_consultation_le', "TEXT NOT NULL DEFAULT ''");
   ajouterColonne('reglages', 'veille_consultation_vue', 'INTEGER NOT NULL DEFAULT 0');
+  // Les identifiants des rappels déjà en file, pour les annuler avant d'en
+  // reposer : le texte d'une notification est figé au moment où elle est
+  // programmée, donc tout se refait à chaque recalcul.
+  ajouterColonne('reglages', 'veille_rappels', "TEXT NOT NULL DEFAULT '[]'");
   // Les liens fournis avec l'application gagnent un repère de traduction. Les
   // anciens sont réappariés sur leur adresse, qui n'a pas changé.
   if (ajouterColonne('liens', 'cle', "TEXT NOT NULL DEFAULT ''")) {

@@ -690,6 +690,13 @@ export const en: Dictionnaire = {
   },
 
   notifications: {
+    veilleTitre: 'Clinical watch',
+    veilleAReviser: 'To review: {{sujets}}',
+    veilleEtAutres_one: 'and {{count}} other',
+    veilleEtAutres_other: 'and {{count}} others',
+    veilleSources_one: '{{count}} source to check again',
+    veilleSources_other: '{{count}} sources to check again',
+    veilleSansSujet: 'Today’s reviews',
     quartDans48h: 'Shift in 48 h',
     quartDans: 'Shift in {{delai}}',
     corpsQuart: '{{pharmacie}} — {{horaire}}',

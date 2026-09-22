@@ -691,6 +691,13 @@ export const fr = {
   },
 
   notifications: {
+    veilleTitre: 'Veille clinique',
+    veilleAReviser: 'À réviser : {{sujets}}',
+    veilleEtAutres_one: 'et {{count}} autre',
+    veilleEtAutres_other: 'et {{count}} autres',
+    veilleSources_one: '{{count}} source à revérifier',
+    veilleSources_other: '{{count}} sources à revérifier',
+    veilleSansSujet: 'Vos révisions du jour',
     quartDans48h: 'Quart dans 48 h',
     quartDans: 'Quart dans {{delai}}',
     corpsQuart: '{{pharmacie}} — {{horaire}}',

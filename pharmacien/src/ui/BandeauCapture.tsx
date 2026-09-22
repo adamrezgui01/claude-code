@@ -14,6 +14,7 @@ import {
 } from '../db/veille';
 import { useTextes } from '../i18n';
 import { doitProposerBandeau, offresBandeau } from '../lib/veille/capture';
+import { replanifierVeille } from '../lib/veille/planifier';
 import { nomDuSujet } from '../lib/veille/sujets';
 import { couleurs, espace, police, rayon, useAccent } from './theme';
 
@@ -66,8 +67,14 @@ export function BandeauCapture() {
 
   useEffect(() => {
     verifier();
+    // Le retour au premier plan sert deux fois : le bandeau, et le recalcul
+    // de la notification du soir, qui a pu se périmer pendant l'absence.
+    void replanifierVeille();
     const abonnement = AppState.addEventListener('change', (etat) => {
-      if (etat === 'active') verifier();
+      if (etat === 'active') {
+        verifier();
+        void replanifierVeille();
+      }
     });
     return () => abonnement.remove();
   }, [verifier]);

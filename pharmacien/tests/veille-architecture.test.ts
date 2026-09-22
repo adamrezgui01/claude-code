@@ -16,7 +16,13 @@ import { join } from 'node:path';
  * - la reprogrammation des notifications au changement de langue, qui doit
  *   refaire celle de la veille comme les autres ;
  * - le fichier de démarrage, qui assemble toute l'application par nature, sème
- *   les données au premier lancement et pose le bandeau de capture.
+ *   les données au premier lancement et pose le bandeau de capture ;
+ * - l'écran des réglages, qui porte par construction les réglages de tous les
+ *   modules — quelqu'un qui cherche « rappel » va là, pas ailleurs.
+ *
+ * Les quatre sont des fichiers de charpente. Aucune fonction du volet
+ * organisation — un horaire, une facture, une statistique — n'en fait partie,
+ * et c'est ce que la règle protège.
  *
  * S'y ajoute une frontière, qui n'est pas une exception : la section « Liens
  * et infos utiles » est la liste des sources du volet clinique, pas un
@@ -26,6 +32,7 @@ import { join } from 'node:path';
 const EXCEPTIONS = [
   join('app', '(tabs)', 'menu.tsx'),
   join('app', '_layout.tsx'),
+  join('app', 'parametres.tsx'),
   join('src', 'lib', 'reprogrammer.ts'),
 ];
 
@@ -62,8 +69,16 @@ describe('le volet organisation ignore le volet clinique', () => {
     expect(fautifs).toEqual([]);
   });
 
-  test('les trois exceptions sont nommées, et pas une de plus', () => {
-    expect(EXCEPTIONS).toHaveLength(3);
+  test('les quatre exceptions sont nommées, et pas une de plus', () => {
+    // Quatre fichiers de charpente. Le jour où ce chiffre monte, c'est que le
+    // volet clinique déborde, et il faut regarder pourquoi.
+    expect(EXCEPTIONS).toHaveLength(4);
+  });
+
+  test('aucune fonction du volet organisation n’est dans les exceptions', () => {
+    const fonctions = ['quart', 'pharmacie', 'facture', 'statistiques', 'repertoire', 'frais'];
+    const debordements = EXCEPTIONS.filter((f) => fonctions.some((mot) => f.includes(mot)));
+    expect(debordements).toEqual([]);
   });
 
   test('la frontière se limite aux deux écrans de signets', () => {

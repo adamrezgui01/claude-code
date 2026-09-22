@@ -9,6 +9,8 @@ import * as Clipboard from 'expo-clipboard';
 
 import { facturesEnAttente } from '../src/db/factures';
 import { compterIncomprises, effacerIncomprises, listerIncomprises } from '../src/db/lecteur';
+import { definirReglageVeille, reglagesVeille } from '../src/db/veille';
+import { replanifierVeille } from '../src/lib/veille/planifier';
 import {
   definirReglage,
   delaisSecondaires,
@@ -33,6 +35,7 @@ import {
   SousTitre,
 } from '../src/ui/composants';
 import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
+import { SelecteurHeure } from '../src/ui/Selecteurs';
 
 /** Délais proposés pour le rappel secondaire, en minutes. */
 const DELAIS = [30, 60, 120, 180];
@@ -49,14 +52,40 @@ export default function Parametres() {
   const [reglages, setReglages] = useState<Reglages | null>(null);
   const [enregistre, setEnregistre] = useState(false);
   const [incomprises, setIncomprises] = useState(0);
+  const [veille, setVeille] = useState({
+    rappel: true,
+    heure: '20:00',
+    plafond: 10,
+    bandeau: true,
+    navigateur: false,
+  });
   const [copiee, setCopiee] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       setReglages(obtenirReglages());
       setIncomprises(compterIncomprises());
+      const v = reglagesVeille();
+      setVeille({
+        rappel: !!v.veille_rappel_actif,
+        heure: v.veille_heure || '20:00',
+        plafond: v.veille_plafond,
+        bandeau: !!v.veille_bandeau,
+        navigateur: !!v.veille_navigateur,
+      });
     }, [])
   );
+
+  /** Un réglage de veille prend effet tout de suite : la file est reprogrammée. */
+  function changerVeille(
+    champ: Parameters<typeof definirReglageVeille>[0],
+    valeur: string | number,
+    local: Partial<typeof veille>
+  ) {
+    definirReglageVeille(champ, valeur);
+    setVeille((actuel) => ({ ...actuel, ...local }));
+    void replanifierVeille();
+  }
 
   /**
    * La liste part dans le presse-papiers, et nulle part ailleurs. C'est
@@ -198,6 +227,42 @@ export default function Parametres() {
             ))}
           </View>
         </View>
+      </Section>
+
+      <Section titre={t('veille.reglages')}>
+        <Interrupteur
+          label={t('veille.rappelActif')}
+          detail={t('veille.rappelDetail')}
+          valeur={veille.rappel}
+          onChange={(v) => changerVeille('veille_rappel_actif', v ? 1 : 0, { rappel: v })}
+        />
+        {veille.rappel && (
+          <SelecteurHeure
+            label={t('veille.heureRappel')}
+            valeur={veille.heure}
+            onChange={(v) => changerVeille('veille_heure', v, { heure: v })}
+          />
+        )}
+        <Champ
+          nu
+          label={t('veille.plafond')}
+          valeur={`${veille.plafond}`}
+          onChange={(v) => changerVeille('veille_plafond', Number(v) || 0, { plafond: Number(v) || 0 })}
+          clavier="number-pad"
+          aide={t('veille.plafondAide')}
+        />
+        <Interrupteur
+          label={t('veille.bandeauReglage')}
+          detail={t('veille.bandeauReglageDetail')}
+          valeur={veille.bandeau}
+          onChange={(v) => changerVeille('veille_bandeau', v ? 1 : 0, { bandeau: v })}
+        />
+        <Interrupteur
+          label={t('veille.navigateurIntegre')}
+          detail={t('veille.navigateurIntegreDetail')}
+          valeur={veille.navigateur}
+          onChange={(v) => changerVeille('veille_navigateur', v ? 1 : 0, { navigateur: v })}
+        />
       </Section>
 
       <Section titre={t('dictee.journal')}>

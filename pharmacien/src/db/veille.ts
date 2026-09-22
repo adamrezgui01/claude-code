@@ -504,13 +504,14 @@ export type Reglages = {
   veille_consultation_source: number;
   veille_consultation_le: string;
   veille_consultation_vue: number;
+  veille_rappels: string;
 };
 
 export function reglagesVeille(): Reglages {
   return db.getFirstSync<Reglages>(
     `SELECT veille_rappel_actif, veille_heure, veille_plafond, veille_bandeau,
             veille_navigateur, veille_consultation_source, veille_consultation_le,
-            veille_consultation_vue
+            veille_consultation_vue, veille_rappels
      FROM reglages WHERE id = 1`
   ) as Reglages;
 }

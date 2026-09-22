@@ -17,6 +17,7 @@ import { useTextes } from '../../src/i18n';
 import { aujourdhui } from '../../src/lib/dates';
 import { titreDuLien } from '../../src/lib/liens';
 import { ESPACEMENT_SIMPLE, type Reponse } from '../../src/lib/veille/espacement';
+import { replanifierVeille } from '../../src/lib/veille/planifier';
 import { fileDuJour } from '../../src/lib/veille/file';
 import { etatContenu } from '../../src/lib/veille/peremption';
 import { questionPosee } from '../../src/lib/veille/revision';
@@ -77,6 +78,8 @@ export default function Revision() {
     );
     setRevele(false);
     setRang((r) => r + 1);
+    // La file de demain vient de changer : la notification aussi.
+    void replanifierVeille();
   }
 
   if (!note) {
