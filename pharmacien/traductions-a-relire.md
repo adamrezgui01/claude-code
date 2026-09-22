@@ -466,6 +466,13 @@ l'exige (art. 57) et que les clients sont des pharmacies québécoises.
 
 | Français | English |
 | --- | --- |
+| Veille clinique | Clinical watch |
+| À réviser : {{sujets}} | To review: {{sujets}} |
+| et {{count}} autre | and {{count}} other |
+| et {{count}} autres | and {{count}} others |
+| {{count}} source à revérifier | {{count}} source to check again |
+| {{count}} sources à revérifier | {{count}} sources to check again |
+| Vos révisions du jour | Today’s reviews |
 | Quart dans 48 h | Shift in 48 h \* |
 | Quart dans {{delai}} | Shift in {{delai}} \* |
 | {{pharmacie}} — {{horaire}} | {{pharmacie}} — {{horaire}} \* |
@@ -701,6 +708,138 @@ l'exige (art. 57) et que les clients sont des pharmacies québécoises.
 | {{mois}} | {{mois}} \* |
 | Déjà travaillé ici | Worked here before |
 
+## revision
+
+| Français | English |
+| --- | --- |
+| Révision | Review |
+| {{sujet}} · {{source}} — quel est le point clé ? | {{sujet}} · {{source}} — what is the key point? |
+| {{sujet}} — quel est le point clé ? | {{sujet}} — what is the key point? |
+| Quel est le point clé ? | What is the key point? |
+| Révéler | Reveal |
+| Je savais | I knew it |
+| À revoir | Review again |
+| Reporter | Postpone |
+| Terminé pour aujourd’hui. | Done for today. |
+| {{count}} restante | {{count}} left |
+| {{count}} restantes | {{count}} left |
+| Voir la source | View the source |
+| Sans source | No source |
+
+## sujets
+
+| Français | English |
+| --- | --- |
+| Infections urinaires | Urinary tract infections |
+| Pharyngite | Pharyngitis |
+| Conjonctivite | Conjunctivitis |
+| Hypertension | Hypertension \* |
+| Diabète | Diabetes |
+| Vaccination | Immunization |
+| Anticoagulation | Anticoagulation \* |
+| Antibiothérapie | Antibiotic therapy |
+| Insuffisance cardiaque | Heart failure |
+| Épilepsie | Epilepsy |
+| Pédiatrie | Pediatrics |
+| Grossesse et allaitement | Pregnancy and breastfeeding \* |
+
+## veille
+
+| Français | English |
+| --- | --- |
+| Ma veille clinique | My clinical watch |
+| Sujets suivis, notes, révisions | Followed subjects, notes, reviews |
+| veille, révision, note, sujet, source, clinique, watch, review, note, subject, source | watch, review, note, subject, source, clinical, veille, révision, sujet \* |
+| {{count}} révision | {{count}} review |
+| {{count}} révisions | {{count}} reviews |
+| Commencer | Start |
+| Rien à réviser aujourd’hui. | Nothing to review today. |
+| À revérifier | To check again |
+| {{count}} source | {{count}} source \* |
+| {{count}} sources | {{count}} sources \* |
+| {{count}} note | {{count}} note \* |
+| {{count}} notes | {{count}} notes \* |
+| Sujets suivis | Followed subjects |
+| Suivre un sujet | Follow a subject |
+| Ajouté comme {{motif}} le {{date}} | Added as {{motif}} on {{date}} |
+| Suivi depuis le {{date}} | Followed since {{date}} |
+| Consulté {{count}} fois | Opened {{count}} time |
+| Consulté {{count}} fois | Opened {{count}} times |
+| Jamais consulté depuis l’application | Never opened from the app |
+| lacune | a gap |
+| intérêt | an interest |
+| consultation | a consultation |
+| nouveauté | something new |
+| Sans raison précise | No particular reason |
+| En pause | Paused |
+| Mettre en pause | Pause |
+| Reprendre | Resume |
+| Retirer du suivi | Stop following |
+| Toutes les notes | All notes |
+| Chercher dans vos notes | Search your notes |
+| Aucune note pour l’instant. | No notes yet. |
+| Aucune note ne correspond. | No note matches. |
+| Écrire une note | Write a note |
+| Rien n’est suivi pour l’instant. | Nothing is being followed yet. |
+| Cette section garde ce que vous apprenez et vous le remet sous les yeux avant que vous l’oubliiez. Suivez un sujet, écrivez ce que vous retenez d’une source, et l’application s’occupe du reste. | This section keeps what you learn and brings it back before you forget it. Follow a subject, write down what you take away from a source, and the app handles the rest. |
+| Nom du sujet | Subject name |
+| Tapez pour chercher, ou créez-en un nouveau. | Type to search, or create a new one. |
+| Créer « {{nom}} » | Create “{{nom}}” |
+| Pourquoi ? | Why? |
+| Facultatif. Sert à vous rappeler pourquoi ce sujet est là. | Optional. It reminds you later why this subject is here. |
+| Sources | Sources \* |
+| Notes | Notes \* |
+| Historique | History |
+| Suivi ajouté | Started following |
+| Suivi retiré | Stopped following |
+| Source consultée | Source opened |
+| Note écrite | Note written |
+| Version de la source changée | Source version changed |
+| Note revalidée | Note revalidated |
+| Ce que tu retiens ? | What do you take away? |
+| Écrire une note | Write a note |
+| Suivre ce sujet | Follow this subject |
+| Ne plus proposer pour cette source | Stop offering for this source |
+| Le point clé | The key point |
+| Pas de renseignements sur un patient. | No patient information. |
+| Une question, si vous voulez vous tester | A question, if you want to test yourself |
+| Quelle durée de traitement ? | How long is the treatment? |
+| Sujets | Subjects |
+| Source | Source \* |
+| Aucune source | No source |
+| Version {{version}}, figée le jour de la note | Version {{version}}, recorded the day of the note |
+| Supprimer la note | Delete the note |
+| Supprimer cette note ? | Delete this note? |
+| Cette action est définitive. | This cannot be undone. |
+| Il manque le point clé | The key point is missing |
+| Écrivez ce que vous retenez, même en une ligne. | Write what you take away, even in one line. |
+| Sources à revérifier | Sources to check again |
+| Notes à revérifier | Notes to check again |
+| Rien à revérifier. | Nothing to check again. |
+| Vérifiée le {{date}} | Checked on {{date}} |
+| Jamais vérifiée | Never checked |
+| Ouvrir | Open |
+| Toujours à jour | Still current |
+| Nouvelle version | New version |
+| Quelle version ? | Which version? |
+| L’année ou le numéro inscrit sur le document : « 2026 », « v3 ». | The year or number printed on the document: “2026”, “v3”. |
+| La source est passée à « {{version}} » | The source moved to “{{version}}” |
+| Écrite il y a plus d’un an | Written more than a year ago |
+| Toujours valide | Still valid |
+| Modifier | Edit |
+| {{count}} note est passée à « à revérifier » | {{count}} note moved to “to check again” |
+| {{count}} notes sont passées à « à revérifier » | {{count}} notes moved to “to check again” |
+| Veille clinique | Clinical watch |
+| Rappel quotidien | Daily reminder |
+| Un seul par jour, et seulement s’il y a quelque chose à faire | One a day at most, and only when there is something to do |
+| À quelle heure ? | At what time? |
+| Révisions par jour | Reviews per day |
+| Les révisions en trop glissent au lendemain. Dix se font en cinq minutes. | Extras slide to the next day. Ten take five minutes. |
+| Proposer d’écrire une note | Offer to write a note |
+| Au retour d’un lien consulté depuis l’application | When you come back from a link opened in the app |
+| Ouvrir les liens dans l’application | Open links inside the app |
+| Sinon ils s’ouvrent dans votre navigateur, avec vos identifiants et le mode lecture. | Otherwise they open in your browser, with your logins and reader mode. |
+
 ---
 
-572 textes, dont 186 marqués à relire.
+696 textes, dont 197 marqués à relire.
