@@ -81,3 +81,12 @@ qu'on ne les redécouvre pas trois fois.
   pharmacie n'est pas facturé, donc n'y entre pas.
 - Un quart appartient à la date de son début, quart de nuit compris.
 - Un dépôt aimante à la demi-heure la plus proche ; la demie exacte monte.
+- Le lecteur de commandes ne crée jamais rien. Il remplit une fiche, l'usager
+  confirme, et c'est la création ordinaire qui s'exécute — mêmes défauts,
+  mêmes contrôles de chevauchement, même règle de minuit.
+- Quand deux lectures d'une phrase tiennent debout, on pose une question avec
+  des réponses à toucher. Une supposition silencieuse qui se trompe d'une
+  demi-journée coûte un déplacement inutile ; une question coûte un geste.
+- Un texte affiché vit dans `src/i18n`, jamais en dur dans un écran. La
+  facture fait exception dans l'autre sens : elle est toujours en français,
+  quelle que soit la langue choisie.

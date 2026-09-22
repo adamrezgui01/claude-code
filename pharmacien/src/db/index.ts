@@ -162,6 +162,16 @@ const SCHEMA = `
     cree_le TEXT NOT NULL
   );
 
+  /* Les phrases que le lecteur de commandes n'a pas comprises. Elles ne
+     servent qu'à l'usager : les relire lui dit dans quels mots l'application
+     est sourde, et le bouton « Copier la liste » les sort d'ici. */
+  CREATE TABLE IF NOT EXISTS dictees (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    phrase TEXT NOT NULL,
+    raison TEXT NOT NULL DEFAULT '',
+    le TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS liens (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     /* Repère de traduction, vide pour un lien ajouté par l'usager. */

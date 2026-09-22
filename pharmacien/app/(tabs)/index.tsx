@@ -3,6 +3,7 @@ import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
+import { noterIncomprise } from '../../src/db/lecteur';
 import { listerPharmacies } from '../../src/db/pharmacies';
 import { definirReglage, delaisSecondaires, obtenirReglages } from '../../src/db/profil';
 import {
@@ -32,7 +33,9 @@ import {
 } from '../../src/lib/rappelFactures';
 import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
 import { detecterChevauchements } from '../../src/lib/stats';
+import type { ContexteLecteur, Fiche } from '../../src/lib/lecteur';
 import { Calendrier } from '../../src/ui/Calendrier';
+import { Dictee } from '../../src/ui/Dictee';
 import {
   BandeauAide,
   Bouton,
@@ -45,7 +48,7 @@ import {
 } from '../../src/ui/composants';
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { Pageur } from '../../src/ui/Pageur';
-import { couleurs, espace, police, useAccent } from '../../src/ui/theme';
+import { accentPale, couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 import { VueCarte, type PointCarte } from '../../src/ui/VueCarte';
 import { VueColonnes } from '../../src/ui/VueColonnes';
 
@@ -68,6 +71,7 @@ export default function Horaire() {
   const { height } = useWindowDimensions();
   const hauteurAgenda = Math.max(280, height - 400);
   const [quarts, setQuarts] = useState<QuartDetaille[]>([]);
+  const [dictee, setDictee] = useState(false);
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
   const [vue, setVue] = useState<Vue>('agenda');
   // Le mois s'ouvre en premier : c'est lui qui donne la vue d'ensemble.
@@ -262,6 +266,33 @@ export default function Horaire() {
 
   const semaine = semaineDe(jour);
 
+  /**
+   * Ce que le lecteur de commandes a le droit de savoir : le répertoire, et
+   * les quarts déjà entrés — de quoi reconnaître une pharmacie et reprendre
+   * les heures habituelles. Rien d'autre ne sort d'ici.
+   */
+  const contexteLecteur: ContexteLecteur = useMemo(
+    () => ({
+      aujourdhui: aujourdhui(),
+      // Le répertoire ne sépare pas la bannière du nom : « Familiprix
+      // Gatineau » est un seul champ. Le lecteur y cherche donc les deux.
+      pharmacies: pharmacies.map((p) => ({
+        id: p.id,
+        nom: p.nom,
+        banniere: null,
+        ville: p.ville,
+        rue: p.rue,
+      })),
+      quarts: quarts.map((q) => ({
+        pharmacieId: q.pharmacie_id,
+        date: q.date,
+        heureDebut: q.heure_debut,
+        heureFin: q.heure_fin,
+      })),
+    }),
+    [pharmacies, quarts]
+  );
+
   return (
     <ScrollView contentContainerStyle={styles.contenu} scrollEnabled={!duplication}>
       {rappelFactures && (
@@ -392,11 +423,16 @@ export default function Horaire() {
             </>
           )}
 
-          <Bouton
-            titre="Ajouter un quart"
-            icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
-            onPress={() => router.push(`/quart/nouveau?date=${jour}`)}
-          />
+          <View style={styles.ligneAjout}>
+            <View style={styles.ajoutPrincipal}>
+              <Bouton
+                titre="Ajouter un quart"
+                icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
+                onPress={() => router.push(`/quart/nouveau?date=${jour}`)}
+              />
+            </View>
+            <BoutonMicro onPress={() => setDictee(true)} />
+          </View>
         </Fondu>
       )}
 
@@ -462,11 +498,16 @@ export default function Horaire() {
             ))
           )}
 
-          <Bouton
-            titre="Ajouter un quart"
-            icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
-            onPress={() => router.push('/quart/nouveau')}
-          />
+          <View style={styles.ligneAjout}>
+            <View style={styles.ajoutPrincipal}>
+              <Bouton
+                titre="Ajouter un quart"
+                icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
+                onPress={() => router.push('/quart/nouveau')}
+              />
+            </View>
+            <BoutonMicro onPress={() => setDictee(true)} />
+          </View>
         </Fondu>
       )}
 
@@ -484,13 +525,29 @@ export default function Horaire() {
               }
             />
           )}
-          <Bouton
-            titre="Ajouter un quart"
-            icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
-            onPress={() => router.push(`/quart/nouveau?date=${jour}`)}
-          />
+          <View style={styles.ligneAjout}>
+            <View style={styles.ajoutPrincipal}>
+              <Bouton
+                titre="Ajouter un quart"
+                icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
+                onPress={() => router.push(`/quart/nouveau?date=${jour}`)}
+              />
+            </View>
+            <BoutonMicro onPress={() => setDictee(true)} />
+          </View>
         </Fondu>
       )}
+
+      <Dictee
+        ouvert={dictee}
+        contexte={contexteLecteur}
+        onFermer={() => setDictee(false)}
+        onQuart={(fiche) => router.push(`/quart/nouveau?${parametresDuQuart(fiche)}`)}
+        onPharmacie={(recherche) =>
+          router.push(`/pharmacie/nouvelle?recherche=${encodeURIComponent(recherche)}`)
+        }
+        onIncomprise={noterIncomprise}
+      />
 
       <FicheAide ouvert={aideOuverte} titre="Les gestes de l’agenda" onFermer={() => setAideOuverte(false)}>
         <Doux>
@@ -513,7 +570,60 @@ export default function Horaire() {
   );
 }
 
+/**
+ * Le micro, carré, à côté du bouton d'ajout. Il n'écoute rien lui-même : il
+ * ouvre un champ de texte, et c'est le micro du clavier qui écrit dedans.
+ */
+function BoutonMicro({ onPress }: { onPress: () => void }) {
+  const accent = useAccent();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityLabel="Dicter un quart"
+      style={({ pressed }) => [
+        styles.micro,
+        { borderColor: accent },
+        pressed && { backgroundColor: accentPale(accent) },
+      ]}>
+      <Ionicons name="mic-outline" size={22} color={accent} />
+    </Pressable>
+  );
+}
+
+/**
+ * La fiche lue devient des paramètres de route : le formulaire de quart reste
+ * le seul endroit où un quart se crée, et il s'ouvre pré-rempli comme après
+ * n'importe quel autre geste.
+ */
+function parametresDuQuart(fiche: Extract<Fiche, { action: 'quart' }>): string {
+  const parametres = new URLSearchParams();
+  if (fiche.dates.length > 0) parametres.set('date', fiche.dates[0]);
+  else if (fiche.calendrier) parametres.set('date', fiche.calendrier);
+  if (fiche.dates.length > 1) parametres.set('jours', fiche.dates.join(','));
+  if (fiche.heureDebut) parametres.set('heure', fiche.heureDebut);
+  if (fiche.heureFin) parametres.set('fin', fiche.heureFin);
+  if (fiche.pharmacieId !== null) parametres.set('pharmacie', `${fiche.pharmacieId}`);
+  if (fiche.pharmacieInconnue) parametres.set('creer', fiche.pharmacieInconnue);
+  if (fiche.taux !== null) parametres.set('taux', `${fiche.taux}`);
+  if (fiche.pauseMinutes !== null) parametres.set('pause', `${fiche.pauseMinutes}`);
+  if (fiche.pausePayee !== null) parametres.set('pausePayee', fiche.pausePayee ? '1' : '0');
+  return parametres.toString();
+}
+
 const styles = StyleSheet.create({
+  ligneAjout: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: espace.m,
+  },
+  ajoutPrincipal: { flex: 1 },
+  micro: {
+    width: 52,
+    borderWidth: 1.5,
+    borderRadius: rayon,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   contenu: {
     padding: espace.l,
     // Même raison qu'ailleurs : le bouton d'ajout ne doit pas finir sous la

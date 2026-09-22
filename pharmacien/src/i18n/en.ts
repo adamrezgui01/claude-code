@@ -397,6 +397,37 @@ export const en: Dictionnaire = {
     perDiemAide: 'Prefills a new pharmacy record.',
   },
 
+  dictee: {
+    titre: 'Dictate a shift',
+    micro: 'Tap the microphone on your keyboard to dictate.',
+    exemple: 'Add a shift Thursday from 9 to 5 at Familiprix',
+    lire: 'Read the sentence',
+    ouvrir: 'Open the form',
+    jours_one: '{{count}} day',
+    jours_other: '{{count}} days',
+    ficheVide: 'Empty form: everything is left to fill in.',
+    incompris:
+      'I did not understand that sentence. It is kept in Settings, where you can read it again.',
+    raisonAnnulation:
+      'Dictation does not delete shifts: open the shift and delete it there.',
+    raisonModification:
+      'Dictation does not move shifts: open the shift and change its date.',
+    raisonQuestion:
+      'Dictation adds shifts; it does not answer questions.',
+    raisonPlusieurs:
+      'Two different schedules in one sentence: dictate them one at a time.',
+    raisonChaine:
+      'Two commands in one sentence: dictate them one at a time.',
+    journal: 'Sentences not understood',
+    journalDetail_one: '{{count}} sentence kept',
+    journalDetail_other: '{{count}} sentences kept',
+    journalAucune: 'None so far',
+    journalIntro:
+      'Whatever dictation did not understand stays here, on the device. Nothing leaves on its own.',
+    copier: 'Copy the list',
+    copiee: 'List copied',
+    effacer: 'Clear',
+  },
   parametres: {
     titre: 'Settings',
     rappelsQuart: 'Shift reminders',

@@ -67,12 +67,13 @@ const PAUSES = [30, 45, 60];
 export default function FichePharmacie() {
   const router = useRouter();
   const accent = useAccent();
-  const params = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string; recherche?: string }>();
   const nouvelle = params.id === 'nouvelle';
   const pharmacieId = nouvelle ? null : Number(params.id);
 
   const [reglages] = useState(obtenirReglages);
-  const [nom, setNom] = useState('');
+  // Nom dicté : la fiche s'ouvre avec, et il ne reste que l'adresse à chercher.
+  const [nom, setNom] = useState(nouvelle ? (params.recherche ?? '') : '');
   const [adresse, setAdresse] = useState<Adresse>(adresseVide);
   const [contactNom, setContactNom] = useState('');
   const [contactTelephone, setContactTelephone] = useState('');

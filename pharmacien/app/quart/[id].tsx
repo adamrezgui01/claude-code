@@ -85,6 +85,14 @@ export default function FormulaireQuart() {
     heure?: string;
     pharmacie?: string;
     duplique?: string;
+    /* Ce que la dictée a compris. Rien n'est créé : la fiche s'ouvre remplie,
+       et l'usager confirme, corrige ou abandonne comme d'habitude. */
+    fin?: string;
+    jours?: string;
+    creer?: string;
+    taux?: string;
+    pause?: string;
+    pausePayee?: string;
   }>();
   const nouveau = params.id === 'nouveau';
   const quartId = nouveau ? null : Number(params.id);
@@ -98,7 +106,7 @@ export default function FormulaireQuart() {
 
   const [date, setDate] = useState(params.date ?? aujourdhui());
   const [heureDebut, setHeureDebut] = useState(params.heure ?? '09:00');
-  const [heureFin, setHeureFin] = useState('17:00');
+  const [heureFin, setHeureFin] = useState(params.fin ?? '17:00');
   const [pause, setPause] = useState(0);
   const [pausePayee, setPausePayee] = useState(false);
   const [taux, setTaux] = useState('');
@@ -194,6 +202,25 @@ export default function FormulaireQuart() {
       return;
     }
     if (params.pharmacie) appliquerPharmacie(Number(params.pharmacie));
+
+    // La dictée pose ses valeurs par-dessus celles héritées de la pharmacie :
+    // ce qui a été dit à voix haute l'emporte sur une valeur par défaut.
+    // Zéro est une valeur : « sans pause » se dicte, et ne doit pas retomber
+    // sur la pause habituelle de la pharmacie.
+    if (params.taux !== undefined) setTaux(params.taux);
+    if (params.pause !== undefined) setPause(Number(params.pause));
+    if (params.pausePayee !== undefined) setPausePayee(params.pausePayee === '1');
+    if (params.creer) {
+      setCreationPharmacie(true);
+      setNouvellePharmacie(params.creer);
+    }
+    if (params.jours) {
+      const jours = params.jours.split(',').filter(Boolean);
+      if (jours.length > 1) {
+        setRepeter(true);
+        setJoursChoisis(new Set(jours));
+      }
+    }
   }, [quartId, params.pharmacie, params.duplique]);
 
   useFocusEffect(

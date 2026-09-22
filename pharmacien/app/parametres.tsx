@@ -5,7 +5,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getLocales } from 'expo-localization';
 
+import * as Clipboard from 'expo-clipboard';
+
 import { facturesEnAttente } from '../src/db/factures';
+import { compterIncomprises, effacerIncomprises, listerIncomprises } from '../src/db/lecteur';
 import {
   definirReglage,
   delaisSecondaires,
@@ -45,12 +48,27 @@ export default function Parametres() {
   const { t } = useTextes();
   const [reglages, setReglages] = useState<Reglages | null>(null);
   const [enregistre, setEnregistre] = useState(false);
+  const [incomprises, setIncomprises] = useState(0);
+  const [copiee, setCopiee] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       setReglages(obtenirReglages());
+      setIncomprises(compterIncomprises());
     }, [])
   );
+
+  /**
+   * La liste part dans le presse-papiers, et nulle part ailleurs. C'est
+   * l'usager qui décide de la coller quelque part, ou pas.
+   */
+  async function copierJournal() {
+    const liste = listerIncomprises()
+      .map((d) => `${d.le.slice(0, 10)}  ${d.phrase}`)
+      .join('\n');
+    await Clipboard.setStringAsync(liste);
+    setCopiee(true);
+  }
 
   function modifier<C extends keyof Reglages>(champ: C, valeur: Reglages[C]) {
     setReglages((actuels) => (actuels ? { ...actuels, [champ]: valeur } : actuels));
@@ -182,6 +200,37 @@ export default function Parametres() {
         </View>
       </Section>
 
+      <Section titre={t('dictee.journal')}>
+        <Doux>{t('dictee.journalIntro')}</Doux>
+        <Text style={styles.compte}>
+          {incomprises === 0
+            ? t('dictee.journalAucune')
+            : t('dictee.journalDetail', { count: incomprises })}
+        </Text>
+        {incomprises > 0 && (
+          <View style={styles.actionsJournal}>
+            <View style={styles.actionJournal}>
+              <Bouton
+                titre={copiee ? t('dictee.copiee') : t('dictee.copier')}
+                variante="secondaire"
+                onPress={() => void copierJournal()}
+              />
+            </View>
+            <View style={styles.actionJournal}>
+              <Bouton
+                titre={t('dictee.effacer')}
+                variante="secondaire"
+                onPress={() => {
+                  effacerIncomprises();
+                  setIncomprises(0);
+                  setCopiee(false);
+                }}
+              />
+            </View>
+          </View>
+        )}
+      </Section>
+
       <Section titre={t('parametres.serviceAdresses')}>
         <Champ
           nu
@@ -232,6 +281,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
+  compte: {
+    fontSize: 15,
+    fontFamily: police.demi,
+    color: couleurs.texte,
+    marginTop: espace.s,
+  },
+  actionsJournal: {
+    flexDirection: 'row',
+    gap: espace.m,
+    marginTop: espace.m,
+  },
+  actionJournal: { flex: 1 },
   apparence: {
     flexDirection: 'row',
     alignItems: 'center',

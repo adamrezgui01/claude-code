@@ -399,6 +399,37 @@ export const fr = {
     perDiemAide: 'Préremplit une nouvelle fiche de pharmacie.',
   },
 
+  dictee: {
+    titre: 'Dicter un quart',
+    micro: 'Touchez le micro du clavier pour dicter.',
+    exemple: 'Ajoute un quart jeudi de 9 à 5 au Familiprix',
+    lire: 'Lire la phrase',
+    ouvrir: 'Ouvrir la fiche',
+    jours_one: '{{count}} jour',
+    jours_other: '{{count}} jours',
+    ficheVide: 'Fiche vide : tout reste à remplir.',
+    incompris:
+      'Je n’ai pas compris cette phrase. Elle est gardée dans Paramètres, où vous pouvez la relire.',
+    raisonAnnulation:
+      'Supprimer un quart ne se fait pas par la dictée : ouvrez le quart et supprimez-le.',
+    raisonModification:
+      'Déplacer un quart ne se fait pas par la dictée : ouvrez le quart et changez sa date.',
+    raisonQuestion:
+      'La dictée ajoute des quarts ; elle ne répond pas aux questions.',
+    raisonPlusieurs:
+      'Deux quarts d’horaires différents dans une phrase : dictez-les l’un après l’autre.',
+    raisonChaine:
+      'Deux commandes dans une phrase : dictez-les l’une après l’autre.',
+    journal: 'Phrases incomprises',
+    journalDetail_one: '{{count}} phrase gardée',
+    journalDetail_other: '{{count}} phrases gardées',
+    journalAucune: 'Aucune pour l’instant',
+    journalIntro:
+      'Ce que la dictée n’a pas compris reste ici, sur l’appareil. Rien n’en sort tout seul.',
+    copier: 'Copier la liste',
+    copiee: 'Liste copiée',
+    effacer: 'Effacer',
+  },
   parametres: {
     titre: 'Paramètres',
     rappelsQuart: 'Rappels de quart',
