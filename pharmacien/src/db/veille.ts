@@ -518,3 +518,13 @@ export function reglagesVeille(): Reglages {
 export function definirReglageVeille(champ: keyof Reglages, valeur: string | number) {
   db.runSync(`UPDATE reglages SET ${champ} = ? WHERE id = 1`, valeur);
 }
+
+/** Un champ de source, sur un signet. La date de vérification suit à la création. */
+export function definirChampSource(sourceId: number, champ: 'version' | 'capture_desactivee', valeur: string | number) {
+  db.runSync(`UPDATE liens SET ${champ} = ? WHERE id = ?`, valeur, sourceId);
+}
+
+/** Un signet créé aujourd'hui est réputé vérifié aujourd'hui. */
+export function marquerSourceNeuve(sourceId: number) {
+  db.runSync("UPDATE liens SET date_verification = ? WHERE id = ? AND date_verification = ''", aujourdhui(), sourceId);
+}

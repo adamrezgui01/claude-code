@@ -9,9 +9,10 @@ import {
   obtenirLien,
   supprimerLien,
 } from '../../src/db/liens';
-import { Bouton, Champ, Doux, Ecran, Puce, Section } from '../../src/ui/composants';
+import { Bouton, Champ, Doux, Ecran, Puce, Section, Interrupteur } from '../../src/ui/composants';
 import { espace } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
+import { definirChampSource, marquerSourceNeuve, obtenirSource } from '../../src/db/veille';
 
 export default function FormulaireLien() {
   const { t } = useTextes();
@@ -27,6 +28,10 @@ export default function FormulaireLien() {
   /** Vide pour un lien de l'usager ; conservé pour un lien fourni qu'il modifie. */
   const [cle, setCle] = useState('');
   const [existantes] = useState(categories);
+  /* Le signet est aussi une source : sa version fait périmer les notes qui en
+     sont tirées, et « ne plus proposer » coupe le bandeau pour elle seule. */
+  const [version, setVersion] = useState('');
+  const [sansCapture, setSansCapture] = useState(false);
 
   useEffect(() => {
     if (!lienId) return;
@@ -37,6 +42,9 @@ export default function FormulaireLien() {
     setCategorie(l.categorie);
     setMotsCles(l.motsCles);
     setCle(l.cle);
+    const source = obtenirSource(lienId);
+    setVersion(source?.version ?? '');
+    setSansCapture(!!source?.capture_desactivee);
   }, [lienId]);
 
   function enregistrer() {
@@ -53,8 +61,11 @@ export default function FormulaireLien() {
       categorie: categorie.trim(),
       motsCles: motsCles.trim(),
     };
+    const id = lienId ?? creerLien(entree);
     if (lienId) modifierLien(lienId, entree);
-    else creerLien(entree);
+    else marquerSourceNeuve(id);
+    definirChampSource(id, 'version', version.trim());
+    definirChampSource(id, 'capture_desactivee', sansCapture ? 1 : 0);
     router.back();
   }
 
@@ -99,6 +110,16 @@ export default function FormulaireLien() {
           ))}
         </View>
       )}
+
+      <Section titre={t('veille.sourceDeLaNote')}>
+        <Champ nu label={t('veille.quelleVersion')} valeur={version} onChange={setVersion} />
+        <Interrupteur
+          label={t('veille.bandeauJamais')}
+          detail={t('veille.bandeauReglageDetail')}
+          valeur={sansCapture}
+          onChange={setSansCapture}
+        />
+      </Section>
 
       <Section titre={t('liens.motsCles')}>
         <Champ
