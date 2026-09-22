@@ -1,5 +1,68 @@
 # V2 — le volet clinique : analyse et architecture
 
+> ## Décisions de la V2.1
+>
+> Ce document reste la référence. Les points ci-dessous, tranchés par l'usager
+> après lecture, **l'emportent sur ce qui suit** partout où les deux diffèrent.
+>
+> **La remise à zéro de la base est supprimée** (étape 0). Le code n'efface
+> plus les tables quand le numéro de schéma augmente. Un test interdit
+> `DROP TABLE` dans tout `src/` et tout `app/`. La règle n'est plus à retenir :
+> elle est tenue.
+>
+> **Désaccord 1, le navigateur : accepté.** Le navigateur intégré devient un
+> réglage ; par défaut, les liens s'ouvrent comme aujourd'hui. La consultation
+> est notée à l'ouverture, et le bandeau apparaît au retour au premier plan —
+> mais seulement si le lien a été ouvert **moins de 30 minutes** avant, et une
+> seule fois par consultation, qu'elle ait été utilisée ou ignorée. Plusieurs
+> liens ouverts : le bandeau porte sur le dernier.
+>
+> **Désaccord 2, l'état calculé : accepté.** Les limites de 6 et de 12 mois
+> sont **incluses** : une source vérifiée le 21 mars est à revérifier le
+> 21 septembre.
+>
+> **Désaccord 3, la table unique d'événements : accepté.**
+>
+> **Désaccord 4, les notifications : ma règle est rejetée, et avec raison.**
+> Je proposais de sauter la veille quand un rappel de quart tombait autour de
+> l'heure prévue. Le mémo de fin de quart arrive 2 h après la fin : après un
+> quart de 9 h à 17 h, il tombe à 19 h. La veille aurait été sautée presque
+> chaque jour travaillé, et les révisions se seraient accumulées jusqu'aux
+> congés. On ne saute plus rien :
+>
+> - au plus une notification de veille par jour, à **20 h** par défaut,
+>   réglable ;
+> - si une autre notification de l'application est déjà programmée ce jour-là
+>   **entre 17 h et 22 h**, la veille part à la même heure que la première
+>   d'entre elles, pour que les deux arrivent ensemble ;
+> - la veille est programmée **sept jours d'avance**, et recalculée à chaque
+>   retour au premier plan et après chaque séance ;
+> - le texte **nomme les sujets** à réviser, tirés des notes retenues après le
+>   plafond.
+>
+> **Désaccord 4 bis, aucun score : accepté**, avec la règle dans `CLAUDE.md` et
+> son test sur les traductions.
+>
+> **Le niveau de départ : mon avis est retenu.** Une note créée prend le
+> **niveau 0**, donc première révision 2 jours plus tard. `NIVEAU_DEPART = 0`.
+>
+> **Une note à plusieurs sujets** reste dans la file tant qu'au moins un de ses
+> sujets est actif. Une note sans sujet y reste aussi.
+>
+> **La validation des réponses de l'IA** ne peut pas détecter une posologie
+> inventée. Le test annoncé est remplacé par une heuristique : une réponse qui
+> contient un nombre suivi d'une unité absente des notes envoyées est refusée.
+> C'est un premier rempart, pas une garantie — l'approbation de l'usager reste
+> le vrai garde-fou.
+>
+> **Les dix questions**, tranchées : navigateur au choix ; note sans source
+> permise ; un sujet en pause met ses notes en pause ; le plafond compte les
+> reports ; une source due pour ses 6 mois garde ses notes dans les révisions ;
+> notification à 20 h ; les huit signets reçoivent organisation, type et sujets
+> dès la migration ; « ne plus proposer » s'applique à la source ; les douze
+> sujets de départ sont gardés tels quels ; la veille apparaît au Menu dès la
+> première ouverture.
+
 Séance d'analyse. Aucun fichier de l'application n'a été touché : ce document
 est le seul résultat.
 

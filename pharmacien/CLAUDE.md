@@ -79,6 +79,11 @@ qu'on ne les redécouvre pas trois fois.
 - « Argent » compte tout ce qui se facture : honoraires, kilométrage, per
   diem, hébergement payé, frais ponctuels. L'hébergement fourni par la
   pharmacie n'est pas facturé, donc n'y entre pas.
+- **La base de l'usager ne se remet jamais à zéro.** Aucun `DROP TABLE`, nulle
+  part. Une table nouvelle passe par `CREATE TABLE IF NOT EXISTS`, une colonne
+  par `ajouterColonne`, une réécriture de données par la table `reprises`.
+  Incrémenter le numéro de schéma ne détruit plus rien, et ne doit plus jamais
+  le pouvoir.
 - Un quart appartient à la date de son début, quart de nuit compris.
 - Un dépôt aimante à la demi-heure la plus proche ; la demie exacte monte.
 - Le lecteur de commandes ne crée jamais rien. Il remplit une fiche, l'usager
@@ -90,3 +95,11 @@ qu'on ne les redécouvre pas trois fois.
 - Un texte affiché vit dans `src/i18n`, jamais en dur dans un écran. La
   facture fait exception dans l'autre sens : elle est toujours en français,
   quelle que soit la langue choisie.
+- L'écran de révision ne montre jamais un nombre de bonnes réponses, un
+  pourcentage, ni une série de jours consécutifs. Il compte ce qu'il reste à
+  faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;
+  elle n'évalue pas le pharmacien.
+- Le volet organisation — horaire, répertoire, factures, statistiques —
+  n'importe rien du volet clinique. Deux exceptions, et deux seulement :
+  l'entrée du menu, et la reprogrammation des notifications au changement de
+  langue.

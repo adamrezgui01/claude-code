@@ -16,7 +16,6 @@ import { marquerRelanceFaite } from '../src/db/factures';
 import { amorcerLiens } from '../src/db/liens';
 import { definirReglage, obtenirReglages } from '../src/db/profil';
 import { adresseDesReglages, adresseRenseignee } from '../src/lib/adresses';
-import { supprimerSecrets } from '../src/lib/codes';
 import { preparerTraductions } from '../src/i18n';
 import { langueActive } from '../src/lib/langue';
 import { preparerNotifications } from '../src/lib/notifications';
@@ -38,11 +37,7 @@ export default function Racine() {
   const [bienvenue, setBienvenue] = useState(false);
 
   useEffect(() => {
-    const effacees = initialiserBase();
-    // Un changement de schéma efface les pharmacies : leurs secrets doivent
-    // partir avec elles, sinon ils réapparaîtraient sur une pharmacie qui
-    // réutilise le même identifiant.
-    effacees.forEach((id) => void supprimerSecrets(id));
+    initialiserBase();
     amorcerLiens();
     preparerNotifications();
     const reglages = obtenirReglages();

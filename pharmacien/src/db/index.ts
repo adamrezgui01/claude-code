@@ -3,8 +3,17 @@ import * as SQLite from 'expo-sqlite';
 export const db = SQLite.openDatabaseSync('pharmacien.db');
 
 /**
- * Version du schéma. L'incrémenter recrée la base à neuf : l'application n'a
- * pas encore d'usagers dont il faudrait préserver les données.
+ * Version du schéma, tenue à jour pour information.
+ *
+ * Elle ne détruit plus rien. La base a contenu des quarts et des factures
+ * réels le jour où quelqu'un l'a incrémentée sans y penser ; ce jour-là, tout
+ * serait parti. Une application qui calcule de l'argent n'a pas le droit de
+ * remettre les données de son usager à zéro, jamais, pour aucune raison.
+ *
+ * Toute évolution du schéma passe donc par trois outils, et rien d'autre :
+ * `CREATE TABLE IF NOT EXISTS` pour une table nouvelle, `ajouterColonne` pour
+ * une colonne, et la table `reprises` pour une réécriture de données qui ne
+ * doit se faire qu'une fois.
  */
 const VERSION = 5;
 
@@ -189,26 +198,9 @@ const SCHEMA = `
   INSERT OR IGNORE INTO formation_continue (id) VALUES (1);
 `;
 
-/**
- * Prépare la base. Retourne les identifiants des pharmacies effacées lors d'un
- * changement de schéma : leurs secrets doivent être retirés du trousseau, sinon
- * ils réapparaîtraient sur une pharmacie réutilisant le même identifiant.
- */
-export function initialiserBase(): number[] {
+/** Prépare la base. Elle n'efface jamais rien : elle ajoute, et c'est tout. */
+export function initialiserBase() {
   db.execSync('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
-
-  const version =
-    db.getFirstSync<{ user_version: number }>('PRAGMA user_version')?.user_version ?? 0;
-
-  let pharmaciesEffacees: number[] = [];
-  if (version < VERSION) {
-    pharmaciesEffacees = tablesExistantes().includes('pharmacies')
-      ? db.getAllSync<{ id: number }>('SELECT id FROM pharmacies').map((p) => p.id)
-      : [];
-    for (const table of tablesExistantes()) {
-      db.execSync(`DROP TABLE IF EXISTS ${table}`);
-    }
-  }
 
   db.execSync(SCHEMA);
   // Ajout de colonne toléré, pour ne pas effacer les données de l'usager quand
@@ -273,7 +265,6 @@ export function initialiserBase(): number[] {
     marquerFait('distance_inconnue_negative');
   }
   db.execSync(`PRAGMA user_version = ${VERSION}`);
-  return pharmaciesEffacees;
 }
 
 /** Retourne vrai quand la colonne vient d'être ajoutée, pour la remplir. */
@@ -298,12 +289,4 @@ function dejaFait(repere: string): boolean {
 
 function marquerFait(repere: string) {
   db.runSync('INSERT OR IGNORE INTO reprises (repere) VALUES (?)', repere);
-}
-
-function tablesExistantes(): string[] {
-  return db
-    .getAllSync<{ name: string }>(
-      "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
-    )
-    .map((t) => t.name);
 }
