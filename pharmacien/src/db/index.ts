@@ -194,6 +194,86 @@ const SCHEMA = `
     rang INTEGER NOT NULL DEFAULT 0
   );
 
+  /* ---------------------------------------------------------------------
+     Le volet clinique. Tables séparées, jamais mêlées à celles des quarts :
+     le module doit pouvoir évoluer, et au besoin disparaître, sans toucher
+     au reste.
+     --------------------------------------------------------------------- */
+
+  /* Une étiquette à plat, sans hiérarchie. Les sujets fournis portent une
+     clé de traduction ; ceux que l'usager crée gardent le nom qu'il a tapé,
+     dans la langue où il l'a tapé. C'est le mécanisme des signets. */
+  CREATE TABLE IF NOT EXISTS sujets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cle TEXT NOT NULL DEFAULT '',
+    nom TEXT NOT NULL,
+    /* Synonymes des deux langues, jamais affichés, cherchés quand même. */
+    synonymes TEXT NOT NULL DEFAULT '',
+    cree_le TEXT NOT NULL DEFAULT ''
+  );
+
+  CREATE TABLE IF NOT EXISTS sujets_sources (
+    sujet_id INTEGER NOT NULL,
+    source_id INTEGER NOT NULL,
+    PRIMARY KEY (sujet_id, source_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS sujets_contenus (
+    sujet_id INTEGER NOT NULL,
+    contenu_id INTEGER NOT NULL,
+    PRIMARY KEY (sujet_id, contenu_id)
+  );
+
+  /* Un seul suivi par sujet. Les motifs successifs vivent dans les
+     événements : le suivi porte le dernier, l'historique les garde tous. */
+  CREATE TABLE IF NOT EXISTS suivis (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sujet_id INTEGER NOT NULL UNIQUE,
+    motif TEXT NOT NULL DEFAULT '',
+    statut TEXT NOT NULL DEFAULT 'actif',
+    cree_le TEXT NOT NULL
+  );
+
+  /* Tout ce qui se révise, écrit par l'usager ou produit par l'IA plus tard.
+     Les colonnes de la phase 2 sont là dès maintenant, vides : les ajouter
+     ensuite coûterait une migration, les séparer coûterait une réécriture. */
+  CREATE TABLE IF NOT EXISTS contenus (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL DEFAULT 'pointCle',
+    origine TEXT NOT NULL DEFAULT 'usager',
+    modele TEXT NOT NULL DEFAULT '',
+    texte TEXT NOT NULL DEFAULT '',
+    question TEXT NOT NULL DEFAULT '',
+    choix TEXT NOT NULL DEFAULT '',
+    reponse TEXT NOT NULL DEFAULT '',
+    explication TEXT NOT NULL DEFAULT '',
+    /* Nulle quand la note ne vient d'aucune source : un point retenu d'une
+       formation ou d'un collègue est une note comme une autre. */
+    source_id INTEGER,
+    /* La version de la source le jour où la note a été écrite. C'est elle qui
+       fait périmer la note quand la source change. */
+    version_source TEXT NOT NULL DEFAULT '',
+    cree_le TEXT NOT NULL,
+    valide_le TEXT NOT NULL,
+    statut TEXT NOT NULL DEFAULT 'actif',
+    approuve INTEGER NOT NULL DEFAULT 1,
+    niveau INTEGER NOT NULL DEFAULT 0,
+    prochaine_revision TEXT NOT NULL DEFAULT ''
+  );
+
+  /* Un fait, une ligne. Le journal des consultations est cette table filtrée
+     sur « source consultée » ; l'historique d'un sujet, la même filtrée sur
+     ce sujet. Deux tables se seraient contredites tôt ou tard. */
+  CREATE TABLE IF NOT EXISTS evenements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    sujet_id INTEGER,
+    source_id INTEGER,
+    contenu_id INTEGER,
+    detail TEXT NOT NULL DEFAULT '',
+    le TEXT NOT NULL
+  );
+
   INSERT OR IGNORE INTO reglages (id) VALUES (1);
   INSERT OR IGNORE INTO formation_continue (id) VALUES (1);
 `;
@@ -210,6 +290,33 @@ export function initialiserBase() {
   ajouterColonne('reglages', 'aide_horaire_vues', 'INTEGER NOT NULL DEFAULT 0');
   ajouterColonne('reglages', 'per_diem', 'REAL NOT NULL DEFAULT 0');
   ajouterColonne('reglages', 'langue', "TEXT NOT NULL DEFAULT 'auto'");
+
+  // Le volet clinique. Un signet devient une source : mêmes lignes, quelques
+  // colonnes de plus, pour que les deux listes ne divergent jamais.
+  ajouterColonne('liens', 'organisation', "TEXT NOT NULL DEFAULT ''");
+  ajouterColonne('liens', 'type_source', "TEXT NOT NULL DEFAULT ''");
+  ajouterColonne('liens', 'officielle', 'INTEGER NOT NULL DEFAULT 0');
+  ajouterColonne('liens', 'version', "TEXT NOT NULL DEFAULT ''");
+  ajouterColonne('liens', 'date_publication', "TEXT NOT NULL DEFAULT ''");
+  ajouterColonne('liens', 'statut', "TEXT NOT NULL DEFAULT 'active'");
+  ajouterColonne('liens', 'notes_source', "TEXT NOT NULL DEFAULT ''");
+  ajouterColonne('liens', 'capture_desactivee', 'INTEGER NOT NULL DEFAULT 0');
+  // Les signets déjà là sont réputés vérifiés le jour de la migration : sans
+  // ça, les huit basculeraient dans « à revérifier » le premier soir.
+  if (ajouterColonne('liens', 'date_verification', "TEXT NOT NULL DEFAULT ''")) {
+    db.runSync('UPDATE liens SET date_verification = ?', dateDuJour());
+  }
+
+  ajouterColonne('reglages', 'veille_rappel_actif', 'INTEGER NOT NULL DEFAULT 1');
+  ajouterColonne('reglages', 'veille_heure', "TEXT NOT NULL DEFAULT '20:00'");
+  ajouterColonne('reglages', 'veille_plafond', 'INTEGER NOT NULL DEFAULT 10');
+  ajouterColonne('reglages', 'veille_bandeau', 'INTEGER NOT NULL DEFAULT 1');
+  // Zéro : les liens s'ouvrent comme avant, dans le navigateur du téléphone.
+  ajouterColonne('reglages', 'veille_navigateur', 'INTEGER NOT NULL DEFAULT 0');
+  // La dernière consultation, et si son bandeau a déjà été proposé.
+  ajouterColonne('reglages', 'veille_consultation_source', 'INTEGER NOT NULL DEFAULT 0');
+  ajouterColonne('reglages', 'veille_consultation_le', "TEXT NOT NULL DEFAULT ''");
+  ajouterColonne('reglages', 'veille_consultation_vue', 'INTEGER NOT NULL DEFAULT 0');
   // Les liens fournis avec l'application gagnent un repère de traduction. Les
   // anciens sont réappariés sur leur adresse, qui n'a pas changé.
   if (ajouterColonne('liens', 'cle', "TEXT NOT NULL DEFAULT ''")) {
@@ -267,6 +374,12 @@ export function initialiserBase() {
   db.execSync(`PRAGMA user_version = ${VERSION}`);
 }
 
+/** Le jour même, en ISO. Dupliqué ici pour ne pas faire dépendre la base de `lib`. */
+function dateDuJour(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${`${d.getMonth() + 1}`.padStart(2, '0')}-${`${d.getDate()}`.padStart(2, '0')}`;
+}
+
 /** Retourne vrai quand la colonne vient d'être ajoutée, pour la remplir. */
 function ajouterColonne(table: string, colonne: string, definition: string): boolean {
   const colonnes = db
@@ -282,11 +395,11 @@ function ajouterColonne(table: string, colonne: string, definition: string): boo
  * seule fois par nature ; une réécriture de valeurs, non — il faut donc se
  * souvenir qu'on l'a faite.
  */
-function dejaFait(repere: string): boolean {
+export function dejaFait(repere: string): boolean {
   db.execSync('CREATE TABLE IF NOT EXISTS reprises (repere TEXT PRIMARY KEY)');
   return !!db.getFirstSync('SELECT repere FROM reprises WHERE repere = ?', repere);
 }
 
-function marquerFait(repere: string) {
+export function marquerFait(repere: string) {
   db.runSync('INSERT OR IGNORE INTO reprises (repere) VALUES (?)', repere);
 }

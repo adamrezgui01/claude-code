@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { initialiserBase } from '../src/db';
+import { amorcerVeille } from '../src/db/veille';
 import { marquerRelanceFaite } from '../src/db/factures';
 import { amorcerLiens } from '../src/db/liens';
 import { definirReglage, obtenirReglages } from '../src/db/profil';
@@ -39,6 +40,7 @@ export default function Racine() {
   useEffect(() => {
     initialiserBase();
     amorcerLiens();
+    amorcerVeille();
     preparerNotifications();
     const reglages = obtenirReglages();
     // La langue s'applique avant le premier rendu : sinon l'application
