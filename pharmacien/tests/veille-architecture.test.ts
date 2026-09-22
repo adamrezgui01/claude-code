@@ -15,8 +15,12 @@ import { join } from 'node:path';
  * - l'entrée du menu, qui doit bien pointer quelque part ;
  * - la reprogrammation des notifications au changement de langue, qui doit
  *   refaire celle de la veille comme les autres ;
- * - le fichier de démarrage, qui assemble toute l'application par nature et
- *   qui sème les données au premier lancement.
+ * - le fichier de démarrage, qui assemble toute l'application par nature, sème
+ *   les données au premier lancement et pose le bandeau de capture.
+ *
+ * S'y ajoute une frontière, qui n'est pas une exception : la section « Liens
+ * et infos utiles » est la liste des sources du volet clinique, pas un
+ * doublon à côté. Ses écrans appartiennent donc aux deux volets à la fois.
  */
 
 const EXCEPTIONS = [
@@ -24,6 +28,9 @@ const EXCEPTIONS = [
   join('app', '_layout.tsx'),
   join('src', 'lib', 'reprogrammer.ts'),
 ];
+
+/** La frontière : les signets sont les sources. */
+const FRONTIERE = [join('app', 'liens.tsx'), join('app', 'lien', '[id].tsx')];
 
 function fichiers(dossier: string): string[] {
   const trouves: string[] = [];
@@ -41,6 +48,8 @@ function voletOrganisation(): string[] {
     (f) =>
       !f.includes(join('veille')) &&
       !f.includes(join('app', 'veille')) &&
+      !f.includes('BandeauCapture') &&
+      !FRONTIERE.includes(f) &&
       !EXCEPTIONS.includes(f)
   );
 }
@@ -55,6 +64,10 @@ describe('le volet organisation ignore le volet clinique', () => {
 
   test('les trois exceptions sont nommées, et pas une de plus', () => {
     expect(EXCEPTIONS).toHaveLength(3);
+  });
+
+  test('la frontière se limite aux deux écrans de signets', () => {
+    expect(FRONTIERE).toHaveLength(2);
   });
 });
 

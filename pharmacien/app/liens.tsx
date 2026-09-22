@@ -9,6 +9,8 @@ import {
   parCategorie,
   type Lien as LienSignet,
 } from '../src/db/liens';
+import { reglagesVeille } from '../src/db/veille';
+import { ouvrirSource } from '../src/lib/veille/ouvrir';
 import { SECTIONS, type Lien } from '../src/content/liens';
 import { Bouton, Doux, Ecran, Fondu, SousTitre, Vide } from '../src/ui/composants';
 import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
@@ -43,7 +45,9 @@ function LigneSignet({ signet, onModifier }: { signet: LienSignet; onModifier: (
   const accent = useAccent();
   return (
     <Pressable
-      onPress={() => Linking.openURL(signet.url)}
+      // Passe par `ouvrirSource` : la consultation est notée, et c'est elle qui
+      // fera apparaître le bandeau au retour dans l'application.
+      onPress={() => void ouvrirSource(signet, !!reglagesVeille().veille_navigateur)}
       onLongPress={onModifier}
       delayLongPress={400}
       style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>

@@ -13,6 +13,7 @@ import { ActivityIndicator, View } from 'react-native';
 
 import { initialiserBase } from '../src/db';
 import { amorcerVeille } from '../src/db/veille';
+import { BandeauCapture } from '../src/ui/BandeauCapture';
 import { marquerRelanceFaite } from '../src/db/factures';
 import { amorcerLiens } from '../src/db/liens';
 import { definirReglage, obtenirReglages } from '../src/db/profil';
@@ -114,6 +115,7 @@ export default function Racine() {
         {bienvenue ? (
           <Bienvenue onTermine={() => setBienvenue(false)} />
         ) : (
+          <>
         <Stack
           screenOptions={{
             headerTintColor: accent,
@@ -146,6 +148,8 @@ export default function Racine() {
           <Stack.Screen name="apparence" options={{ title: t('apparence.titre') }} />
           <Stack.Screen name="disponibilites" options={{ title: t('disponibilites.titre') }} />
         </Stack>
+          <BandeauCapture />
+          </>
         )}
       </>
     </FournisseurTheme>
