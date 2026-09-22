@@ -409,3 +409,112 @@ export function noterConsultation(sourceId: number) {
 export function marquerBandeauVu() {
   db.runSync('UPDATE reglages SET veille_consultation_vue = 1 WHERE id = 1');
 }
+
+// ---------------------------------------------------------------------------
+// Les vues dont les écrans ont besoin
+// ---------------------------------------------------------------------------
+
+export type Source = {
+  id: number;
+  cle: string;
+  titre: string;
+  url: string;
+  organisation: string;
+  type_source: string;
+  officielle: number;
+  version: string;
+  date_publication: string;
+  date_verification: string;
+  statut: string;
+  notes_source: string;
+  capture_desactivee: number;
+};
+
+export function listerSources(): Source[] {
+  return db.getAllSync<Source>('SELECT * FROM liens ORDER BY titre COLLATE NOCASE');
+}
+
+export function obtenirSource(id: number): Source | null {
+  return db.getFirstSync<Source>('SELECT * FROM liens WHERE id = ?', id);
+}
+
+export function sourcesDuSujet(sujetId: number): Source[] {
+  return db.getAllSync<Source>(
+    `SELECT l.* FROM liens l
+     JOIN sujets_sources j ON j.source_id = l.id
+     WHERE j.sujet_id = ? ORDER BY l.titre COLLATE NOCASE`,
+    sujetId
+  );
+}
+
+export function contenusDuSujet(sujetId: number): Contenu[] {
+  return db.getAllSync<Contenu>(
+    `SELECT c.* FROM contenus c
+     JOIN sujets_contenus j ON j.contenu_id = c.id
+     WHERE j.sujet_id = ? ORDER BY c.cree_le DESC, c.id DESC`,
+    sujetId
+  );
+}
+
+/** Combien de fois cette source a été ouverte depuis l'application. */
+export function compterConsultations(sourceId: number): number {
+  return (
+    db.getFirstSync<{ n: number }>(
+      "SELECT COUNT(*) AS n FROM evenements WHERE type = 'sourceConsultee' AND source_id = ?",
+      sourceId
+    )?.n ?? 0
+  );
+}
+
+/** Les consultations de toutes les sources d'un sujet, additionnées. */
+export function consultationsDuSujet(sujetId: number): number {
+  return (
+    db.getFirstSync<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM evenements e
+       JOIN sujets_sources j ON j.source_id = e.source_id
+       WHERE e.type = 'sourceConsultee' AND j.sujet_id = ?`,
+      sujetId
+    )?.n ?? 0
+  );
+}
+
+/**
+ * Le statut des sujets d'une note, tel que la file l'attend.
+ *
+ * Un sujet sans suivi n'a pas de statut : suivre sert à surveiller, pas à
+ * autoriser. Il ne met donc rien en pause.
+ */
+export function statutsDesSujets(contenuId: number): ('actif' | 'pause' | 'retire')[] {
+  return db
+    .getAllSync<{ statut: 'actif' | 'pause' | 'retire' }>(
+      `SELECT s.statut FROM suivis s
+       JOIN sujets_contenus j ON j.sujet_id = s.sujet_id
+       WHERE j.contenu_id = ?`,
+      contenuId
+    )
+    .map((l) => l.statut);
+}
+
+export type Reglages = {
+  veille_rappel_actif: number;
+  veille_heure: string;
+  veille_plafond: number;
+  veille_bandeau: number;
+  veille_navigateur: number;
+  veille_consultation_source: number;
+  veille_consultation_le: string;
+  veille_consultation_vue: number;
+};
+
+export function reglagesVeille(): Reglages {
+  return db.getFirstSync<Reglages>(
+    `SELECT veille_rappel_actif, veille_heure, veille_plafond, veille_bandeau,
+            veille_navigateur, veille_consultation_source, veille_consultation_le,
+            veille_consultation_vue
+     FROM reglages WHERE id = 1`
+  ) as Reglages;
+}
+
+export function definirReglageVeille(champ: keyof Reglages, valeur: string | number) {
+  db.runSync(`UPDATE reglages SET ${champ} = ? WHERE id = 1`, valeur);
+}

@@ -17,6 +17,7 @@ import { useTextes } from '../../src/i18n';
 const ENTREES = [
   { chemin: '/profil', icone: 'person-outline' as const, cle: 'profil' },
   { chemin: '/liens', icone: 'bookmark-outline' as const, cle: 'liens' },
+  { chemin: '/veille', icone: 'school-outline' as const, cle: 'veille' },
   { chemin: '/parametres', icone: 'options-outline' as const, cle: 'parametres' },
 ] as const;
 
@@ -32,12 +33,12 @@ export default function Menu() {
     () =>
       ENTREES.map((e) => ({
         ...e,
-        titre: t(`menu.${e.cle}`),
-        detail: t(`menu.${e.cle}Detail`),
+        titre: t(e.cle === 'veille' ? 'veille.titre' : `menu.${e.cle}`),
+        detail: t(e.cle === 'veille' ? 'veille.detailMenu' : `menu.${e.cle}Detail`),
         // Les mots-clés portent les deux langues : on cherche « invoice »
         // comme « facture », sans avoir à deviner dans laquelle l'application
         // est ouverte.
-        motsCles: t(`menu.${e.cle}Mots`),
+        motsCles: t(e.cle === 'veille' ? 'veille.motsCles' : `menu.${e.cle}Mots`),
       })),
     [t]
   );
