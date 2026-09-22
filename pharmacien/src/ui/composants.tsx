@@ -20,6 +20,7 @@ import {
 
 import { formaterTelephone, formaterTelephoneSaisie } from '../lib/telephone';
 import { accentPale, couleurs, espace, ombre, police, rayon, useAccent } from './theme';
+import { useTextes } from '../i18n';
 
 /**
  * Enveloppe de tout écran qui contient des champs. Trois comportements que
@@ -133,6 +134,7 @@ export function Champ({
   /** Posé dans une section : le cadre est déjà là, le champ n'en remet pas un. */
   nu?: boolean;
 }) {
+  const { t } = useTextes();
   const accent = useAccent();
   const [actif, setActif] = useState(false);
   // Un pavé numérique n'a pas de touche de retour sur iOS : sans cette barre,
@@ -172,7 +174,7 @@ export function Champ({
         <InputAccessoryView nativeID={identifiant}>
           <View style={styles.barreClavier}>
             <Pressable onPress={Keyboard.dismiss} hitSlop={10}>
-              <Text style={[styles.barreTexte, { color: accent }]}>Terminé</Text>
+              <Text style={[styles.barreTexte, { color: accent }]}>{t('commun.termine')}</Text>
             </Pressable>
           </View>
         </InputAccessoryView>
@@ -200,13 +202,14 @@ export function ChampTelephone({
   aide?: string;
   nu?: boolean;
 }) {
+  const { t } = useTextes();
   return (
     <Champ
       label={label}
       valeur={formaterTelephone(valeur)}
       onChange={(saisi) => onChange(formaterTelephoneSaisie(formaterTelephone(valeur), saisi))}
       clavier="number-pad"
-      placeholder="(514) 968-7204"
+      placeholder={t('commun.telephoneExemple')}
       aide={aide}
       nu={nu}
     />
@@ -335,6 +338,7 @@ export function FicheAide({
   onFermer: () => void;
   children: ReactNode;
 }) {
+  const { t } = useTextes();
   const accent = useAccent();
   return (
     <Modal visible={ouvert} transparent animationType="fade" onRequestClose={onFermer}>
@@ -349,7 +353,7 @@ export function FicheAide({
               pressed && styles.attenue,
             ]}
             onPress={onFermer}>
-            <Text style={styles.boutonTexte}>Compris</Text>
+            <Text style={styles.boutonTexte}>{t('commun.compris')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>

@@ -12,6 +12,7 @@ import {
 import { SECTIONS, type Lien } from '../src/content/liens';
 import { Bouton, Doux, Ecran, Fondu, SousTitre, Vide } from '../src/ui/composants';
 import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
+import { useTextes } from '../src/i18n';
 
 function ouvrir(lien: Lien) {
   const url = lien.type === 'tel' ? `tel:${lien.valeur.replace(/[^\d+]/g, '')}` : lien.valeur;
@@ -58,6 +59,7 @@ function LigneSignet({ signet, onModifier }: { signet: LienSignet; onModifier: (
 }
 
 export default function Liens() {
+  const { t } = useTextes();
   const router = useRouter();
   const [signets, setSignets] = useState<LienSignet[]>([]);
   const [recherche, setRecherche] = useState('');
@@ -84,7 +86,7 @@ export default function Liens() {
           style={styles.saisie}
           value={recherche}
           onChangeText={setRecherche}
-          placeholder="Chercher — cystite, vaccin, DIN…"
+          placeholder={t('liens.chercher')}
           placeholderTextColor={couleurs.doux}
           autoCorrect={false}
           returnKeyType="search"
@@ -97,7 +99,7 @@ export default function Liens() {
       </View>
 
       {groupes.length === 0 ? (
-        <Vide texte="Aucun signet ne correspond." />
+        <Vide texte={t('liens.aucunSignet')} />
       ) : (
         groupes.map((groupe) => (
           <Fondu key={groupe.categorie}>
@@ -115,12 +117,12 @@ export default function Liens() {
       )}
 
       <Bouton
-        titre="Ajouter un lien"
+        titre={t('liens.ajouterLien')}
         variante="secondaire"
         icone={<Ionicons name="add" size={18} color={couleurs.texte} />}
         onPress={() => router.push('/lien/nouveau')}
       />
-      <Doux>Appui long sur un signet pour le modifier.</Doux>
+      <Doux>{t('liens.appuiLong')}</Doux>
 
       {!cherche &&
         SECTIONS.map((section) => (

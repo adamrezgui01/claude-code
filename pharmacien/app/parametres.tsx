@@ -117,7 +117,7 @@ export default function Parametres() {
 
   return (
     <Ecran>
-      <SousTitre>Rappels de quart</SousTitre>
+      <SousTitre>{t('parametres.rappelsQuart')}</SousTitre>
       <Doux>
         Un rappel part toujours 48 h avant un quart, et un mémo 2 h après sa fin — celui-là ne
         demande rien, il rappelle seulement de corriger vos heures si elles ont changé.
@@ -129,14 +129,14 @@ export default function Parametres() {
       <Section>
         <View style={styles.bloc}>
           <Interrupteur
-            label="Rappel supplémentaire"
-            detail="Un second rappel, plus près du quart"
+            label={t('parametres.rappelSupplementaire')}
+            detail={t('parametres.rappelSupplementaireDetail')}
             valeur={!!reglages.rappel_secondaire_actif}
             onChange={(v) => modifier('rappel_secondaire_actif', v ? 1 : 0)}
           />
           {!!reglages.rappel_secondaire_actif && (
             <Fondu>
-              <Text style={styles.label}>Combien de temps avant ?</Text>
+              <Text style={styles.label}>{t('parametres.combienAvant')}</Text>
               <View style={styles.puces}>
                 {DELAIS.map((minutes) => (
                   <Puce
@@ -147,7 +147,7 @@ export default function Parametres() {
                   />
                 ))}
               </View>
-              <Doux>Vous pouvez en choisir plusieurs. Ils prennent effet aux prochains quarts.</Doux>
+              <Doux>{t('parametres.plusieursDelais')}</Doux>
             </Fondu>
           )}
         </View>
@@ -159,7 +159,7 @@ export default function Parametres() {
         global — un délai par pharmacie ne se remplit intelligemment qu'après
         des mois d'usage, quand on sait laquelle paie lentement.
       */}
-      <SousTitre>Relance des factures</SousTitre>
+      <SousTitre>{t('parametres.relanceFactures')}</SousTitre>
       <Doux>
         Une facture restée en attente au-delà de ce délai vous vaut une notification. Un seul
         rappel, doux, sans répétition.
@@ -168,11 +168,11 @@ export default function Parametres() {
       <Section>
         <Champ
           nu
-          label="Relancer après (jours)"
+          label={t('parametres.relanceDelai')}
           valeur={`${reglages.delai_relance_factures}`}
           onChange={(v) => modifier('delai_relance_factures', analyserNombre(v))}
           clavier="number-pad"
-          aide="30 jours par défaut. Mettez zéro pour ne jamais être relancé."
+          aide={t('parametres.relanceAide')}
         />
       </Section>
 
@@ -234,16 +234,16 @@ export default function Parametres() {
       <Section titre={t('parametres.serviceAdresses')}>
         <Champ
           nu
-          label="Clé OpenRouteService (facultative)"
+          label={t('parametres.cleItineraire')}
           valeur={reglages.cle_itineraire}
           onChange={(v) => modifier('cle_itineraire', v)}
           masque
-          aide="Sert à chercher les adresses et à calculer les distances. C’est la seule fonction qui envoie des données à l’extérieur de l’appareil."
+          aide={t('parametres.cleAide')}
         />
       </Section>
 
       <Bouton
-        titre={enregistre ? 'Enregistré' : 'Enregistrer'}
+        titre={t(enregistre ? 'commun.enregistre' : 'commun.enregistrer')}
         variante={enregistre ? 'secondaire' : 'principal'}
         onPress={() => void sauvegarder()}
       />
@@ -253,8 +253,8 @@ export default function Parametres() {
         style={({ pressed }) => [styles.apparence, pressed && { opacity: 0.6 }]}>
         <Ionicons name="color-palette-outline" size={20} color={accent} />
         <View style={styles.apparenceTexte}>
-          <Text style={styles.apparenceTitre}>Apparence</Text>
-          <Doux>Choisir la couleur d’accent</Doux>
+          <Text style={styles.apparenceTitre}>{t('parametres.apparence')}</Text>
+          <Doux>{t('parametres.apparenceDetail')}</Doux>
         </View>
         <Ionicons name="chevron-forward" size={18} color={couleurs.doux} />
       </Pressable>

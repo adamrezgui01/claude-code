@@ -51,6 +51,7 @@ import { Pageur } from '../../src/ui/Pageur';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 import { VueCarte, type PointCarte } from '../../src/ui/VueCarte';
 import { VueColonnes } from '../../src/ui/VueColonnes';
+import { useTextes } from '../../src/i18n';
 
 type Vue = 'agenda' | 'liste' | 'carte';
 type Affichage = 'jour' | 'semaine' | 'mois';
@@ -59,10 +60,8 @@ type Sens = 'aVenir' | 'anterieurs';
 /** Nombre d'ouvertures accompagnées du bandeau d'aide, avant qu'il ne se taise. */
 const OUVERTURES_AIDEES = 3;
 
-const TEXTE_AIDE =
-  'Maintenez un bloc pour le déplacer, plus longtemps pour le dupliquer. Balayez la grille pour changer de période.';
-
 export default function Horaire() {
+  const { t } = useTextes();
   const router = useRouter();
   const navigation = useNavigation();
   const accent = useAccent();
@@ -194,7 +193,11 @@ export default function Horaire() {
         longitude: q.pharmacie_longitude,
         couleur: couleurs[urgence],
         titre: q.pharmacie_nom,
-        detail: `${formatDateLongue(q.date)} · ${q.heure_debut} à ${q.heure_fin}`,
+        detail: t('horaire.detailCarte', {
+          date: formatDateLongue(q.date),
+          debut: q.heure_debut,
+          fin: q.heure_fin,
+        }),
         pharmacieId: q.pharmacie_id,
         quartId: q.id,
       });
@@ -214,7 +217,7 @@ export default function Horaire() {
         longitude: p.longitude,
         couleur: couleurs.historique,
         titre: p.nom,
-        detail: 'Déjà travaillé ici',
+        detail: t('carte.dejaTravailleIci'),
         pharmacieId: p.id,
       });
     }
@@ -300,9 +303,9 @@ export default function Horaire() {
           <Carte style={styles.bandeau}>
             <View style={styles.enteteBandeau}>
               <Ionicons name="cash-outline" size={18} color={couleurs.doux} />
-              <Text style={styles.titreBandeau}>Vos factures ont-elles été payées ?</Text>
+              <Text style={styles.titreBandeau}>{t('horaire.rappelFacturesTitre')}</Text>
             </View>
-            <Doux>Un coup d’œil par mois suffit à ne rien laisser traîner.</Doux>
+            <Doux>{t('horaire.rappelFacturesDetail')}</Doux>
             <View style={styles.actionsBandeau}>
               <Pressable
                 onPress={() => {
@@ -311,7 +314,7 @@ export default function Horaire() {
                   router.push('/factures');
                 }}
                 hitSlop={8}>
-                <Text style={[styles.lienBandeau, { color: accent }]}>Voir les factures</Text>
+                <Text style={[styles.lienBandeau, { color: accent }]}>{t('horaire.rappelFacturesVoir')}</Text>
               </Pressable>
               <Pressable
                 onPress={() => {
@@ -319,7 +322,7 @@ export default function Horaire() {
                   setRappelFactures(false);
                 }}
                 hitSlop={8}>
-                <Text style={styles.lienBandeauDoux}>Revenir à ça plus tard</Text>
+                <Text style={styles.lienBandeauDoux}>{t('horaire.rappelFacturesPlusTard')}</Text>
               </Pressable>
             </View>
           </Carte>
@@ -330,9 +333,9 @@ export default function Horaire() {
           que là où il a un sens : en agenda. */}
       <Onglets
         options={[
-          { valeur: 'agenda' as const, texte: 'Agenda' },
-          { valeur: 'liste' as const, texte: 'Liste' },
-          { valeur: 'carte' as const, texte: 'Carte' },
+          { valeur: 'agenda' as const, texte: t('horaire.vueAgenda') },
+          { valeur: 'liste' as const, texte: t('horaire.vueListe') },
+          { valeur: 'carte' as const, texte: t('horaire.vueCarte') },
         ]}
         valeur={vue}
         onChange={setVue}
@@ -341,17 +344,17 @@ export default function Horaire() {
       {vue === 'agenda' && (
         <Fondu>
           <Onglets
-            libelle="Affichage"
+            libelle={t('horaire.affichage')}
             options={[
-              { valeur: 'jour' as const, texte: 'Jour' },
-              { valeur: 'semaine' as const, texte: 'Semaine' },
-              { valeur: 'mois' as const, texte: 'Mois' },
+              { valeur: 'jour' as const, texte: t('horaire.jour') },
+              { valeur: 'semaine' as const, texte: t('horaire.semaine') },
+              { valeur: 'mois' as const, texte: t('horaire.mois') },
             ]}
             valeur={affichage}
             onChange={setAffichage}
           />
 
-          {bandeauAide && <BandeauAide texte={TEXTE_AIDE} />}
+          {bandeauAide && <BandeauAide texte={t('horaire.bandeauAide')} />}
 
           {affichage === 'mois' ? (
             <Calendrier
@@ -404,7 +407,7 @@ export default function Horaire() {
                 <>
                   <Text style={styles.jour}>{formatDateLongue(jour)}</Text>
                   {quartsDuJour.length === 0 ? (
-                    <Vide texte="Aucun quart ce jour-là." />
+                    <Vide texte={t('horaire.aucunQuartCeJour')} />
                   ) : (
                     quartsDuJour.map((q) => (
                       <LigneQuart
@@ -426,7 +429,7 @@ export default function Horaire() {
           <View style={styles.ligneAjout}>
             <View style={styles.ajoutPrincipal}>
               <Bouton
-                titre="Ajouter un quart"
+                titre={t('horaire.ajouterQuart')}
                 icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
                 onPress={() => router.push(`/quart/nouveau?date=${jour}`)}
               />
@@ -446,8 +449,8 @@ export default function Horaire() {
           */}
           <Onglets
             options={[
-              { valeur: 'aVenir' as const, texte: 'À venir' },
-              { valeur: 'anterieurs' as const, texte: 'Antérieurs' },
+              { valeur: 'aVenir' as const, texte: t('horaire.aVenir') },
+              { valeur: 'anterieurs' as const, texte: t('horaire.anterieurs') },
             ]}
             valeur={sens}
             onChange={setSens}
@@ -467,7 +470,7 @@ export default function Horaire() {
                 />
               ))}
               {aVenir.length === 0 && enCours.length === 0 ? (
-                <Vide texte="Aucun quart à venir." />
+                <Vide texte={t('horaire.aucunQuartAVenir')} />
               ) : (
                 aVenir.map((q) => (
                   <LigneQuart
@@ -483,7 +486,7 @@ export default function Horaire() {
               )}
             </>
           ) : anterieurs.length === 0 ? (
-            <Vide texte="Aucun quart antérieur." />
+            <Vide texte={t('horaire.aucunQuartAnterieur')} />
           ) : (
             anterieurs.map((q) => (
               <LigneQuart
@@ -501,7 +504,7 @@ export default function Horaire() {
           <View style={styles.ligneAjout}>
             <View style={styles.ajoutPrincipal}>
               <Bouton
-                titre="Ajouter un quart"
+                titre={t('horaire.ajouterQuart')}
                 icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
                 onPress={() => router.push('/quart/nouveau')}
               />
@@ -514,7 +517,7 @@ export default function Horaire() {
       {vue === 'carte' && (
         <Fondu>
           {points.length === 0 ? (
-            <Vide texte="Aucune pharmacie localisée. Ajoutez une adresse dans une fiche de pharmacie." />
+            <Vide texte={t('horaire.aucunePharmacieLocalisee')} />
           ) : (
             <VueCarte
               points={points}
@@ -528,7 +531,7 @@ export default function Horaire() {
           <View style={styles.ligneAjout}>
             <View style={styles.ajoutPrincipal}>
               <Bouton
-                titre="Ajouter un quart"
+                titre={t('horaire.ajouterQuart')}
                 icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
                 onPress={() => router.push(`/quart/nouveau?date=${jour}`)}
               />
@@ -549,10 +552,8 @@ export default function Horaire() {
         onIncomprise={noterIncomprise}
       />
 
-      <FicheAide ouvert={aideOuverte} titre="Les gestes de l’agenda" onFermer={() => setAideOuverte(false)}>
-        <Doux>
-          Balayez la grille vers la gauche ou la droite pour changer de jour, de semaine ou de mois.
-        </Doux>
+      <FicheAide ouvert={aideOuverte} titre={t('horaire.aideTitre')} onFermer={() => setAideOuverte(false)}>
+        <Doux>{t('horaire.aideBalayage')}</Doux>
         <Doux>
           Maintenez un bloc de quart, puis glissez-le pour le déplacer : il se cale à l’heure
           pleine ou à la demi-heure la plus proche.
@@ -575,11 +576,12 @@ export default function Horaire() {
  * ouvre un champ de texte, et c'est le micro du clavier qui écrit dedans.
  */
 function BoutonMicro({ onPress }: { onPress: () => void }) {
+  const { t } = useTextes();
   const accent = useAccent();
   return (
     <Pressable
       onPress={onPress}
-      accessibilityLabel="Dicter un quart"
+      accessibilityLabel={t('dictee.titre')}
       style={({ pressed }) => [
         styles.micro,
         { borderColor: accent },
@@ -596,6 +598,7 @@ function BoutonMicro({ onPress }: { onPress: () => void }) {
  * n'importe quel autre geste.
  */
 function parametresDuQuart(fiche: Extract<Fiche, { action: 'quart' }>): string {
+  const { t } = useTextes();
   const parametres = new URLSearchParams();
   if (fiche.dates.length > 0) parametres.set('date', fiche.dates[0]);
   else if (fiche.calendrier) parametres.set('date', fiche.calendrier);

@@ -11,8 +11,10 @@ import {
 } from '../../src/db/liens';
 import { Bouton, Champ, Doux, Ecran, Puce, Section } from '../../src/ui/composants';
 import { espace } from '../../src/ui/theme';
+import { useTextes } from '../../src/i18n';
 
 export default function FormulaireLien() {
+  const { t } = useTextes();
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
   const nouveau = params.id === 'nouveau';
@@ -39,7 +41,7 @@ export default function FormulaireLien() {
 
   function enregistrer() {
     if (!titre.trim() || !url.trim()) {
-      Alert.alert('Il manque quelque chose', 'Un titre et une adresse sont nécessaires.');
+      Alert.alert(t('liens.champsManquants'), t('liens.champsManquantsDetail'));
       return;
     }
     const entree = {
@@ -58,10 +60,10 @@ export default function FormulaireLien() {
 
   function supprimer() {
     if (!lienId) return;
-    Alert.alert('Supprimer ce lien ?', 'Cette action est définitive.', [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t('liens.supprimerConfirme'), t('liens.supprimerDefinitif'), [
+      { text: t('commun.annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: t('commun.supprimer'),
         style: 'destructive',
         onPress: () => {
           supprimerLien(lienId);
@@ -73,22 +75,22 @@ export default function FormulaireLien() {
 
   return (
     <Ecran>
-      <Stack.Screen options={{ title: nouveau ? 'Nouveau lien' : 'Modifier le lien' }} />
+      <Stack.Screen options={{ title: t(nouveau ? 'liens.titreNouveau' : 'liens.titreModifier') }} />
 
-      <Section titre="Le signet">
-        <Champ nu label="Titre" valeur={titre} onChange={setTitre} />
+      <Section titre={t('liens.leSignet')}>
+        <Champ nu label={t('liens.titreChamp')} valeur={titre} onChange={setTitre} />
         <Champ
           nu
-          label="Adresse"
+          label={t('profil.adresse')}
           valeur={url}
           onChange={setUrl}
           auto="none"
-          placeholder="https://"
+          placeholder={t('liens.adressePlaceholder')}
         />
       </Section>
 
-      <Section titre="Catégorie">
-        <Champ nu label="Nom de la catégorie" valeur={categorie} onChange={setCategorie} />
+      <Section titre={t('liens.categorie')}>
+        <Champ nu label={t('liens.nomCategorie')} valeur={categorie} onChange={setCategorie} />
       </Section>
       {existantes.length > 0 && (
         <View style={styles.puces}>
@@ -98,10 +100,10 @@ export default function FormulaireLien() {
         </View>
       )}
 
-      <Section titre="Mots-clés">
+      <Section titre={t('liens.motsCles')}>
         <Champ
           nu
-          label="Séparés par des virgules"
+          label={t('liens.motsClesAide')}
           valeur={motsCles}
           onChange={setMotsCles}
           multiligne
@@ -113,8 +115,8 @@ export default function FormulaireLien() {
       </Doux>
 
       <View style={styles.actions}>
-        <Bouton titre="Enregistrer" onPress={enregistrer} />
-        {!nouveau && <Bouton titre="Supprimer" variante="danger" onPress={supprimer} />}
+        <Bouton titre={t('commun.enregistrer')} onPress={enregistrer} />
+        {!nouveau && <Bouton titre={t('commun.supprimer')} variante="danger" onPress={supprimer} />}
       </View>
     </Ecran>
   );

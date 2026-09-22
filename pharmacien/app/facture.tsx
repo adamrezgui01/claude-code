@@ -43,10 +43,12 @@ import {
 import { SelecteurDate } from '../src/ui/Selecteurs';
 import { SelecteurPharmacie } from '../src/ui/SelecteurPharmacie';
 import { couleurs, espace, police } from '../src/ui/theme';
+import { useTextes } from '../src/i18n';
 
 type Groupe = { pharmacie: Pharmacie; quarts: QuartDetaille[]; frais: FraisExtra[] };
 
 export default function GenererFacture() {
+  const { t } = useTextes();
   const router = useRouter();
   const params = useLocalSearchParams<{ debut?: string; fin?: string; pharmacies?: string }>();
 
@@ -189,7 +191,7 @@ export default function GenererFacture() {
       }
       router.replace(`/factures?ids=${ids.join(',')}`);
     } catch (erreur) {
-      Alert.alert('Factures non générées', `${erreur}`);
+      Alert.alert(t('facture.nonGenerees'), `${erreur}`);
     } finally {
       setEnCours(false);
     }
@@ -209,22 +211,26 @@ export default function GenererFacture() {
 
     const restants = grouper(quartsNonFactures(quartsFacturables(quarts)));
     Alert.alert(
-      'Des quarts sont déjà facturés',
-      `${pluriel(dejaFactures.length, 'quart')} de cette sélection ${
-        dejaFactures.length > 1 ? 'figurent' : 'figure'
-      } déjà sur ${numerosConcernes.length > 1 ? 'les factures' : 'la facture'} ${numerosConcernes.join(', ')}.`,
+      t('facture.doublonTitre'),
+      t('facture.doublonDetail', {
+        count: dejaFactures.length,
+        factures: t('facture.surFacture', {
+          count: numerosConcernes.length,
+          liste: numerosConcernes.join(', '),
+        }),
+      }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('commun.annuler'), style: 'cancel' },
         ...(restants.length > 0
           ? [
               {
-                text: 'Exclure ces quarts',
+                text: t('facture.exclure'),
                 onPress: () => void ecrire(restants),
               },
             ]
           : []),
         {
-          text: 'Remplacer',
+          text: t('facture.remplacer'),
           style: 'destructive' as const,
           onPress: () =>
             void (async () => {
@@ -250,12 +256,12 @@ export default function GenererFacture() {
   return (
     <Ecran>
       <Onglets
-        libelle="Période"
+        libelle={t('statistiques.periode')}
         options={[
-          { valeur: 'mois' as const, texte: 'Ce mois' },
-          { valeur: 'moisDernier' as const, texte: 'Mois dernier' },
-          { valeur: 'trimestre' as const, texte: '3 mois' },
-          { valeur: 'personnalisee' as const, texte: 'Autre' },
+          { valeur: 'mois' as const, texte: t('statistiques.ceMois') },
+          { valeur: 'moisDernier' as const, texte: t('statistiques.moisDernier') },
+          { valeur: 'trimestre' as const, texte: t('statistiques.troisMois') },
+          { valeur: 'personnalisee' as const, texte: t('commun.autre') },
         ]}
         valeur={preset}
         onChange={setPreset}
@@ -272,14 +278,14 @@ export default function GenererFacture() {
       )}
 
       <View style={styles.section}>
-        <SousTitre>Pharmacies</SousTitre>
+        <SousTitre>{t('facture.pharmacies')}</SousTitre>
         <SelecteurPharmacie
           pharmacies={pharmacies}
           recentes={recentes}
           selection={selection}
           onSelectionner={basculerPharmacie}
           enTete={
-            <Puce texte="Toutes" actif={selection.length === 0} onPress={() => setSelection([])} />
+            <Puce texte={t('commun.toutes')} actif={selection.length === 0} onPress={() => setSelection([])} />
           }
         />
       </View>
@@ -287,7 +293,7 @@ export default function GenererFacture() {
       <Separateur />
 
       {groupes.length === 0 ? (
-        <Vide texte="Aucun quart dans cette période : rien à facturer." />
+        <Vide texte={t('facture.rienAFacturer')} />
       ) : (
         <Fondu>
           {dejaFactures.length > 0 && (
@@ -300,34 +306,36 @@ export default function GenererFacture() {
             </Carte>
           )}
 
-          <SousTitre>À inclure</SousTitre>
+          <SousTitre>{t('facture.aInclure')}</SousTitre>
           <Carte>
             <Interrupteur
-              label="Déplacement"
-              detail="Selon les conditions de chaque pharmacie"
+              label={t('facture.deplacement')}
+              detail={t('facture.deplacementDetail')}
               valeur={inclureDeplacement}
               onChange={setInclureDeplacement}
             />
             <Separateur />
             <Interrupteur
-              label="Per diem"
-              detail="Jours travaillés × montant de la pharmacie"
+              label={t('facture.perDiem')}
+              detail={t('facture.perDiemDetail')}
               valeur={inclurePerDiem}
               onChange={setInclurePerDiem}
             />
             <Separateur />
             <Interrupteur
-              label="Frais extra"
+              label={t('facture.fraisExtra')}
               detail={
-                totalFrais > 0 ? `${argent(totalFrais)} sur la période` : 'Aucun frais sur la période'
+                totalFrais > 0
+                  ? t('facture.fraisSurPeriode', { montant: argent(totalFrais) })
+                  : t('facture.aucunFrais')
               }
               valeur={inclureFrais}
               onChange={setInclureFrais}
             />
             <Separateur />
             <Interrupteur
-              label="Hébergement"
-              detail="Prérempli depuis la fiche de chaque pharmacie"
+              label={t('facture.hebergement')}
+              detail={t('facture.hebergementDetail')}
               valeur={inclureHebergement}
               onChange={setInclureHebergement}
             />
@@ -346,46 +354,56 @@ export default function GenererFacture() {
                       setHebergements((actuels) => ({ ...actuels, [g.pharmacie.id]: v }))
                     }
                     clavier="decimal-pad"
-                    placeholder="0,00"
+                    placeholder={t('commun.montantZero')}
                   />
                 )
               )}
           </Carte>
 
           <SousTitre>
-            {groupes.length > 1 ? `${pluriel(groupes.length, 'facture')} à générer` : 'Facture à générer'}
+            {groupes.length > 1
+              ? t('facture.aGenererPlusieurs', { count: groupes.length })
+              : t('facture.aGenerer')}
           </SousTitre>
           {groupes.map((g) => {
-            const t = calculerTotaux(options(g));
+            const totaux = calculerTotaux(options(g));
             return (
               <Carte key={g.pharmacie.id}>
-                <Rangee label={g.pharmacie.nom} valeur={argent(t.total)} accent />
+                <Rangee label={g.pharmacie.nom} valeur={argent(totaux.total)} accent />
                 <Doux>
-                  {pluriel(g.quarts.length, 'quart')} · {heures(t.totalHeures)} ·
-                  honoraires {argent(t.honoraires)}
-                  {t.deplacementMontant > 0 ? ` · déplacement ${argent(t.deplacementMontant)}` : ''}
-                  {t.perDiemMontant > 0 ? ` · per diem ${argent(t.perDiemMontant)}` : ''}
-                  {t.fraisExtra > 0 ? ` · frais ${argent(t.fraisExtra)}` : ''}
-                  {t.hebergement > 0 ? ` · hébergement ${argent(t.hebergement)}` : ''}
+                  {t('facture.resumeHonoraires', {
+                    quarts: t('compteur.quart', { count: g.quarts.length }),
+                    heures: heures(totaux.totalHeures),
+                    honoraires: argent(totaux.honoraires),
+                  })}
+                  {totaux.deplacementMontant > 0
+                    ? t('facture.resumeDeplacement', { montant: argent(totaux.deplacementMontant) })
+                    : ''}
+                  {totaux.perDiemMontant > 0
+                    ? t('facture.resumePerDiem', { montant: argent(totaux.perDiemMontant) })
+                    : ''}
+                  {totaux.fraisExtra > 0
+                    ? t('facture.resumeFrais', { montant: argent(totaux.fraisExtra) })
+                    : ''}
+                  {totaux.hebergement > 0
+                    ? t('facture.resumeHebergement', { montant: argent(totaux.hebergement) })
+                    : ''}
                 </Doux>
               </Carte>
             );
           })}
 
           {enteteIncomplete && (
-            <Text style={styles.avertissement}>
-              L’en-tête de facture est incomplète : ajoutez votre nom et votre numéro de permis OPQ
-              dans Profil › Vos coordonnées.
-            </Text>
+            <Text style={styles.avertissement}>{t('facture.enteteIncomplete')}</Text>
           )}
 
           <Bouton
             titre={
               enCours
-                ? 'Génération…'
+                ? t('facture.generation')
                 : groupes.length > 1
-                  ? `Générer les ${pluriel(groupes.length, 'facture')}`
-                  : 'Générer la facture'
+                  ? t('facture.genererPlusieurs', { count: groupes.length })
+                  : t('facture.generer')
             }
             onPress={generer}
             desactive={enCours}

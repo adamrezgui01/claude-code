@@ -11,6 +11,7 @@ import { argent, heures, pluriel } from '../src/lib/format';
 import { ancienneteFacture, relanceDue } from '../src/lib/relanceFactures';
 import { Bouton, Doux, Etiquette, Fondu, Vide } from '../src/ui/composants';
 import { couleurs, espace, ombre, police, rayon, useAccent } from '../src/ui/theme';
+import { useTextes } from '../src/i18n';
 
 /**
  * Les factures déjà générées. Sans cette liste, l'usager ne sait jamais ce
@@ -18,6 +19,7 @@ import { couleurs, espace, ombre, police, rayon, useAccent } from '../src/ui/the
  * aucune trace.
  */
 export default function Factures() {
+  const { t } = useTextes();
   const router = useRouter();
   const accent = useAccent();
   const params = useLocalSearchParams<{ ids?: string }>();
@@ -38,12 +40,10 @@ export default function Factures() {
 
   return (
     <View style={styles.cadre}>
-      <Stack.Screen options={{ title: nouvelles ? 'Factures générées' : 'Factures' }} />
+      <Stack.Screen options={{ title: t(nouvelles ? 'facture.titreNouvelles' : 'facture.titreListe') }} />
       <ScrollView contentContainerStyle={styles.contenu}>
         {nouvelles && (
-          <Doux>
-            Envoyez chaque facture à sa pharmacie. Elles restent accessibles depuis Statistiques.
-          </Doux>
+          <Doux>{t('facture.envoyerChacune')}</Doux>
         )}
 
         {!nouvelles && enAttente.length > 0 && (
@@ -55,7 +55,7 @@ export default function Factures() {
         )}
 
         {factures.length === 0 ? (
-          <Vide texte="Aucune facture générée pour l’instant." />
+          <Vide texte={t('facture.aucuneFacture')} />
         ) : (
           factures.map((f) => {
             const paye = f.statut_paiement === 'payee';
@@ -74,17 +74,22 @@ export default function Factures() {
                   <View style={styles.entete}>
                     <Text style={styles.pharmacie}>{f.pharmacie_nom}</Text>
                     <Etiquette
-                      texte={paye ? 'Payée' : enRetard ? 'Impayée' : 'En attente'}
+                      texte={t(
+                        paye ? 'facture.payee' : enRetard ? 'facture.impayee' : 'facture.enAttente'
+                      )}
                       ton={paye ? 'succes' : enRetard ? 'alerte' : 'attente'}
                     />
                   </View>
                   <Text style={styles.detail}>
-                    Facture {f.numero} · {formatDateCourte(f.periode_debut)} –{' '}
-                    {formatDateCourte(f.periode_fin)}
+                    {t('facture.numeroEtPeriode', {
+                      numero: f.numero,
+                      debut: formatDateCourte(f.periode_debut),
+                      fin: formatDateCourte(f.periode_fin),
+                    })}
                   </Text>
                   <Text style={styles.detail}>
-                    Générée le {formatDateCourte(f.date_generation)}
-                    {!paye ? ` · ${pluriel(ancienneteFacture(f), 'jour')}` : ''}
+                    {t('facture.genereeLe', { date: formatDateCourte(f.date_generation) })}
+                    {!paye ? t('facture.depuisJours', { count: ancienneteFacture(f) }) : ''}
                   </Text>
                   <View style={styles.bas}>
                     <Text style={styles.montant}>
@@ -99,7 +104,7 @@ export default function Factures() {
         )}
 
         {nouvelles ? (
-          <Bouton titre="Terminé" onPress={() => router.back()} />
+          <Bouton titre={t('commun.termine')} onPress={() => router.back()} />
         ) : (
           factures.length > 0 && (
             <Doux>

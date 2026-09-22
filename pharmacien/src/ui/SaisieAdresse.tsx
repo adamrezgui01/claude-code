@@ -6,6 +6,7 @@ import { PROVINCES, type Adresse } from '../db/types';
 import { codePostalValide, formaterCodePostal } from '../lib/adresses';
 import {
   chercherAdresses,
+  type MotifEchec,
   type Point,
   type Portee,
   type SuggestionAdresse,
@@ -13,6 +14,7 @@ import {
 import { creerRechercheDifferee, MINIMUM_CARACTERES } from '../lib/frappe';
 import { Champ, Puce } from './composants';
 import { couleurs, espace, police, rayon, useAccent } from './theme';
+import { useTextes } from '../i18n';
 
 /**
  * La saisie d'adresse de l'application, la même pour une pharmacie et pour le
@@ -29,8 +31,8 @@ export function SaisieAdresse({
   cle,
   foyer,
   onNom,
-  libelle = 'Adresse',
-  invite = 'Commencez à taper l’adresse',
+  libelle,
+  invite,
   apresRecherche,
   portee = 'domicile',
 }: {
@@ -52,12 +54,14 @@ export function SaisieAdresse({
    */
   portee?: Portee;
 }) {
+  const { t } = useTextes();
   const accent = useAccent();
   const foyerLat = foyer?.lat;
   const foyerLon = foyer?.lon;
   const [recherche, setRecherche] = useState('');
   const [suggestions, setSuggestions] = useState<SuggestionAdresse[]>([]);
-  const [erreur, setErreur] = useState('');
+  const [motif, setMotif] = useState<MotifEchec | null>(null);
+  const [statut, setStatut] = useState<number | undefined>(undefined);
   const [chargement, setChargement] = useState(false);
   const [provinces, setProvinces] = useState(false);
   /**
@@ -80,12 +84,13 @@ export function SaisieAdresse({
         ),
       surResultat: (resultat) => {
         setSuggestions(resultat.suggestions);
-        setErreur(resultat.erreur ?? '');
+        setMotif(resultat.motif ?? null);
+        setStatut(resultat.statut);
         setChargement(false);
       },
       surVide: () => {
         setSuggestions([]);
-        setErreur('');
+        setMotif(null);
         setChargement(false);
       },
     });
@@ -109,7 +114,7 @@ export function SaisieAdresse({
     if (suggestion.nom) onNom?.(suggestion.nom);
     setRecherche('');
     setSuggestions([]);
-    setErreur('');
+    setMotif(null);
     chercheur.current?.saisir('');
   }
 
@@ -125,14 +130,14 @@ export function SaisieAdresse({
   return (
     <View>
       <View style={styles.champ}>
-          <Text style={styles.label}>{libelle}</Text>
+          <Text style={styles.label}>{libelle ?? t('adresse.adresseLibelle')}</Text>
           <View style={[styles.recherche, suggestions.length > 0 && { borderColor: accent }]}>
             <Ionicons name="search" size={16} color={couleurs.doux} />
             <TextInput
               style={styles.saisie}
               value={recherche}
               onChangeText={taper}
-              placeholder={invite}
+              placeholder={invite ?? t('adresse.taperAdresse')}
               placeholderTextColor={couleurs.doux}
               autoCorrect={false}
             />
@@ -168,8 +173,8 @@ export function SaisieAdresse({
 
           {/* Les champs restent là, alors une recherche sans résultat n'est pas
               un échec : on remplit soi-même, sans avoir à basculer de mode. */}
-          {!!erreur && !chargement && erreur !== 'Aucune adresse trouvée.' && (
-            <Text style={styles.erreur}>{erreur}</Text>
+          {!!motif && motif !== 'aucune' && !chargement && (
+            <Text style={styles.erreur}>{t(`adresse.erreur${majuscule(motif)}`, { statut })}</Text>
           )}
       </View>
 
@@ -178,41 +183,41 @@ export function SaisieAdresse({
       <View style={styles.rangee}>
         <View style={styles.court}>
           <Champ
-            label="Numéro"
+            label={t('adresse.numeroCivique')}
             valeur={adresse.numero_civique}
             onChange={(v) => modifier('numero_civique', v)}
             clavier="number-pad"
           />
         </View>
         <View style={styles.long}>
-          <Champ label="Rue" valeur={adresse.rue} onChange={(v) => modifier('rue', v)} />
+          <Champ label={t('adresse.rue')} valeur={adresse.rue} onChange={(v) => modifier('rue', v)} />
         </View>
       </View>
 
       <Champ
-        label="Local ou suite (facultatif)"
+        label={t('adresse.local')}
         valeur={adresse.local}
         onChange={(v) => modifier('local', v)}
-        placeholder="Centre commercial, bureau 5"
+        placeholder={t('adresse.localExemple')}
       />
 
       <View style={styles.rangee}>
         <View style={styles.long}>
-          <Champ label="Ville" valeur={adresse.ville} onChange={(v) => modifier('ville', v)} />
+          <Champ label={t('adresse.ville')} valeur={adresse.ville} onChange={(v) => modifier('ville', v)} />
         </View>
         <View style={styles.court}>
           <Champ
-            label="Code postal"
+            label={t('adresse.codePostal')}
             valeur={adresse.code_postal}
             onChange={(v) => modifier('code_postal', formaterCodePostal(v))}
             auto="characters"
-            placeholder="A1A 1A1"
-            avertissement={codeIncomplet ? 'Format attendu : A1A 1A1' : undefined}
+            placeholder={t('adresse.codePostalExemple')}
+            avertissement={codeIncomplet ? t('adresse.codePostalFormat') : undefined}
           />
         </View>
       </View>
 
-      <Text style={styles.label}>Province</Text>
+      <Text style={styles.label}>{t('adresse.province')}</Text>
       <Pressable onPress={() => setProvinces((p) => !p)} style={styles.boite}>
         <Text style={styles.boiteTexte}>{adresse.province}</Text>
         <Ionicons name={provinces ? 'chevron-up' : 'chevron-down'} size={16} color={couleurs.doux} />
@@ -234,6 +239,11 @@ export function SaisieAdresse({
       )}
     </View>
   );
+}
+
+/** « cleRefusee » donne la clé « erreurCleRefusee ». */
+function majuscule(motif: MotifEchec): string {
+  return `${motif[0].toUpperCase()}${motif.slice(1)}`;
 }
 
 const styles = StyleSheet.create({

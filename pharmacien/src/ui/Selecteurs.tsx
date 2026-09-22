@@ -22,6 +22,7 @@ import {
 } from '../lib/dates';
 import { Pageur } from './Pageur';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
+import { useTextes } from '../i18n';
 
 /**
  * Les sélecteurs de date et d'heure, construits ici plutôt que pris au système.
@@ -50,6 +51,7 @@ function Feuille({
   onFermer: () => void;
   children: ReactNode;
 }) {
+  const { t } = useTextes();
   const accent = useAccent();
   return (
     <Modal visible={ouvert} transparent animationType="fade" onRequestClose={onFermer}>
@@ -65,7 +67,7 @@ function Feuille({
               pressed && { opacity: 0.8 },
             ]}
             onPress={onFermer}>
-            <Text style={styles.validerTexte}>Terminé</Text>
+            <Text style={styles.validerTexte}>{t('commun.termine')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -157,6 +159,7 @@ export function SelecteurHeure({
   ouvert?: boolean;
   onOuvert?: (v: boolean) => void;
 }) {
+  const { t } = useTextes();
   const [ouvertInterne, setOuvertInterne] = useState(false);
   const ouvert = ouvertPilote ?? ouvertInterne;
   const setOuvert = (v: boolean) => {
@@ -188,7 +191,7 @@ export function SelecteurHeure({
         <Ionicons name="time-outline" size={16} color={couleurs.doux} />
       </Pressable>
 
-      <Feuille ouvert={ouvert} titre={`Heure de ${label.toLowerCase()}`} onFermer={() => setOuvert(false)}>
+      <Feuille ouvert={ouvert} titre={t('commun.heureDe', { moment: label.toLowerCase() })} onFermer={() => setOuvert(false)}>
         <View style={styles.rouleaux}>
           <Rouleau
             valeurs={heuresPossibles}
@@ -279,6 +282,7 @@ export function SelecteurDate({
   /** Jours portant déjà un quart, marqués d'un point sous le chiffre. */
   joursMarques?: Set<string>;
 }) {
+  const { t } = useTextes();
   const accent = useAccent();
   const [ouvert, setOuvert] = useState(false);
   const [mois, setMois] = useState(valeur);
@@ -371,7 +375,7 @@ export function SelecteurDate({
         />
 
         <Pressable onPress={() => setMois(dateISO(new Date()))} hitSlop={8}>
-          <Text style={[styles.aujourdhui, { color: accent }]}>Aujourd’hui</Text>
+          <Text style={[styles.aujourdhui, { color: accent }]}>{t('commun.aujourdhui')}</Text>
         </Pressable>
       </Feuille>
     </View>

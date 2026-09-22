@@ -11,10 +11,11 @@ import { createContext, useContext } from 'react';
  * blanc, donc n'importe lequel reste lisible sur un bouton.
  */
 export const MAUVES = [
-  { cle: 'amethyste', nom: 'Améthyste', valeur: '#7847C2' },
-  { cle: 'iris', nom: 'Iris', valeur: '#7051B8' },
-  { cle: 'violette', nom: 'Violette', valeur: '#8547C2' },
-  { cle: 'prune', nom: 'Prune', valeur: '#8F51B8' },
+  // Le nom de chaque nuance vit dans les traductions, sous sa clé.
+  { cle: 'amethyste', valeur: '#7847C2' },
+  { cle: 'iris', valeur: '#7051B8' },
+  { cle: 'violette', valeur: '#8547C2' },
+  { cle: 'prune', valeur: '#8F51B8' },
 ] as const;
 
 export const ACCENT_DEFAUT: string = MAUVES[0].valeur;

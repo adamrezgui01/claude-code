@@ -3,20 +3,22 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Carte, Doux, Fondu, SousTitre } from '../src/ui/composants';
 import { accentPale, couleurs, espace, MAUVES, police, rayon, useTheme } from '../src/ui/theme';
+import { useTextes } from '../src/i18n';
 
 /**
  * Un mauve ne se juge pas sur papier. L'usager voit ici les quatre nuances
  * appliquées à un bouton et à une carte, sur son vrai écran, et choisit.
  */
 export default function Apparence() {
+  const { t } = useTextes();
   const { accent, definirAccent } = useTheme();
 
   return (
     <ScrollView contentContainerStyle={styles.contenu}>
       <Fondu>
-        <SousTitre>Couleur d’accent</SousTitre>
+        <SousTitre>{t('apparence.couleur')}</SousTitre>
         <Doux>
-          Touchez une nuance pour l’essayer : l’application l’applique immédiatement, partout.
+          {t('apparence.explication')}
         </Doux>
 
         <View style={styles.nuances}>
@@ -35,21 +37,21 @@ export default function Apparence() {
                 <View style={[styles.pastille, { backgroundColor: mauve.valeur }]}>
                   {choisi && <Ionicons name="checkmark" size={18} color="#FFFFFF" />}
                 </View>
-                <Text style={[styles.nom, choisi && { color: mauve.valeur }]}>{mauve.nom}</Text>
+                <Text style={[styles.nom, choisi && { color: mauve.valeur }]}>{t(`apparence.${mauve.cle}`)}</Text>
               </Pressable>
             );
           })}
         </View>
 
-        <SousTitre>Aperçu</SousTitre>
+        <SousTitre>{t('apparence.apercu')}</SousTitre>
         <Carte>
-          <Text style={styles.apercuTitre}>Familiprix du Centre</Text>
+          <Text style={styles.apercuTitre}>{t('apparence.exemplePharmacie')}</Text>
           <Doux>vendredi 18 septembre · 09:00 à 17:00</Doux>
           <View style={[styles.boutonApercu, { backgroundColor: accent }]}>
-            <Text style={styles.boutonTexte}>Enregistrer</Text>
+            <Text style={styles.boutonTexte}>{t('commun.enregistrer')}</Text>
           </View>
           <View style={[styles.puceApercu, { backgroundColor: accentPale(accent), borderColor: accent }]}>
-            <Text style={[styles.puceTexte, { color: accent }]}>Ce mois-ci</Text>
+            <Text style={[styles.puceTexte, { color: accent }]}>{t('apparence.ceMoisCi')}</Text>
           </View>
         </Carte>
 

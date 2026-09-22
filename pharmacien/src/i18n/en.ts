@@ -13,6 +13,9 @@ import type { Dictionnaire } from './fr';
  */
 export const en: Dictionnaire = {
   commun: {
+    montantZero: '0.00',
+    telephoneExemple: '(514) 968-7204',
+    heureDe: '{{moment}} time',
     enregistrer: 'Save',
     enregistre: 'Saved',
     annuler: 'Cancel',
@@ -62,6 +65,9 @@ export const en: Dictionnaire = {
   },
 
   horaire: {
+    consigneCopier: 'Copy of {{pharmacie}} — release to drop it.',
+    consigneDeplacer: '{{pharmacie}} — release to move it.',
+    detailCarte: '{{date}} · {{debut}} to {{fin}}',
     vueAgenda: 'Agenda',
     vueListe: 'List',
     vueCarte: 'Map',
@@ -96,6 +102,17 @@ export const en: Dictionnaire = {
   },
 
   quart: {
+    pauseCourte: ' · break {{minutes}} min',
+    distanceEnCalcul: 'distance being calculated…',
+    adresseProfilManquante: 'profile address missing',
+    dureeFacturableLabel: 'Billable time',
+    pauseStatut: '{{duree}}{{statut}}',
+    pausePayeeCourt: ' · paid',
+    pauseNonPayee: ' · unpaid',
+    tauxHoraireValeur: '{{montant}}/h',
+    fraisSansNom: 'Expense',
+    totalFraisLabel: 'Total expenses',
+    pharmacieSansNom: 'Pharmacy',
     titreNouveau: 'New shift',
     titreModifier: 'Edit shift',
     titreFacture: 'Invoiced shift',
@@ -186,6 +203,7 @@ export const en: Dictionnaire = {
   },
 
   pharmacie: {
+    resultats: 'Results',
     titreNouvelle: 'New pharmacy',
     titre: 'Pharmacy',
     pageIdentite: 'Identity',
@@ -267,7 +285,8 @@ export const en: Dictionnaire = {
     ajouterQuartIci: 'Add a shift here',
     supprimerPharmacie: 'Delete pharmacy',
     supprimerConfirme: 'Delete this pharmacy?',
-    supprimerAvecQuarts: 'Its {{quarts}}, codes and credentials will be deleted too.',
+    supprimerAvecQuarts_one: 'Its shift, codes and credentials will be deleted too.',
+    supprimerAvecQuarts_other: 'Its {{count}} shifts, codes and credentials will be deleted too.',
     supprimerSansQuarts: 'Its codes and credentials will be deleted too.',
     nomManquant: 'Name missing',
     nomManquantDetail: 'Give the pharmacy a name.',
@@ -276,6 +295,9 @@ export const en: Dictionnaire = {
   },
 
   repertoire: {
+    toutes: 'All pharmacies',
+    plusRecentes: 'Most recent',
+    triAZ: 'A – Z',
     rechercher: 'Search a pharmacy',
     triePar: 'Sorted by',
     triAlphabetique: 'A – Z',
@@ -313,6 +335,8 @@ export const en: Dictionnaire = {
   },
 
   facture: {
+    depuisJours_one: ' · {{count}} day',
+    depuisJours_other: ' · {{count}} days',
     titreGenerer: 'Generate an invoice',
     titre: 'Invoice',
     titreNumero: 'Invoice {{numero}}',
@@ -340,7 +364,10 @@ export const en: Dictionnaire = {
       'The invoice header is incomplete: add your name and OPQ licence number in Profile › Your details.',
     nonGenerees: 'Invoices not generated',
     doublonTitre: 'Some shifts are already invoiced',
-    doublonDetail: '{{quarts}} in this selection already appear on {{factures}}.',
+    doublonDetail_one: 'One shift in this selection already appears on {{factures}}.',
+    doublonDetail_other: '{{count}} shifts in this selection already appear on {{factures}}.',
+    surFacture_one: 'invoice {{liste}}',
+    surFacture_other: 'invoices {{liste}}',
     doublonAvis:
       '{{quarts}} in this period already appear on {{factures}}. When generating, you can exclude them or replace the previous invoice.',
     exclure: 'Exclude those shifts',
@@ -356,13 +383,21 @@ export const en: Dictionnaire = {
     genereeLe: 'Generated on {{date}}',
     toucherPourRouvrir:
       'Tap an invoice to review it, share it again or delete it. Deleting an invoice releases its shifts.',
-    enAttenteDepuis: ' · pending for {{jours}}',
+    enAttenteDepuis_one: ' · pending for {{count}} day',
+    enAttenteDepuis_other: ' · pending for {{count}} days',
     repartager: 'Share the PDF again',
     marquerPayee: 'Mark as paid',
     marquerEnAttente: 'Mark as pending',
     partageImpossible: 'Cannot share',
     supprimerConfirme: 'Delete this invoice?',
-    supprimerRelibere: '{{quarts}} will become editable again and can be re-invoiced.',
+    supprimerRelibere_one: 'Its shift will become editable again and can be re-invoiced.',
+    supprimerRelibere_other:
+      'Its {{count}} shifts will become editable again and can be re-invoiced.',
+    resumeHonoraires: '{{quarts}} · {{heures}} · fees {{honoraires}}',
+    resumeDeplacement: ' · travel {{montant}}',
+    resumePerDiem: ' · per diem {{montant}}',
+    resumeFrais: ' · expenses {{montant}}',
+    resumeHebergement: ' · lodging {{montant}}',
     supprimerDefinitif: 'This cannot be undone.',
     supprimerFacture: 'Delete the invoice',
     supprimerExplication:
@@ -458,6 +493,9 @@ export const en: Dictionnaire = {
   },
 
   menu: {
+    profilMots: 'name, licence, opq, address, invoice, training, documents, insurance, nom, permis, adresse, facture, formation',
+    liensMots: 'bookmarks, inesss, protocol, vaccine, emergency, info-santé, poison, signets, protocole, urgence',
+    parametresMots: 'reminder, notification, colour, color, accent, purple, key, openrouteservice, rappel, couleur, clé, language, langue',
     titre: 'Menu',
     rechercher: 'Find a section',
     aucuneSection: 'No section matches.',
@@ -472,6 +510,24 @@ export const en: Dictionnaire = {
   },
 
   liens: {
+    unLien: 'Link',
+    titreNouveau: 'New bookmark',
+    titreModifier: 'Edit bookmark',
+    leSignet: 'The bookmark',
+    titreChamp: 'Title',
+    adressePlaceholder: 'https://',
+    categorie: 'Category',
+    nomCategorie: 'Category name',
+    motsCles: 'Keywords',
+    motsClesAide: 'Separated by commas',
+    ajouterLien: 'Add a bookmark',
+    champsManquants: 'Title and address missing',
+    champsManquantsDetail: 'A title and an address are required.',
+    supprimerConfirme: 'Delete this bookmark?',
+    supprimerDefinitif: 'This cannot be undone.',
+    appuiLong: 'Press and hold a bookmark to edit it.',
+    aucunSignet: 'No bookmark matches.',
+    chercher: 'Search — cystitis, vaccine, DIN…',
     titre: 'Useful links and information',
     rechercher: 'Search a protocol, a reference…',
     aucunResultat: 'Nothing matches this search.',
@@ -479,6 +535,9 @@ export const en: Dictionnaire = {
   },
 
   bienvenue: {
+    manqueTitre: 'Something is missing',
+    manqueDetail: 'Your name and address are needed to invoice and to compute distances.',
+    nomPlaceholder: 'As it will appear on your invoices',
     titre: 'Welcome',
     intro:
       'Two things before you start: your name, which will appear on your invoices, and your address, which is used to calculate distances.',
@@ -489,6 +548,15 @@ export const en: Dictionnaire = {
   },
 
   carte: {
+    apres48h: '48 h',
+    apres14j: '14 d',
+    plusTard: 'later',
+    legendeDejaTravaille: 'worked here before',
+    unMois: '1 month',
+    troisMois: '3 months',
+    sixMois: '6 months',
+    douzeMois: '12 months',
+    dejaTravailleIci: 'Worked here before',
     historique: 'History',
     historiqueMois: '{{mois}}',
     dejaTravaille: 'Worked here before',
@@ -511,6 +579,16 @@ export const en: Dictionnaire = {
   },
 
   adresse: {
+    codePostalFormat: 'Expected format: A1A 1A1',
+    localExemple: 'Mall, suite 5',
+    codePostalExemple: 'A1A 1A1',
+    taperAdresse: 'Start typing the address',
+    adresseLibelle: 'Address',
+    erreurAucune: 'No address found.',
+    erreurSansCle: 'No OpenRouteService key in your settings.',
+    erreurCleRefusee: 'Key refused by the service ({{statut}}). Check it in Profile › Settings.',
+    erreurStatut: 'The address service answered {{statut}}.',
+    erreurReseau: 'The search did not go through. Check your connection.',
     rechercher: 'Address',
     invite: 'Number and street, or business name',
     numeroCivique: 'Number',
@@ -525,6 +603,23 @@ export const en: Dictionnaire = {
   },
 
   frais: {
+    titreExtra: 'Extra expense',
+    titreModifier: 'Edit expense',
+    quartChez: 'Shift at {{pharmacie}}',
+    ceQueVousFacturez: 'What you are billing',
+    ecrivezLibrement: 'Write whatever you like',
+    descriptionManquante: 'Description missing',
+    decrivez: 'Describe what you are billing.',
+    aucunRecu: 'No receipt',
+    aucunRecuDetail: 'Without a receipt, the pharmacy could dispute this expense. You can save it anyway.',
+    ajouterRecu: 'Add a receipt',
+    enregistrerSansRecu: 'Save without a receipt',
+    recuIncontestable: 'A photo of the receipt makes the expense indisputable. Without one, the pharmacy can refuse it.',
+    prendrePhoto: 'Take a photo',
+    choisirPellicule: 'Choose from the library',
+    supprimerConfirme: 'Delete this expense?',
+    supprimerDefinitif: 'This cannot be undone.',
+    montantZero: '0.00',
     titre: 'Expense',
     titreNouveau: 'New expense',
     description: 'Description',
@@ -538,6 +633,13 @@ export const en: Dictionnaire = {
   },
 
   document: {
+    nomManquant: 'Name missing',
+    nomManquantDetail: 'Give the document a name.',
+    supprimerConfirme: 'Delete this document?',
+    supprimerRappel: 'Its reminder will be cancelled.',
+    exempleNom: 'Liability insurance',
+    rappelJours: 'Reminder (days before expiry)',
+    rappelAide: 'The reminder is set for 9 a.m., the given number of days before expiry.',
     titre: 'Document',
     titreNouveau: 'New document',
     nom: 'Document name',
@@ -574,6 +676,13 @@ export const en: Dictionnaire = {
   },
 
   apparence: {
+    amethyste: 'Amethyst',
+    iris: 'Iris',
+    violette: 'Violet',
+    prune: 'Plum',
+    apercu: 'Preview',
+    ceMoisCi: 'This month',
+    exemplePharmacie: 'Familiprix du Centre',
     titre: 'Appearance',
     couleur: 'Accent colour',
     explication:

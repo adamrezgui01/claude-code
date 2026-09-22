@@ -10,6 +10,9 @@
  */
 export const fr = {
   commun: {
+    montantZero: '0,00',
+    telephoneExemple: '(514) 968-7204',
+    heureDe: 'Heure de {{moment}}',
     enregistrer: 'Enregistrer',
     enregistre: 'Enregistré',
     annuler: 'Annuler',
@@ -59,6 +62,9 @@ export const fr = {
   },
 
   horaire: {
+    consigneCopier: 'Copie de {{pharmacie}} — relâchez pour la poser.',
+    consigneDeplacer: '{{pharmacie}} — relâchez pour le déplacer.',
+    detailCarte: '{{date}} · {{debut}} à {{fin}}',
     vueAgenda: 'Agenda',
     vueListe: 'Liste',
     vueCarte: 'Carte',
@@ -94,6 +100,17 @@ export const fr = {
   },
 
   quart: {
+    pauseCourte: ' · pause {{minutes}} min',
+    distanceEnCalcul: 'distance en calcul…',
+    adresseProfilManquante: 'adresse du profil manquante',
+    dureeFacturableLabel: 'Durée facturable',
+    pauseStatut: '{{duree}}{{statut}}',
+    pausePayeeCourt: ' · payée',
+    pauseNonPayee: ' · non payée',
+    tauxHoraireValeur: '{{montant}}/h',
+    fraisSansNom: 'Frais',
+    totalFraisLabel: 'Total des frais',
+    pharmacieSansNom: 'Pharmacie',
     titreNouveau: 'Nouveau quart',
     titreModifier: 'Modifier le quart',
     titreFacture: 'Quart facturé',
@@ -184,6 +201,7 @@ export const fr = {
   },
 
   pharmacie: {
+    resultats: 'Résultats',
     titreNouvelle: 'Nouvelle pharmacie',
     titre: 'Pharmacie',
     pageIdentite: 'Identité',
@@ -265,8 +283,10 @@ export const fr = {
     ajouterQuartIci: 'Ajouter un quart ici',
     supprimerPharmacie: 'Supprimer la pharmacie',
     supprimerConfirme: 'Supprimer cette pharmacie ?',
-    supprimerAvecQuarts:
-      'Ses {{quarts}}, ses codes et ses identifiants seront supprimés aussi.',
+    supprimerAvecQuarts_one:
+      'Son quart, ses codes et ses identifiants seront supprimés aussi.',
+    supprimerAvecQuarts_other:
+      'Ses {{count}} quarts, ses codes et ses identifiants seront supprimés aussi.',
     supprimerSansQuarts: 'Ses codes et ses identifiants seront supprimés aussi.',
     nomManquant: 'Nom manquant',
     nomManquantDetail: 'Donnez un nom à la pharmacie.',
@@ -275,6 +295,9 @@ export const fr = {
   },
 
   repertoire: {
+    toutes: 'Toutes les pharmacies',
+    plusRecentes: 'Les plus récentes',
+    triAZ: 'A – Z',
     rechercher: 'Rechercher une pharmacie',
     triePar: 'Trié par',
     triAlphabetique: 'A – Z',
@@ -312,6 +335,8 @@ export const fr = {
   },
 
   facture: {
+    depuisJours_one: ' · {{count}} jour',
+    depuisJours_other: ' · {{count}} jours',
     titreGenerer: 'Générer une facture',
     titre: 'Facture',
     titreNumero: 'Facture {{numero}}',
@@ -339,8 +364,10 @@ export const fr = {
       'L’en-tête de facture est incomplète : ajoutez votre nom et votre numéro de permis OPQ dans Profil › Vos coordonnées.',
     nonGenerees: 'Factures non générées',
     doublonTitre: 'Des quarts sont déjà facturés',
-    doublonDetail:
-      '{{quarts}} de cette sélection figurent déjà sur {{factures}}.',
+    doublonDetail_one: 'Un quart de cette sélection figure déjà sur {{factures}}.',
+    doublonDetail_other: '{{count}} quarts de cette sélection figurent déjà sur {{factures}}.',
+    surFacture_one: 'la facture {{liste}}',
+    surFacture_other: 'les factures {{liste}}',
     doublonAvis:
       '{{quarts}} de cette période figurent déjà sur {{factures}}. À la génération, vous pourrez les exclure ou remplacer la facture précédente.',
     exclure: 'Exclure ces quarts',
@@ -356,14 +383,21 @@ export const fr = {
     genereeLe: 'Générée le {{date}}',
     toucherPourRouvrir:
       'Touchez une facture pour la revoir, la repartager ou la supprimer. Supprimer une facture relibère ses quarts.',
-    enAttenteDepuis: ' · en attente depuis {{jours}}',
+    enAttenteDepuis_one: ' · en attente depuis {{count}} jour',
+    enAttenteDepuis_other: ' · en attente depuis {{count}} jours',
     repartager: 'Repartager le PDF',
     marquerPayee: 'Marquer payée',
     marquerEnAttente: 'Marquer en attente',
     partageImpossible: 'Partage impossible',
     supprimerConfirme: 'Supprimer cette facture ?',
-    supprimerRelibere:
-      '{{quarts}} redeviendront modifiables et pourront être refacturés.',
+    supprimerRelibere_one: 'Son quart redeviendra modifiable et pourra être refacturé.',
+    supprimerRelibere_other:
+      'Ses {{count}} quarts redeviendront modifiables et pourront être refacturés.',
+    resumeHonoraires: '{{quarts}} · {{heures}} · honoraires {{honoraires}}',
+    resumeDeplacement: ' · déplacement {{montant}}',
+    resumePerDiem: ' · per diem {{montant}}',
+    resumeFrais: ' · frais {{montant}}',
+    resumeHebergement: ' · hébergement {{montant}}',
     supprimerDefinitif: 'Cette action est définitive.',
     supprimerFacture: 'Supprimer la facture',
     supprimerExplication:
@@ -460,6 +494,9 @@ export const fr = {
   },
 
   menu: {
+    profilMots: 'nom, permis, opq, adresse, facture, formation, documents, assurance, name, licence, address, invoice, training, insurance',
+    liensMots: 'signets, inesss, protocole, vaccin, urgence, info-santé, antipoison, bookmarks, protocol, vaccine, emergency, poison',
+    parametresMots: 'rappel, notification, couleur, accent, mauve, clé, openrouteservice, reminder, colour, key, language, langue',
     titre: 'Menu',
     rechercher: 'Trouver une section',
     aucuneSection: 'Aucune section ne correspond.',
@@ -474,6 +511,24 @@ export const fr = {
   },
 
   liens: {
+    unLien: 'Lien',
+    titreNouveau: 'Nouveau lien',
+    titreModifier: 'Modifier le lien',
+    leSignet: 'Le signet',
+    titreChamp: 'Titre',
+    adressePlaceholder: 'https://',
+    categorie: 'Catégorie',
+    nomCategorie: 'Nom de la catégorie',
+    motsCles: 'Mots-clés',
+    motsClesAide: 'Séparés par des virgules',
+    ajouterLien: 'Ajouter un lien',
+    champsManquants: 'Titre et adresse manquants',
+    champsManquantsDetail: 'Un titre et une adresse sont nécessaires.',
+    supprimerConfirme: 'Supprimer ce lien ?',
+    supprimerDefinitif: 'Cette action est définitive.',
+    appuiLong: 'Appui long sur un signet pour le modifier.',
+    aucunSignet: 'Aucun signet ne correspond.',
+    chercher: 'Chercher — cystite, vaccin, DIN…',
     titre: 'Liens et infos utiles',
     rechercher: 'Chercher un protocole, une référence…',
     aucunResultat: 'Rien ne correspond à cette recherche.',
@@ -481,6 +536,9 @@ export const fr = {
   },
 
   bienvenue: {
+    manqueTitre: 'Il manque quelque chose',
+    manqueDetail: 'Votre nom et votre adresse sont nécessaires pour facturer et pour calculer les distances.',
+    nomPlaceholder: 'Tel qu’il paraîtra sur vos factures',
     titre: 'Bienvenue',
     intro:
       'Deux choses avant de commencer : votre nom, qui paraîtra sur vos factures, et votre adresse, qui sert à calculer les distances.',
@@ -491,6 +549,15 @@ export const fr = {
   },
 
   carte: {
+    apres48h: '48 h',
+    apres14j: '14 j',
+    plusTard: 'plus tard',
+    legendeDejaTravaille: 'déjà travaillé',
+    unMois: '1 mois',
+    troisMois: '3 mois',
+    sixMois: '6 mois',
+    douzeMois: '12 mois',
+    dejaTravailleIci: 'Déjà travaillé ici',
     historique: 'Historique',
     historiqueMois: '{{mois}}',
     dejaTravaille: 'Déjà travaillé ici',
@@ -514,6 +581,16 @@ export const fr = {
   },
 
   adresse: {
+    codePostalFormat: 'Format attendu : A1A 1A1',
+    localExemple: 'Centre commercial, bureau 5',
+    codePostalExemple: 'A1A 1A1',
+    taperAdresse: 'Commencez à taper l’adresse',
+    adresseLibelle: 'Adresse',
+    erreurAucune: 'Aucune adresse trouvée.',
+    erreurSansCle: 'Aucune clé OpenRouteService dans vos paramètres.',
+    erreurCleRefusee: 'Clé refusée par le service ({{statut}}). Vérifiez-la dans Profil › Paramètres.',
+    erreurStatut: 'Le service d’adresses a répondu {{statut}}.',
+    erreurReseau: 'La recherche n’a pas abouti. Vérifiez votre connexion.',
     rechercher: 'Adresse',
     invite: 'Numéro et rue, ou nom du commerce',
     numeroCivique: 'Numéro',
@@ -528,6 +605,23 @@ export const fr = {
   },
 
   frais: {
+    titreExtra: 'Frais extra',
+    titreModifier: 'Modifier le frais',
+    quartChez: 'Quart chez {{pharmacie}}',
+    ceQueVousFacturez: 'Ce que vous facturez',
+    ecrivezLibrement: 'Écrivez ce que vous voulez',
+    descriptionManquante: 'Description manquante',
+    decrivez: 'Décrivez ce que vous facturez.',
+    aucunRecu: 'Aucun reçu',
+    aucunRecuDetail: 'Sans reçu, ce frais pourrait être contesté par la pharmacie. Vous pouvez l’enregistrer quand même.',
+    ajouterRecu: 'Ajouter un reçu',
+    enregistrerSansRecu: 'Enregistrer sans reçu',
+    recuIncontestable: 'Une photo du reçu rend le frais incontestable. Sans elle, la pharmacie peut le refuser.',
+    prendrePhoto: 'Prendre une photo',
+    choisirPellicule: 'Choisir dans la pellicule',
+    supprimerConfirme: 'Supprimer ce frais ?',
+    supprimerDefinitif: 'Cette action est définitive.',
+    montantZero: '0,00',
     titre: 'Frais',
     titreNouveau: 'Nouveau frais',
     description: 'Description',
@@ -541,6 +635,13 @@ export const fr = {
   },
 
   document: {
+    nomManquant: 'Nom manquant',
+    nomManquantDetail: 'Donnez un nom au document.',
+    supprimerConfirme: 'Supprimer ce document ?',
+    supprimerRappel: 'Le rappel associé sera annulé.',
+    exempleNom: 'Assurance responsabilité',
+    rappelJours: 'Rappel (jours avant l’expiration)',
+    rappelAide: 'Le rappel est programmé à 9 h, le nombre de jours indiqué avant l’expiration.',
     titre: 'Document',
     titreNouveau: 'Nouveau document',
     nom: 'Nom du document',
@@ -578,6 +679,13 @@ export const fr = {
   },
 
   apparence: {
+    amethyste: 'Améthyste',
+    iris: 'Iris',
+    violette: 'Violette',
+    prune: 'Prune',
+    apercu: 'Aperçu',
+    ceMoisCi: 'Ce mois-ci',
+    exemplePharmacie: 'Familiprix du Centre',
     titre: 'Apparence',
     couleur: 'Couleur d’accent',
     explication:

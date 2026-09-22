@@ -34,8 +34,10 @@ import {
 import { SelecteurDate } from '../src/ui/Selecteurs';
 import { SaisieAdresse } from '../src/ui/SaisieAdresse';
 import { couleurs, espace, police, useAccent } from '../src/ui/theme';
+import { useTextes } from '../src/i18n';
 
 export default function Profil() {
+  const { t } = useTextes();
   const router = useRouter();
   const accent = useAccent();
 
@@ -102,43 +104,46 @@ export default function Profil() {
 
   return (
     <Ecran>
-      <SousTitre>Formation continue</SousTitre>
+      <SousTitre>{t('profil.formationContinue')}</SousTitre>
       <Text style={styles.compteur}>
-        {nombre(analyserNombre(heuresCompletees))} h / {nombre(analyserNombre(heuresRequises))} h
-        {finPeriode ? ` — échéance le ${formatDateCourte(finPeriode)}` : ''}
+        {t('profil.compteur', {
+          faites: nombre(analyserNombre(heuresCompletees)),
+          requises: nombre(analyserNombre(heuresRequises)),
+        })}
+        {finPeriode ? t('profil.echeanceLe', { date: formatDateCourte(finPeriode) }) : ''}
       </Text>
       {!ajusteFormation ? (
         <Pressable onPress={() => setAjusteFormation(true)} hitSlop={8}>
-          <Text style={[styles.lien, { color: accent }]}>Ajuster</Text>
+          <Text style={[styles.lien, { color: accent }]}>{t('commun.ajuster')}</Text>
         </Pressable>
       ) : (
         <Fondu style={styles.bloc}>
           <Champ
-            label="Heures complétées"
+            label={t('profil.heuresCompletees')}
             valeur={heuresCompletees}
             onChange={setHeuresCompletees}
             clavier="decimal-pad"
           />
           <Champ
-            label="Heures requises"
+            label={t('profil.heuresRequises')}
             valeur={heuresRequises}
             onChange={setHeuresRequises}
             clavier="decimal-pad"
           />
           <SelecteurDate
-            label="Fin de la période de référence"
+            label={t('profil.finPeriode')}
             valeur={finPeriode || aujourdhui()}
             onChange={setFinPeriode}
           />
-          <Bouton titre="Enregistrer" onPress={sauvegarderFormation} />
+          <Bouton titre={t('commun.enregistrer')} onPress={sauvegarderFormation} />
         </Fondu>
       )}
 
       <Separateur />
 
-      <SousTitre>Documents professionnels</SousTitre>
+      <SousTitre>{t('profil.documents')}</SousTitre>
       {documents.length === 0 ? (
-        <Vide texte="Aucun document suivi." />
+        <Vide texte={t('profil.aucunDocument')} />
       ) : (
         documents.map((d) => {
           const restants = joursEntre(aujourdhui(), d.date_expiration);
@@ -150,44 +155,46 @@ export default function Profil() {
               <View style={styles.documentTexte}>
                 <Text style={styles.documentNom}>{d.nom}</Text>
                 <Doux>
-                  Expire le {formatDateCourte(d.date_expiration)} · rappel {d.jours_avant_rappel} j
-                  avant
+                  {t('profil.expireLe', {
+                    date: formatDateCourte(d.date_expiration),
+                    jours: d.jours_avant_rappel,
+                  })}
                 </Doux>
               </View>
               <Text style={[styles.restants, restants <= 0 && styles.expire]}>
-                {restants <= 0 ? 'Expiré' : `${restants} j`}
+                {restants <= 0 ? t('profil.expire') : t('profil.joursRestants', { jours: restants })}
               </Text>
             </Pressable>
           );
         })
       )}
       <Pressable onPress={() => router.push('/document/nouveau')} hitSlop={8}>
-        <Text style={[styles.lien, { color: accent }]}>Ajouter un document</Text>
+        <Text style={[styles.lien, { color: accent }]}>{t('profil.ajouterDocument')}</Text>
       </Pressable>
 
       <Separateur />
 
       {/* Ce qui décrit l'usager et ce qui part sur ses factures. */}
-      <SousTitre>Informations et facturation</SousTitre>
-      <Doux>Vos coordonnées apparaissent en en-tête de chaque facture.</Doux>
+      <SousTitre>{t('profil.informations')}</SousTitre>
+      <Doux>{t('profil.coordonneesEntete')}</Doux>
       <View style={styles.bloc} />
 
-      <Section titre="Identité">
+      <Section titre={t('profil.identite')}>
         <Champ
           nu
-          label="Votre nom (pharmacien remplaçant)"
+          label={t('profil.votreNom')}
           valeur={reglages.nom}
           onChange={(v) => modifier('nom', v)}
         />
         <Champ
           nu
-          label="Numéro de permis OPQ"
+          label={t('profil.permisOpq')}
           valeur={reglages.permis_opq}
           onChange={(v) => modifier('permis_opq', v)}
         />
       </Section>
 
-      <Section titre="Adresse">
+      <Section titre={t('profil.adresse')}>
         <SaisieAdresse
           adresse={adresseDesReglages(reglages)}
           onChange={(a) => {
@@ -198,27 +205,27 @@ export default function Profil() {
         />
       </Section>
 
-      <Section titre="Coordonnées">
+      <Section titre={t('profil.coordonnees')}>
         <ChampTelephone
           nu
-          label="Téléphone"
+          label={t('pharmacie.telephone')}
           valeur={reglages.telephone}
           onChange={(v) => modifier('telephone', v)}
         />
         <Champ
           nu
-          label="Courriel"
+          label={t('pharmacie.courriel')}
           valeur={reglages.courriel}
           onChange={(v) => modifier('courriel', v)}
           clavier="email-address"
         />
         <Champ
           nu
-          label="Taux par kilomètre par défaut ($/km)"
+          label={t('profil.tauxParKmDefaut')}
           valeur={`${reglages.taux_par_km}`}
           onChange={(v) => modifier('taux_par_km', analyserNombre(v))}
           clavier="decimal-pad"
-          aide={`Préremplit une nouvelle fiche de pharmacie, à ${argent(reglages.taux_par_km)} le kilomètre.`}
+          aide={t('profil.tauxParKmAide', { montant: argent(reglages.taux_par_km) })}
         />
       </Section>
 
@@ -226,7 +233,7 @@ export default function Profil() {
           le permis et l'adresse saisis ici étaient perdus en quittant l'écran,
           et l'en-tête des factures restait vide. */}
       <Bouton
-        titre={enregistre ? 'Enregistré' : 'Enregistrer'}
+        titre={t(enregistre ? 'commun.enregistre' : 'commun.enregistrer')}
         variante={enregistre ? 'secondaire' : 'principal'}
         onPress={() => void sauvegarderReglages()}
       />

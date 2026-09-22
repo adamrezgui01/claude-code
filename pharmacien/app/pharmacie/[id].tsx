@@ -60,11 +60,13 @@ import {
 import { SaisieAdresse } from '../../src/ui/SaisieAdresse';
 import { SelecteurDuree } from '../../src/ui/Selecteurs';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { useTextes } from '../../src/i18n';
 
 /** Durées de pause courantes. « Autre » ouvre la roulette. */
 const PAUSES = [30, 45, 60];
 
 export default function FichePharmacie() {
+  const { t } = useTextes();
   const router = useRouter();
   const accent = useAccent();
   const params = useLocalSearchParams<{ id: string; recherche?: string }>();
@@ -212,9 +214,12 @@ export default function FichePharmacie() {
         setEchecCalcul(resultat.raison);
         return;
       }
-      Alert.alert('Distance non calculée', resultat.raison, [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Ouvrir dans Plans', onPress: () => ouvrirItineraireVers(adresseUneLigne(adresse)) },
+      Alert.alert(t('pharmacie.distanceNonCalculee'), resultat.raison, [
+        { text: t('commun.annuler'), style: 'cancel' },
+        {
+          text: t('pharmacie.ouvrirPlans'),
+          onPress: () => ouvrirItineraireVers(adresseUneLigne(adresse)),
+        },
       ]);
     },
     [adresse, allerRetour, domicile, reglages.cle_itineraire, sansDomicile]
@@ -247,7 +252,7 @@ export default function FichePharmacie() {
 
   async function enregistrer() {
     if (!nom.trim()) {
-      Alert.alert('Nom manquant', 'Donnez un nom à la pharmacie.');
+      Alert.alert(t('pharmacie.nomManquant'), t('pharmacie.nomManquantDetail'));
       return;
     }
 
@@ -298,14 +303,14 @@ export default function FichePharmacie() {
   function supprimer() {
     if (!pharmacieId) return;
     Alert.alert(
-      'Supprimer cette pharmacie ?',
+      t('pharmacie.supprimerConfirme'),
       nombreQuarts > 0
-        ? `Ses ${pluriel(nombreQuarts, 'quart')}, ses codes et ses identifiants seront supprimés aussi.`
-        : 'Ses codes et ses identifiants seront supprimés aussi.',
+        ? t('pharmacie.supprimerAvecQuarts', { count: nombreQuarts })
+        : t('pharmacie.supprimerSansQuarts'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('commun.annuler'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('commun.supprimer'),
           style: 'destructive',
           onPress: async () => {
             const rappels = supprimerPharmacie(pharmacieId);
@@ -342,13 +347,19 @@ export default function FichePharmacie() {
     if (pharmacieId) definirAEviter(pharmacieId, prochain);
   }
 
-  const PAGES = ['Identité', 'Contact', 'Conditions'];
+  const PAGES = [
+    t('pharmacie.pageIdentite'),
+    t('pharmacie.pageContact'),
+    t('pharmacie.pageConditions'),
+  ];
   const derniere = page === PAGES.length - 1;
   const deplacementActif = mode !== 'aucun';
 
   return (
     <Ecran>
-      <Stack.Screen options={{ title: nouvelle ? 'Nouvelle pharmacie' : nom || 'Pharmacie' }} />
+      <Stack.Screen
+        options={{ title: nouvelle ? t('pharmacie.titreNouvelle') : nom || t('pharmacie.titre') }}
+      />
 
       {/* Sur une fiche existante, on saute à la page voulue : on vient souvent
           chercher un code d'accès, pas remplir un formulaire. À la création,
@@ -380,8 +391,8 @@ export default function FichePharmacie() {
                 if (!nom.trim()) setNom(trouve);
               }}
               portee="pharmacie"
-              libelle="Rechercher"
-              invite="Nom de la pharmacie ou adresse"
+              libelle={t('pharmacie.rechercher')}
+              invite={t('pharmacie.inviteRecherche')}
               cle={reglages.cle_itineraire}
               foyer={
                 reglages.adresse_latitude !== null && reglages.adresse_longitude !== null
@@ -389,14 +400,14 @@ export default function FichePharmacie() {
                   : undefined
               }
               apresRecherche={
-                <Section titre="Identité">
+                <Section titre={t('pharmacie.pageIdentite')}>
                   <Champ
                     nu
-                    label="Nom"
+                    label={t('pharmacie.nom')}
                     valeur={nom}
                     onChange={setNom}
-                    placeholder="Nom de la pharmacie"
-                    aide="Celui qui paraîtra sur vos factures."
+                    placeholder={t('pharmacie.nomPlaceholder')}
+                    aide={t('pharmacie.nomAide')}
                   />
                 </Section>
               }
@@ -412,7 +423,7 @@ export default function FichePharmacie() {
             )}
             {estLocalisee(adresse) && (
               <Bouton
-                titre="Obtenir un itinéraire"
+                titre={t('pharmacie.itineraire')}
                 variante="secondaire"
                 icone={<Ionicons name="navigate-outline" size={18} color={couleurs.texte} />}
                 onPress={() => ouvrirItineraireVers(adresseUneLigne(adresse))}
@@ -435,9 +446,7 @@ export default function FichePharmacie() {
                       size={18}
                       color={favori ? couleurs.favori : couleurs.doux}
                     />
-                    <Text style={[styles.repereTexte, favori && { fontFamily: police.demi }]}>
-                      Favori
-                    </Text>
+                    <Text style={[styles.repereTexte, favori && { fontFamily: police.demi }]}>{t('pharmacie.favori')}</Text>
                   </Pressable>
                   <Pressable
                     onPress={basculerAEviter}
@@ -451,15 +460,11 @@ export default function FichePharmacie() {
                       size={18}
                       color={couleurs.doux}
                     />
-                    <Text style={[styles.repereTexte, aEviter && { fontFamily: police.demi }]}>
-                      À éviter
-                    </Text>
+                    <Text style={[styles.repereTexte, aEviter && { fontFamily: police.demi }]}>{t('pharmacie.aEviter')}</Text>
                   </Pressable>
                 </View>
                 <Doux>
-                  {aEviter
-                    ? 'Un rappel pour vous seul : ajouter un quart ici affichera un avertissement, sans jamais bloquer.'
-                    : 'Un favori remonte en haut du répertoire. Les deux repères s’excluent.'}
+                  {t(aEviter ? 'pharmacie.expliqueAEviter' : 'pharmacie.expliqueFavori')}
                 </Doux>
               </>
             )}
@@ -468,22 +473,22 @@ export default function FichePharmacie() {
 
         {page === 1 && (
           <>
-            <Section titre="Contact principal">
+            <Section titre={t('pharmacie.contactPrincipal')}>
               <Champ
                 nu
-                label="Nom de la personne contact"
+                label={t('pharmacie.contactNom')}
                 valeur={contactNom}
                 onChange={setContactNom}
               />
               <ChampTelephone
                 nu
-                label="Téléphone"
+                label={t('pharmacie.telephone')}
                 valeur={contactTelephone}
                 onChange={setContactTelephone}
               />
               <Champ
                 nu
-                label="Courriel"
+                label={t('pharmacie.courriel')}
                 valeur={contactCourriel}
                 onChange={setContactCourriel}
                 clavier="email-address"
@@ -494,14 +499,14 @@ export default function FichePharmacie() {
                 onPress={() => Linking.openURL(`tel:${contactTelephone.replace(/[^\d+]/g, '')}`)}
                 hitSlop={8}
                 style={styles.lienBloc}>
-                <Text style={[styles.lien, { color: accent }]}>Appeler</Text>
+                <Text style={[styles.lien, { color: accent }]}>{t('pharmacie.appeler')}</Text>
               </Pressable>
             )}
 
-            <Section titre="Notes générales">
+            <Section titre={t('pharmacie.notesGenerales')}>
               <Champ
                 nu
-                label="Fonctionnement, particularités, stationnement…"
+                label={t('pharmacie.notesPlaceholder')}
                 valeur={notes}
                 onChange={setNotes}
                 multiligne
@@ -518,14 +523,14 @@ export default function FichePharmacie() {
             </Doux>
             <View style={styles.espacement} />
 
-            <Section titre="Honoraires">
+            <Section titre={t('pharmacie.honoraires')}>
               <Champ
                 nu
-                label="Taux horaire habituel ($/h)"
+                label={t('pharmacie.tauxHoraireHabituel')}
                 valeur={tauxHoraire}
                 onChange={setTauxHoraire}
                 clavier="decimal-pad"
-                placeholder="0,00"
+                placeholder={t('commun.montantZero')}
               />
             </Section>
 
@@ -535,11 +540,11 @@ export default function FichePharmacie() {
               une pause non payée retire des heures. Les mêler, avec la même
               allure et le même geste, embrouillerait la lecture du calcul.
             */}
-            <Section titre="Pause repas">
+            <Section titre={t('pharmacie.pauseRepas')}>
               <View style={styles.champInterne}>
-                <Text style={styles.label}>Durée habituelle</Text>
+                <Text style={styles.label}>{t('pharmacie.dureeHabituelle')}</Text>
                 <View style={styles.puces}>
-                  <Puce texte="Aucune" actif={pause === 0} onPress={() => setPause(0)} />
+                  <Puce texte={t('commun.aucune')} actif={pause === 0} onPress={() => setPause(0)} />
                   {PAUSES.map((minutes) => (
                     <Puce
                       key={minutes}
@@ -556,11 +561,11 @@ export default function FichePharmacie() {
                 </View>
                 {pause > 0 && (
                   <Interrupteur
-                    label="Pause payée"
+                    label={t('quart.pausePayee')}
                     detail={
                       pausePayee
-                        ? 'Incluse dans les heures facturées'
-                        : `Déduite des heures facturées (${formaterDuree(pause)})`
+                        ? t('quart.pauseIncluse')
+                        : t('quart.pauseDeduite', { duree: formaterDuree(pause) })
                     }
                     valeur={pausePayee}
                     onChange={setPausePayee}
@@ -571,23 +576,21 @@ export default function FichePharmacie() {
 
             {/* Trois lignes serrées : seules celles qui servent occupent de la
                 place. Aucune n'est ouverte par défaut. */}
-            <Section titre="Frais typiques">
+            <Section titre={t('pharmacie.fraisTypiques')}>
               <LigneDepliable
                 premiere
-                label="Kilométrage"
+                label={t('pharmacie.kilometrage')}
                 detail={
                   deplacementActif
-                    ? mode === 'km'
-                      ? 'Taux au kilomètre × distance'
-                      : 'Montant fixe par quart'
-                    : 'Aucun remboursement de déplacement'
+                    ? t(mode === 'km' ? 'pharmacie.auKilometre' : 'pharmacie.montantParQuart')
+                    : t('pharmacie.aucunRemboursement')
                 }
                 actif={deplacementActif}
                 onChange={(v) => setMode(v ? 'km' : 'aucun')}>
                 <View style={styles.puces}>
-                  <Puce texte="Au kilomètre" actif={mode === 'km'} onPress={() => setMode('km')} />
+                  <Puce texte={t('pharmacie.auKilometre')} actif={mode === 'km'} onPress={() => setMode('km')} />
                   <Puce
-                    texte="Montant fixe"
+                    texte={t('pharmacie.montantFixeCourt')}
                     actif={mode === 'fixe'}
                     onPress={() => setMode('fixe')}
                   />
@@ -601,35 +604,33 @@ export default function FichePharmacie() {
                       valeur={calculEnCours ? '' : distance}
                       onChange={setDistance}
                       clavier="decimal-pad"
-                      placeholder={calculEnCours ? 'Calcul en cours…' : 'Pas encore calculée'}
+                      placeholder={t(
+                        calculEnCours ? 'quart.calculEnCours' : 'quart.pasEncoreCalculee'
+                      )}
                     />
                     <Interrupteur
-                      label="Aller-retour"
+                      label={t('quart.allerRetour')}
                       detail={
-                        allerRetour
-                          ? 'Le trajet est compté dans les deux sens'
-                          : 'Le trajet n’est compté qu’une fois'
+                        allerRetour ? t('quart.allerRetourOui') : t('quart.allerRetourNon')
                       }
                       valeur={allerRetour}
                       onChange={setAllerRetour}
                     />
                     <Champ
                       nu
-                      label="Taux par kilomètre ($/km)"
+                      label={t('quart.tauxParKm')}
                       valeur={tauxParKm}
                       onChange={setTauxParKm}
                       clavier="decimal-pad"
                     />
                     {sansDomicile ? (
-                      <Doux>
-                        Ajoutez votre adresse dans votre profil pour calculer les distances.
-                      </Doux>
+                      <Doux>{t('quart.sansDomicile')}</Doux>
                     ) : (
                       <>
                         {!!echecCalcul && <Doux>{echecCalcul}</Doux>}
                         <View style={styles.espacement} />
                         <Bouton
-                          titre={calculEnCours ? 'Calcul…' : 'Recalculer la distance'}
+                          titre={t(calculEnCours ? 'pharmacie.calculCourt' : 'pharmacie.recalculer')}
                           variante="secondaire"
                           onPress={() => void calculer(false)}
                           desactive={calculEnCours}
@@ -646,50 +647,50 @@ export default function FichePharmacie() {
                 {mode === 'fixe' && (
                   <Champ
                     nu
-                    label="Montant par quart ($)"
+                    label={t('pharmacie.montantParQuart')}
                     valeur={montantFixe}
                     onChange={setMontantFixe}
                     clavier="decimal-pad"
-                    placeholder="0,00"
+                    placeholder={t('commun.montantZero')}
                   />
                 )}
               </LigneDepliable>
 
               <LigneDepliable
-                label="Per diem"
-                detail="Montant que la pharmacie verse pour le repas"
+                label={t('pharmacie.perDiem')}
+                detail={t('pharmacie.perDiemDetail')}
                 actif={perDiemActif}
                 onChange={setPerDiemActif}>
                 <Champ
                   nu
-                  label="Montant par jour ($)"
+                  label={t('pharmacie.perDiemMontant')}
                   valeur={perDiem}
                   onChange={setPerDiem}
                   clavier="decimal-pad"
-                  placeholder="0,00"
-                  aide="Réclamable quart par quart, et modifiable sur chacun."
+                  placeholder={t('commun.montantZero')}
+                  aide={t('pharmacie.perDiemAide')}
                 />
               </LigneDepliable>
 
               <LigneDepliable
-                label="Hébergement"
-                detail="Un montant, ou un logement mis à disposition"
+                label={t('pharmacie.hebergement')}
+                detail={t('pharmacie.hebergementDetail')}
                 actif={hebergementActif}
                 onChange={setHebergementActif}>
                 <Case
-                  label="Hébergement fourni par la pharmacie"
-                  detail="Une note pour vous : rien n’est payé, donc rien n’est facturé ni compté."
+                  label={t('pharmacie.hebergementFourni')}
+                  detail={t('pharmacie.hebergementFourniDetail')}
                   valeur={hebergementFourni}
                   onChange={setHebergementFourni}
                 />
                 {!hebergementFourni && (
                   <Champ
                     nu
-                    label="Montant ($)"
+                    label={t('pharmacie.montant')}
                     valeur={hebergement}
                     onChange={setHebergement}
                     clavier="decimal-pad"
-                    placeholder="0,00"
+                    placeholder={t('commun.montantZero')}
                   />
                 )}
               </LigneDepliable>
@@ -711,15 +712,15 @@ export default function FichePharmacie() {
               dit ça.
             */}
             <View style={styles.enteteSection}>
-              <SousTitre>Codes d’accès (logiciel)</SousTitre>
+              <SousTitre>{t('pharmacie.codesLogiciel')}</SousTitre>
               {secretsVisibles && (
                 <Pressable onPress={() => setSecretsVisibles(false)} hitSlop={8}>
-                  <Text style={[styles.lien, { color: accent }]}>Masquer</Text>
+                  <Text style={[styles.lien, { color: accent }]}>{t('pharmacie.masquer')}</Text>
                 </Pressable>
               )}
             </View>
 
-            <Text style={styles.label}>Logiciel</Text>
+            <Text style={styles.label}>{t('pharmacie.logiciel')}</Text>
             <View style={styles.puces}>
               {[...LOGICIELS, 'Autre'].map((l) => (
                 <Puce
@@ -731,7 +732,7 @@ export default function FichePharmacie() {
               ))}
             </View>
             {logicielChoisi === 'Autre' && (
-              <Champ label="Nom du logiciel" valeur={logicielAutre} onChange={setLogicielAutre} />
+              <Champ label={t('pharmacie.nomLogiciel')} valeur={logicielAutre} onChange={setLogicielAutre} />
             )}
 
             {!secretsVisibles ? (
@@ -742,7 +743,7 @@ export default function FichePharmacie() {
                   trousseau sécurisé de l’appareil et ne s’affichent qu’après authentification.
                 </Doux>
                 <Bouton
-                  titre="Afficher"
+                  titre={t('pharmacie.afficher')}
                   onPress={async () => {
                     if (await deverrouiller()) setSecretsVisibles(true);
                   }}
@@ -752,7 +753,7 @@ export default function FichePharmacie() {
               <Fondu>
                 {/* Le NIP d'abord et en gros : le mot de passe sert une fois à
                     l'ouverture, le NIP sert toute la journée. */}
-                <Section titre="NIP">
+                <Section titre={t('pharmacie.nip')}>
                   <TextInput
                     style={[styles.nip, { color: accent }]}
                     value={nip}
@@ -762,18 +763,18 @@ export default function FichePharmacie() {
                     autoCapitalize="none"
                     autoCorrect={false}
                   />
-                  <Doux>Lettres et chiffres acceptés, aucune longueur imposée.</Doux>
+                  <Doux>{t('pharmacie.nipAide')}</Doux>
                 </Section>
 
-                <Section titre="Connexion">
-                  <Champ nu label="Utilisateur" valeur={utilisateur} onChange={setUtilisateur} />
-                  <Champ nu label="Mot de passe" valeur={motDePasse} onChange={setMotDePasse} />
+                <Section titre={t('pharmacie.connexion')}>
+                  <Champ nu label={t('pharmacie.utilisateur')} valeur={utilisateur} onChange={setUtilisateur} />
+                  <Champ nu label={t('pharmacie.motDePasse')} valeur={motDePasse} onChange={setMotDePasse} />
                 </Section>
 
                 <Doux>
                   {logiciel
-                    ? `Identifiants ${logiciel}, conservés dans le trousseau sécurisé de l’appareil (Keychain), jamais dans la base de l’application.`
-                    : 'Choisissez le logiciel utilisé dans cette pharmacie.'}
+                    ? t('pharmacie.identifiantsDe', { logiciel })
+                    : t('pharmacie.choisirLogiciel')}
                 </Doux>
               </Fondu>
             )}
@@ -786,7 +787,7 @@ export default function FichePharmacie() {
               style={styles.enteteSection}
               onPress={() => setLieuDeploye((d) => !d)}
               hitSlop={6}>
-              <SousTitre>Accès au lieu</SousTitre>
+              <SousTitre>{t('pharmacie.accesLieu')}</SousTitre>
               <Ionicons
                 name={lieuDeploye ? 'chevron-up' : 'chevron-down'}
                 size={18}
@@ -796,32 +797,32 @@ export default function FichePharmacie() {
 
             {lieuDeploye && (
               <Fondu>
-                <Doux>Alarme, stationnement, porte — ce qu’il faut pour entrer.</Doux>
+                <Doux>{t('pharmacie.accesLieuDetail')}</Doux>
                 <View style={styles.espacement} />
                 {codes.map((code, i) => (
                   <Section key={i}>
                     <Champ
                       nu
-                      label="Libellé"
+                      label={t('pharmacie.libelle')}
                       valeur={code.libelle}
                       onChange={(v) => modifierCode(i, 'libelle', v)}
-                      placeholder="Code de porte"
+                      placeholder={t('pharmacie.libellePlaceholder')}
                     />
                     <Champ
                       nu
-                      label="Valeur"
+                      label={t('pharmacie.valeur')}
                       valeur={code.valeur}
                       onChange={(v) => modifierCode(i, 'valeur', v)}
                     />
                     <Pressable
                       onPress={() => setCodes((actuels) => actuels.filter((_, j) => j !== i))}
                       hitSlop={8}>
-                      <Text style={styles.retirer}>Retirer</Text>
+                      <Text style={styles.retirer}>{t('commun.retirer')}</Text>
                     </Pressable>
                   </Section>
                 ))}
                 <Bouton
-                  titre="Ajouter un code"
+                  titre={t('pharmacie.ajouterCode')}
                   variante="secondaire"
                   onPress={() => setCodes((actuels) => [...actuels, { libelle: '', valeur: '' }])}
                 />
@@ -832,28 +833,28 @@ export default function FichePharmacie() {
 
         <View style={styles.actions}>
           {nouvelle && !derniere ? (
-            <Bouton titre="Suivant" onPress={() => setPage((p) => p + 1)} />
+            <Bouton titre={t('commun.suivant')} onPress={() => setPage((p) => p + 1)} />
           ) : (
-            <Bouton titre="Enregistrer" onPress={enregistrer} />
+            <Bouton titre={t('commun.enregistrer')} onPress={enregistrer} />
           )}
           {nouvelle && page > 0 && (
-            <Bouton titre="Retour" variante="secondaire" onPress={() => setPage((p) => p - 1)} />
+            <Bouton titre={t('commun.retour')} variante="secondaire" onPress={() => setPage((p) => p - 1)} />
           )}
           {!nouvelle && derniere && (
             <>
               <Bouton
-                titre="Ajouter un quart ici"
+                titre={t('pharmacie.ajouterQuartIci')}
                 variante="secondaire"
                 onPress={() => router.push(`/quart/nouveau?pharmacie=${pharmacieId}`)}
               />
-              <Bouton titre="Supprimer la pharmacie" variante="danger" onPress={supprimer} />
+              <Bouton titre={t('pharmacie.supprimerPharmacie')} variante="danger" onPress={supprimer} />
             </>
           )}
         </View>
       </Fondu>
 
       <SelecteurDuree
-        titre="Durée de la pause"
+        titre={t('quart.dureePause')}
         minutes={pause || 30}
         ouvert={rouletteePause}
         onChange={setPause}

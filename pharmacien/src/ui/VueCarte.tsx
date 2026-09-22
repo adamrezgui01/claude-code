@@ -4,6 +4,7 @@ import MapView, { Marker, type Region } from 'react-native-maps';
 import Supercluster from 'supercluster';
 
 import { couleurs, espace, police, rayon } from './theme';
+import { useTextes } from '../i18n';
 
 export type PointCarte = {
   cle: string;
@@ -25,10 +26,10 @@ const REGION_DEFAUT: Region = {
 };
 
 export const HISTORIQUES = [
-  { mois: 1, texte: '1 mois' },
-  { mois: 3, texte: '3 mois' },
-  { mois: 6, texte: '6 mois' },
-  { mois: 12, texte: '12 mois' },
+  { mois: 1, cle: 'unMois' },
+  { mois: 3, cle: 'troisMois' },
+  { mois: 6, cle: 'sixMois' },
+  { mois: 12, cle: 'douzeMois' },
 ] as const;
 
 type Grappe = {
@@ -64,6 +65,7 @@ export function VueCarte({
   onChangerHistorique: (mois: number) => void;
   onChoisir: (point: PointCarte) => void;
 }) {
+  const { t } = useTextes();
   const depart = useRef(regionInitiale(points)).current;
   const [region, setRegion] = useState<Region>(depart);
 
@@ -138,7 +140,7 @@ export function VueCarte({
                 styles.choixTexte,
                 historiqueMois === h.mois && { fontFamily: police.demi, color: couleurs.texte },
               ]}>
-              {h.texte}
+              {t(`carte.${h.cle}`)}
             </Text>
           </Pressable>
         ))}
@@ -146,10 +148,10 @@ export function VueCarte({
 
       <View style={styles.legende}>
         {[
-          { couleur: couleurs.urgent, texte: '48 h' },
-          { couleur: couleurs.proche, texte: '14 j' },
-          { couleur: couleurs.lointain, texte: 'plus tard' },
-          { couleur: couleurs.historique, texte: 'déjà travaillé' },
+          { couleur: couleurs.urgent, texte: t('carte.apres48h') },
+          { couleur: couleurs.proche, texte: t('carte.apres14j') },
+          { couleur: couleurs.lointain, texte: t('carte.plusTard') },
+          { couleur: couleurs.historique, texte: t('carte.legendeDejaTravaille') },
         ].map((entree) => (
           <View key={entree.texte} style={styles.entreeLegende}>
             <View style={[styles.pastille, { backgroundColor: entree.couleur }]} />

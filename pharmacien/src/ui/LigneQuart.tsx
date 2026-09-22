@@ -6,6 +6,7 @@ import { argent, heures } from '../lib/format';
 import { heuresTravaillees } from '../lib/stats';
 import { Etiquette } from './composants';
 import { couleurs, espace, police, rayon, useAccent } from './theme';
+import { useTextes } from '../i18n';
 
 export function LigneQuart({
   quart,
@@ -29,6 +30,7 @@ export function LigneQuart({
   onPress: () => void;
   onPressPharmacie?: () => void;
 }) {
+  const { t } = useTextes();
   const accent = useAccent();
   const duree = heuresTravaillees(quart);
   const debut = quart.heure_debut_reelle || quart.heure_debut;
@@ -46,7 +48,7 @@ export function LigneQuart({
         pressed && styles.presse,
       ]}>
       <View style={styles.gauche}>
-        {enCours && <Text style={styles.maintenant}>En cours</Text>}
+        {enCours && <Text style={styles.maintenant}>{t('horaire.enCours')}</Text>}
         {afficherDate && <Text style={styles.date}>{formatJourCourt(quart.date)}</Text>}
         <Pressable onPress={onPressPharmacie} disabled={!onPressPharmacie} hitSlop={6}>
           <Text
@@ -61,7 +63,9 @@ export function LigneQuart({
         </Pressable>
         <Text style={styles.horaire}>
           {debut} – {fin} · {heures(duree)}
-          {quart.pause_minutes > 0 && !quart.pause_payee ? ` · pause ${quart.pause_minutes} min` : ''}
+          {quart.pause_minutes > 0 && !quart.pause_payee
+            ? t('quart.pauseCourte', { minutes: quart.pause_minutes })
+            : ''}
         </Text>
         {!!quart.notes && (
           <Text style={styles.notes} numberOfLines={1}>
@@ -70,17 +74,17 @@ export function LigneQuart({
         )}
         {corrige && !annule && (
           <View style={styles.etiquette}>
-            <Etiquette texte="Heures corrigées" ton="succes" />
+            <Etiquette texte={t('quart.heuresCorrigees')} ton="succes" />
           </View>
         )}
         {annule && (
           <View style={styles.etiquette}>
-            <Etiquette texte="N’a pas eu lieu" ton="attente" />
+            <Etiquette texte={t('quart.nAPasEuLieu')} ton="attente" />
           </View>
         )}
         {verrouille && !annule && (
           <View style={styles.etiquette}>
-            <Etiquette texte={`Facturé · ${quart.numero_facture}`} ton="attente" />
+            <Etiquette texte={t('quart.facturePar', { numero: quart.numero_facture })} ton="attente" />
           </View>
         )}
       </View>

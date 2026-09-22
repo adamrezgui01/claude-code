@@ -13,6 +13,7 @@ import { localiserAdresse } from '../lib/adressesRecherche';
 import { Bouton, Champ, Doux, Ecran } from './composants';
 import { SaisieAdresse } from './SaisieAdresse';
 import { couleurs, espace, police } from './theme';
+import { useTextes } from '../i18n';
 
 /**
  * Premier lancement. Deux champs, pas dix : sans le nom il n'y a pas de
@@ -27,6 +28,7 @@ import { couleurs, espace, police } from './theme';
  * directement, il n'y a plus ni redirection ni options à négocier.
  */
 export function Bienvenue({ onTermine }: { onTermine: () => void }) {
+  const { t } = useTextes();
   const [reglages] = useState(obtenirReglages);
   const [nom, setNom] = useState(reglages.nom);
   const [adresse, setAdresse] = useState<Adresse>(adresseVide);
@@ -36,10 +38,7 @@ export function Bienvenue({ onTermine }: { onTermine: () => void }) {
 
   async function commencer() {
     if (!complet) {
-      Alert.alert(
-        'Il manque quelque chose',
-        'Votre nom et votre adresse sont nécessaires pour facturer et pour calculer les distances.'
-      );
+      Alert.alert(t('bienvenue.manqueTitre'), t('bienvenue.manqueDetail'));
       return;
     }
 
@@ -64,17 +63,17 @@ export function Bienvenue({ onTermine }: { onTermine: () => void }) {
   return (
     <Ecran fond>
       <View style={styles.entete}>
-        <Text style={styles.titre}>Bienvenue</Text>
+        <Text style={styles.titre}>{t('bienvenue.titre')}</Text>
         <Text style={styles.sousTitre}>
           Deux choses à remplir, une seule fois. Le reste attendra que vous en ayez besoin.
         </Text>
       </View>
 
       <Champ
-        label="Votre nom"
+        label={t('bienvenue.votreNom')}
         valeur={nom}
         onChange={setNom}
-        placeholder="Tel qu’il paraîtra sur vos factures"
+        placeholder={t('bienvenue.nomPlaceholder')}
       />
 
       <SaisieAdresse

@@ -7,6 +7,7 @@ import { ligneVille } from '../lib/adresses';
 import { normaliser } from '../lib/texte';
 import { Puce } from './composants';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
+import { useTextes } from '../i18n';
 
 /** Au-delà, la liste devient un mur : le reste se déroule à la demande. */
 const VISIBLES = 5;
@@ -28,6 +29,7 @@ export function SelecteurPharmacie({
   onSelectionner: (id: number) => void;
   enTete?: ReactNode;
 }) {
+  const { t } = useTextes();
   const accent = useAccent();
   const [recherche, setRecherche] = useState('');
   const [toutAfficher, setToutAfficher] = useState(false);
@@ -57,7 +59,7 @@ export function SelecteurPharmacie({
           style={styles.saisie}
           value={recherche}
           onChangeText={setRecherche}
-          placeholder="Rechercher une pharmacie"
+          placeholder={t('repertoire.rechercher')}
           placeholderTextColor={couleurs.doux}
           autoCorrect={false}
         />
@@ -70,7 +72,7 @@ export function SelecteurPharmacie({
 
       {!cherche && recentes.length > 0 && (
         <>
-          <Text style={styles.section}>Récentes</Text>
+          <Text style={styles.section}>{t('repertoire.triRecentes')}</Text>
           <View style={styles.puces}>
             {recentes.map((p) => (
               <Puce
@@ -84,9 +86,9 @@ export function SelecteurPharmacie({
         </>
       )}
 
-      <Text style={styles.section}>{cherche ? 'Résultats' : 'Toutes les pharmacies'}</Text>
+      <Text style={styles.section}>{t(cherche ? 'pharmacie.resultats' : 'repertoire.toutes')}</Text>
       {visibles.length === 0 ? (
-        <Text style={styles.aucune}>Aucune pharmacie ne correspond.</Text>
+        <Text style={styles.aucune}>{t('repertoire.aucunResultat')}</Text>
       ) : (
         visibles.map((p) => {
           const choisie = selection.includes(p.id);

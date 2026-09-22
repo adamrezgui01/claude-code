@@ -22,8 +22,10 @@ import { langueActive } from '../src/lib/langue';
 import { preparerNotifications } from '../src/lib/notifications';
 import { Bienvenue } from '../src/ui/Bienvenue';
 import { ACCENT_DEFAUT, couleurs, FournisseurTheme, police } from '../src/ui/theme';
+import { useTextes } from '../src/i18n';
 
 export default function Racine() {
+  const { t } = useTextes();
   const router = useRouter();
   const [pret, setPret] = useState(false);
   const [accent, setAccent] = useState(ACCENT_DEFAUT);
@@ -127,20 +129,20 @@ export default function Racine() {
             // précédent — donc « (tabs) », le nom technique de la route.
             headerBackTitle: 'Retour',
           }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Horaire' }} />
-          <Stack.Screen name="quart/[id]" options={{ title: 'Quart' }} />
-          <Stack.Screen name="frais/[id]" options={{ title: 'Frais' }} />
-          <Stack.Screen name="pharmacie/[id]" options={{ title: 'Pharmacie' }} />
-          <Stack.Screen name="document/[id]" options={{ title: 'Document' }} />
-          <Stack.Screen name="profil" options={{ title: 'Profil' }} />
-          <Stack.Screen name="parametres" options={{ title: 'Paramètres' }} />
-          <Stack.Screen name="liens" options={{ title: 'Liens et infos utiles' }} />
-          <Stack.Screen name="lien/[id]" options={{ title: 'Lien' }} />
-          <Stack.Screen name="facture" options={{ title: 'Générer une facture' }} />
-          <Stack.Screen name="facture/[id]" options={{ title: 'Facture' }} />
-          <Stack.Screen name="factures" options={{ title: 'Factures' }} />
-          <Stack.Screen name="apparence" options={{ title: 'Apparence' }} />
-          <Stack.Screen name="disponibilites" options={{ title: 'Disponibilités' }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t('onglets.horaire') }} />
+          <Stack.Screen name="quart/[id]" options={{ title: t('quart.leQuart') }} />
+          <Stack.Screen name="frais/[id]" options={{ title: t('frais.titre') }} />
+          <Stack.Screen name="pharmacie/[id]" options={{ title: t('pharmacie.titre') }} />
+          <Stack.Screen name="document/[id]" options={{ title: t('document.titre') }} />
+          <Stack.Screen name="profil" options={{ title: t('profil.titre') }} />
+          <Stack.Screen name="parametres" options={{ title: t('parametres.titre') }} />
+          <Stack.Screen name="liens" options={{ title: t('liens.titre') }} />
+          <Stack.Screen name="lien/[id]" options={{ title: t('liens.unLien') }} />
+          <Stack.Screen name="facture" options={{ title: t('facture.titreGenerer') }} />
+          <Stack.Screen name="facture/[id]" options={{ title: t('facture.titre') }} />
+          <Stack.Screen name="factures" options={{ title: t('facture.titreListe') }} />
+          <Stack.Screen name="apparence" options={{ title: t('apparence.titre') }} />
+          <Stack.Screen name="disponibilites" options={{ title: t('disponibilites.titre') }} />
         </Stack>
         )}
       </>

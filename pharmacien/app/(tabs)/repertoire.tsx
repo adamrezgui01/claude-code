@@ -15,10 +15,12 @@ import { pluriel } from '../../src/lib/format';
 import { normaliser } from '../../src/lib/texte';
 import { Bouton, Ecran, Fondu, Onglets, Vide } from '../../src/ui/composants';
 import { couleurs, espace, police, rayon } from '../../src/ui/theme';
+import { useTextes } from '../../src/i18n';
 
 type Tri = 'alphabetique' | 'recentes';
 
 export default function Repertoire() {
+  const { t } = useTextes();
   const router = useRouter();
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
   const [recherche, setRecherche] = useState('');
@@ -58,7 +60,7 @@ export default function Repertoire() {
               style={styles.saisie}
               value={recherche}
               onChangeText={setRecherche}
-              placeholder="Rechercher une pharmacie"
+              placeholder={t('repertoire.rechercher')}
               placeholderTextColor={couleurs.doux}
               autoCorrect={false}
               returnKeyType="search"
@@ -71,10 +73,10 @@ export default function Repertoire() {
           </View>
 
           <Onglets
-            libelle="Trié par"
+            libelle={t('repertoire.triePar')}
             options={[
-              { valeur: 'alphabetique' as const, texte: 'A – Z' },
-              { valeur: 'recentes' as const, texte: 'Récentes' },
+              { valeur: 'alphabetique' as const, texte: t('repertoire.triAZ') },
+              { valeur: 'recentes' as const, texte: t('repertoire.triRecentes') },
             ]}
             valeur={tri}
             onChange={setTri}
@@ -94,7 +96,7 @@ export default function Repertoire() {
             />
           ))}
           <Text style={styles.section}>
-            {tri === 'alphabetique' ? 'Toutes les pharmacies' : 'Les plus récentes'}
+            {t(tri === 'alphabetique' ? 'repertoire.toutes' : 'repertoire.plusRecentes')}
           </Text>
         </Fondu>
       )}
@@ -103,8 +105,8 @@ export default function Repertoire() {
         <Vide
           texte={
             cherche
-              ? 'Aucune pharmacie ne correspond.'
-              : 'Aucune pharmacie. Ajoutez-en une ici ou au moment de créer un quart.'
+              ? t('repertoire.aucunResultat')
+              : t('repertoire.aucunePharmacie')
           }
         />
       ) : (
@@ -118,7 +120,7 @@ export default function Repertoire() {
         ))
       )}
 
-      <Bouton titre="Ajouter une pharmacie" onPress={() => router.push('/pharmacie/nouvelle')} />
+      <Bouton titre={t('repertoire.ajouterPharmacie')} onPress={() => router.push('/pharmacie/nouvelle')} />
     </Ecran>
   );
 }

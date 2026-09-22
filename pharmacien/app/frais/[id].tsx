@@ -17,8 +17,10 @@ import {
   SousTitre,
 } from '../../src/ui/composants';
 import { couleurs, espace, police, rayon } from '../../src/ui/theme';
+import { useTextes } from '../../src/i18n';
 
 export default function FormulaireFrais() {
+  const { t } = useTextes();
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string; quart?: string }>();
   const nouveau = params.id === 'nouveau';
@@ -60,7 +62,7 @@ export default function FormulaireFrais() {
   function enregistrer() {
     if (!quartId) return;
     if (!description.trim()) {
-      Alert.alert('Description manquante', 'Décrivez ce que vous facturez.');
+      Alert.alert(t('frais.descriptionManquante'), t('frais.decrivez'));
       return;
     }
     const entree = {
@@ -78,11 +80,11 @@ export default function FormulaireFrais() {
 
     if (!photo) {
       Alert.alert(
-        'Aucun reçu',
-        'Sans reçu, ce frais pourrait être contesté par la pharmacie. Vous pouvez l’enregistrer quand même.',
+        t('frais.aucunRecu'),
+        t('frais.aucunRecuDetail'),
         [
-          { text: 'Ajouter un reçu', style: 'cancel' },
-          { text: 'Enregistrer sans reçu', onPress: sauver },
+          { text: t('frais.ajouterRecu'), style: 'cancel' },
+          { text: t('frais.enregistrerSansRecu'), onPress: sauver },
         ]
       );
       return;
@@ -92,10 +94,10 @@ export default function FormulaireFrais() {
 
   function retirer() {
     if (!fraisId) return;
-    Alert.alert('Supprimer ce frais ?', 'Cette action est définitive.', [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t('frais.supprimerConfirme'), t('frais.supprimerDefinitif'), [
+      { text: t('commun.annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: t('commun.supprimer'),
         style: 'destructive',
         onPress: () => {
           if (photo) supprimerRecu(photo);
@@ -108,25 +110,25 @@ export default function FormulaireFrais() {
 
   return (
     <Ecran>
-      <Stack.Screen options={{ title: nouveau ? 'Frais extra' : 'Modifier le frais' }} />
+      <Stack.Screen options={{ title: t(nouveau ? 'frais.titreExtra' : 'frais.titreModifier') }} />
 
       <Fondu>
-        {!!pharmacie && <Doux>Quart chez {pharmacie}</Doux>}
+        {!!pharmacie && <Doux>{t('frais.quartChez', { pharmacie })}</Doux>}
 
         <View style={styles.espacement}>
           <Champ
-            label="Ce que vous facturez"
+            label={t('frais.ceQueVousFacturez')}
             valeur={description}
             onChange={setDescription}
-            placeholder="Écrivez ce que vous voulez"
+            placeholder={t('frais.ecrivezLibrement')}
             multiligne
           />
           <Champ
-            label="Montant ($)"
+            label={t('frais.montant')}
             valeur={montant}
             onChange={setMontant}
             clavier="decimal-pad"
-            placeholder="0,00"
+            placeholder={t('commun.montantZero')}
           />
         </View>
 
@@ -144,24 +146,21 @@ export default function FormulaireFrais() {
                   setPhoto('');
                 }}
                 hitSlop={8}>
-                <Text style={styles.retirer}>Retirer</Text>
+                <Text style={styles.retirer}>{t('commun.retirer')}</Text>
               </Pressable>
             </View>
           </Carte>
         ) : (
           <Carte>
-            <Doux>
-              Une photo du reçu rend le frais incontestable. Sans elle, la pharmacie peut le
-              refuser.
-            </Doux>
+            <Doux>{t('frais.recuIncontestable')}</Doux>
             <View style={styles.boutonsPhoto}>
               <Bouton
-                titre="Prendre une photo"
+                titre={t('frais.prendrePhoto')}
                 icone={<Ionicons name="camera-outline" size={18} color="#FFFFFF" />}
                 onPress={() => ajouterPhoto(true)}
               />
               <Bouton
-                titre="Choisir dans la pellicule"
+                titre={t('frais.choisirPellicule')}
                 variante="secondaire"
                 onPress={() => ajouterPhoto(false)}
               />
@@ -170,8 +169,8 @@ export default function FormulaireFrais() {
         )}
 
         <View style={styles.actions}>
-          <Bouton titre="Enregistrer" onPress={enregistrer} />
-          {!nouveau && <Bouton titre="Supprimer" variante="danger" onPress={retirer} />}
+          <Bouton titre={t('commun.enregistrer')} onPress={enregistrer} />
+          {!nouveau && <Bouton titre={t('commun.supprimer')} variante="danger" onPress={retirer} />}
         </View>
       </Fondu>
     </Ecran>

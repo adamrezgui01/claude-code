@@ -72,11 +72,13 @@ import { Recompense } from '../../src/ui/Recompense';
 import { CalendrierMultiple } from '../../src/ui/CalendrierMultiple';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { useTextes } from '../../src/i18n';
 
 /** Durées de pause courantes. « Autre » ouvre la roulette. */
 const PAUSES = [30, 45, 60];
 
 export default function FormulaireQuart() {
+  const { t } = useTextes();
   const router = useRouter();
   const accent = useAccent();
   const params = useLocalSearchParams<{
@@ -313,9 +315,9 @@ export default function FormulaireQuart() {
     if (modeDeplacement === 'km') {
       // Zéro kilomètre et distance inconnue ne sont pas la même chose : on ne
       // montre jamais un zéro qui aurait l'air d'une vraie valeur.
-      if (calculKm) morceaux.push('distance en calcul…');
+      if (calculKm) morceaux.push(t('quart.distanceEnCalcul'));
       else if (distanceEtablie(kmSaisi)) morceaux.push(`${kmSaisi} km`);
-      else if (sansDomicile) morceaux.push('adresse du profil manquante');
+      else if (sansDomicile) morceaux.push(t('quart.adresseProfilManquante'));
     }
     if (modeDeplacement === 'fixe' && fixe > 0) morceaux.push(argent(fixe));
     if (repas > 0) morceaux.push(`repas ${argent(repas)}`);
@@ -385,15 +387,15 @@ export default function FormulaireQuart() {
     for (const id of identifiants) await programmerRappels(id);
 
     if (sautes.length > 0) {
-      Alert.alert(
-        'Certains jours ont été sautés',
-        `${sautes.map((jour) => formatJourCourt(jour)).join(', ')} — un quart existait déjà à ces heures.`,
-        [{ text: 'Compris' }]
-      );
+      Alert.alert(t('quart.joursSautes'), t('quart.joursSautesDetail', {
+        jours: sautes.map((jour) => formatJourCourt(jour)).join(', '),
+      }), [{ text: t('commun.compris') }]);
     }
 
     setRecompense(
-      identifiants.length > 1 ? `${pluriel(identifiants.length, 'quart')} ajoutés` : 'Quart ajouté'
+      identifiants.length > 1
+        ? t('quart.quartsAjoutes', { count: identifiants.length })
+        : t('quart.quartAjoute')
     );
   }
 
@@ -405,7 +407,7 @@ export default function FormulaireQuart() {
       );
     }
     if (!idPharmacie) {
-      Alert.alert('Pharmacie manquante', 'Choisissez une pharmacie ou créez-en une.');
+      Alert.alert(t('quart.pharmacieManquante'), t('quart.pharmacieManquanteDetail'));
       return;
     }
     const retenue = idPharmacie;
@@ -413,7 +415,7 @@ export default function FormulaireQuart() {
     // quarts de nuit sont pris en charge : c'est une faute de frappe bien plus
     // souvent qu'un vrai quart de vingt-quatre heures.
     if (heureDebut === heureFin) {
-      Alert.alert('Horaire invalide', 'L’heure de fin doit être différente de l’heure de début.');
+      Alert.alert(t('quart.horaireInvalide'), t('quart.horaireInvalideDetail'));
       return;
     }
 
@@ -429,13 +431,18 @@ export default function FormulaireQuart() {
       if (verification.type === 'chevauchement') {
         const autre = verification.autre;
         Alert.alert(
-          'Ces deux quarts se chevauchent',
-          `${autre.pharmacie_nom}, le ${autre.date}, de ${autre.heure_debut} à ${autre.heure_fin}.`,
+          t('quart.chevauchement'),
+          t('quart.chevauchementDetail', {
+            pharmacie: autre.pharmacie_nom,
+            date: autre.date,
+            debut: autre.heure_debut,
+            fin: autre.heure_fin,
+          }),
           [
-            { text: 'Modifier ce quart-ci', style: 'cancel' },
-            { text: 'Ouvrir l’autre quart', onPress: () => router.replace(`/quart/${autre.id}`) },
+            { text: t('quart.modifierCeQuart'), style: 'cancel' },
+            { text: t('quart.ouvrirAutreQuart'), onPress: () => router.replace(`/quart/${autre.id}`) },
             {
-              text: 'Supprimer l’autre quart',
+              text: t('quart.supprimerAutreQuart'),
               style: 'destructive',
               onPress: async () => {
                 await annulerRappels(rappelsDuQuart(autre));
@@ -443,7 +450,7 @@ export default function FormulaireQuart() {
                 await valider();
               },
             },
-            { text: 'Enregistrer quand même', onPress: () => enregistrer(retenue) },
+            { text: t('quart.enregistrerQuandMeme'), onPress: () => enregistrer(retenue) },
           ]
         );
         return;
@@ -451,11 +458,14 @@ export default function FormulaireQuart() {
 
       if (verification.type === 'serre') {
         Alert.alert(
-          'Trajet serré',
-          `Il ne reste que ${verification.minutes} minutes entre ce quart et celui de ${verification.autre.pharmacie_nom}. Êtes-vous certain d’avoir le temps de vous déplacer ?`,
+          t('quart.trajetSerre'),
+          t('quart.trajetSerreDetail', {
+            minutes: verification.minutes,
+            pharmacie: verification.autre.pharmacie_nom,
+          }),
           [
-            { text: 'Corriger', style: 'cancel' },
-            { text: 'Enregistrer', onPress: () => enregistrer(retenue) },
+            { text: t('quart.corriger'), style: 'cancel' },
+            { text: t('commun.enregistrer'), onPress: () => enregistrer(retenue) },
           ]
         );
         return;
@@ -474,10 +484,10 @@ export default function FormulaireQuart() {
 
   function supprimer() {
     if (!quartId) return;
-    Alert.alert('Supprimer ce quart ?', 'Cette action est définitive.', [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t('quart.supprimerQuart'), t('quart.supprimerDefinitif'), [
+      { text: t('commun.annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: t('commun.supprimer'),
         style: 'destructive',
         onPress: async () => {
           const quart = obtenirQuart(quartId);
@@ -497,19 +507,20 @@ export default function FormulaireQuart() {
    */
   if (verrouille) {
     const facture = numeroFacture ? factureParNumero(numeroFacture) : null;
-    const nomPharmacie = pharmacies.find((p) => p.id === pharmacieId)?.nom ?? 'Pharmacie';
+    const nomPharmacie =
+      pharmacies.find((p) => p.id === pharmacieId)?.nom ?? t('quart.pharmacieSansNom');
     const kmSaisi = kilometrage.trim() === '' ? null : analyserNombre(kilometrage);
     const fixe = analyserNombre(montantFixe);
     const tauxKm = analyserNombre(tauxParKm);
     const repas = analyserNombre(perDiem);
     return (
       <Ecran>
-        <Stack.Screen options={{ title: 'Quart facturé' }} />
+        <Stack.Screen options={{ title: t('quart.titreFacture') }} />
 
         <Carte style={styles.verrou}>
           <View style={styles.verrouEntete}>
             <Ionicons name="lock-closed-outline" size={20} color={couleurs.attente} />
-            <Text style={styles.verrouTitre}>Ce quart est facturé</Text>
+            <Text style={styles.verrouTitre}>{t('quart.verrouilleTitre')}</Text>
           </View>
           <Doux>
             Il a été effectué et porté sur la facture {numeroFacture}. Pour le modifier, il faut
@@ -518,7 +529,7 @@ export default function FormulaireQuart() {
           </Doux>
           {!!facture && (
             <Bouton
-              titre="Voir la facture"
+              titre={t('quart.voirLaFacture')}
               variante="secondaire"
               icone={<Ionicons name="document-text-outline" size={18} color={couleurs.texte} />}
               onPress={() => router.push(`/facture/${facture.id}`)}
@@ -526,47 +537,65 @@ export default function FormulaireQuart() {
           )}
         </Carte>
 
-        <SousTitre>Le quart</SousTitre>
+        <SousTitre>{t('quart.leQuart')}</SousTitre>
         <Carte>
-          <Rangee label="Pharmacie" valeur={nomPharmacie} accent />
-          <Rangee label="Date" valeur={formatDateLongue(date)} />
+          <Rangee label={t('quart.pharmacie')} valeur={nomPharmacie} accent />
+          <Rangee label={t('quart.date')} valeur={formatDateLongue(date)} />
           <Rangee
-            label="Horaire"
-            valeur={`${heureDebut} – ${heureFin}${traverseMinuit(heureDebut, heureFin) ? ' (nuit)' : ''}`}
+            label={t('quart.horaire')}
+            valeur={`${heureDebut} – ${heureFin}${
+              traverseMinuit(heureDebut, heureFin) ? ` (${t('quart.nuit')})` : ''
+            }`}
           />
-          <Rangee label="Durée facturable" valeur={heures(duree)} />
-          <Rangee label="Pause repas" valeur={`${formaterDuree(pause)}${pause > 0 ? (pausePayee ? ' · payée' : ' · non payée') : ''}`} />
-          <Rangee label="Taux horaire" valeur={`${argent(analyserNombre(taux))}/h`} />
+          <Rangee label={t('quart.dureeFacturableLabel')} valeur={heures(duree)} />
+          <Rangee
+            label={t('quart.pauseRepas')}
+            valeur={t('quart.pauseStatut', {
+              duree: formaterDuree(pause),
+              statut:
+                pause > 0 ? t(pausePayee ? 'quart.pausePayeeCourt' : 'quart.pauseNonPayee') : '',
+            })}
+          />
+          <Rangee
+            label={t('quart.tauxHoraire')}
+            valeur={t('quart.tauxHoraireValeur', { montant: argent(analyserNombre(taux)) })}
+          />
         </Carte>
 
-        <SousTitre>Frais du quart</SousTitre>
+        <SousTitre>{t('quart.fraisDuQuart')}</SousTitre>
         <Carte>
           {modeDeplacement === 'km' && (
             <Rangee
-              label="Kilométrage"
+              label={t('pharmacie.kilometrage')}
               valeur={
                 kmSaisi === null
-                  ? 'Distance inconnue'
+                  ? t('quart.distanceInconnue')
                   : `${kmSaisi * (allerRetour ? 2 : 1)} km · ${argent(
                       montantKilometrage(kmSaisi, tauxKm, allerRetour) ?? 0
                     )}`
               }
             />
           )}
-          {modeDeplacement === 'fixe' && <Rangee label="Déplacement" valeur={argent(fixe)} />}
+          {modeDeplacement === 'fixe' && <Rangee label={t('statistiques.deplacement')} valeur={argent(fixe)} />}
           {modeDeplacement === 'aucun' && (
-            <Doux>Cette pharmacie ne rembourse pas les déplacements.</Doux>
+            <Doux>{t('quart.aucunDeplacement')}</Doux>
           )}
-          <Rangee label="Repas" valeur={argent(repas)} />
+          <Rangee label={t('quart.repas')} valeur={argent(repas)} />
           {frais.map((f) => (
-            <Rangee key={f.id} label={f.description || 'Frais'} valeur={argent(f.montant)} />
+            <Rangee
+              key={f.id}
+              label={f.description || t('quart.fraisSansNom')}
+              valeur={argent(f.montant)}
+            />
           ))}
-          {totalFrais > 0 && <Rangee label="Total des frais" valeur={argent(totalFrais)} accent />}
+          {totalFrais > 0 && (
+            <Rangee label={t('quart.totalFraisLabel')} valeur={argent(totalFrais)} accent />
+          )}
         </Carte>
 
         {!!notes.trim() && (
           <>
-            <SousTitre>Notes</SousTitre>
+            <SousTitre>{t('quart.notes')}</SousTitre>
             <Carte>
               <Text style={styles.notesFigees}>{notes}</Text>
             </Carte>
@@ -579,9 +608,11 @@ export default function FormulaireQuart() {
   return (
     <>
       <Ecran>
-        <Stack.Screen options={{ title: nouveau ? 'Nouveau quart' : 'Modifier le quart' }} />
+        <Stack.Screen
+          options={{ title: t(nouveau ? 'quart.titreNouveau' : 'quart.titreModifier') }}
+        />
 
-        <SousTitre>Pharmacie</SousTitre>
+        <SousTitre>{t('quart.pharmacie')}</SousTitre>
         <SelecteurPharmacie
           pharmacies={pharmacies}
           recentes={recentes}
@@ -589,7 +620,7 @@ export default function FormulaireQuart() {
           onSelectionner={appliquerPharmacie}
           enTete={
             <Puce
-              texte="+ Nouvelle pharmacie"
+              texte={t('quart.nouvellePharmacie')}
               actif={creationPharmacie}
               onPress={() => {
                 setCreationPharmacie((c) => !c);
@@ -601,11 +632,11 @@ export default function FormulaireQuart() {
         {creationPharmacie && (
           <View style={styles.espacement}>
             <Champ
-              label="Nom de la nouvelle pharmacie"
+              label={t('quart.nomNouvellePharmacie')}
               valeur={nouvellePharmacie}
               onChange={setNouvellePharmacie}
-              placeholder="Nom de la pharmacie"
-              aide="Son adresse et ses conditions se remplissent ensuite dans sa fiche."
+              placeholder={t('pharmacie.nomPlaceholder')}
+              aide={t('quart.aideNouvellePharmacie')}
             />
           </View>
         )}
@@ -626,14 +657,14 @@ export default function FormulaireQuart() {
         <Separateur />
 
         <SelecteurDate
-          label="Date"
+          label={t('quart.date')}
           valeur={date}
           onChange={setDate}
           joursMarques={joursAvecQuart}
         />
         <View style={styles.rangee}>
           <SelecteurHeure
-            label="Début"
+            label={t('quart.debut')}
             valeur={heureDebut}
             onChange={setHeureDebut}
             ouvert={ouvertDebut}
@@ -645,7 +676,7 @@ export default function FormulaireQuart() {
             }}
           />
           <SelecteurHeure
-            label="Fin"
+            label={t('quart.fin')}
             valeur={heureFin}
             onChange={setHeureFin}
             ouvert={ouvertFin}
@@ -653,21 +684,19 @@ export default function FormulaireQuart() {
           />
         </View>
         {passe && (
-          <Doux>
-            Ce quart est passé : ces heures sont celles que vous avez réellement faites.
-          </Doux>
+          <Doux>{t('quart.quartPasse')}</Doux>
         )}
 
         {/* Un quart de nuit se termine le lendemain : la durée l'annonce,
             faute de quoi la facture se tromperait en silence. */}
         <Text style={styles.duree}>
-          Durée facturable : {heures(duree)}
-          {traverseMinuit(heureDebut, heureFin) ? ' · se termine le lendemain' : ''}
+          {t('quart.dureeFacturable', { duree: heures(duree) })}
+          {traverseMinuit(heureDebut, heureFin) ? t('quart.seTermineLendemain') : ''}
         </Text>
 
         <Pressable style={styles.ligneDetails} onPress={() => setDetails((d) => !d)} hitSlop={6}>
           <View style={styles.detailsTexte}>
-            <Text style={styles.detailsLabel}>Plus de détails</Text>
+            <Text style={styles.detailsLabel}>{t('quart.plusDeDetails')}</Text>
             {!details && <Text style={styles.detailsResume}>{resumeDetails()}</Text>}
           </View>
           <Ionicons
@@ -680,18 +709,18 @@ export default function FormulaireQuart() {
         {details && (
           <Fondu>
             <Champ
-              label="Taux horaire ($/h)"
+              label={t('quart.tauxHoraire')}
               valeur={taux}
               onChange={setTaux}
               clavier="decimal-pad"
-              placeholder="0,00"
+              placeholder={t('commun.montantZero')}
             />
 
             {/* Héritée de la pharmacie. On ne la change ici que pour un jour
                 qui s'est passé autrement. */}
-            <Text style={styles.label}>Pause repas</Text>
+            <Text style={styles.label}>{t('quart.pauseRepas')}</Text>
             <View style={styles.puces}>
-              <Puce texte="Aucune" actif={pause === 0} onPress={() => setPause(0)} />
+              <Puce texte={t('commun.aucune')} actif={pause === 0} onPress={() => setPause(0)} />
               {PAUSES.map((minutes) => (
                 <Puce
                   key={minutes}
@@ -708,11 +737,11 @@ export default function FormulaireQuart() {
             </View>
             {pause > 0 && (
               <Interrupteur
-                label="Pause payée"
+                label={t('quart.pausePayee')}
                 detail={
                   pausePayee
-                    ? 'Incluse dans les heures facturées'
-                    : `Déduite des heures facturées (${formaterDuree(pause)})`
+                    ? t('quart.pauseIncluse')
+                    : t('quart.pauseDeduite', { duree: formaterDuree(pause) })
                 }
                 valeur={pausePayee}
                 onChange={setPausePayee}
@@ -720,23 +749,21 @@ export default function FormulaireQuart() {
             )}
 
             <Separateur />
-            <SousTitre>Frais du quart</SousTitre>
+            <SousTitre>{t('quart.fraisDuQuart')}</SousTitre>
             {modeDeplacement === 'km' && (
               <>
                 <Champ
-                  label="Kilométrage (km)"
+                  label={t('quart.kilometrage')}
                   valeur={calculKm ? '' : kilometrage}
                   onChange={setKilometrage}
                   clavier="decimal-pad"
-                  placeholder={calculKm ? 'Calcul en cours…' : 'Pas encore calculée'}
-                  aide="Mettez zéro pour une journée où le trajet n’est pas remboursé."
+                  placeholder={t(calculKm ? 'quart.calculEnCours' : 'quart.pasEncoreCalculee')}
+                  aide={t('quart.kilometrageAide')}
                 />
                 <Interrupteur
-                  label="Aller-retour"
+                  label={t('quart.allerRetour')}
                   detail={
-                    allerRetour
-                      ? 'Le trajet est compté dans les deux sens'
-                      : 'Le trajet n’est compté qu’une fois'
+                    allerRetour ? t('quart.allerRetourOui') : t('quart.allerRetourNon')
                   }
                   valeur={allerRetour}
                   onChange={setAllerRetour}
@@ -745,20 +772,18 @@ export default function FormulaireQuart() {
                     quart seul : une journée peut avoir été négociée autrement
                     sans que l'entente habituelle change. */}
                 <Champ
-                  label="Taux par kilomètre ($/km)"
+                  label={t('quart.tauxParKm')}
                   valeur={tauxParKm}
                   onChange={setTauxParKm}
                   clavier="decimal-pad"
-                  placeholder="0,00"
-                  aide="Ne touche que ce quart. La fiche de la pharmacie reste inchangée."
+                  placeholder={t('commun.montantZero')}
+                  aide={t('quart.tauxParKmAide')}
                 />
                 {sansDomicile && (
                   <Carte style={styles.eviter}>
-                    <Doux>
-                      Ajoutez votre adresse dans votre profil pour calculer les distances.
-                    </Doux>
+                    <Doux>{t('quart.sansDomicile')}</Doux>
                     <Pressable onPress={() => router.push('/profil')} hitSlop={8}>
-                      <Text style={[styles.lien, { color: accent }]}>Ouvrir mon profil</Text>
+                      <Text style={[styles.lien, { color: accent }]}>{t('quart.ouvrirProfil')}</Text>
                     </Pressable>
                   </Carte>
                 )}
@@ -766,42 +791,42 @@ export default function FormulaireQuart() {
             )}
             {modeDeplacement === 'fixe' && (
               <Champ
-                label="Déplacement ($)"
+                label={t('quart.deplacement')}
                 valeur={montantFixe}
                 onChange={setMontantFixe}
                 clavier="decimal-pad"
-                placeholder="0,00"
+                placeholder={t('commun.montantZero')}
               />
             )}
             {modeDeplacement === 'aucun' && (
-              <Doux>Cette pharmacie ne rembourse pas les déplacements.</Doux>
+              <Doux>{t('quart.aucunDeplacement')}</Doux>
             )}
             <Champ
-              label="Repas ($)"
+              label={t('quart.repas')}
               valeur={perDiem}
               onChange={setPerDiem}
               clavier="decimal-pad"
-              placeholder="0,00"
+              placeholder={t('commun.montantZero')}
             />
             {/* Repris de la pharmacie. Un logement qu'elle fournit ne se
                 facture pas, et arrive donc ici à zéro. */}
             <Champ
-              label="Hébergement ($)"
+              label={t('quart.hebergement')}
               valeur={hebergement}
               onChange={setHebergement}
               clavier="decimal-pad"
-              placeholder="0,00"
+              placeholder={t('commun.montantZero')}
             />
 
             <Separateur />
-            <Champ label="Notes" valeur={notes} onChange={setNotes} multiligne />
+            <Champ label={t('quart.notes')} valeur={notes} onChange={setNotes} multiligne />
 
             {nouveau && (
               <>
                 <Separateur />
                 <Interrupteur
-                  label="Répéter ce quart"
-                  detail="Pointez les jours voulus, un à un"
+                  label={t('quart.repeter')}
+                  detail={t('quart.repeterDetail')}
                   valeur={repeter}
                   onChange={setRepeter}
                 />
@@ -825,9 +850,7 @@ export default function FormulaireQuart() {
                       ou les supprimer ensuite ne touche jamais les autres.
                     </Doux>
                     {[...joursChoisis].some((j) => joursOccupes.has(j)) && (
-                      <Doux>
-                        Les jours grisés portent déjà un quart à ces heures. Ils seront sautés.
-                      </Doux>
+                      <Doux>{t('quart.joursOccupes')}</Doux>
                     )}
                   </Fondu>
                 )}
@@ -839,9 +862,9 @@ export default function FormulaireQuart() {
         {!nouveau && (
           <>
             <Separateur />
-            <SousTitre>Frais extra</SousTitre>
+            <SousTitre>{t('quart.fraisExtra')}</SousTitre>
             {frais.length === 0 ? (
-              <Doux>Rien de facturé en plus des heures pour ce quart.</Doux>
+              <Doux>{t('quart.aucunFraisExtra')}</Doux>
             ) : (
               frais.map((f) => (
                 <Pressable
@@ -850,7 +873,7 @@ export default function FormulaireQuart() {
                   style={({ pressed }) => [styles.frais, pressed && { opacity: 0.6 }]}>
                   <View style={styles.fraisTexte}>
                     <Text style={styles.fraisDescription}>{f.description || 'Frais'}</Text>
-                    {!f.photo && <Doux>Sans reçu</Doux>}
+                    {!f.photo && <Doux>{t('quart.sansRecu')}</Doux>}
                   </View>
                   <Text style={styles.fraisMontant}>{argent(f.montant)}</Text>
                 </Pressable>
@@ -862,7 +885,7 @@ export default function FormulaireQuart() {
               </Text>
             )}
             <Bouton
-              titre="Charger quelque chose en plus"
+              titre={t('quart.chargerEnPlus')}
               variante="secondaire"
               icone={<Ionicons name="add" size={18} color={couleurs.texte} />}
               onPress={() => router.push(`/frais/nouveau?quart=${quartId}`)}
@@ -878,28 +901,28 @@ export default function FormulaireQuart() {
         </Carte>
 
         <View style={styles.actions}>
-          <Bouton titre="Enregistrer" onPress={valider} />
+          <Bouton titre={t('commun.enregistrer')} onPress={valider} />
           {!nouveau && (
             <>
               <Bouton
-                titre="Dupliquer ce quart"
+                titre={t('quart.dupliquer')}
                 variante="secondaire"
                 icone={<Ionicons name="copy-outline" size={18} color={couleurs.texte} />}
                 onPress={() => router.push(`/quart/nouveau?duplique=${quartId}`)}
               />
               <Bouton
-                titre={annule ? 'Finalement, le quart a eu lieu' : 'Le quart n’a pas eu lieu'}
+                titre={t(annule ? 'quart.finalementEuLieu' : 'quart.pasEuLieu')}
                 variante={annule ? 'secondaire' : 'danger'}
                 onPress={basculerAnnule}
               />
-              <Bouton titre="Supprimer le quart" variante="danger" onPress={supprimer} />
+              <Bouton titre={t('quart.supprimerQuart')} variante="danger" onPress={supprimer} />
             </>
           )}
         </View>
       </Ecran>
 
       <SelecteurDuree
-        titre="Durée de la pause"
+        titre={t('quart.dureePause')}
         minutes={pause || 30}
         ouvert={roulettePause}
         onChange={setPause}

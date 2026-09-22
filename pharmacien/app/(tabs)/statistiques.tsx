@@ -28,11 +28,13 @@ import {
 import { SelecteurDate } from '../../src/ui/Selecteurs';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
 import { couleurs, espace, police } from '../../src/ui/theme';
+import { useTextes } from '../../src/i18n';
 
 /** Une minute : de quoi distinguer un vrai départ d'un aller-retour immédiat. */
 const DELAI_REJEU = 60 * 1000;
 
 export default function Statistiques() {
+  const { t } = useTextes();
   const router = useRouter();
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
   const [recentes, setRecentes] = useState<Pharmacie[]>([]);
@@ -99,12 +101,12 @@ export default function Statistiques() {
       {/* Libellés courts : un trait qui glisse ne peut pas suivre sur deux
           rangées, donc la rangée doit tenir sur une seule ligne. */}
       <Onglets
-        libelle="Période"
+        libelle={t('statistiques.periode')}
         options={[
-          { valeur: 'mois' as const, texte: 'Ce mois' },
-          { valeur: 'moisDernier' as const, texte: 'Mois dernier' },
-          { valeur: 'trimestre' as const, texte: '3 mois' },
-          { valeur: 'personnalisee' as const, texte: 'Autre' },
+          { valeur: 'mois' as const, texte: t('statistiques.ceMois') },
+          { valeur: 'moisDernier' as const, texte: t('statistiques.moisDernier') },
+          { valeur: 'trimestre' as const, texte: t('statistiques.troisMois') },
+          { valeur: 'personnalisee' as const, texte: t('commun.autre') },
         ]}
         valeur={preset}
         onChange={setPreset}
@@ -127,9 +129,9 @@ export default function Statistiques() {
       <SousTitre>12 derniers mois</SousTitre>
       <Onglets
         options={[
-          { valeur: 'argent' as const, texte: 'Argent' },
-          { valeur: 'heures' as const, texte: 'Heures' },
-          { valeur: 'kilometres' as const, texte: 'Kilomètres' },
+          { valeur: 'argent' as const, texte: t('statistiques.argent') },
+          { valeur: 'heures' as const, texte: t('statistiques.heures') },
+          { valeur: 'kilometres' as const, texte: t('statistiques.kilometres') },
         ]}
         valeur={mesure}
         onChange={setMesure}
@@ -146,41 +148,47 @@ export default function Statistiques() {
       <Separateur />
 
       <View style={styles.section}>
-        <SousTitre>Pharmacies</SousTitre>
+        <SousTitre>{t('statistiques.pharmacies')}</SousTitre>
         <SelecteurPharmacie
           pharmacies={pharmacies}
           recentes={recentes}
           selection={selection}
           onSelectionner={basculerPharmacie}
           enTete={
-            <Puce texte="Toutes" actif={selection.length === 0} onPress={() => setSelection([])} />
+            <Puce texte={t('commun.toutes')} actif={selection.length === 0} onPress={() => setSelection([])} />
           }
         />
       </View>
 
       {stats.nombreQuarts === 0 ? (
-        <Vide texte="Aucun quart dans cette période." />
+        <Vide texte={t('statistiques.aucunQuart')} />
       ) : (
         <Fondu>
           <Carte>
             <Text style={styles.revenu}>{argent(stats.revenuEstime)}</Text>
-            <Doux>Revenu estimé</Doux>
+            <Doux>{t('statistiques.revenuEstime')}</Doux>
             <Separateur />
-            <Rangee label="Quarts" valeur={`${stats.nombreQuarts}`} />
-            <Rangee label="Heures travaillées" valeur={heures(stats.totalHeures)} />
-            <Rangee label="Honoraires" valeur={argent(stats.montantHoraire)} />
+            <Rangee label={t('statistiques.quarts')} valeur={`${stats.nombreQuarts}`} />
+            <Rangee label={t('statistiques.heuresTravaillees')} valeur={heures(stats.totalHeures)} />
+            <Rangee label={t('statistiques.honoraires')} valeur={argent(stats.montantHoraire)} />
             <Rangee
-              label={stats.totalKm > 0 ? `Déplacement (${nombre(stats.totalKm)} km)` : 'Déplacement'}
+              label={
+                stats.totalKm > 0
+                  ? t('statistiques.deplacementKm', { km: nombre(stats.totalKm) })
+                  : t('statistiques.deplacement')
+              }
               valeur={argent(stats.montantDeplacement)}
             />
             <Rangee
-              label={`Per diem (${pluriel(stats.joursTravailles, 'jour travaillé', 'jours travaillés')})`}
+              label={t('statistiques.perDiem', {
+                jours: t('compteur.jourTravaille', { count: stats.joursTravailles }),
+              })}
               valeur={argent(stats.montantPerDiem)}
             />
-            <Rangee label="Frais extra" valeur={argent(stats.montantFraisExtra)} />
+            <Rangee label={t('statistiques.fraisExtra')} valeur={argent(stats.montantFraisExtra)} />
           </Carte>
 
-          <SousTitre>Par pharmacie</SousTitre>
+          <SousTitre>{t('statistiques.parPharmacie')}</SousTitre>
           <Carte>
             {stats.parPharmacie.map((p, i) => (
               <View key={p.pharmacie_id}>
@@ -198,7 +206,7 @@ export default function Statistiques() {
 
       <View style={styles.actions}>
         <Bouton
-          titre="Générer une facture"
+          titre={t('statistiques.genererFacture')}
           onPress={() =>
             router.push(
               `/facture?debut=${debut}&fin=${fin}${
@@ -208,7 +216,7 @@ export default function Statistiques() {
           }
         />
         <Bouton
-          titre="Factures"
+          titre={t('statistiques.factures')}
           variante="secondaire"
           onPress={() => router.push('/factures')}
         />

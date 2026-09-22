@@ -24,6 +24,7 @@ import {
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { Recompense } from '../../src/ui/Recompense';
 import { couleurs, espace, police } from '../../src/ui/theme';
+import { useTextes } from '../../src/i18n';
 
 /**
  * Une facture déjà émise, rouverte. On y revient pour trois raisons : la
@@ -31,6 +32,7 @@ import { couleurs, espace, police } from '../../src/ui/theme';
  * sortie d'un quart verrouillé.
  */
 export default function VueFacture() {
+  const { t } = useTextes();
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
   const factureId = Number(params.id);
@@ -73,14 +75,14 @@ export default function VueFacture() {
 
   function supprimer(f: Facture) {
     Alert.alert(
-      'Supprimer cette facture ?',
+      t('facture.supprimerConfirme'),
       quarts.length > 0
-        ? `${pluriel(quarts.length, 'quart')} ${quarts.length > 1 ? 'redeviendront modifiables' : 'redeviendra modifiable'} et ${quarts.length > 1 ? 'pourront' : 'pourra'} être refacturé${quarts.length > 1 ? 's' : ''}.`
-        : 'Cette action est définitive.',
+        ? t('facture.supprimerRelibere', { count: quarts.length })
+        : t('facture.supprimerDefinitif'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('commun.annuler'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('commun.supprimer'),
           style: 'destructive',
           onPress: async () => {
             await supprimerFactureEtRappel(f);
@@ -96,46 +98,52 @@ export default function VueFacture() {
   return (
     <>
       <Ecran>
-      <Stack.Screen options={{ title: `Facture ${facture.numero}` }} />
+      <Stack.Screen options={{ title: t('facture.titreNumero', { numero: facture.numero }) }} />
 
       <View style={styles.entete}>
         <Text style={styles.pharmacie}>{facture.pharmacie_nom}</Text>
-        <Etiquette texte={paye ? 'Payée' : 'En attente'} ton={paye ? 'succes' : 'attente'} />
+        <Etiquette
+          texte={t(paye ? 'facture.payee' : 'facture.enAttente')}
+          ton={paye ? 'succes' : 'attente'}
+        />
       </View>
       <Doux>
-        Du {formatDateCourte(facture.periode_debut)} au {formatDateCourte(facture.periode_fin)}
+        {t('commun.duAu', {
+          debut: formatDateCourte(facture.periode_debut),
+          fin: formatDateCourte(facture.periode_fin),
+        })}
       </Doux>
       <Doux>
-        Générée le {formatDateCourte(facture.date_generation)}
-        {!paye && jours > 0 ? ` · en attente depuis ${pluriel(jours, 'jour')}` : ''}
+        {t('facture.genereeLe', { date: formatDateCourte(facture.date_generation) })}
+        {!paye && jours > 0 ? t('facture.enAttenteDepuis', { count: jours }) : ''}
       </Doux>
 
       <Carte style={styles.totaux}>
         <Text style={styles.total}>{argent(facture.total)}</Text>
         <Separateur />
-        <Rangee label="Heures" valeur={heures(facture.total_heures)} />
+        <Rangee label={t('statistiques.heures')} valeur={heures(facture.total_heures)} />
         {facture.deplacement_montant > 0 && (
-          <Rangee label="Déplacement" valeur={argent(facture.deplacement_montant)} />
+          <Rangee label={t('facture.deplacement')} valeur={argent(facture.deplacement_montant)} />
         )}
         {facture.per_diem_montant > 0 && (
-          <Rangee label="Per diem" valeur={argent(facture.per_diem_montant)} />
+          <Rangee label={t('facture.perDiem')} valeur={argent(facture.per_diem_montant)} />
         )}
         {facture.hebergement_montant > 0 && (
-          <Rangee label="Hébergement" valeur={argent(facture.hebergement_montant)} />
+          <Rangee label={t('facture.hebergement')} valeur={argent(facture.hebergement_montant)} />
         )}
         {facture.frais_extra_montant > 0 && (
-          <Rangee label="Frais extra" valeur={argent(facture.frais_extra_montant)} />
+          <Rangee label={t('facture.fraisExtra')} valeur={argent(facture.frais_extra_montant)} />
         )}
       </Carte>
 
       <View style={styles.actions}>
         <Bouton
-          titre="Repartager le PDF"
+          titre={t('facture.repartager')}
           icone={<Ionicons name="share-outline" size={18} color="#FFFFFF" />}
           onPress={() => void partager(facture)}
         />
         <Bouton
-          titre={paye ? 'Marquer en attente' : 'Marquer payée'}
+          titre={t(paye ? 'facture.marquerEnAttente' : 'facture.marquerPayee')}
           variante={paye ? 'secondaire' : 'succes'}
           onPress={() => basculerPaiement(facture)}
         />
@@ -143,7 +151,7 @@ export default function VueFacture() {
 
       <Separateur />
 
-      <SousTitre>{pluriel(quarts.length, 'quart facturé', 'quarts facturés')}</SousTitre>
+      <SousTitre>{t('compteur.quartFacture', { count: quarts.length })}</SousTitre>
       {quarts.map((q) => (
         <LigneQuart
           key={q.id}
@@ -160,12 +168,12 @@ export default function VueFacture() {
         facturables. C’est la seule façon de corriger un quart déjà facturé.
       </Doux>
       <View style={styles.actions}>
-        <Bouton titre="Supprimer la facture" variante="danger" onPress={() => supprimer(facture)} />
+        <Bouton titre={t('facture.supprimerFacture')} variante="danger" onPress={() => supprimer(facture)} />
       </View>
       </Ecran>
 
       {/* Hors du défilement : la récompense couvre l'écran, pas le contenu. */}
-      <Recompense visible={recompense} texte="Facture payée" onFini={() => setRecompense(false)} />
+      <Recompense visible={recompense} texte={t('facture.facturePayee')} onFini={() => setRecompense(false)} />
     </>
   );
 }

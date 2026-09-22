@@ -2,8 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router/js-tabs';
 
 import { couleurs, police, useAccent } from '../../src/ui/theme';
+import { useTextes } from '../../src/i18n';
 
 export default function DispositionOnglets() {
+  const { t } = useTextes();
   const accent = useAccent();
 
   return (
@@ -30,7 +32,7 @@ export default function DispositionOnglets() {
       <Tabs.Screen
         name="repertoire"
         options={{
-          title: 'Répertoire',
+          title: t('onglets.repertoire'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="business-outline" color={color} size={size} />
           ),

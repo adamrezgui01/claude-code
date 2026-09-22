@@ -21,8 +21,10 @@ import {
 } from '../../src/ui/composants';
 import { SelecteurDate } from '../../src/ui/Selecteurs';
 import { espace } from '../../src/ui/theme';
+import { useTextes } from '../../src/i18n';
 
 export default function FormulaireDocument() {
+  const { t } = useTextes();
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
   const nouveau = params.id === 'nouveau';
@@ -46,7 +48,7 @@ export default function FormulaireDocument() {
 
   async function enregistrer() {
     if (!nom.trim()) {
-      Alert.alert('Nom manquant', 'Donnez un nom au document.');
+      Alert.alert(t('document.nomManquant'), t('document.nomManquantDetail'));
       return;
     }
     const entree = {
@@ -65,10 +67,10 @@ export default function FormulaireDocument() {
 
   function supprimer() {
     if (!documentId) return;
-    Alert.alert('Supprimer ce document ?', 'Le rappel associé sera annulé.', [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t('document.supprimerConfirme'), t('document.supprimerRappel'), [
+      { text: t('commun.annuler'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: t('commun.supprimer'),
         style: 'destructive',
         onPress: async () => {
           await annulerRappel(rappelExistant);
@@ -85,22 +87,22 @@ export default function FormulaireDocument() {
 
       <Fondu>
       <Champ
-        label="Nom"
+        label={t('document.nom')}
         valeur={nom}
         onChange={setNom}
-        placeholder="Assurance responsabilité"
+        placeholder={t('document.exempleNom')}
       />
-      <SelecteurDate label="Date d’expiration" valeur={expiration} onChange={setExpiration} />
+      <SelecteurDate label={t('document.expiration')} valeur={expiration} onChange={setExpiration} />
       <Champ
-        label="Rappel (jours avant l’expiration)"
+        label={t('document.rappelJours')}
         valeur={jours}
         onChange={setJours}
         clavier="number-pad"
       />
-      <Doux>Le rappel est programmé à 9 h, le nombre de jours indiqué avant l’expiration.</Doux>
+      <Doux>{t('document.rappelAide')}</Doux>
 
-      <Bouton titre="Enregistrer" onPress={enregistrer} />
-      {!nouveau && <Bouton titre="Supprimer" variante="danger" onPress={supprimer} />}
+      <Bouton titre={t('commun.enregistrer')} onPress={enregistrer} />
+      {!nouveau && <Bouton titre={t('commun.supprimer')} variante="danger" onPress={supprimer} />}
       </Fondu>
     </Ecran>
   );

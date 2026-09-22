@@ -165,14 +165,14 @@ function etiquettes(question: Question): string[] {
 /** Ce que le lecteur a compris, en une ligne, avant d'ouvrir la fiche. */
 function resumer(
   fiche: Extract<Fiche, { action: 'quart' }>,
-  t: (cle: string, valeurs?: Record<string, unknown>) => string
+  traduire: (cle: string, valeurs?: Record<string, unknown>) => string
 ): string {
   const morceaux: string[] = [];
   if (fiche.dates.length === 1) morceaux.push(fiche.dates[0]);
-  else if (fiche.dates.length > 1) morceaux.push(t('dictee.jours', { count: fiche.dates.length }));
+  else if (fiche.dates.length > 1) morceaux.push(traduire('dictee.jours', { count: fiche.dates.length }));
   if (fiche.heureDebut && fiche.heureFin) morceaux.push(`${fiche.heureDebut} – ${fiche.heureFin}`);
   if (fiche.pharmacieInconnue) morceaux.push(fiche.pharmacieInconnue);
-  if (morceaux.length === 0) return t('dictee.ficheVide');
+  if (morceaux.length === 0) return traduire('dictee.ficheVide');
   return morceaux.join(' · ');
 }
 

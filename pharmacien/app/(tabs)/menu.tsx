@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { normaliser } from '../../src/lib/texte';
 import { Ecran, Vide } from '../../src/ui/composants';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { useTextes } from '../../src/i18n';
 
 /**
  * Le moyeu. « Profil » était trop étroit — l'onglet porte plus que le profil —
@@ -14,43 +15,40 @@ import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
  * un menu à trois barres.
  */
 const ENTREES = [
-  {
-    chemin: '/profil',
-    icone: 'person-outline' as const,
-    titre: 'Profil',
-    detail: 'Vos coordonnées, formation continue, documents',
-    motsCles: 'nom, permis, opq, adresse, facture, formation, documents, assurance',
-  },
-  {
-    chemin: '/liens',
-    icone: 'bookmark-outline' as const,
-    titre: 'Liens et infos utiles',
-    detail: 'Protocoles, guides de pratique, urgences',
-    motsCles: 'signets, inesss, protocole, vaccin, urgence, info-santé, antipoison',
-  },
-  {
-    chemin: '/parametres',
-    icone: 'options-outline' as const,
-    titre: 'Paramètres',
-    detail: 'Rappels, apparence, clé du service d’adresses',
-    motsCles: 'rappel, notification, couleur, accent, mauve, clé, openrouteservice',
-  },
-];
+  { chemin: '/profil', icone: 'person-outline' as const, cle: 'profil' },
+  { chemin: '/liens', icone: 'bookmark-outline' as const, cle: 'liens' },
+  { chemin: '/parametres', icone: 'options-outline' as const, cle: 'parametres' },
+] as const;
 
 export default function Menu() {
+  const { t } = useTextes();
   const router = useRouter();
   const accent = useAccent();
   const [recherche, setRecherche] = useState('');
 
   // Un filtre sur les entrées du menu, rien de plus : elle ne cherche ni les
   // quarts, ni les pharmacies, ni les signets.
+  const sections = useMemo(
+    () =>
+      ENTREES.map((e) => ({
+        ...e,
+        titre: t(`menu.${e.cle}`),
+        detail: t(`menu.${e.cle}Detail`),
+        // Les mots-clés portent les deux langues : on cherche « invoice »
+        // comme « facture », sans avoir à deviner dans laquelle l'application
+        // est ouverte.
+        motsCles: t(`menu.${e.cle}Mots`),
+      })),
+    [t]
+  );
+
   const visibles = useMemo(() => {
     const terme = normaliser(recherche.trim());
-    if (!terme) return ENTREES;
-    return ENTREES.filter((e) =>
+    if (!terme) return sections;
+    return sections.filter((e) =>
       normaliser(`${e.titre} ${e.detail} ${e.motsCles}`).includes(terme)
     );
-  }, [recherche]);
+  }, [recherche, sections]);
 
   return (
     <Ecran>
@@ -60,7 +58,7 @@ export default function Menu() {
           style={styles.saisie}
           value={recherche}
           onChangeText={setRecherche}
-          placeholder="Trouver une section"
+          placeholder={t('menu.rechercher')}
           placeholderTextColor={couleurs.doux}
           autoCorrect={false}
           returnKeyType="search"
@@ -73,7 +71,7 @@ export default function Menu() {
       </View>
 
       {visibles.length === 0 ? (
-        <Vide texte="Aucune section ne correspond." />
+        <Vide texte={t('menu.aucuneSection')} />
       ) : (
         visibles.map((entree) => (
           <Pressable

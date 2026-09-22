@@ -73,9 +73,18 @@ export type SuggestionAdresse = {
  * pas si la clé manque, si le service a refusé, ou s'il n'y a simplement aucune
  * adresse qui corresponde.
  */
+export type MotifEchec = 'sansCle' | 'aucune' | 'cleRefusee' | 'statut' | 'reseau';
+
 export type ResultatRecherche = {
   suggestions: SuggestionAdresse[];
-  erreur?: string;
+  /**
+   * Pourquoi la recherche n'a rien donné, sous forme de repère. Le texte
+   * affiché vit dans les traductions : une fonction pure ne connaît pas la
+   * langue de l'écran qui l'appelle.
+   */
+  motif?: MotifEchec;
+  /** Le code HTTP, quand il y en a un, pour le glisser dans le message. */
+  statut?: number;
 };
 
 function province(region: unknown): string {
@@ -140,7 +149,7 @@ export async function chercherAdresses(
 ): Promise<ResultatRecherche> {
   if (recherche.trim().length < MINIMUM_CARACTERES) return { suggestions: [] };
   if (!cle.trim()) {
-    return { suggestions: [], erreur: 'Aucune clé OpenRouteService dans vos paramètres.' };
+    return { suggestions: [], motif: 'sansCle' };
   }
 
   const premier = await interroger(
@@ -156,7 +165,7 @@ export async function chercherAdresses(
     signal
   );
   if (second.suggestions.length > 0) return second;
-  return second.erreur ? second : { suggestions: [], erreur: 'Aucune adresse trouvée.' };
+  return second.motif ? second : { suggestions: [], motif: 'aucune' };
 }
 
 /** Un appel à l'un des deux services de géocodage. */
@@ -174,9 +183,8 @@ async function interroger(
       return {
         suggestions: [],
         refus,
-        erreur: refus
-          ? `Clé refusée par le service (${reponse.status}). Vérifiez-la dans Profil › Paramètres.`
-          : `Le service d’adresses a répondu ${reponse.status}.`,
+        motif: refus ? 'cleRefusee' : 'statut',
+        statut: reponse.status,
       };
     }
     const donnees = await reponse.json();
@@ -220,7 +228,7 @@ async function interroger(
     return { suggestions };
   } catch (e) {
     console.warn(`[adresses] échec réseau ${sansCle(url)} — ${String(e)}`);
-    return { suggestions: [], erreur: 'La recherche n’a pas abouti. Vérifiez votre connexion.' };
+    return { suggestions: [], motif: 'reseau' };
   }
 }
 

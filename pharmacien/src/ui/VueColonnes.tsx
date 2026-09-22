@@ -6,6 +6,7 @@ import type { QuartDetaille } from '../db/types';
 import { aimanter, minutesDebut, minutesEnHeure, minutesFin } from '../lib/agenda';
 import { analyserDate, aujourdhui } from '../lib/dates';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
+import { useTextes } from '../i18n';
 
 /**
  * Les vues jour et semaine, en colonnes façon Google Agenda : chaque quart est
@@ -94,6 +95,7 @@ export function VueColonnes({
   onDupliquer: (quartId: number, date: string, heure: string) => void;
   onArmer: (arme: boolean) => void;
 }) {
+  const { t } = useTextes();
   const accent = useAccent();
   const [largeur, setLargeur] = useState(0);
   const [source, setSource] = useState<QuartDetaille | null>(null);
@@ -307,8 +309,8 @@ export function VueColonnes({
         <View style={[styles.consigne, { borderColor: accent }]}>
           <Text style={[styles.consigneTexte, { color: accent }]}>
             {mode === 'dupliquer'
-              ? `Copie de ${source.pharmacie_nom} — relâchez pour la poser.`
-              : `${source.pharmacie_nom} — relâchez pour le déplacer.`}
+              ? t('horaire.consigneCopier', { pharmacie: source.pharmacie_nom })
+              : t('horaire.consigneDeplacer', { pharmacie: source.pharmacie_nom })}
           </Text>
         </View>
       )}
