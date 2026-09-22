@@ -135,6 +135,9 @@ export default function Racine() {
           <Stack.Screen name="parametres" options={{ title: t('parametres.titre') }} />
           <Stack.Screen name="liens" options={{ title: t('liens.titre') }} />
           <Stack.Screen name="veille/index" options={{ title: t('veille.titre') }} />
+          <Stack.Screen name="veille/suivre" options={{ title: t('veille.suivreSujet') }} />
+          <Stack.Screen name="veille/note/[id]" options={{ title: t('veille.ecrireNote') }} />
+          <Stack.Screen name="veille/sujet/[id]" options={{ title: t('veille.sujetsSuivis') }} />
           <Stack.Screen name="lien/[id]" options={{ title: t('liens.unLien') }} />
           <Stack.Screen name="facture" options={{ title: t('facture.titreGenerer') }} />
           <Stack.Screen name="facture/[id]" options={{ title: t('facture.titre') }} />
