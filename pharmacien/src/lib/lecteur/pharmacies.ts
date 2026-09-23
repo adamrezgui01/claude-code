@@ -36,6 +36,9 @@ const ALIAS: [RegExp, string][] = [
   [/\bpjc\b/g, 'jean coutu'],
   [/\bjean coutu\b/g, 'jean coutu'],
   [/\bacces pharma\b/g, 'accespharma'],
+  // Ce qui est écrit sur la porte, et ce qu'on dit en parlant de la place.
+  [/\bshoppers?(?:\s+drug\s+mart)?\b/g, 'pharmaprix'],
+  [/\bwalmart\b/g, 'accespharma'],
 ];
 
 /** Mots qui annoncent une pharmacie sans en faire partie. */
@@ -50,9 +53,15 @@ const VIDES = new Set([
   'en', 'dans', 'sur', 'at', 'in', 'to', 'my', 'mon', 'ma', 'pharmacie', 'pharmacy',
 ]);
 
-/** Mots d'un nom de rue ou de pharmacie qui ne distinguent rien. */
+/**
+ * Mots d'un nom de rue ou de pharmacie qui ne distinguent rien.
+ *
+ * « pharma » en fait partie, et il faut le dire : il se cache dans Pharmaprix
+ * comme dans Accès pharma, et sans lui les deux bannières se disputaient
+ * chaque phrase où l'une des deux était nommée seule.
+ */
 const GENERIQUES = new Set([
-  'pharmacie', 'pharmacy', 'inc', 'enr', 'ltee', 'et', 'associes', 'rue',
+  'pharmacie', 'pharmacy', 'pharma', 'inc', 'enr', 'ltee', 'et', 'associes', 'rue',
   'avenue', 'boulevard', 'chemin', 'place', 'montee', 'route', 'saint', 'sainte',
 ]);
 

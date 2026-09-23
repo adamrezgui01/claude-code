@@ -55,6 +55,26 @@ const JOURS: Record<string, number> = {
 /** Mots qui relient deux dates d'une même énumération. */
 const LIAISONS = new Set([',', 'et', 'and', 'ou', 'puis']);
 
+/**
+ * « début », « mi », « fin » : le repère où ouvrir le calendrier quand la
+ * phrase nomme un mois sans nommer de jour.
+ */
+const PORTIONS: Record<string, 'debut' | 'milieu' | 'fin'> = {
+  debut: 'debut', commencement: 'debut', early: 'debut',
+  mi: 'milieu', milieu: 'milieu', mid: 'milieu',
+  fin: 'fin', late: 'fin',
+};
+
+/** Mots qui annoncent un mois sans jour : « en octobre », « au mois d'octobre ». */
+const ANNONCES_MOIS = new Set(['en', 'au', 'mois', 'pour', 'in']);
+
+/**
+ * « sept » est un mois abrégé à l'écrit et un nombre à l'oral. Personne ne
+ * dicte « en sept » ; tout le monde dit « de sept heures ». On ne le lit donc
+ * jamais comme un mois tout seul.
+ */
+const MOIS_TROP_COURTS = new Set(['sept']);
+
 const JOUR_EN_MS = 86400000;
 
 // ---------------------------------------------------------------------------
@@ -83,6 +103,11 @@ function construire(annee: number, mois: number, jour: number): string | null {
   const d = new Date(Date.UTC(annee, mois - 1, jour));
   if (d.getUTCMonth() !== mois - 1 || d.getUTCDate() !== jour) return null;
   return `${annee}-${deux(mois)}-${deux(jour)}`;
+}
+
+/** Le dernier jour d'un mois : 28, 29, 30 ou 31. */
+function dernierJourDuMois(annee: number, mois: number): number {
+  return new Date(Date.UTC(annee, mois, 0)).getUTCDate();
 }
 
 function jourSemaine(jours: number): number {
@@ -217,10 +242,12 @@ function lireAtome(
     };
   }
 
-  // « tous les jeudis d'octobre ».
-  if (mot === 'tous' && mots[i + 1] === 'les') {
-    const jour = lireJourSemaine(mots[i + 2]);
-    const mois = jour === null ? null : lireMois(mots, i + 3);
+  // « tous les jeudis d'octobre », « les lundis d'octobre », « chaque vendredi
+  // de novembre ». Le mois est obligatoire : sans lui, la série n'a pas de fin.
+  if (mot === 'tous' || mot === 'les' || mot === 'chaque' || mot === 'every') {
+    const depart = mot === 'tous' && mots[i + 1] === 'les' ? i + 2 : i + 1;
+    const jour = lireJourSemaine(mots[depart]);
+    const mois = jour === null ? null : lireMois(mots, depart + 1);
     if (jour !== null && mois) {
       const annee = anneePour(mois.mois, base, passe);
       const dates: string[] = [];
@@ -229,6 +256,36 @@ function lireAtome(
         if (iso && jourSemaine(enJours(iso)) === jour) dates.push(iso);
       }
       return { genre: 'fixe', debut: i, fin: mois.fin, dates, calendrier: dates[0] ?? null };
+    }
+  }
+
+  // « cette semaine » : on ouvre le calendrier sur la semaine en cours, sans
+  // rien cocher. Deviner un jour ferait entrer un quart qui n'existe pas.
+  if ((mot === 'cette' || mot === 'la') && mots[i + 1] === 'semaine' && mots[i + 2] !== 'prochaine') {
+    // « la semaine du 12 octobre » : la semaine de cette date-là.
+    if (mots[i + 2] === 'du') {
+      const cible = lireDateCalendrier(mots, i + 2, null);
+      if (cible && cible.genre === 'date') {
+        const iso = resoudreQuantieme(cible.jourDuMois, cible.mois, cible.annee, base, passe);
+        if (iso) {
+          return {
+            genre: 'fixe',
+            debut: i,
+            fin: cible.fin,
+            dates: [],
+            calendrier: enIso(lundiDeLaSemaine(enJours(iso))),
+          };
+        }
+      }
+    }
+    if (mot === 'cette') {
+      return {
+        genre: 'fixe',
+        debut: i,
+        fin: i + 1,
+        dates: [],
+        calendrier: enIso(lundiDeLaSemaine(base)),
+      };
     }
   }
 
@@ -274,6 +331,25 @@ function lireAtome(
   const calendrier = lireDateCalendrier(mots, i, precedent);
   if (calendrier) return calendrier;
 
+  // « en octobre », « au mois d'octobre », « début octobre », « fin octobre ».
+  // Aucun jour n'est nommé : le calendrier s'ouvre au bon endroit, et l'usager
+  // coche. On n'invente pas une date pour avoir l'air de comprendre.
+  const portion = PORTIONS[mot];
+  const annonce = portion !== undefined || ANNONCES_MOIS.has(mots[i - 1] ?? '');
+  const moisSeul = annonce ? lireMois(mots, portion ? i + 1 : i) : null;
+  if (moisSeul && !MOIS_TROP_COURTS.has(mots[moisSeul.fin])) {
+    const an = anneePour(moisSeul.mois, base, passe);
+    const jourDuMois =
+      portion === 'milieu' ? 15 : portion === 'fin' ? dernierJourDuMois(an, moisSeul.mois) : 1;
+    return {
+      genre: 'fixe',
+      debut: portion ? i : Math.max(0, i - 1),
+      fin: moisSeul.fin,
+      dates: [],
+      calendrier: construire(an, moisSeul.mois, jourDuMois),
+    };
+  }
+
   // « la semaine prochaine », seule : on ouvre le calendrier sans rien cocher.
   if (mot === 'la' && mots[i + 1] === 'semaine' && mots[i + 2] === 'prochaine') {
     return { genre: 'fixe', debut: i, fin: i + 2, dates: [], calendrier: enIso(lundiProchain(base)) };
@@ -314,22 +390,32 @@ function lireIntervalle(mots: string[], i: number, base: number, passe: boolean)
   const moisA = lireMois(mots, j);
   if (moisA) j = moisA.fin + 1;
   if (mots[j] !== 'au' && mots[j] !== 'a') return null;
+  const separateur = mots[j];
   const second = lireNombre(mots.slice(j + 1));
   if (!second || second.valeur > 31) return null;
   let k = j + 1 + second.mots;
   const moisB = lireMois(mots, k);
   if (moisB) k = moisB.fin + 1;
   // Un mois annoncé une seule fois vaut pour les deux bornes.
-  const moisDebut = moisA?.mois ?? moisB?.mois;
-  const moisFin = moisB?.mois ?? moisA?.mois;
-  if (moisDebut === undefined || moisFin === undefined) return null;
+  const moisDebut = moisA?.mois ?? moisB?.mois ?? null;
+  const moisFin = moisB?.mois ?? moisA?.mois ?? null;
+  // Sans mois, « du 12 au 16 » reste une plage de dates — mais « dès 9 à 5 »
+  // est un horaire, et les deux se ressemblent trop. On n'accepte la forme nue
+  // que sous sa tournure exacte, celle que personne n'emploie pour des heures.
+  if (moisDebut === null && (mots[i] !== 'du' || separateur !== 'au')) return null;
 
   const isoA = resoudreQuantieme(premier.valeur, moisDebut, null, base, passe);
   let isoB = resoudreQuantieme(second.valeur, moisFin, null, base, passe);
   if (!isoA || !isoB) return { genre: 'fixe', debut: i, fin: k - 1, dates: [], calendrier: null };
-  // « du 30 décembre au 2 janvier » : la fin bascule dans l'année suivante.
+  // « du 30 décembre au 2 janvier » : la fin bascule dans le mois, ou l'année,
+  // qui suit.
   if (enJours(isoB) < enJours(isoA)) {
-    const suivant = construire(Number(isoB.slice(0, 4)) + 1, moisFin, second.valeur);
+    const an = Number(isoB.slice(0, 4));
+    const m = Number(isoB.slice(5, 7));
+    const suivant =
+      moisFin === null
+        ? construire(m === 12 ? an + 1 : an, m === 12 ? 1 : m + 1, second.valeur)
+        : construire(an + 1, moisFin, second.valeur);
     if (suivant) isoB = suivant;
   }
   return {
@@ -357,9 +443,26 @@ function suite(debut: number, fin: number): string[] {
  * un « et ». Sans cette retenue, « de 9 à 5 » donnerait deux dates.
  */
 function lireDateCalendrier(mots: string[], i: number, precedent: Atome | null): Atome | null {
-  const annonce = mots[i] === 'le' || mots[i] === 'du' || mots[i] === 'l';
+  const annonce =
+    mots[i] === 'le' || mots[i] === 'du' || mots[i] === 'l' ||
+    // « les 12 et 13 octobre » : sans « les », seul le dernier serait retenu.
+    mots[i] === 'les' || mots[i] === 'aux';
   const depart = i;
   let j = annonce ? i + 1 : i;
+
+  // « 2026-10-12 » : tapée plutôt que dictée, mais elle ne doit pas se lire de
+  // travers pour autant.
+  const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(mots[j] ?? '');
+  if (iso) {
+    return {
+      genre: 'date',
+      debut: depart,
+      fin: j,
+      jourDuMois: Number(iso[3]),
+      mois: Number(iso[2]),
+      annee: Number(iso[1]),
+    };
+  }
 
   // « October 12 » : le mois d'abord, à l'anglaise.
   const moisDevant = MOIS[mots[j] ?? ''];
@@ -378,8 +481,8 @@ function lireDateCalendrier(mots: string[], i: number, precedent: Atome | null):
     }
   }
 
-  // « le 12/10 », « le 10/25 ».
-  const barre = /^(\d{1,2})\/(\d{1,2})$/.exec(mots[j] ?? '');
+  // « le 12/10 », « le 10/25 », « le 12/10/2026 ».
+  const barre = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/.exec(mots[j] ?? '');
   if (barre) {
     const a = Number(barre[1]);
     const b = Number(barre[2]);
@@ -387,7 +490,15 @@ function lireDateCalendrier(mots: string[], i: number, precedent: Atome | null):
     // nombre ne peut être qu'un quantième.
     const jourDuMois = b > 12 ? b : a;
     const mois = b > 12 ? a : b;
-    return { genre: 'date', debut: depart, fin: j, jourDuMois, mois, annee: null };
+    const an = barre[3] === undefined ? null : Number(barre[3]);
+    return {
+      genre: 'date',
+      debut: depart,
+      fin: j,
+      jourDuMois,
+      mois,
+      annee: an !== null && an < 100 ? 2000 + an : an,
+    };
   }
 
   const nombre = lireNombre(mots.slice(j));

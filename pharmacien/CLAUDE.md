@@ -106,6 +106,12 @@ qu'on ne les redécouvre pas trois fois.
 - Le lecteur de commandes ne crée jamais rien. Il remplit une fiche, l'usager
   confirme, et c'est la création ordinaire qui s'exécute — mêmes défauts,
   mêmes contrôles de chevauchement, même règle de minuit.
+- Une phrase qui ne nomme aucun jour — « en octobre », « cette semaine » —
+  ouvre le calendrier au bon endroit sans rien cocher. Le lecteur n'invente
+  pas une date pour avoir l'air d'avoir compris.
+- Une phrase qui ne dit qu'une borne d'horaire — « de 9 h à la fermeture » —
+  garde celle qui est dite et laisse l'autre vide. Une fin supposée fait
+  travailler trois heures de trop, ou de moins.
 - Quand deux lectures d'une phrase tiennent debout, on pose une question avec
   des réponses à toucher. Une supposition silencieuse qui se trompe d'une
   demi-journée coûte un déplacement inutile ; une question coûte un geste.

@@ -70,22 +70,30 @@ export type Fiche =
 // Ce qui n'est pas une demande de quart
 // ---------------------------------------------------------------------------
 
-const QUESTION = /^(combien|est ce qu|quand|quel|quelle|ou est|ou sont|c est quoi|how much|when|do i have|what)/;
-const ANNULATION = /\b(annul|cancell?e|cancel|supprim|efface|enlev|retire)/;
-const MODIFICATION = /\b(deplac|decal|modifi|reporte|change|move|remplace par)/;
-const AJOUT = /\b(ajoute|ajouter|rajoute|rajouter|mets|met|mettre|note|inscris|marque|planifie|book|booke|cedule|ceduler|add|schedule)\b/;
+const QUESTION =
+  /^(combien|est ce qu|quand|quel|quelle|ou est|ou sont|c est quoi|montre|affiche|liste|donne moi|how much|when|do i have|what|show|list)/;
+const ANNULATION = /\b(annul|cancell?e|cancel|supprim|efface|enlev|retire|delete|j ai plus|je fais plus)/;
+const MODIFICATION =
+  /\b(deplac|decal|modifi|reporte|repousse|avance|recule|change|switch|swap|echange|inverse|move|remplace par)/;
+const AJOUT =
+  /\b(ajoute|ajouter|rajoute|rajouter|mets|met|mettre|note|inscris|marque|planifie|reserve|reserver|bloque|bloquer|confirme|confirmer|accepte|accepter|enregistre|sauvegarde|book|booke|cedule|ceduler|add|schedule)\b/;
 
 /**
  * « Shift » sort de la dictée française sous toutes les orthographes : chiffe,
  * chift, shifte, chifte. On les accepte toutes plutôt que de rendre « je ne
  * comprends pas » pour un mot que l'usager a pourtant bien prononcé.
  */
-const MOTS_QUART = /\b(quarts?|shifts?|shifte|chiffe|chift|chifte|job|jobs|garde|remplacement)\b/;
+const MOTS_QUART =
+  /\b(quarts?|shifts?|shifte|chiffe|chift|chifte|job|jobs|garde|remplacement|contrats?|depannages?)\b/;
 
-const MARQUE_PHARMACIE =
-  /(?:ajoute|ajouter|rajoute|rajouter|nouvelle|nouveau|add|new|cree|creer|enregistre)\s+(?:une?|la|le|l|les|my|mon)?\s*(?:pharmacie|pharmacy|pharmacies)\b\s*(.*)$/;
-const MARQUE_REPERTOIRE =
-  /(?:ajoute|ajouter|rajoute|rajouter|add|inscris)\s+(?:une?|la|le|l|les)?\s*(.*?)\s+(?:dans|a|to)\s+(?:mon|my|le|la)\s+(?:repertoire|directory|liste|pharmacies)/;
+const VERBES_PHARMACIE =
+  '(?:ajoute|ajouter|rajoute|rajouter|nouvelle|nouveau|add|new|cree|creer|enregistre|sauvegarde|note|inscris|mets?)';
+const MARQUE_PHARMACIE = new RegExp(
+  `${VERBES_PHARMACIE}\\s+(?:une?|la|le|l|les|my|mon)?\\s*(?:pharmacie|pharmacy|pharmacies)\\b\\s*(.*)$`
+);
+const MARQUE_REPERTOIRE = new RegExp(
+  `${VERBES_PHARMACIE}\\s+(?:une?|la|le|l|les)?\\s*(.*?)\\s+(?:dans|a|to)\\s+(?:mon|my|le|la)\\s+(?:repertoire|directory|liste|pharmacies)`
+);
 
 const PASSE = /\b(j ai fait|j ai travaille|j ai fini|j etais|j etait|hier|passe|passee|dernier|derniere|last)\b/;
 
@@ -95,15 +103,42 @@ const PASSE = /\b(j ai fait|j ai travaille|j ai fini|j etais|j etait|hier|passe|
 
 type Extraction<T> = { valeur: T; reste: string };
 
-/** « à 70 piasses de l'heure » : le taux dicté prime sur celui de la fiche. */
+/**
+ * « à 70 piasses de l'heure », « 70 $/h », « taux de 70 » : le taux dicté
+ * prime sur celui de la fiche.
+ *
+ * Le dollar ne survit pas à la normalisation — il n'est ni une lettre ni un
+ * chiffre —, alors « 70 $/h » arrive ici sous la forme « 70 /h ».
+ */
+/**
+ * Un montant, avec ou sans cents.
+ *
+ * La virgule des décimales n'arrive pas ici collée : la normalisation l'a
+ * détachée, parce qu'ailleurs elle sépare les jours d'une énumération. On la
+ * recolle, mais seulement derrière au moins deux chiffres — « 75 , 50 » est un
+ * taux, tandis que le « 5 , 70 » de « de 9 à 5, 70 de l'heure » est une heure
+ * suivie d'un taux. Un taux horaire à un seul chiffre n'existe pas ; une
+ * heure, oui.
+ */
+const MONTANT = String.raw`(\d{2,}\s*[.,]\s*\d{1,2}|\d+(?:[.,]\d+)?)`;
+
+const MOTIFS_TAUX = [
+  new RegExp(
+    `\\b${MONTANT}\\s*(?:piasses?|piastres?|dollars?|balles?)?\\s*(?:de l heure|l heure|par heure|de l h\\b|\\/\\s*h\\b|an hour|per hour|hourly)`
+  ),
+  new RegExp(`\\btaux(?:\\s+horaire)?\\s+(?:de\\s+|a\\s+)?${MONTANT}`),
+];
+
 function extraireTaux(phrase: string): Extraction<number | null> {
-  const motif = /\b(\d+(?:[.,]\d+)?)\s*(?:piasses?|piastres?|dollars?|balles?|\$)?\s*(?:de l heure|l heure|par heure|de l h|an hour|per hour)\b/;
-  const trouve = motif.exec(phrase);
-  if (!trouve) return { valeur: null, reste: phrase };
-  return {
-    valeur: Number(trouve[1].replace(',', '.')),
-    reste: phrase.replace(trouve[0], ' ').replace(/\s+/g, ' ').trim(),
-  };
+  for (const motif of MOTIFS_TAUX) {
+    const trouve = motif.exec(phrase);
+    if (!trouve) continue;
+    return {
+      valeur: Number(trouve[1].replace(/\s+/g, '').replace(',', '.')),
+      reste: phrase.replace(trouve[0], ' ').replace(/\s+/g, ' ').trim(),
+    };
+  }
+  return { valeur: null, reste: phrase };
 }
 
 const MOTS_PAUSE = 'pause|break|lunch|diner|dinner|souper|repas';
@@ -134,11 +169,11 @@ function extrairePause(phrase: string): Extraction<{ minutes: number | null; pay
     [new RegExp(`un quart d heure(?:\\s+(?:de\\s+)?(?:${MOTS_PAUSE}))?`), () => 15],
     [new RegExp(`une demie? heure(?:\\s+(?:de\\s+)?(?:${MOTS_PAUSE}))?`), () => 30],
     [
-      new RegExp(`(?:${MOTS_PAUSE})\\s+(?:de\\s+)?([a-z0-9]+)\\s*(minutes?|min|heures?|h)\\b`),
+      new RegExp(`(?:${MOTS_PAUSE})\\s+(?:de\\s+|d\\s+)?([a-z0-9]+)\\s*(minutes?|min|heures?|h)\\b`),
       (t) => enMinutes(t[1], t[2]),
     ],
     [
-      new RegExp(`([a-z0-9]+)\\s*(minutes?|min|heures?|h)\\s+(?:de\\s+)?(?:${MOTS_PAUSE})`),
+      new RegExp(`([a-z0-9]+)\\s*(minutes?|min|heures?|h)\\s+(?:de\\s+|d\\s+)?(?:${MOTS_PAUSE})`),
       (t) => enMinutes(t[1], t[2]),
     ],
   ];
@@ -153,9 +188,15 @@ function extrairePause(phrase: string): Extraction<{ minutes: number | null; pay
 
   // Le statut ne se déduit pas : sans mention, la pause garde celui de la
   // pharmacie. Le vide hérite, il ne vaut pas « non payée ».
+  //
+  // Et il ne se lit que si la phrase parle d'une pause : « payé 80 de
+  // l'heure » parle du taux, et rendrait payée une pause dont personne n'a
+  // parlé — une demi-heure facturée en trop à chaque quart.
   let payee: boolean | null = null;
-  if (/\b(non pay|pas pay|unpaid|non remuner)/.test(phrase)) payee = false;
-  else if (/\bpay(e|ee|es|ees)\b|\bpaid\b|\bremuneree?\b/.test(phrase)) payee = true;
+  if (new RegExp(`\\b(?:${MOTS_PAUSE})`).test(phrase)) {
+    if (/\b(non pay|pas pay|unpaid|non remuner)/.test(phrase)) payee = false;
+    else if (/\bpay(e|ee|es|ees)\b|\bpaid\b|\bremuneree?\b/.test(phrase)) payee = true;
+  }
 
   return { valeur: { minutes, payee }, reste };
 }

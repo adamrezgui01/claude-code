@@ -176,8 +176,14 @@ function effacer(mots: string[], de: number, a: number): void {
 const PERIODES: Record<string, string> = {
   'de jour': 'jour',
   'de soir': 'soir',
+  'de soiree': 'soir',
+  'en soiree': 'soir',
+  'le soir': 'soir',
   'de nuit': 'nuit',
+  'la nuit': 'nuit',
   'en avant midi': 'avantMidi',
+  'en matinee': 'avantMidi',
+  'le matin': 'avantMidi',
   'en apres midi': 'apresMidi',
   'toute la journee': 'journee',
 };
@@ -207,6 +213,26 @@ export function extraireHeures(texte: string): LectureHeures {
         fin: enTexte(debut + nombre.valeur * 60),
         ambiguite: null,
         reste: phrase.replace(duree[0], ' '),
+        periodeNommee: null,
+      };
+    }
+  }
+
+  // « de 9 h à la fermeture ». L'heure de fermeture d'un commerce n'est pas
+  // dans l'application : on garde la borne qui a été dite et on laisse l'autre
+  // vide. Une fin inventée fait travailler trois heures de trop, ou de moins.
+  const ouverte =
+    /\b(?:de|des|a partir de|from)\s+(.+?)\s+(?:jusqu\s+)?(?:a|au|to|until|till)\s+(?:la\s+)?(?:fermeture|closing|close)\b/.exec(
+      phrase
+    );
+  if (ouverte) {
+    const moment = lireMoment(ouverte[1].split(' '), 0);
+    if (moment) {
+      return {
+        debut: enTexte(caler(moment)),
+        fin: null,
+        ambiguite: null,
+        reste: phrase.replace(ouverte[0], ' ').replace(/\s+/g, ' ').trim(),
         periodeNommee: null,
       };
     }
