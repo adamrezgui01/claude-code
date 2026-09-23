@@ -1,5 +1,6 @@
 import { filtrerLiens, parCategorie, titreDuLien, type EntreeLien, type Lien } from '../lib/liens';
 import { db } from './index';
+import { insertion } from './sql';
 
 // Les règles vivent dans `lib/liens` ; ce fichier ne fait que le stockage.
 export { filtrerLiens, parCategorie, titreDuLien };
@@ -86,10 +87,10 @@ export function listerLiens(): Lien[] {
 export function creerLien(entree: EntreeLien): number {
   const rang =
     (db.getFirstSync<{ n: number }>('SELECT IFNULL(MAX(rang), 0) AS n FROM liens')?.n ?? 0) + 1;
-  const r = db.runSync(
-    `INSERT INTO liens (${CHAMPS.join(', ')}, rang) VALUES (?, ?, ?, ?, ?)`,
-    [...CHAMPS.map((c) => entree[c]), rang]
-  );
+  const r = db.runSync(insertion('liens', [...CHAMPS, 'rang']), [
+    ...CHAMPS.map((c) => entree[c]),
+    rang,
+  ]);
   return r.lastInsertRowId;
 }
 
