@@ -479,6 +479,17 @@ export const en: Dictionnaire = {
     pediatrie: 'Pediatrics',
     grossesseAllaitement: 'Pregnancy and breastfeeding',
   },
+  clinique: {
+    titre: 'Clinical',
+    revisionsDuJour_one: '{{count}} note to review tonight',
+    revisionsDuJour_other: '{{count}} notes to review tonight',
+    chercher: 'Search — cystitis, DOAC, eGFR…',
+    aucunResultat: 'No source matches.',
+    sansSujet: 'General references',
+    maVeille: 'My subjects and notes',
+    pageOfficielle: 'View the official page',
+    urgences: 'Emergencies',
+  },
   veille: {
     titre: 'My clinical watch',
     detailMenu: 'Followed subjects, notes, reviews',

@@ -24,9 +24,12 @@ import { join } from 'node:path';
  * organisation — un horaire, une facture, une statistique — n'en fait partie,
  * et c'est ce que la règle protège.
  *
- * S'y ajoute une frontière, qui n'est pas une exception : la section « Liens
- * et infos utiles » est la liste des sources du volet clinique, pas un
- * doublon à côté. Ses écrans appartiennent donc aux deux volets à la fois.
+ * S'y ajoute une frontière, qui n'est pas une exception : les signets sont les
+ * sources du volet clinique, pas un doublon à côté. L'écran qui en modifie un
+ * appartient donc aux deux volets à la fois.
+ *
+ * L'onglet Clinique, lui, n'est ni l'un ni l'autre : il **est** le volet
+ * clinique, au même titre que `app/veille/`. Il est compté avec lui.
  */
 
 const EXCEPTIONS = [
@@ -37,7 +40,10 @@ const EXCEPTIONS = [
 ];
 
 /** La frontière : les signets sont les sources. */
-const FRONTIERE = [join('app', 'liens.tsx'), join('app', 'lien', '[id].tsx')];
+const FRONTIERE = [join('app', 'lien', '[id].tsx')];
+
+/** Les fichiers qui sont le volet clinique, sans porter « veille » dans leur nom. */
+const VOLET_CLINIQUE = [join('app', '(tabs)', 'clinique.tsx'), join('src', 'ui', 'BandeauCapture.tsx')];
 
 function fichiers(dossier: string): string[] {
   const trouves: string[] = [];
@@ -55,7 +61,7 @@ function voletOrganisation(): string[] {
     (f) =>
       !f.includes(join('veille')) &&
       !f.includes(join('app', 'veille')) &&
-      !f.includes('BandeauCapture') &&
+      !VOLET_CLINIQUE.includes(f) &&
       !FRONTIERE.includes(f) &&
       !EXCEPTIONS.includes(f)
   );
@@ -81,8 +87,8 @@ describe('le volet organisation ignore le volet clinique', () => {
     expect(debordements).toEqual([]);
   });
 
-  test('la frontière se limite aux deux écrans de signets', () => {
-    expect(FRONTIERE).toHaveLength(2);
+  test('la frontière se limite à l’écran qui modifie un signet', () => {
+    expect(FRONTIERE).toHaveLength(1);
   });
 });
 
@@ -92,8 +98,11 @@ describe('le volet clinique ne dépend pas des calculs de facturation', () => {
     // finirait par en dépendre, et les deux volets se tiendraient par les
     // deux bouts.
     const interdits = /from '[^']*(montants|facturation|facturePdf|stats)'/;
-    const fautifs = [...fichiers(join('src', 'lib', 'veille')), ...fichiers(join('app', 'veille'))]
-      .filter((f) => interdits.test(readFileSync(f, 'utf8')));
+    const fautifs = [
+      ...fichiers(join('src', 'lib', 'veille')),
+      ...fichiers(join('app', 'veille')),
+      ...VOLET_CLINIQUE,
+    ].filter((f) => interdits.test(readFileSync(f, 'utf8')));
     expect(fautifs).toEqual([]);
   });
 });

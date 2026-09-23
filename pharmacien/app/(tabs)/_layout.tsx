@@ -23,7 +23,7 @@ export default function DispositionOnglets() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Horaire',
+          title: t('onglets.horaire'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" color={color} size={size} />
           ),
@@ -38,11 +38,22 @@ export default function DispositionOnglets() {
           ),
         }}
       />
+      {/* Clinique occupe le centre : c'est la position la plus confortable au
+          pouce, et c'est la moitié de l'application. */}
+      <Tabs.Screen
+        name="clinique"
+        options={{
+          title: t('clinique.titre'),
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="medkit-outline" color={color} size={size} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="statistiques"
         options={{
-          title: 'Statistiques',
-          tabBarLabel: 'Stats',
+          title: t('onglets.statistiques'),
+          tabBarLabel: t('onglets.statistiquesCourt'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="stats-chart-outline" color={color} size={size} />
           ),
@@ -51,7 +62,7 @@ export default function DispositionOnglets() {
       <Tabs.Screen
         name="menu"
         options={{
-          title: 'Menu',
+          title: t('onglets.menu'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="menu-outline" color={color} size={size} />
           ),

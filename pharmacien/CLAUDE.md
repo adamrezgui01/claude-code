@@ -117,6 +117,7 @@ qu'on ne les redécouvre pas trois fois.
   faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;
   elle n'évalue pas le pharmacien.
 - Le volet organisation — horaire, répertoire, factures, statistiques —
-  n'importe rien du volet clinique. Deux exceptions, et deux seulement :
-  l'entrée du menu, et la reprogrammation des notifications au changement de
-  langue.
+  n'importe rien du volet clinique. Les seules exceptions sont des fichiers de
+  charpente : le menu, le démarrage, les réglages, et la reprogrammation des
+  notifications au changement de langue. Un test les nomme et vérifie
+  qu'aucune fonction du volet organisation ne s'y glisse.

@@ -419,6 +419,9 @@ export type Source = {
   cle: string;
   titre: string;
   url: string;
+  categorie: string;
+  /** Synonymes cachés, dans les deux langues. Jamais affichés, cherchés quand même. */
+  motsCles: string;
   organisation: string;
   type_source: string;
   officielle: number;

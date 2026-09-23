@@ -480,6 +480,17 @@ export const fr = {
     pediatrie: 'Pédiatrie',
     grossesseAllaitement: 'Grossesse et allaitement',
   },
+  clinique: {
+    titre: 'Clinique',
+    revisionsDuJour_one: '{{count}} note à revoir ce soir',
+    revisionsDuJour_other: '{{count}} notes à revoir ce soir',
+    chercher: 'Chercher — cystite, AOD, DFGe…',
+    aucunResultat: 'Aucune source ne correspond.',
+    sansSujet: 'Références générales',
+    maVeille: 'Mes sujets et mes notes',
+    pageOfficielle: 'Voir la page officielle',
+    urgences: 'Urgences',
+  },
   veille: {
     titre: 'Ma veille clinique',
     detailMenu: 'Sujets suivis, notes, révisions',
