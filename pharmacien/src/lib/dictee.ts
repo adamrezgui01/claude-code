@@ -41,6 +41,11 @@ export function parametresDuQuart(fiche: FicheQuart): string {
   if (fiche.taux !== null) parametres.set('taux', `${fiche.taux}`);
   if (fiche.pauseMinutes !== null) parametres.set('pause', `${fiche.pauseMinutes}`);
   if (fiche.pausePayee !== null) parametres.set('pausePayee', fiche.pausePayee ? '1' : '0');
+  if (fiche.perDiem !== null) parametres.set('perdiem', `${fiche.perDiem}`);
+  if (fiche.kilometrage !== null) parametres.set('km', `${fiche.kilometrage}`);
+  if (fiche.allerRetour !== null) parametres.set('allerRetour', fiche.allerRetour ? '1' : '0');
+  if (fiche.montantFixe !== null) parametres.set('fixe', `${fiche.montantFixe}`);
+  if (fiche.hebergement !== null) parametres.set('hebergement', `${fiche.hebergement}`);
   return parametres.toString();
 }
 
@@ -62,6 +67,15 @@ export type Dictee = {
   taux: string | null;
   pause: number | null;
   pausePayee: boolean | null;
+  /**
+   * L'argent du quart reste en texte : c'est ce que les champs de la fiche
+   * attendent, et le convertir deux fois ne ferait que perdre des cents.
+   */
+  perDiem: string | null;
+  kilometrage: string | null;
+  allerRetour: boolean | null;
+  montantFixe: string | null;
+  hebergement: string | null;
 };
 
 /**
@@ -77,10 +91,41 @@ export function valeursDictees(params: {
   taux?: string;
   pause?: string;
   pausePayee?: string;
+  perdiem?: string;
+  km?: string;
+  allerRetour?: string;
+  fixe?: string;
+  hebergement?: string;
 }): Dictee {
   return {
     taux: params.taux ?? null,
     pause: params.pause === undefined ? null : Number(params.pause),
     pausePayee: params.pausePayee === undefined ? null : params.pausePayee === '1',
+    perDiem: params.perdiem ?? null,
+    kilometrage: params.km ?? null,
+    allerRetour: params.allerRetour === undefined ? null : params.allerRetour === '1',
+    montantFixe: params.fixe ?? null,
+    hebergement: params.hebergement ?? null,
   };
+}
+
+/**
+ * La dictée a-t-elle posé autre chose qu'une date, des heures et une
+ * pharmacie ?
+ *
+ * Si oui, la fiche du quart ouvre « plus de détails » toute seule. Ce qui a
+ * été dicté doit se voir : un per diem posé dans une section repliée se
+ * facture sans que personne ne l'ait relu.
+ */
+export function dicteeDetaillee(dictee: Dictee): boolean {
+  return (
+    dictee.taux !== null ||
+    dictee.pause !== null ||
+    dictee.pausePayee !== null ||
+    dictee.perDiem !== null ||
+    dictee.kilometrage !== null ||
+    dictee.allerRetour !== null ||
+    dictee.montantFixe !== null ||
+    dictee.hebergement !== null
+  );
 }

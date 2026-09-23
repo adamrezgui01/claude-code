@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { Pharmacie } from '../db/types';
 import { ligneVille } from '../lib/adresses';
+import { filtrerPharmacies } from '../lib/repertoire';
 import { normaliser } from '../lib/texte';
 import { Puce } from './composants';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
@@ -35,14 +36,10 @@ export function SelecteurPharmacie({
   const [toutAfficher, setToutAfficher] = useState(false);
 
   const filtrees = useMemo(() => {
-    const terme = normaliser(recherche.trim());
-    const retenues = terme
-      ? pharmacies.filter(
-          (p) => normaliser(p.nom).includes(terme) || normaliser(ligneVille(p)).includes(terme)
-        )
-      : [...pharmacies];
     // Les favorites en tête, le reste dans son ordre d'origine.
-    return retenues.sort((a, b) => (b.favori ? 1 : 0) - (a.favori ? 1 : 0));
+    return filtrerPharmacies(pharmacies, recherche).sort(
+      (a, b) => (b.favori ? 1 : 0) - (a.favori ? 1 : 0)
+    );
   }, [pharmacies, recherche]);
 
   const cherche = recherche.trim().length > 0;

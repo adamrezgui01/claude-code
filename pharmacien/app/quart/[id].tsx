@@ -15,7 +15,7 @@ import {
 import { delaisSecondaires, obtenirReglages } from '../../src/db/profil';
 import { calculerSiPossible } from '../../src/lib/distance';
 import { defautsQuart } from '../../src/lib/defauts';
-import { parametresNouvellePharmacie, valeursDictees } from '../../src/lib/dictee';
+import { dicteeDetaillee, parametresNouvellePharmacie, valeursDictees } from '../../src/lib/dictee';
 import { reprendrePharmacieCreee } from '../../src/lib/retourPharmacie';
 import { joursDeLaSerie, repartirRecurrence } from '../../src/lib/recurrence';
 import {
@@ -220,6 +220,9 @@ export default function FormulaireQuart() {
     // Zéro est une valeur : « sans pause » se dicte, et ne doit pas retomber
     // sur la pause habituelle de la pharmacie.
     reposerDictee();
+    // Ce qui a été dicté doit se voir : on déplie les détails plutôt que de
+    // facturer un per diem que personne n'a relu.
+    if (dicteeDetaillee(dictee)) setDetails(true);
     if (params.creer) setNomEntendu(params.creer);
     if (params.jours) {
       const jours = params.jours.split(',').filter(Boolean);
@@ -257,6 +260,19 @@ export default function FormulaireQuart() {
     if (dictee.taux !== null) setTaux(dictee.taux);
     if (dictee.pause !== null) setPause(dictee.pause);
     if (dictee.pausePayee !== null) setPausePayee(dictee.pausePayee);
+    if (dictee.perDiem !== null) setPerDiem(dictee.perDiem);
+    if (dictee.hebergement !== null) setHebergement(dictee.hebergement);
+    // Une distance ou un forfait dicté dit aussi comment le déplacement se
+    // paie : sans ça, le champ n'apparaîtrait même pas à l'écran.
+    if (dictee.kilometrage !== null) {
+      setKilometrage(dictee.kilometrage);
+      setModeDeplacement('km');
+    }
+    if (dictee.allerRetour !== null) setAllerRetour(dictee.allerRetour);
+    if (dictee.montantFixe !== null) {
+      setMontantFixe(dictee.montantFixe);
+      setModeDeplacement('fixe');
+    }
   }
 
   /** Reprend les conditions de la pharmacie : taux, déplacement, repas, pause. */

@@ -11,7 +11,7 @@ import {
 } from '../../src/db/pharmacies';
 import type { Pharmacie } from '../../src/db/types';
 import { ligneVille } from '../../src/lib/adresses';
-import { normaliser } from '../../src/lib/texte';
+import { filtrerPharmacies } from '../../src/lib/repertoire';
 import { Bouton, Ecran, Fondu, Onglets, Vide } from '../../src/ui/composants';
 import { couleurs, espace, police, rayon } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
@@ -34,13 +34,7 @@ export default function Repertoire() {
 
   const cherche = recherche.trim().length > 0;
 
-  const filtrees = useMemo(() => {
-    const terme = normaliser(recherche.trim());
-    if (!terme) return pharmacies;
-    return pharmacies.filter(
-      (p) => normaliser(p.nom).includes(terme) || normaliser(ligneVille(p)).includes(terme)
-    );
-  }, [pharmacies, recherche]);
+  const filtrees = useMemo(() => filtrerPharmacies(pharmacies, recherche), [pharmacies, recherche]);
 
   const favorites = useMemo(() => pharmacies.filter((p) => p.favori), [pharmacies]);
 
@@ -153,9 +147,11 @@ function LignePharmacie({
             {pharmacie.nom}
           </Text>
         </View>
-        {!!ligneVille(pharmacie) && (
+        {/* Le surnom d'abord : c'est par lui qu'on la reconnaît. La ville
+            suit, quand il y a de la place pour les deux. */}
+        {!!(pharmacie.surnom || ligneVille(pharmacie)) && (
           <Text style={styles.detail} numberOfLines={1}>
-            {ligneVille(pharmacie)}
+            {[pharmacie.surnom, ligneVille(pharmacie)].filter(Boolean).join(' · ')}
           </Text>
         )}
       </View>

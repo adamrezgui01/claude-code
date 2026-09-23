@@ -45,6 +45,7 @@ export function unePharmacie(champs: Partial<Pharmacie> = {}): Pharmacie {
   return {
     id: 1,
     nom: 'Pharmacie A',
+    surnom: '',
     numero_civique: '',
     rue: '',
     local: '',

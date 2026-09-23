@@ -56,6 +56,16 @@ export type FicheQuart = {
   taux: number | null;
   pauseMinutes: number | null;
   pausePayee: boolean | null;
+  /** Repas de la journée, réclamé au client. */
+  perDiem: number | null;
+  /** Distance jusqu'à la pharmacie, aller simple — comme sur la fiche. */
+  kilometrage: number | null;
+  /** Vrai quand la phrase dit que le trajet compte dans les deux sens. */
+  allerRetour: boolean | null;
+  /** Déplacement payé au forfait, plutôt qu'au kilomètre. */
+  montantFixe: number | null;
+  /** Hébergement payé par le remplaçant et refacturé. */
+  hebergement: number | null;
   manque: Manque[];
   questions: Question[];
 };
@@ -73,8 +83,12 @@ export type Fiche =
 const QUESTION =
   /^(combien|est ce qu|quand|quel|quelle|ou est|ou sont|c est quoi|montre|affiche|liste|donne moi|how much|when|do i have|what|show|list)/;
 const ANNULATION = /\b(annul|cancell?e|cancel|supprim|efface|enlev|retire|delete|j ai plus|je fais plus)/;
+/**
+ * Le verbe seulement. « Déplacement » est un nom, et il porte de l'argent :
+ * « 50 $ de déplacement » est un quart à remplir, pas un quart à bouger.
+ */
 const MODIFICATION =
-  /\b(deplac|decal|modifi|reporte|repousse|avance|recule|change|switch|swap|echange|inverse|move|remplace par)/;
+  /\b(deplac(?:e|es|er|ez|ons)\b|decal|modifi|reporte|repousse|avance|recule|change|switch|swap|echange|inverse|move|remplace par)/;
 const AJOUT =
   /\b(ajoute|ajouter|rajoute|rajouter|mets|met|mettre|note|inscris|marque|planifie|reserve|reserver|bloque|bloquer|confirme|confirmer|accepte|accepter|enregistre|sauvegarde|book|booke|cedule|ceduler|add|schedule)\b/;
 
@@ -120,7 +134,7 @@ type Extraction<T> = { valeur: T; reste: string };
  * suivie d'un taux. Un taux horaire à un seul chiffre n'existe pas ; une
  * heure, oui.
  */
-const MONTANT = String.raw`(\d{2,}\s*[.,]\s*\d{1,2}|\d+(?:[.,]\d+)?)`;
+const MONTANT = String.raw`(\d{2,}\s*[.,]\s*\d{1,2}(?!\d)|\d+(?:[.,]\d+)?)`;
 
 const MOTIFS_TAUX = [
   new RegExp(
@@ -139,6 +153,86 @@ function extraireTaux(phrase: string): Extraction<number | null> {
     };
   }
   return { valeur: null, reste: phrase };
+}
+
+/**
+ * L'argent d'un quart, autre que le taux horaire.
+ *
+ * Chacun a besoin de son mot. Un nombre nu n'en devient jamais un : dire
+ * « 40 » dans une phrase ne met pas quarante dollars sur une facture.
+ *
+ * Et comme partout ailleurs, zéro est une valeur. « Sans per diem » vaut
+ * zéro et se facture comme tel ; ce dont la phrase ne dit rien reste vide et
+ * hérite de la pharmacie.
+ */
+const MOTS_MONTANT = {
+  perDiem: 'per diem|per dieme|per dium|perdiem',
+  // Le nom, jamais le verbe : « déplace » est une autre demande.
+  montantFixe: 'forfait|montant fixe|deplacement|transport',
+  hebergement: 'hebergement|hotel|motel|logement',
+} as const;
+
+type NomMontant = keyof typeof MOTS_MONTANT;
+
+const MOTS_KM = 'km|kilometre|kilometres|kilometrage';
+
+export type Montants = {
+  perDiem: number | null;
+  kilometrage: number | null;
+  allerRetour: boolean | null;
+  montantFixe: number | null;
+  hebergement: number | null;
+};
+
+function extraireMontants(phrase: string): Extraction<Montants> {
+  let reste = phrase;
+  const lus: Record<NomMontant, number | null> = {
+    perDiem: null,
+    montantFixe: null,
+    hebergement: null,
+  };
+
+  for (const nom of Object.keys(MOTS_MONTANT) as NomMontant[]) {
+    const mots = MOTS_MONTANT[nom];
+    const essais: [RegExp, (t: RegExpExecArray) => number][] = [
+      [new RegExp(`\\b(?:sans|pas de|aucune?|no)\\s+(?:${mots})\\b`), () => 0],
+      [new RegExp(`\\b(?:${mots})\\s*(?:de\\s+|d\\s+|a\\s+)?${MONTANT}`), (t) => enNombre(t[1])],
+      [new RegExp(`${MONTANT}\\s*(?:de\\s+|d\\s+)?(?:${mots})\\b`), (t) => enNombre(t[1])],
+    ];
+    for (const [motif, valeur] of essais) {
+      const trouve = motif.exec(reste);
+      if (!trouve) continue;
+      lus[nom] = valeur(trouve);
+      reste = reste.replace(trouve[0], ' ').replace(/\s+/g, ' ').trim();
+      break;
+    }
+  }
+
+  // Le kilométrage se dit en unités, pas en dollars : c'est une distance, et
+  // c'est toujours celle qui va jusqu'à la pharmacie.
+  let kilometrage: number | null = null;
+  for (const motif of [
+    new RegExp(`${MONTANT}\\s*(?:${MOTS_KM})\\b`),
+    new RegExp(`\\b(?:${MOTS_KM})\\s*(?:de\\s+|d\\s+)?${MONTANT}`),
+  ]) {
+    const trouve = motif.exec(reste);
+    if (!trouve) continue;
+    kilometrage = enNombre(trouve[1]);
+    reste = reste.replace(trouve[0], ' ').replace(/\s+/g, ' ').trim();
+    break;
+  }
+
+  // « Aller-retour » ne touche pas au nombre : il coche la case qui le double,
+  // exactement comme sur la fiche.
+  let allerRetour: boolean | null = null;
+  if (/\baller retour\b/.test(reste)) allerRetour = true;
+  else if (/\baller simple\b|\bone way\b/.test(reste)) allerRetour = false;
+
+  return { valeur: { ...lus, kilometrage, allerRetour }, reste };
+}
+
+function enNombre(texte: string): number {
+  return Number(texte.replace(/\s+/g, '').replace(',', '.'));
 }
 
 const MOTS_PAUSE = 'pause|break|lunch|diner|dinner|souper|repas';
@@ -225,6 +319,7 @@ type Analyse = {
   taux: number | null;
   pauseMinutes: number | null;
   pausePayee: boolean | null;
+  montants: Montants;
 };
 
 const RIEN: LectureHeures = { debut: null, fin: null, ambiguite: null, reste: '', periodeNommee: null };
@@ -235,12 +330,16 @@ function analyser(texte: string, brut: string, contexte: ContexteLecteur, passe:
     heures: RIEN, horairesMultiples: false,
     pharmacieId: null, choixPharmacie: [], pharmacieInconnue: null, mentionPharmacie: false,
     taux: null, pauseMinutes: null, pausePayee: null,
+    montants: { perDiem: null, kilometrage: null, allerRetour: null, montantFixe: null, hebergement: null },
   };
   if (!texte) return vide;
 
   const pause = extrairePause(texte);
   const taux = extraireTaux(pause.reste);
-  const dates = extraireDates(taux.reste, contexte.aujourdhui, passe);
+  // Les montants passent avant les dates : « per diem de 25 » contient un
+  // quantième très convaincant.
+  const montants = extraireMontants(taux.reste);
+  const dates = extraireDates(montants.reste, contexte.aujourdhui, passe);
   const heures = extraireHeures(dates.reste);
 
   // Deux plages horaires distinctes dans la même phrase, ce sont deux quarts.
@@ -266,6 +365,7 @@ function analyser(texte: string, brut: string, contexte: ContexteLecteur, passe:
     taux: taux.valeur,
     pauseMinutes: pause.valeur.minutes,
     pausePayee: pause.valeur.payee,
+    montants: montants.valeur,
   };
 }
 
@@ -380,6 +480,11 @@ function composer(
     taux: corrige.taux ?? initial.taux,
     pauseMinutes: corrige.pauseMinutes ?? initial.pauseMinutes,
     pausePayee: corrige.pausePayee ?? initial.pausePayee,
+    perDiem: corrige.montants.perDiem ?? initial.montants.perDiem,
+    kilometrage: corrige.montants.kilometrage ?? initial.montants.kilometrage,
+    allerRetour: corrige.montants.allerRetour ?? initial.montants.allerRetour,
+    montantFixe: corrige.montants.montantFixe ?? initial.montants.montantFixe,
+    hebergement: corrige.montants.hebergement ?? initial.montants.hebergement,
     manque,
     questions,
   };

@@ -217,6 +217,10 @@ export const en: Dictionnaire = {
     nom: 'Name',
     nomPlaceholder: 'Pharmacy name',
     nomAide: 'The one that will appear on your invoices.',
+    surnom: 'Nickname (optional)',
+    surnomPlaceholder: 'The big PJC',
+    surnomAide:
+      'What you actually call it. Dictation recognises it and the directory searches it. It never leaves the app: an invoice carries the legal name.',
     adresseNonSituee:
       'This address could not be located: the pharmacy will not appear on the map. Correct it above and save again.',
     itineraire: 'Get directions',

@@ -6,6 +6,7 @@ export type EntreePharmacie = Omit<Pharmacie, 'id'>;
 
 const CHAMPS = [
   'nom',
+  'surnom',
   'numero_civique',
   'rue',
   'local',
@@ -156,6 +157,7 @@ export function compterQuartsPharmacie(id: number): number {
 export function pharmacieVide(nom: string, tauxParKmDefaut: number): EntreePharmacie {
   return {
     nom,
+    surnom: '',
     numero_civique: '',
     rue: '',
     local: '',

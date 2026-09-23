@@ -20,6 +20,8 @@ export type PharmacieConnue = {
   banniere?: string | null;
   ville?: string | null;
   rue?: string | null;
+  /** Le nom que l'usager lui donne, quand il n'utilise pas le vrai. */
+  surnom?: string | null;
 };
 
 export type Correspondance = {
@@ -65,6 +67,13 @@ const GENERIQUES = new Set([
   'avenue', 'boulevard', 'chemin', 'place', 'montee', 'route', 'saint', 'sainte',
 ]);
 
+/** Ce qu'on dit à la place de la bannière, remplacé par la bannière. */
+function appliquerAlias(texte: string): string {
+  let sortie = ` ${texte} `;
+  for (const [motif, remplacement] of ALIAS) sortie = sortie.replace(motif, remplacement);
+  return sortie;
+}
+
 function coller(texte: string | null | undefined): string {
   if (!texte) return '';
   return normaliserPhrase(texte).replace(/[\s,]/g, '');
@@ -81,6 +90,30 @@ function motsDe(texte: string | null | undefined): string[] {
 function contient(colle: string, expression: string | null | undefined): boolean {
   const cible = coller(expression);
   return cible.length >= 4 && colle.includes(cible);
+}
+
+/**
+ * Le surnom, lui, se reconnaît court.
+ *
+ * « BSR », « chez Gigi » : trois lettres suffisent, parce qu'un surnom est
+ * choisi exprès pour désigner une place et une seule. C'est la seule chose
+ * qu'on accepte d'aussi court — un mot de trois lettres pris dans un nom de
+ * pharmacie désignerait la moitié du répertoire.
+ */
+function contientSurnom(colle: string, surnom: string | null | undefined): boolean {
+  if (!surnom) return false;
+  // Le surnom passe par les mêmes alias que la phrase : « le gros PJC » et
+  // « le gros Jean Coutu » sont le même endroit, et l'usager dit l'un un jour
+  // et l'autre le lendemain.
+  //
+  // Et on laisse tomber ce qui l'introduit. Un surnom s'écrit « chez Ti-Guy »
+  // et se dit « au Ti-Guy » : l'article n'en fait pas partie.
+  // On normalise avant d'aliaser : les alias sont écrits en minuscules, et
+  // un surnom s'écrit comme on veut.
+  const mots = appliquerAlias(normaliserPhrase(surnom)).split(' ').filter(Boolean);
+  while (mots.length > 1 && VIDES.has(mots[0])) mots.shift();
+  const cible = mots.join('');
+  return cible.length >= 3 && colle.includes(cible);
 }
 
 /** Un seul mot distinctif suffit : « Coutu » pour « Jean Coutu ». */
@@ -131,9 +164,7 @@ export function trouverPharmacie(
   brut: string,
   pharmacies: PharmacieConnue[]
 ): Correspondance {
-  let texte = ` ${reste} `;
-  for (const [motif, remplacement] of ALIAS) texte = texte.replace(motif, remplacement);
-  const colle = texte.replace(/[\s,]/g, '');
+  const colle = appliquerAlias(reste).replace(/[\s,]/g, '');
 
   let meilleur = 0;
   const notes = pharmacies.map((p) => {
@@ -143,6 +174,10 @@ export function trouverPharmacie(
     const nom = sansGenerique(p.nom);
     if (contient(colle, nom) || contientUnMot(colle, nom)) note += 4;
     if (contient(colle, voieSeule(p.rue))) note += 3;
+    // Le surnom pèse plus que le nom : l'usager l'a choisi lui-même, et il ne
+    // l'emploie que pour une pharmacie. C'est ce qui tranche entre deux
+    // succursales de la même bannière.
+    if (contientSurnom(colle, p.surnom)) note += 5;
     meilleur = Math.max(meilleur, note);
     return { p, note };
   });

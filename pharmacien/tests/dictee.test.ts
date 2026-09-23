@@ -1,4 +1,5 @@
 import {
+  dicteeDetaillee,
   parametresDuQuart,
   parametresNouvellePharmacie,
   suiteDeLaLecture,
@@ -112,16 +113,50 @@ describe('groupe 2 — créer la pharmacie entendue', () => {
 // ===========================================================================
 
 describe('groupe 3 — la dictée survit à la création de la pharmacie', () => {
+  const RIEN = {
+    taux: null,
+    pause: null,
+    pausePayee: null,
+    perDiem: null,
+    kilometrage: null,
+    allerRetour: null,
+    montantFixe: null,
+    hebergement: null,
+  };
+
   test('les valeurs dictées se relisent, et zéro en est une', () => {
-    expect(valeursDictees({ taux: '70', pause: '0', pausePayee: '0' })).toEqual({
+    expect(valeursDictees({ taux: '70', pause: '0', pausePayee: '0', perdiem: '0' })).toEqual({
+      ...RIEN,
       taux: '70',
       pause: 0,
       pausePayee: false,
+      perDiem: '0',
     });
   });
 
   test('ce qui n’a pas été dicté reste vide, et n’écrase donc rien', () => {
-    expect(valeursDictees({})).toEqual({ taux: null, pause: null, pausePayee: null });
+    expect(valeursDictees({})).toEqual(RIEN);
+  });
+
+  test('l’argent dicté passe par la route, et en revient tel quel', () => {
+    const fiche = quart(
+      'Ajoute un quart jeudi de 9 à 5 au Familiprix, per diem de 40, 120 km aller-retour, ' +
+        '150 $ d’hébergement'
+    );
+    const params = Object.fromEntries(new URLSearchParams(parametresDuQuart(fiche)));
+    expect(valeursDictees(params)).toEqual({
+      ...RIEN,
+      perDiem: '40',
+      kilometrage: '120',
+      allerRetour: true,
+      hebergement: '150',
+    });
+  });
+
+  test('un forfait de déplacement suit le même chemin', () => {
+    const fiche = quart('Ajoute un quart jeudi de 9 à 5 au Familiprix, forfait de 60');
+    const params = Object.fromEntries(new URLSearchParams(parametresDuQuart(fiche)));
+    expect(valeursDictees(params).montantFixe).toBe('60');
   });
 
   test('une pause dictée traverse la création de la pharmacie', () => {
@@ -145,6 +180,14 @@ describe('groupe 3 — la dictée survit à la création de la pharmacie', () =>
     // habituelle à un quart où l'usager a dit qu'il n'y en aurait pas.
     const params = new URLSearchParams(parametresDuQuart(fiche));
     expect(valeursDictees(Object.fromEntries(params)).pause).toBe(0);
+  });
+
+  test('une dictée qui porte de l’argent déplie les détails', () => {
+    // Un per diem posé dans une section repliée se facturerait sans que
+    // personne ne l'ait relu.
+    expect(dicteeDetaillee(valeursDictees({ perdiem: '40' }))).toBe(true);
+    expect(dicteeDetaillee(valeursDictees({ pause: '0' }))).toBe(true);
+    expect(dicteeDetaillee(valeursDictees({}))).toBe(false);
   });
 
   test('la pharmacie créée se reprend une seule fois', () => {

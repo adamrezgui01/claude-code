@@ -84,6 +84,11 @@ export default function FichePharmacie() {
   const [reglages] = useState(obtenirReglages);
   // Nom dicté : la fiche s'ouvre avec, et il ne reste que l'adresse à chercher.
   const [nom, setNom] = useState(nouvelle ? (params.recherche ?? '') : '');
+  /**
+   * Le nom qu'on lui donne pour vrai. Il ne sort jamais de l'application : une
+   * facture porte le nom légal, pas « chez Ti-Guy ».
+   */
+  const [surnom, setSurnom] = useState('');
   const [adresse, setAdresse] = useState<Adresse>(adresseVide);
   const [contactNom, setContactNom] = useState('');
   const [contactTelephone, setContactTelephone] = useState('');
@@ -143,6 +148,7 @@ export default function FichePharmacie() {
     const p = obtenirPharmacie(pharmacieId);
     if (p) {
       setNom(p.nom);
+      setSurnom(p.surnom);
       setAdresse({
         numero_civique: p.numero_civique,
         rue: p.rue,
@@ -275,6 +281,7 @@ export default function FichePharmacie() {
 
     const entree: EntreePharmacie = {
       nom: nom.trim(),
+      surnom: surnom.trim(),
       ...situee,
       contact_nom: contactNom.trim(),
       contact_telephone: contactTelephone.trim(),
@@ -421,6 +428,14 @@ export default function FichePharmacie() {
                     onChange={setNom}
                     placeholder={t('pharmacie.nomPlaceholder')}
                     aide={t('pharmacie.nomAide')}
+                  />
+                  <Champ
+                    nu
+                    label={t('pharmacie.surnom')}
+                    valeur={surnom}
+                    onChange={setSurnom}
+                    placeholder={t('pharmacie.surnomPlaceholder')}
+                    aide={t('pharmacie.surnomAide')}
                   />
                 </Section>
               }

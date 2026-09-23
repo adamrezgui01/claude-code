@@ -286,6 +286,7 @@ export default function Horaire() {
         banniere: null,
         ville: p.ville,
         rue: p.rue,
+        surnom: p.surnom,
       })),
       quarts: quarts.map((q) => ({
         pharmacieId: q.pharmacie_id,

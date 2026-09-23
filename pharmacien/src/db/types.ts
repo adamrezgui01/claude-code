@@ -20,6 +20,13 @@ export type Adresse = {
 export type Pharmacie = Adresse & {
   id: number;
   nom: string;
+  /**
+   * Le nom que l'usager lui donne : « le gros PJC », « chez Ti-Guy ». Vide
+   * quand il n'en a pas donné. La dictée le reconnaît et le répertoire le
+   * cherche, mais rien de ce qui sort de l'application ne le montre : une
+   * facture porte le nom légal.
+   */
+  surnom: string;
   contact_nom: string;
   contact_telephone: string;
   contact_courriel: string;

@@ -112,6 +112,15 @@ qu'on ne les redécouvre pas trois fois.
 - Une phrase qui ne dit qu'une borne d'horaire — « de 9 h à la fermeture » —
   garde celle qui est dite et laisse l'autre vide. Une fin supposée fait
   travailler trois heures de trop, ou de moins.
+- Un nombre nu n'est jamais un montant. Chaque somme dictée a besoin de son
+  mot — per diem, forfait, hébergement, kilomètres —, et « 40 » dit au milieu
+  d'une phrase ne met rien sur une facture.
+- Le nombre de kilomètres dicté est toujours la distance jusqu'à la pharmacie,
+  aller simple, comme le champ de la fiche. « Aller-retour » ne fait que cocher
+  la case qui la double ; le lecteur ne divise ni ne multiplie rien tout seul.
+- Le surnom d'une pharmacie sert à la reconnaître, jamais à la désigner
+  ailleurs. Une facture porte le nom légal ; « le gros PJC » ne sort pas de
+  l'appareil.
 - Quand deux lectures d'une phrase tiennent debout, on pose une question avec
   des réponses à toucher. Une supposition silencieuse qui se trompe d'une
   demi-journée coûte un déplacement inutile ; une question coûte un geste.

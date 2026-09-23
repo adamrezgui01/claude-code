@@ -21,6 +21,7 @@ const SCHEMA = `
   CREATE TABLE IF NOT EXISTS pharmacies (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nom TEXT NOT NULL,
+    surnom TEXT NOT NULL DEFAULT '',
     numero_civique TEXT NOT NULL DEFAULT '',
     rue TEXT NOT NULL DEFAULT '',
     local TEXT NOT NULL DEFAULT '',
@@ -305,6 +306,9 @@ export function initialiserBase() {
   ajouterColonne('reglages', 'aide_horaire_vues', 'INTEGER NOT NULL DEFAULT 0');
   ajouterColonne('reglages', 'per_diem', 'REAL NOT NULL DEFAULT 0');
   ajouterColonne('reglages', 'langue', "TEXT NOT NULL DEFAULT 'auto'");
+  // Le nom que l'usager donne à une pharmacie. La dictée le reconnaît, et le
+  // répertoire le cherche.
+  ajouterColonne('pharmacies', 'surnom', "TEXT NOT NULL DEFAULT ''");
 
   // Le volet clinique. Un signet devient une source : mêmes lignes, quelques
   // colonnes de plus, pour que les deux listes ne divergent jamais.

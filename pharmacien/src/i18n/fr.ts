@@ -215,6 +215,10 @@ export const fr = {
     nom: 'Nom',
     nomPlaceholder: 'Nom de la pharmacie',
     nomAide: 'Celui qui paraîtra sur vos factures.',
+    surnom: 'Surnom (facultatif)',
+    surnomPlaceholder: 'Le gros PJC',
+    surnomAide:
+      'Le nom que vous lui donnez vraiment. La dictée le reconnaît, et le répertoire le cherche. Il ne sort jamais de l’application : une facture porte le nom légal.',
     adresseNonSituee:
       'Cette adresse n’a pas pu être située : la pharmacie n’apparaît pas sur la carte. Corrigez-la ci-dessus et enregistrez de nouveau.',
     itineraire: 'Obtenir un itinéraire',
