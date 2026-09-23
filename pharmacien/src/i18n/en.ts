@@ -484,6 +484,15 @@ export const en: Dictionnaire = {
     grossesseAllaitement: 'Pregnancy and breastfeeding',
   },
   clinique: {
+    bandeauTitre: 'You have searched this three times.',
+    bandeauAction: 'Write a note?',
+    bandeauPlusTard: 'Later',
+    recherchesSansReponse: 'Searches with no answer',
+    recherchesIntro:
+      'What you searched for without finding anything stays here, on the device. Nothing leaves on its own. This is how your library of sources grows.',
+    recherchesAucune: 'None so far',
+    recherches_one: '{{count}} search kept',
+    recherches_other: '{{count}} searches kept',
     titre: 'Clinical',
     revisionsDuJour_one: '{{count}} note to review tonight',
     revisionsDuJour_other: '{{count}} notes to review tonight',

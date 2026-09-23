@@ -485,6 +485,15 @@ export const fr = {
     grossesseAllaitement: 'Grossesse et allaitement',
   },
   clinique: {
+    bandeauTitre: 'Tu as cherché ça trois fois.',
+    bandeauAction: 'Écrire une note ?',
+    bandeauPlusTard: 'Plus tard',
+    recherchesSansReponse: 'Recherches sans réponse',
+    recherchesIntro:
+      'Ce que vous avez cherché sans rien trouver reste ici, sur l’appareil. Rien n’en sort tout seul. C’est par là que votre bibliothèque de sources grandit.',
+    recherchesAucune: 'Aucune pour l’instant',
+    recherches_one: '{{count}} recherche gardée',
+    recherches_other: '{{count}} recherches gardées',
     titre: 'Clinique',
     revisionsDuJour_one: '{{count}} note à revoir ce soir',
     revisionsDuJour_other: '{{count}} notes à revoir ce soir',

@@ -36,7 +36,13 @@ import { couleurs, espace, police } from '../../../src/ui/theme';
 export default function Note() {
   const { t } = useTextes();
   const router = useRouter();
-  const params = useLocalSearchParams<{ id: string; source?: string; sujets?: string }>();
+  const params = useLocalSearchParams<{
+    id: string;
+    source?: string;
+    sujets?: string;
+    /** Le texte de la recherche, quand la note vient du bandeau de récurrence. */
+    titre?: string;
+  }>();
   const nouvelle = params.id === 'nouvelle';
   const noteId = nouvelle ? null : Number(params.id);
 
@@ -70,7 +76,10 @@ export default function Note() {
       setChoisis(sujetsDeLaSource(id).map((s) => s.id));
     }
     if (params.sujets) setChoisis(params.sujets.split(',').map(Number).filter(Boolean));
-  }, [noteId, params.source, params.sujets]);
+    // Venue du bandeau de recherche : la question est déjà posée, c'est celle
+    // qu'on s'est posée trois fois.
+    if (params.titre) setQuestion(params.titre);
+  }, [noteId, params.source, params.sujets, params.titre]);
 
   const source = useMemo(() => sources.find((s) => s.id === sourceId) ?? null, [sources, sourceId]);
 

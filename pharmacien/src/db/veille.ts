@@ -1,6 +1,7 @@
 import { aujourdhui } from '../lib/dates';
 import { contenusAPerimer, sourceAChange } from '../lib/veille/peremption';
 import { SOURCES_DEPART, SUJETS_DEPART } from '../lib/veille/depart';
+import { cleDeRecherche, type Recherche, type RefusRecherche } from '../lib/veille/recherches';
 import type { Motif } from '../lib/veille/sujets';
 import { db, dejaFait, marquerFait } from './index';
 
@@ -368,7 +369,9 @@ export type TypeEvenement =
   | 'sourceConsultee'
   | 'noteCreee'
   | 'versionChangee'
-  | 'contenuRevalide';
+  | 'contenuRevalide'
+  | 'rechercheRefusee'
+  | 'bandeauRecherche';
 
 export type Evenement = {
   id: number;
@@ -564,4 +567,91 @@ export function definirChampSource(sourceId: number, champ: 'version' | 'capture
 /** Un signet créé aujourd'hui est réputé vérifié aujourd'hui. */
 export function marquerSourceNeuve(sourceId: number) {
   db.runSync("UPDATE liens SET date_verification = ? WHERE id = ? AND date_verification = ''", aujourdhui(), sourceId);
+}
+
+// ---------------------------------------------------------------------------
+// Les recherches
+// ---------------------------------------------------------------------------
+
+export type RechercheEnregistree = Recherche & {
+  id: number;
+  texte: string;
+  nbResultats: number;
+};
+
+/**
+ * Chaque recherche est notée, avec ce qu'elle a donné. Tout reste sur
+ * l'appareil : rien n'en sort, jamais.
+ */
+export function noterRecherche(texte: string, nbResultats: number): number {
+  const propre = texte.trim();
+  if (!propre) return 0;
+  const r = db.runSync(
+    'INSERT INTO recherches (texte, cle, horodatage, nb_resultats, source_ouverte) VALUES (?, ?, ?, ?, NULL)',
+    propre,
+    cleDeRecherche(propre),
+    Date.now(),
+    nbResultats
+  );
+  return r.lastInsertRowId;
+}
+
+/** La source ouverte à la suite d'une recherche : c'est ce qui la rend probante. */
+export function noterSourceOuverte(rechercheId: number, sourceId: number) {
+  if (!rechercheId) return;
+  db.runSync('UPDATE recherches SET source_ouverte = ? WHERE id = ?', sourceId, rechercheId);
+}
+
+export function listerRecherches(): RechercheEnregistree[] {
+  return db
+    .getAllSync<{
+      id: number;
+      texte: string;
+      cle: string;
+      horodatage: number;
+      nb_resultats: number;
+      source_ouverte: number | null;
+    }>('SELECT * FROM recherches ORDER BY horodatage DESC')
+    .map((r) => ({
+      id: r.id,
+      texte: r.texte,
+      cle: r.cle,
+      horodatage: r.horodatage,
+      nbResultats: r.nb_resultats,
+      sourceOuverte: r.source_ouverte,
+    }));
+}
+
+/** Celles qui n'ont rien donné. C'est par là que la bibliothèque grandit. */
+export function recherchesSansReponse(): RechercheEnregistree[] {
+  return listerRecherches().filter((r) => r.nbResultats === 0);
+}
+
+export function effacerRecherchesSansReponse() {
+  db.runSync('DELETE FROM recherches WHERE nb_resultats = 0');
+}
+
+/** Les refus de bandeau, gardés dans le journal commun. */
+export function refusDeRecherche(): RefusRecherche[] {
+  return db
+    .getAllSync<{ detail: string; le: string }>(
+      "SELECT detail, le FROM evenements WHERE type = 'rechercheRefusee'"
+    )
+    .map((e) => ({ cle: e.detail, le: Date.parse(e.le) }));
+}
+
+export function refuserBandeauRecherche(cle: string) {
+  noterEvenement({ type: 'rechercheRefusee', detail: cle });
+}
+
+export function noterBandeauRecherche(cle: string) {
+  noterEvenement({ type: 'bandeauRecherche', detail: cle });
+}
+
+/** Quand le dernier bandeau de recherche a été montré, ou `null`. */
+export function dernierBandeauRecherche(): number | null {
+  const e = db.getFirstSync<{ le: string }>(
+    "SELECT le FROM evenements WHERE type = 'bandeauRecherche' ORDER BY le DESC LIMIT 1"
+  );
+  return e ? Date.parse(e.le) : null;
 }

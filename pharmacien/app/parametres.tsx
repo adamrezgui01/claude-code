@@ -9,7 +9,12 @@ import * as Clipboard from 'expo-clipboard';
 
 import { facturesEnAttente } from '../src/db/factures';
 import { compterIncomprises, effacerIncomprises, listerIncomprises } from '../src/db/lecteur';
-import { definirReglageVeille, reglagesVeille } from '../src/db/veille';
+import {
+  definirReglageVeille,
+  effacerRecherchesSansReponse,
+  recherchesSansReponse,
+  reglagesVeille,
+} from '../src/db/veille';
 import { replanifierVeille } from '../src/lib/veille/planifier';
 import { PLAFOND_MAX, PLAFOND_MIN } from '../src/lib/veille/file';
 import {
@@ -54,6 +59,7 @@ export default function Parametres() {
   const [reglages, setReglages] = useState<Reglages | null>(null);
   const [enregistre, setEnregistre] = useState(false);
   const [incomprises, setIncomprises] = useState(0);
+  const [sansReponse, setSansReponse] = useState(0);
   const [veille, setVeille] = useState({
     rappel: true,
     heure: '20:00',
@@ -67,6 +73,7 @@ export default function Parametres() {
     useCallback(() => {
       setReglages(obtenirReglages());
       setIncomprises(compterIncomprises());
+      setSansReponse(recherchesSansReponse().length);
       const v = reglagesVeille();
       setVeille({
         rappel: !!v.veille_rappel_actif,
@@ -87,6 +94,11 @@ export default function Parametres() {
     definirReglageVeille(champ, valeur);
     setVeille((actuel) => ({ ...actuel, ...local }));
     void replanifierVeille();
+  }
+
+  /** Les recherches restées sans réponse, pour les coller quelque part. */
+  async function copierRecherches() {
+    await Clipboard.setStringAsync(recherchesSansReponse().map((r) => r.texte).join('\n'));
   }
 
   /**
@@ -265,6 +277,36 @@ export default function Parametres() {
           valeur={veille.navigateur}
           onChange={(v) => changerVeille('veille_navigateur', v ? 1 : 0, { navigateur: v })}
         />
+      </Section>
+
+      <Section titre={t('clinique.recherchesSansReponse')}>
+        <Doux>{t('clinique.recherchesIntro')}</Doux>
+        <Text style={styles.compte}>
+          {sansReponse === 0
+            ? t('clinique.recherchesAucune')
+            : t('clinique.recherches', { count: sansReponse })}
+        </Text>
+        {sansReponse > 0 && (
+          <View style={styles.actionsJournal}>
+            <View style={styles.actionJournal}>
+              <Bouton
+                titre={t('dictee.copier')}
+                variante="secondaire"
+                onPress={() => void copierRecherches()}
+              />
+            </View>
+            <View style={styles.actionJournal}>
+              <Bouton
+                titre={t('dictee.effacer')}
+                variante="secondaire"
+                onPress={() => {
+                  effacerRecherchesSansReponse();
+                  setSansReponse(0);
+                }}
+              />
+            </View>
+          </View>
+        )}
       </Section>
 
       <Section titre={t('dictee.journal')}>

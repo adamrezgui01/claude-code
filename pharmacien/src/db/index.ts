@@ -264,6 +264,21 @@ const SCHEMA = `
   /* Un fait, une ligne. Le journal des consultations est cette table filtrée
      sur « source consultée » ; l'historique d'un sujet, la même filtrée sur
      ce sujet. Deux tables se seraient contredites tôt ou tard. */
+  /* Ce que l'usager a cherché. C'est le signal qui remplace l'aveu de la
+     lacune : trois fois la même question en trois mois, et l'application le
+     dit, sans que personne ait eu à l'admettre. */
+  CREATE TABLE IF NOT EXISTS recherches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    /* Tel que tapé, pour pouvoir le relire. */
+    texte TEXT NOT NULL,
+    /* La forme normalisée, sur laquelle porte l'appariement. */
+    cle TEXT NOT NULL,
+    horodatage INTEGER NOT NULL,
+    nb_resultats INTEGER NOT NULL DEFAULT 0,
+    /* La source ouverte à la suite, s'il y en a une. */
+    source_ouverte INTEGER
+  );
+
   CREATE TABLE IF NOT EXISTS evenements (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL,

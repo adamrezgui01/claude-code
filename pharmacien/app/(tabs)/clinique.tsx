@@ -1,12 +1,19 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { SECTIONS, type Lien as LienFixe } from '../../src/content/liens';
 import {
+  dernierBandeauRecherche,
   listerContenus,
+  listerRecherches,
   listerSources,
+  noterBandeauRecherche,
+  noterRecherche,
+  noterSourceOuverte,
+  refuserBandeauRecherche,
+  refusDeRecherche,
   reglagesVeille,
   statutsDesSujets,
   sujetsDeLaSource,
@@ -17,6 +24,7 @@ import { aujourdhui } from '../../src/lib/dates';
 import { titreDuLien } from '../../src/lib/liens';
 import { ouvrirSource } from '../../src/lib/veille/ouvrir';
 import { filtrerSources, parSujet, type SourceCherchable } from '../../src/lib/veille/recherche';
+import { cleARevoir } from '../../src/lib/veille/recherches';
 import { nomDuSujet } from '../../src/lib/veille/sujets';
 import { etatVeille } from '../../src/lib/veille/tableau';
 import { Doux, Ecran, Fondu, SousTitre, Vide } from '../../src/ui/composants';
@@ -47,6 +55,9 @@ export default function Clinique() {
   const [sources, setSources] = useState<SourceListee[]>([]);
   const [revisions, setRevisions] = useState(0);
   const [recherche, setRecherche] = useState('');
+  /** L'identifiant de la recherche notée, pour y rattacher la source ouverte. */
+  const [notee, setNotee] = useState(0);
+  const [aRevoir, setARevoir] = useState<string | null>(null);
 
   const traduire = useCallback((cle: string) => t(cle), [t]);
 
@@ -77,8 +88,27 @@ export default function Clinique() {
           plafond
         ).revisions
       );
+      setARevoir(
+        cleARevoir(listerRecherches(), refusDeRecherche(), dernierBandeauRecherche(), Date.now())
+      );
     }, [jour, traduire])
   );
+
+  /**
+   * La recherche est notée quand l'usager s'arrête de taper, pas à chaque
+   * lettre : « m », « me », « met » ne sont pas trois questions.
+   */
+  useEffect(() => {
+    const terme = recherche.trim();
+    if (terme.length < 3) {
+      setNotee(0);
+      return;
+    }
+    const minuterie = setTimeout(() => {
+      setNotee(noterRecherche(terme, filtrerSources(sources, terme).length));
+    }, 900);
+    return () => clearTimeout(minuterie);
+  }, [recherche, sources]);
 
   const groupes = useMemo(
     () => parSujet(filtrerSources(sources, recherche), t('clinique.sansSujet')),
@@ -91,6 +121,40 @@ export default function Clinique() {
     <Ecran style={styles.contenu}>
       {/* Rien à revoir : pas de ligne. Un compteur à zéro s'apprend à ne plus
           se lire, et emporte avec lui celui qui ne l'est pas. */}
+      {/* Trois fois la même question en trois mois : c'est un sujet qui ne
+          rentre pas, et ça se dit sans que personne ait eu à l'admettre. */}
+      {!!aRevoir && (
+        <Fondu>
+          <View style={[styles.rappel, { borderColor: accent }]}>
+            <View style={styles.texte}>
+              <Text style={styles.titre}>{t('clinique.bandeauTitre')}</Text>
+              <Text style={styles.detail}>{aRevoir}</Text>
+            </View>
+            <Pressable
+              onPress={() => {
+                noterBandeauRecherche(aRevoir);
+                setARevoir(null);
+                router.push(`/veille/note/nouvelle?titre=${encodeURIComponent(aRevoir)}`);
+              }}
+              style={({ pressed }) => [
+                styles.action,
+                { backgroundColor: accent },
+                pressed && { opacity: 0.7 },
+              ]}>
+              <Text style={styles.actionTexte}>{t('clinique.bandeauAction')}</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                refuserBandeauRecherche(aRevoir);
+                setARevoir(null);
+              }}
+              hitSlop={10}>
+              <Ionicons name="close" size={18} color={couleurs.doux} />
+            </Pressable>
+          </View>
+        </Fondu>
+      )}
+
       {revisions > 0 && (
         <Fondu>
           <Pressable
@@ -134,7 +198,12 @@ export default function Clinique() {
           <Fondu key={groupe.sujet}>
             <SousTitre>{groupe.sujet}</SousTitre>
             {groupe.sources.map((source) => (
-              <LigneSource key={`${groupe.sujet}-${source.id}`} source={source} traduire={traduire} />
+              <LigneSource
+                key={`${groupe.sujet}-${source.id}`}
+                source={source}
+                traduire={traduire}
+                onOuvrir={() => noterSourceOuverte(notee, source.id)}
+              />
             ))}
             <View style={styles.espace} />
           </Fondu>
@@ -171,15 +240,20 @@ export default function Clinique() {
 function LigneSource({
   source,
   traduire,
+  onOuvrir,
 }: {
   source: SourceListee;
   traduire: (cle: string) => string;
+  onOuvrir: () => void;
 }) {
   const accent = useAccent();
   const router = useRouter();
   return (
     <Pressable
-      onPress={() => void ouvrirSource(source, !!reglagesVeille().veille_navigateur)}
+      onPress={() => {
+        onOuvrir();
+        void ouvrirSource(source, !!reglagesVeille().veille_navigateur);
+      }}
       onLongPress={() => router.push(`/lien/${source.id}`)}
       delayLongPress={400}
       style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
@@ -221,6 +295,18 @@ function LigneFixe({ lien }: { lien: LienFixe }) {
 
 const styles = StyleSheet.create({
   contenu: { paddingTop: espace.xl },
+  rappel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace.m,
+    borderWidth: 1.5,
+    borderRadius: rayon,
+    paddingVertical: espace.m,
+    paddingHorizontal: espace.l,
+    marginBottom: espace.l,
+  },
+  action: { borderRadius: rayon, paddingVertical: espace.s, paddingHorizontal: espace.m },
+  actionTexte: { fontSize: 13, fontFamily: police.demi, color: '#FFFFFF' },
   revisions: {
     flexDirection: 'row',
     alignItems: 'center',
