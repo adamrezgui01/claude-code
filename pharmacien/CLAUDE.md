@@ -121,3 +121,38 @@ qu'on ne les redécouvre pas trois fois.
   charpente : le menu, le démarrage, les réglages, et la reprogrammation des
   notifications au changement de langue. Un test les nomme et vérifie
   qu'aucune fonction du volet organisation ne s'y glisse.
+
+# Ce qu'on a décidé de ne pas faire
+
+Ces choix-là ont été pesés puis tranchés. Ils sont écrits ici pour ne pas être
+reproposés à chaque version. Chacun se rouvre, mais sur un argument neuf.
+
+- La dictée n'ajoute que des quarts. Modifier, déplacer, dupliquer ou supprimer
+  passe par la fiche. Une phrase mal comprise à la création ne coûte qu'un
+  abandon : rien n'existait encore. La même phrase sur un quart déjà entré
+  écrase du travail, et souvent sans que ça se voie. Une seule exception à
+  rouvrir plus tard : la duplication récurrente — « pareil tous les mardis
+  d'octobre » — qui n'écrase rien puisqu'elle ne fait qu'ajouter.
+- Pas de lecteur de commandes pour le répertoire. Une pharmacie se crée une
+  fois, avec une adresse, un taux, des codes d'accès, et se corrige rarement.
+  Dicter tout ça prendrait plus de temps que de le taper, et le lecteur devrait
+  apprendre un vocabulaire entier pour un geste qu'on pose deux fois par année.
+  La dictée d'un quart, elle, remplace un geste quotidien.
+- Pas d'écran de dictée maison tant que l'application tourne sur Expo Go. La
+  reconnaissance vocale native demande un module qui n'est pas dans Expo Go :
+  il faudrait un *development build*, donc un ordinateur, un câble et une
+  reconstruction à chaque essai. Le micro du clavier écrit déjà dans le champ,
+  la phrase reste lisible et corrigeable avant d'être lue — ce qu'aucune
+  commande vocale ne permet — et rien ne sort de l'appareil.
+- Pas d'intelligence artificielle dans cette version, ni locale ni par API. Le
+  lecteur de commandes est un lecteur à règles : gratuit, instantané, hors
+  ligne, et on peut dire exactement pourquoi il a compris ce qu'il a compris.
+  Une API ferait sortir de l'appareil une phrase qui contient un nom de
+  pharmacie et un horaire de travail, et coûterait à chaque usage. Un modèle
+  embarqué pèserait plus lourd que toute l'application pour ce qu'il ajouterait
+  ici. La couture existe dans `src/lib/veille/ia.ts` ; ce qui y est branché,
+  c'est `AUCUN_SERVICE`.
+- Pas de navigateur dans l'application. Une facture s'ouvre dans Safari, qui
+  sait imprimer, envoyer et archiver mieux que ce qu'on écrirait ici. Les
+  sources de la veille peuvent s'ouvrir dans la feuille du système — c'est
+  Safari aussi, présenté autrement, pas un navigateur à nous.
