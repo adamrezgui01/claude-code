@@ -40,6 +40,23 @@ Si une valeur attendue semble contredire la spécification, on laisse le test en
 échec, on le marque comme contesté, et on s'en explique. On ne la force pas
 dans le code pour obtenir du vert.
 
+## Les hooks ne s'appellent que dans un composant
+
+`useTextes`, `useState`, `useEffect` et les autres ne s'appellent que dans le
+corps d'un composant ou d'un hook personnalisé. Jamais dans une fonction
+ordinaire, jamais dans un rappel d'événement, jamais dans un `setTimeout`,
+jamais dans un gestionnaire de notification.
+
+Une fonction appelée depuis un rappel reçoit `t` et `langue` **en paramètres**.
+Elle ne va pas les chercher elle-même. Et on ne remplace pas non plus par un
+appel direct à `i18n.t` hors composant : le texte cesserait de se retraduire au
+changement de langue.
+
+Ce défaut ne se voit nulle part. Il passe le typage, il passe les tests, il
+passe le démarrage, et il casse au moment exact où l'usager touche le bouton.
+`npm test` lance donc le lint avant Jest, avec `react-hooks/rules-of-hooks` en
+erreur : une régression casse la suite.
+
 ## Où vivent les tests
 
 Dans `tests/`, un fichier par domaine. Ils portent sur la logique — les

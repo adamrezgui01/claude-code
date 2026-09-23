@@ -598,7 +598,6 @@ function BoutonMicro({ onPress }: { onPress: () => void }) {
  * n'importe quel autre geste.
  */
 function parametresDuQuart(fiche: Extract<Fiche, { action: 'quart' }>): string {
-  const { t } = useTextes();
   const parametres = new URLSearchParams();
   if (fiche.dates.length > 0) parametres.set('date', fiche.dates[0]);
   else if (fiche.calendrier) parametres.set('date', fiche.calendrier);
