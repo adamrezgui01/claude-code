@@ -31,6 +31,18 @@ const DEPART: EntreeLien[] = SOURCES_DEPART.map((source) => ({
 
 const CHAMPS = ['cle', 'titre', 'url_document', 'url_reference', 'categorie', 'motsCles'] as const;
 
+/**
+ * `url` est l'ancien nom de `url_document`.
+ *
+ * La colonne existe encore dans toutes les bases déjà installées, en NOT NULL
+ * et sans valeur par défaut — et on ne réécrit pas la table d'un usager pour
+ * si peu. On l'écrit donc avec la même valeur que `url_document`, et plus rien
+ * ne la lit. C'est le prix de ne jamais toucher aux données de quelqu'un.
+ */
+function avecAncienneColonne(entree: EntreeLien): string[] {
+  return [...CHAMPS.map((c) => entree[c]), entree.url_document];
+}
+
 export function listerLiens(): Lien[] {
   return db.getAllSync<Lien>('SELECT * FROM liens ORDER BY categorie, rang, titre COLLATE NOCASE');
 }
@@ -38,17 +50,18 @@ export function listerLiens(): Lien[] {
 export function creerLien(entree: EntreeLien): number {
   const rang =
     (db.getFirstSync<{ n: number }>('SELECT IFNULL(MAX(rang), 0) AS n FROM liens')?.n ?? 0) + 1;
-  const r = db.runSync(insertion('liens', [...CHAMPS, 'rang']), [
-    ...CHAMPS.map((c) => entree[c]),
+  const r = db.runSync(insertion('liens', [...CHAMPS, 'url', 'rang']), [
+    ...avecAncienneColonne(entree),
     rang,
   ]);
   return r.lastInsertRowId;
 }
 
 export function modifierLien(id: number, entree: EntreeLien) {
+  const colonnes = [...CHAMPS, 'url'];
   db.runSync(
-    `UPDATE liens SET ${CHAMPS.map((c) => `${c} = ?`).join(', ')} WHERE id = ?`,
-    [...CHAMPS.map((c) => entree[c]), id]
+    `UPDATE liens SET ${colonnes.map((c) => `${c} = ?`).join(', ')} WHERE id = ?`,
+    [...avecAncienneColonne(entree), id]
   );
 }
 
