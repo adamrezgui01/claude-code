@@ -1,5 +1,7 @@
 import { enregistrerRelance, reinitialiserRelance, supprimerFacture } from '../db/factures';
 import type { Facture } from '../db/types';
+import { texte } from '../i18n';
+import { langueCourante } from '../i18n';
 import { argent } from './format';
 import { annulerRappel, planifierRappel } from './notifications';
 import { instantRelance, joursEnAttente, relanceDue } from './relance';
@@ -24,8 +26,13 @@ export async function programmerRelance(facture: Facture, delaiJours: number) {
     return;
   }
   const id = await planifierRappel(
-    'Facture toujours impayée',
-    `${facture.pharmacie_nom} — facture ${facture.numero}, ${argent(facture.total)}, en attente depuis ${delaiJours} jours.`,
+    texte('notifications.relanceTitre'),
+    texte('notifications.relanceCorps', {
+      pharmacie: facture.pharmacie_nom,
+      numero: facture.numero,
+      montant: argent(facture.total, langueCourante()),
+      jours: delaiJours,
+    }),
     instantRelance(facture, delaiJours),
     { factureId: facture.id }
   );
