@@ -466,6 +466,10 @@ export const en: Dictionnaire = {
     effacer: 'Clear',
   },
   sujets: {
+    mpoc: 'COPD',
+    dyslipidemie: 'Dyslipidemia',
+    personnesAgees: 'Older adults',
+    allergies: 'Drug allergies',
     infectionsUrinaires: 'Urinary tract infections',
     pharyngite: 'Pharyngitis',
     conjonctivite: 'Conjunctivitis',
@@ -648,6 +652,8 @@ export const en: Dictionnaire = {
   },
 
   liens: {
+    pageOfficielle: 'Official page',
+    pageOfficielleAide: 'The organization’s page presenting the document. It follows the current version, while the file stays online under its old name.',
     unLien: 'Link',
     titreNouveau: 'New bookmark',
     titreModifier: 'Edit bookmark',

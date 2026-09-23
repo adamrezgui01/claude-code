@@ -12,9 +12,11 @@ import { SOURCES_DEPART, SUJETS_DEPART } from '../src/lib/veille/depart';
  * sans que rien ne tombe.
  */
 
-describe('les douze sujets de départ', () => {
-  test('ils sont douze', () => {
-    expect(SUJETS_DEPART).toHaveLength(12);
+describe('les sujets de départ', () => {
+  test('seize : les douze du 1.5, et quatre qu’a réclamés le répertoire vérifié', () => {
+    // MPOC, dyslipidémie, personnes âgées, allergies médicamenteuses. Les
+    // sources de la 2.2 les nommaient, et aucun des douze ne leur allait.
+    expect(SUJETS_DEPART).toHaveLength(16);
   });
 
   test('chaque clé est unique', () => {
@@ -47,9 +49,49 @@ describe('les douze sujets de départ', () => {
   });
 });
 
-describe('les huit signets fournis, enrichis', () => {
-  test('ils sont huit', () => {
-    expect(SOURCES_DEPART).toHaveLength(8);
+describe('le répertoire vérifié', () => {
+  test('dix-neuf documents', () => {
+    expect(SOURCES_DEPART).toHaveLength(19);
+  });
+
+  test('chacun porte une page officielle', () => {
+    // C'est la règle de la 2.2. Un PDF pointe vers un fichier, pas vers un
+    // sujet : sans page de référence, on n'a aucun moyen de savoir qu'une
+    // version plus récente existe ailleurs.
+    const sans = SOURCES_DEPART.filter((s) => !s.url_reference.trim());
+    expect(sans.map((s) => s.cle)).toEqual([]);
+  });
+
+  test('chacun porte aussi son document', () => {
+    const sans = SOURCES_DEPART.filter((s) => !s.url_document.trim());
+    expect(sans.map((s) => s.cle)).toEqual([]);
+  });
+
+  test('une même page officielle peut couvrir plusieurs documents', () => {
+    // L'index des guides d'usage optimal de l'INESSS en couvre onze à lui
+    // seul, et les guides de poche de la Société canadienne de cardiologie
+    // trois.
+    const parPage = new Map<string, number>();
+    for (const source of SOURCES_DEPART) {
+      parPage.set(source.url_reference, (parPage.get(source.url_reference) ?? 0) + 1);
+    }
+    expect(Math.max(...parPage.values())).toBeGreaterThan(1);
+    expect(parPage.size).toBeLessThan(SOURCES_DEPART.length);
+  });
+
+  test('le guide des AOD pointe vers la version de janvier 2022', () => {
+    // Celle de septembre 2021 est toujours en ligne, s'ouvre normalement, et
+    // est périmée. C'est exactement le danger que les deux adresses corrigent.
+    const aod = SOURCES_DEPART.find((s) => s.cle === 'ciusss_aod');
+    expect(aod?.url_document).toContain('janvier-2022');
+    expect(aod?.url_document).not.toContain('sept-2021');
+  });
+
+  test('aucun document ne vient de cgakit.com', () => {
+    // C'était la version 2 des critères STOPP/START, de 2016, qui se réfère
+    // au NICE et au BNF — donc au contexte britannique.
+    const cgakit = SOURCES_DEPART.filter((s) => s.url_document.includes('cgakit'));
+    expect(cgakit).toEqual([]);
   });
 
   test('chacun a une organisation et un type', () => {
@@ -67,13 +109,16 @@ describe('les huit signets fournis, enrichis', () => {
     expect(inconnus).toEqual([]);
   });
 
-  test('sept des huit portent au moins un sujet', () => {
-    // Le huitième est la base de données des produits : une référence qu'on
-    // ouvre pour un DIN, pas pour apprendre quelque chose sur une maladie.
-    // Lui coller un sujet au hasard rendrait la veille fausse dès le départ.
-    const avecSujet = SOURCES_DEPART.filter((s) => s.sujets.length > 0);
-    expect(avecSujet).toHaveLength(7);
-    expect(SOURCES_DEPART.find((s) => s.sujets.length === 0)?.cle).toBe('bdpp');
+  test('chacun porte au moins un sujet', () => {
+    // Le répertoire vérifié n'a plus de référence générale sans sujet : les
+    // dix-neuf documents portent tous sur quelque chose de précis.
+    const sans = SOURCES_DEPART.filter((s) => s.sujets.length === 0);
+    expect(sans.map((s) => s.cle)).toEqual([]);
+  });
+
+  test('chacun porte des synonymes dans les deux langues', () => {
+    const maigres = SOURCES_DEPART.filter((s) => s.motsCles.split(',').length < 4);
+    expect(maigres.map((s) => s.cle)).toEqual([]);
   });
 
   test('le rattachement se fait par la clé du signet, jamais par son titre', () => {

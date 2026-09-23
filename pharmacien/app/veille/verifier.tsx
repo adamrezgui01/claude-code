@@ -19,7 +19,7 @@ import { useTextes } from '../../src/i18n';
 import { aujourdhui, formatDateCourte } from '../../src/lib/dates';
 import { titreDuLien } from '../../src/lib/liens';
 import { etatContenu, etatSource } from '../../src/lib/veille/peremption';
-import { ouvrirSource } from '../../src/lib/veille/ouvrir';
+import { ouvrirPageOfficielle, ouvrirSource } from '../../src/lib/veille/ouvrir';
 import { Bouton, Carte, Champ, Doux, Ecran, Fondu, SousTitre, Vide } from '../../src/ui/composants';
 import { couleurs, espace, police, useAccent } from '../../src/ui/theme';
 
@@ -121,6 +121,17 @@ export default function Verifier() {
             <Ionicons name="open-outline" size={16} color={accent} />
             <Text style={[styles.lienTexte, { color: accent }]}>{t('veille.ouvrirSource')}</Text>
           </Pressable>
+
+          {/* Quand on doute qu'un PDF soit encore la bonne version, c'est
+              celle-ci qu'on rouvre : elle suit la version courante. */}
+          {!!source.url_reference && (
+            <Pressable
+              onPress={() => void ouvrirPageOfficielle(source)}
+              style={({ pressed }) => [styles.lien, pressed && { opacity: 0.6 }]}>
+              <Ionicons name="globe-outline" size={16} color={couleurs.doux} />
+              <Text style={styles.lienDiscret}>{t('clinique.pageOfficielle')}</Text>
+            </Pressable>
+          )}
 
           {enSaisie === source.id ? (
             <Fondu>
@@ -225,6 +236,7 @@ const styles = StyleSheet.create({
   titre: { fontSize: 15, fontFamily: police.demi, color: couleurs.texte, lineHeight: 21 },
   lien: { flexDirection: 'row', alignItems: 'center', gap: espace.s, paddingVertical: espace.xs },
   lienTexte: { fontSize: 14, fontFamily: police.demi },
+  lienDiscret: { fontSize: 13, fontFamily: police.normal, color: couleurs.doux },
   actions: { flexDirection: 'row', gap: espace.m, marginTop: espace.s },
   action: { flex: 1 },
   supprimer: { alignItems: 'center', paddingTop: espace.s },

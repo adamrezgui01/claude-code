@@ -14,7 +14,10 @@ export type Lien = {
    */
   cle: string;
   titre: string;
-  url: string;
+  /** Le document lui-même : c'est ce qui s'ouvre au toucher. */
+  url_document: string;
+  /** La page officielle qui présente le document et suit sa version courante. */
+  url_reference: string;
   categorie: string;
   /** Synonymes courants, séparés par des virgules. Jamais affichés. */
   motsCles: string;

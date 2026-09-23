@@ -467,6 +467,10 @@ export const fr = {
     effacer: 'Effacer',
   },
   sujets: {
+    mpoc: 'MPOC',
+    dyslipidemie: 'Dyslipidémie',
+    personnesAgees: 'Personnes âgées',
+    allergies: 'Allergies médicamenteuses',
     infectionsUrinaires: 'Infections urinaires',
     pharyngite: 'Pharyngite',
     conjonctivite: 'Conjonctivite',
@@ -649,6 +653,8 @@ export const fr = {
   },
 
   liens: {
+    pageOfficielle: 'Page officielle',
+    pageOfficielleAide: 'La page de l’organisme qui présente le document. Elle suit sa version courante, alors que le fichier reste en ligne sous son ancien nom.',
     unLien: 'Lien',
     titreNouveau: 'Nouveau lien',
     titreModifier: 'Modifier le lien',

@@ -128,7 +128,7 @@ export default function Revision() {
                 <Pressable
                   onPress={() => {
                     noterConsultation(source.id);
-                    void Linking.openURL(source.url);
+                    void Linking.openURL(source.url_document);
                   }}
                   style={({ pressed }) => [styles.lien, pressed && { opacity: 0.6 }]}>
                   <Ionicons name="open-outline" size={16} color={accent} />

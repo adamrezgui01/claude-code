@@ -23,6 +23,7 @@ export default function FormulaireLien() {
 
   const [titre, setTitre] = useState('');
   const [url, setUrl] = useState('');
+  const [reference, setReference] = useState('');
   const [categorie, setCategorie] = useState('');
   const [motsCles, setMotsCles] = useState('');
   /** Vide pour un lien de l'usager ; conservé pour un lien fourni qu'il modifie. */
@@ -38,7 +39,8 @@ export default function FormulaireLien() {
     const l = obtenirLien(lienId);
     if (!l) return;
     setTitre(l.titre);
-    setUrl(l.url);
+    setUrl(l.url_document);
+    setReference(l.url_reference);
     setCategorie(l.categorie);
     setMotsCles(l.motsCles);
     setCle(l.cle);
@@ -57,7 +59,8 @@ export default function FormulaireLien() {
       // est le sien, et ne se traduit pas.
       cle,
       titre: titre.trim(),
-      url: url.trim(),
+      url_document: url.trim(),
+      url_reference: reference.trim(),
       categorie: categorie.trim(),
       motsCles: motsCles.trim(),
     };
@@ -97,6 +100,18 @@ export default function FormulaireLien() {
           onChange={setUrl}
           auto="none"
           placeholder={t('liens.adressePlaceholder')}
+        />
+        {/* La page officielle suit la version courante du document. C'est elle
+            qu'il faut rouvrir quand on doute, et c'est elle que la
+            surveillance regardera un jour — jamais le PDF. */}
+        <Champ
+          nu
+          label={t('liens.pageOfficielle')}
+          valeur={reference}
+          onChange={setReference}
+          auto="none"
+          placeholder={t('liens.adressePlaceholder')}
+          aide={t('liens.pageOfficielleAide')}
         />
       </Section>
 

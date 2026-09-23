@@ -17,15 +17,30 @@ import { noterConsultation } from '../../db/veille';
  * mode lecture, l'enregistrement dans Fichiers et les identifiants déjà gardés
  * pour une revue payante. Au comptoir, chercher une dose est un geste pressé.
  */
-export async function ouvrirSource(source: { id: number; url: string }, navigateurIntegre: boolean) {
+export async function ouvrirSource(
+  source: { id: number; url_document: string },
+  navigateurIntegre: boolean
+) {
   noterConsultation(source.id);
   if (navigateurIntegre) {
     try {
-      await WebBrowser.openBrowserAsync(source.url);
+      await WebBrowser.openBrowserAsync(source.url_document);
       return;
     } catch {
       // Un PDF que le navigateur intégré refuse ne doit pas rester fermé.
     }
   }
-  await Linking.openURL(source.url);
+  await Linking.openURL(source.url_document);
+}
+
+/**
+ * La page officielle de la source.
+ *
+ * C'est elle qu'on rouvre quand on doute qu'un PDF soit encore la bonne
+ * version : elle pointe toujours vers la version courante, alors que le
+ * fichier, lui, reste en ligne indéfiniment sous son ancien nom.
+ */
+export async function ouvrirPageOfficielle(source: { url_reference: string }) {
+  if (!source.url_reference) return;
+  await Linking.openURL(source.url_reference);
 }

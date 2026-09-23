@@ -77,6 +77,26 @@ export const SUJETS_DEPART: SujetDepart[] = [
     nom: 'Grossesse et allaitement',
     synonymes: 'enceinte, grossesse, allaitement, pregnancy, breastfeeding, lactation, tératogène',
   },
+  {
+    cle: 'mpoc',
+    nom: 'MPOC',
+    synonymes: 'MPOC, COPD, bronchopneumopathie, emphyseme, exacerbation, pompe, inhalateur',
+  },
+  {
+    cle: 'dyslipidemie',
+    nom: 'Dyslipidémie',
+    synonymes: 'cholesterol, LDL, statine, statin, lipides, lipids, triglycerides',
+  },
+  {
+    cle: 'personnesAgees',
+    nom: 'Personnes âgées',
+    synonymes: 'geriatrie, Beers, STOPP, START, deprescription, elderly, aine',
+  },
+  {
+    cle: 'allergies',
+    nom: 'Allergies médicamenteuses',
+    synonymes: 'allergie, penicilline, reaction, anaphylaxie, allergy, rash, intolerance',
+  },
 ];
 
 export type TypeSource =
@@ -89,82 +109,271 @@ export type TypeSource =
   | 'autre';
 
 export type SourceDepart = {
-  /** La clé du signet déjà fourni, qui sert de point d'ancrage. */
+  /** Repère de traduction et point d'ancrage du rattachement. */
   cle: string;
+  titre: string;
+  /** Le document lui-même. C'est ce qui s'ouvre au toucher. */
+  url_document: string;
+  /**
+   * La page officielle qui présente le document et pointe toujours vers sa
+   * version courante. Obligatoire, et partagée quand un même index couvre
+   * plusieurs documents — les guides d'usage optimal de l'INESSS en sont dix.
+   */
+  url_reference: string;
   organisation: string;
   type: TypeSource;
   officielle: boolean;
-  /** Les clés de sujets rattachés. Peut être vide : voir la note ci-dessous. */
   sujets: string[];
+  /** Synonymes cachés, dans les deux langues. Jamais affichés, cherchés quand même. */
+  motsCles: string;
 };
 
-/**
- * Les huit signets fournis, enrichis.
- *
- * Le rattachement se fait par la clé du signet, jamais par son titre : un
- * usager qui a renommé « Cystite » en « UTI » garde ses sujets.
- *
- * La base de données des produits pharmaceutiques n'a volontairement aucun
- * sujet. C'est une référence générale qu'on ouvre pour un DIN ou une
- * monographie, pas pour apprendre quelque chose sur une maladie en
- * particulier. Lui coller un sujet au hasard pour que la liste soit complète
- * rendrait la veille bavarde et fausse dès le premier jour.
- */
 export const SOURCES_DEPART: SourceDepart[] = [
   {
-    cle: 'cystite',
+    cle: 'inesss_uti',
+    titre: 'Infection urinaire (14 ans et +)',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide_InfectionUrinaire.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
     sujets: ['infectionsUrinaires', 'antibiotherapie'],
+    motsCles: 'cystite, IVU, UTI, urinary tract infection, urinaire, pyelonephrite, nitrofurantoine',
   },
   {
-    cle: 'pharyngite',
+    cle: 'inesss_pharyngite',
+    titre: 'Pharyngite – amygdalite',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide-PharyngiteAmygdalite.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
     sujets: ['pharyngite', 'antibiotherapie'],
+    motsCles: 'gorge, strep, streptocoque, angine, sore throat, tonsillitis, amoxicilline',
   },
   {
-    cle: 'conjonctivite',
+    cle: 'inesss_rhino_adulte',
+    titre: 'Rhinosinusite aiguë, adulte',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide-Rhinosinusite-Adulte.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
-    sujets: ['conjonctivite'],
+    sujets: ['antibiotherapie'],
+    motsCles: 'sinusite, rhinosinusite, sinus, sinusitis, congestion',
   },
   {
-    cle: 'ordonnances',
+    cle: 'inesss_rhino_enfant',
+    titre: 'Rhinosinusite aiguë, enfant',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide-Rhinosinusite-Enfant.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
-    sujets: ['infectionsUrinaires', 'pharyngite', 'conjonctivite'],
+    sujets: ['antibiotherapie', 'pediatrie'],
+    motsCles: 'sinusite, enfant, pediatrique, sinusitis, child',
   },
   {
-    cle: 'hypertension',
-    organisation: 'Hypertension Canada',
+    cle: 'inesss_pneumo_adulte',
+    titre: 'Pneumonie acquise en communauté, adulte',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide_Pneumo_Web.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sujets: ['antibiotherapie'],
+    motsCles: 'pneumonie, PAC, pneumonia, CAP, poumon, toux',
+  },
+  {
+    cle: 'inesss_pneumo_enfant',
+    titre: 'Pneumonie acquise en communauté, enfant',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide-Pneumonie-Enfant.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sujets: ['antibiotherapie', 'pediatrie'],
+    motsCles: 'pneumonie, enfant, pediatrique, pneumonia, child',
+  },
+  {
+    cle: 'inesss_bronchite',
+    titre: 'Bronchite aiguë',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide_BronchiteAigue.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sujets: ['antibiotherapie'],
+    motsCles: 'bronchite, toux, bronchitis, cough',
+  },
+  {
+    cle: 'inesss_mpoc',
+    titre: 'Exacerbation aiguë de la MPOC',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/INESSS_GUO_EAMPOC.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sujets: ['mpoc', 'antibiotherapie'],
+    motsCles: 'MPOC, COPD, EAMPOC, exacerbation, bronchopneumopathie, pompe',
+  },
+  {
+    cle: 'inesss_fa',
+    titre: 'Fibrillation auriculaire chez l’adulte',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/Warfarine/GUO_Fibrillation_FR.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sujets: ['anticoagulation'],
+    motsCles: 'FA, fibrillation auriculaire, atrial fibrillation, AFib, CHADS',
+  },
+  {
+    cle: 'inesss_tev',
+    titre: 'Thrombose veineuse et embolie pulmonaire',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/Warfarine/GUO_Thromboembolie_FR.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sujets: ['anticoagulation'],
+    motsCles: 'TVP, EP, thrombose, embolie, DVT, PE, thromboembolie',
+  },
+  {
+    cle: 'inesss_warfarine',
+    titre: 'Protocole médical national — warfarine',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Ordonnances_collectives/Anticoagulotherapie/INESSS_Protocole_medical_national_Warfarine.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sujets: ['anticoagulation'],
+    motsCles: 'warfarine, INR, coumadin, warfarin, ajustement',
+  },
+  {
+    cle: 'inesss_penicillines',
+    titre: 'Allergie aux pénicillines',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Medicaments/Outil_allergies_penicillines_vfinale.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/publications/repertoire-des-publications/publication/allergie-aux-penicillines.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sujets: ['allergies', 'antibiotherapie'],
+    motsCles: 'allergie, penicilline, penicillin allergy, amoxicilline, cephalosporine, reaction',
+  },
+  {
+    cle: 'ciusss_aod',
+    titre: 'Guide des anticoagulants oraux directs',
+    url_document:
+      'https://www.ciusss-capitalenationale.gouv.qc.ca/sites/d8/files/docs/ProfSante/Pharmacie/Guide-AOD-version-3.0-janvier-2022.pdf',
+    url_reference:
+      'https://ciusss-capitalenationale.gouv.qc.ca/professionnels-sante/pharmaciens/crsp/aco',
+    organisation: 'CIUSSS de la Capitale-Nationale',
+    type: 'local',
+    officielle: true,
+    sujets: ['anticoagulation'],
+    motsCles: 'AOD, DOAC, apixaban, rivaroxaban, edoxaban, dabigatran, eliquis, xarelto',
+  },
+  {
+    cle: 'ccs_ic',
+    titre: 'Insuffisance cardiaque (pocket guide)',
+    url_document:
+      'https://ccs.ca/wp-content/uploads/2026/04/CCS_Pocket_Guide_HFnrEF_ENG.pdf',
+    url_reference:
+      'https://ccs.ca/pocket-guides/',
+    organisation: 'Société canadienne de cardiologie',
     type: 'societe',
+    officielle: true,
+    sujets: ['insuffisanceCardiaque'],
+    motsCles: 'insuffisance cardiaque, heart failure, HFrEF, oedeme, diuretique, sacubitril',
+  },
+  {
+    cle: 'ccs_antiplaquettaires',
+    titre: 'Antiplaquettaires (2018)',
+    url_document:
+      'https://ccs.ca/wp-content/uploads/2020/11/APT_Gui_2018_PG_EN_web.pdf',
+    url_reference:
+      'https://ccs.ca/pocket-guides/',
+    organisation: 'Société canadienne de cardiologie',
+    type: 'societe',
+    officielle: true,
+    sujets: ['anticoagulation'],
+    motsCles: 'antiplaquettaire, antiplatelet, clopidogrel, ticagrelor, aspirine, DAPT, stent',
+  },
+  {
+    cle: 'ccs_lipides',
+    titre: 'Dyslipidémie (2022)',
+    url_document:
+      'https://ccs.ca/wp-content/uploads/2022/07/2022-Lipids-Gui-PG-EN.pdf',
+    url_reference:
+      'https://ccs.ca/pocket-guides/',
+    organisation: 'Société canadienne de cardiologie',
+    type: 'societe',
+    officielle: true,
+    sujets: ['dyslipidemie'],
+    motsCles: 'lipides, cholesterol, LDL, statine, statin, dyslipidemie, lipids',
+  },
+  {
+    cle: 'hc_hta',
+    titre: 'Hypertension chez l’adulte en première ligne (2025)',
+    url_document:
+      'https://www.cmaj.ca/content/cmaj/197/20/E549.full.pdf',
+    url_reference:
+      'https://www.cmaj.ca/content/197/20/E549',
+    organisation: 'Hypertension Canada',
+    type: 'ligneDirectrice',
     officielle: true,
     sujets: ['hypertension'],
+    motsCles: 'HTA, pression, tension arterielle, blood pressure, BP, antihypertenseur',
   },
   {
-    cle: 'diabete',
-    organisation: 'Diabète Canada',
+    cle: 'beers',
+    titre: 'Critères de Beers (2023)',
+    url_document:
+      'https://agsjournals.onlinelibrary.wiley.com/doi/epdf/10.1111/jgs.18372',
+    url_reference:
+      'https://doi.org/10.1111/jgs.18372',
+    organisation: 'American Geriatrics Society',
     type: 'societe',
     officielle: true,
-    sujets: ['diabete'],
+    sujets: ['personnesAgees'],
+    motsCles: 'Beers, personne agee, geriatrie, deprescription, potentially inappropriate, elderly',
   },
   {
-    cle: 'piq',
-    organisation: 'MSSS',
-    type: 'gouvernemental',
+    cle: 'stopp_start',
+    titre: 'Critères STOPP/START version 3',
+    url_document:
+      'https://doi.org/10.1007/s41999-023-00777-y',
+    url_reference:
+      'https://doi.org/10.1007/s41999-023-00777-y',
+    organisation: 'European Geriatric Medicine',
+    type: 'revue',
     officielle: true,
-    sujets: ['vaccination', 'pediatrie'],
-  },
-  {
-    cle: 'bdpp',
-    organisation: 'Santé Canada',
-    type: 'monographie',
-    officielle: true,
-    sujets: [],
+    sujets: ['personnesAgees'],
+    motsCles: 'STOPP, START, personne agee, geriatrie, deprescription, elderly',
   },
 ];

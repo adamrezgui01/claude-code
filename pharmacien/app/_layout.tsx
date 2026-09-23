@@ -40,6 +40,9 @@ export default function Racine() {
 
   useEffect(() => {
     initialiserBase();
+    // La reprise du répertoire remet le repère de semaison à zéro : la veille
+    // passe donc avant, pour que les liens se sèment ensuite.
+    amorcerVeille();
     amorcerLiens();
     amorcerVeille();
     preparerNotifications();

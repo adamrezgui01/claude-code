@@ -301,6 +301,27 @@ export function initialiserBase() {
   ajouterColonne('liens', 'statut', "TEXT NOT NULL DEFAULT 'active'");
   ajouterColonne('liens', 'notes_source', "TEXT NOT NULL DEFAULT ''");
   ajouterColonne('liens', 'capture_desactivee', 'INTEGER NOT NULL DEFAULT 0');
+  /*
+   * Une source porte deux adresses.
+   *
+   * Un lien vers un PDF pointe vers un fichier, pas vers un sujet. Quand
+   * l'éditeur publie une nouvelle version, ou bien il écrase le fichier au
+   * même nom — et l'application sert la nouvelle version sans que rien ne le
+   * signale — ou bien il crée un nouveau nom, et l'ancien fichier reste en
+   * ligne, s'ouvre normalement, et est périmé. Le second cas est le dangereux.
+   *
+   * `url_document` est ce qui s'ouvre : le chemin fréquent reste un geste.
+   * `url_reference` est la page officielle qui présente le document et pointe
+   * toujours vers sa version courante. C'est elle que la surveillance de la
+   * phase 3 regardera, jamais le PDF.
+   *
+   * L'ancienne colonne `url` reste en place, vide de sens : la retirer
+   * demanderait de reconstruire la table, et rien ne justifie ce risque.
+   */
+  if (ajouterColonne('liens', 'url_document', "TEXT NOT NULL DEFAULT ''")) {
+    db.execSync("UPDATE liens SET url_document = url WHERE url_document = ''");
+  }
+  ajouterColonne('liens', 'url_reference', "TEXT NOT NULL DEFAULT ''");
   // Les signets déjà là sont réputés vérifiés le jour de la migration : sans
   // ça, les huit basculeraient dans « à revérifier » le premier soir.
   if (ajouterColonne('liens', 'date_verification', "TEXT NOT NULL DEFAULT ''")) {

@@ -56,6 +56,7 @@ export function rattacherSujetSource(sujetId: number, sourceId: number) {
  * en « UTI » garde ses sujets.
  */
 export function amorcerVeille() {
+  remplacerRepertoireV22();
   if (dejaFait('veille_amorcee')) return;
 
   const parCle = new Map<string, number>();
@@ -68,10 +69,13 @@ export function amorcerVeille() {
     const lien = db.getFirstSync<{ id: number }>('SELECT id FROM liens WHERE cle = ?', source.cle);
     if (!lien) continue;
     db.runSync(
-      'UPDATE liens SET organisation = ?, type_source = ?, officielle = ? WHERE id = ?',
+      `UPDATE liens SET organisation = ?, type_source = ?, officielle = ?,
+         date_verification = CASE WHEN date_verification = '' THEN ? ELSE date_verification END
+       WHERE id = ?`,
       source.organisation,
       source.type,
       source.officielle ? 1 : 0,
+      aujourdhui(),
       lien.id
     );
     for (const cle of source.sujets) {
@@ -81,6 +85,32 @@ export function amorcerVeille() {
   }
 
   marquerFait('veille_amorcee');
+}
+
+/**
+ * Le répertoire vérifié de la 2.2 remplace celui du 1.5.
+ *
+ * L'ancienne liste pointait vers des pages d'accueil et vers un guide des AOD
+ * dont l'éditeur diffuse aujourd'hui une version plus récente sous un autre
+ * nom de fichier : l'ancien restait en ligne, s'ouvrait normalement, et était
+ * périmé.
+ *
+ * On ne retire que les signets fournis, reconnaissables à leur clé. Ceux que
+ * l'usager a ajoutés lui-même n'en ont pas et ne sont jamais touchés.
+ */
+function remplacerRepertoireV22() {
+  if (dejaFait('repertoire_v2_2')) return;
+  const anciennes = ['cystite', 'pharyngite', 'conjonctivite', 'ordonnances', 'hypertension', 'diabete', 'piq', 'bdpp'];
+  for (const cle of anciennes) {
+    const lien = db.getFirstSync<{ id: number }>('SELECT id FROM liens WHERE cle = ?', cle);
+    if (!lien) continue;
+    db.runSync('DELETE FROM sujets_sources WHERE source_id = ?', lien.id);
+    db.runSync('DELETE FROM liens WHERE id = ?', lien.id);
+  }
+  // La semaison peut se rejouer : la nouvelle liste doit entrer.
+  db.runSync('DELETE FROM reprises WHERE repere = ?', 'veille_amorcee');
+  db.runSync('UPDATE reglages SET liens_amorces = 0 WHERE id = 1');
+  marquerFait('repertoire_v2_2');
 }
 
 // ---------------------------------------------------------------------------
@@ -418,7 +448,10 @@ export type Source = {
   id: number;
   cle: string;
   titre: string;
-  url: string;
+  /** Le document : c'est ce qui s'ouvre au toucher. */
+  url_document: string;
+  /** La page officielle, qui suit la version courante du document. */
+  url_reference: string;
   categorie: string;
   /** Synonymes cachés, dans les deux langues. Jamais affichés, cherchés quand même. */
   motsCles: string;

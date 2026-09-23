@@ -420,6 +420,8 @@ l'exige (art. 57) et que les clients sont des pharmacies québécoises.
 
 | Français | English |
 | --- | --- |
+| Page officielle | Official page |
+| La page de l’organisme qui présente le document. Elle suit sa version courante, alors que le fichier reste en ligne sous son ancien nom. | The organization’s page presenting the document. It follows the current version, while the file stays online under its old name. |
 | Lien | Link |
 | Nouveau lien | New bookmark \* |
 | Modifier le lien | Edit bookmark \* |
@@ -708,6 +710,20 @@ l'exige (art. 57) et que les clients sont des pharmacies québécoises.
 | {{mois}} | {{mois}} \* |
 | Déjà travaillé ici | Worked here before |
 
+## clinique
+
+| Français | English |
+| --- | --- |
+| Clinique | Clinical |
+| {{count}} note à revoir ce soir | {{count}} note to review tonight |
+| {{count}} notes à revoir ce soir | {{count}} notes to review tonight |
+| Chercher — cystite, AOD, DFGe… | Search — cystitis, DOAC, eGFR… |
+| Aucune source ne correspond. | No source matches. |
+| Références générales | General references |
+| Mes sujets et mes notes | My subjects and notes |
+| Voir la page officielle | View the official page |
+| Urgences | Emergencies |
+
 ## revision
 
 | Français | English |
@@ -730,6 +746,10 @@ l'exige (art. 57) et que les clients sont des pharmacies québécoises.
 
 | Français | English |
 | --- | --- |
+| MPOC | COPD |
+| Dyslipidémie | Dyslipidemia |
+| Personnes âgées | Older adults |
+| Allergies médicamenteuses | Drug allergies |
 | Infections urinaires | Urinary tract infections |
 | Pharyngite | Pharyngitis |
 | Conjonctivite | Conjunctivitis |
@@ -833,7 +853,7 @@ l'exige (art. 57) et que les clients sont des pharmacies québécoises.
 | Rappel quotidien | Daily reminder |
 | Un seul par jour, et seulement s’il y a quelque chose à faire | One a day at most, and only when there is something to do |
 | À quelle heure ? | At what time? |
-| Révisions par jour | Reviews per day |
+| Notes à revoir chaque soir | Notes to review each evening |
 | Les révisions en trop glissent au lendemain. Dix se font en cinq minutes. | Extras slide to the next day. Ten take five minutes. |
 | Proposer d’écrire une note | Offer to write a note |
 | Au retour d’un lien consulté depuis l’application | When you come back from a link opened in the app |
@@ -842,4 +862,4 @@ l'exige (art. 57) et que les clients sont des pharmacies québécoises.
 
 ---
 
-696 textes, dont 197 marqués à relire.
+711 textes, dont 197 marqués à relire.

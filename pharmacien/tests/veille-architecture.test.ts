@@ -43,7 +43,13 @@ const EXCEPTIONS = [
 const FRONTIERE = [join('app', 'lien', '[id].tsx')];
 
 /** Les fichiers qui sont le volet clinique, sans porter « veille » dans leur nom. */
-const VOLET_CLINIQUE = [join('app', '(tabs)', 'clinique.tsx'), join('src', 'ui', 'BandeauCapture.tsx')];
+const VOLET_CLINIQUE = [
+  join('app', '(tabs)', 'clinique.tsx'),
+  join('src', 'ui', 'BandeauCapture.tsx'),
+  // Les signets sont les sources : leur stockage appartient au volet clinique
+  // depuis que l'écran des liens utiles a déménagé dans l'onglet Clinique.
+  join('src', 'db', 'liens.ts'),
+];
 
 function fichiers(dossier: string): string[] {
   const trouves: string[] = [];
