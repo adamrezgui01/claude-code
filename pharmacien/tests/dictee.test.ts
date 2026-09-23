@@ -137,6 +137,16 @@ describe('groupe 3 — la dictée survit à la création de la pharmacie', () =>
     expect(valeursDictees(Object.fromEntries(params)).pause).toBe(30);
   });
 
+  test('« sans pause » traverse aussi : zéro est une valeur', () => {
+    const fiche = quart('Ajoute un quart jeudi de 9 à 5 au Proxim de Trois-Rivières sans pause');
+    expect(fiche.pauseMinutes).toBe(0);
+
+    // Sans ce zéro, la pharmacie qu'on vient de créer imposerait sa pause
+    // habituelle à un quart où l'usager a dit qu'il n'y en aurait pas.
+    const params = new URLSearchParams(parametresDuQuart(fiche));
+    expect(valeursDictees(Object.fromEntries(params)).pause).toBe(0);
+  });
+
   test('la pharmacie créée se reprend une seule fois', () => {
     expect(reprendrePharmacieCreee()).toBeNull();
     deposerPharmacieCreee(12);

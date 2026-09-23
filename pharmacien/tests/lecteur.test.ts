@@ -100,6 +100,27 @@ describe('groupe 2 — anglicismes et québécismes', () => {
     expect(f.pausePayee).toBe(true);
   });
 
+  test.each([
+    'Ajoute un shift jeudi de 9 à 5 au Familiprix sans pause',
+    'Mets un quart jeudi de 9 à 5 au Familiprix, pas de pause',
+    'Ajoute un shift jeudi de 9 à 5 au Familiprix, aucune pause',
+    'Ajoute un shift jeudi de 9 à 5 au Familiprix sans break',
+    'Ajoute un shift jeudi de 9 à 5 au Familiprix sans dîner',
+    'Add a shift Thursday 9 to 5 at Familiprix with no lunch',
+  ])('« %s » : zéro minute, et non une pause inconnue', (phrase) => {
+    const f = quart(phrase);
+    expect(f.pauseMinutes).toBe(0);
+    // Le reste de la phrase doit survivre au retrait de la mention.
+    expect(f.dates).toEqual(['2026-09-24']);
+    expect(f.heureDebut).toBe('09:00');
+    expect(f.pharmacieId).toBe(3);
+  });
+
+  test('une pause dont on ne dit rien reste inconnue et hérite', () => {
+    const f = quart('Ajoute un shift jeudi de 9 à 5 au Familiprix');
+    expect(f.pauseMinutes).toBeNull();
+  });
+
   test('une pause sans statut laisse celui de la pharmacie', () => {
     const f = quart('Mets un quart vendredi de 9 à 5 chez Bouchard, break de 30 minutes');
     expect(f.dates).toEqual(['2026-09-25']);

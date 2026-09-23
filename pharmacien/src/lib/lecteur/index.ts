@@ -120,6 +120,17 @@ function extrairePause(phrase: string): Extraction<{ minutes: number | null; pay
   let minutes: number | null = null;
 
   const essais: [RegExp, (t: RegExpExecArray) => number | null][] = [
+    // « Sans pause » est une pause de zéro minute, pas une pause dont on n'a
+    // rien dit. Les deux ne se confondent pas : zéro se facture huit heures
+    // pleines, tandis que l'inconnu reprend la pause habituelle de la
+    // pharmacie. Ce cas se lit avant les autres, sinon « pas de pause de 30
+    // minutes » — la durée qu'on refuse — se lirait comme une pause de 30.
+    [
+      new RegExp(
+        `\\b(?:sans|pas de|aucune?|no|without)(?:\\s+(?:a|de|d|du|la|le))?\\s+(?:${MOTS_PAUSE})\\b`
+      ),
+      () => 0,
+    ],
     [new RegExp(`un quart d heure(?:\\s+(?:de\\s+)?(?:${MOTS_PAUSE}))?`), () => 15],
     [new RegExp(`une demie? heure(?:\\s+(?:de\\s+)?(?:${MOTS_PAUSE}))?`), () => 30],
     [
