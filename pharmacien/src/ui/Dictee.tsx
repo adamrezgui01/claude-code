@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useTextes } from '../i18n';
+import { suiteDeLaLecture } from '../lib/dictee';
 import { lire, type ContexteLecteur, type Fiche, type Question } from '../lib/lecteur';
 import { Bouton } from './composants';
 import { couleurs, espace, police, rayon, useAccent } from './theme';
@@ -48,13 +49,30 @@ export function Dictee({
     }
   }, [ouvert]);
 
-  const lancer = () => {
+  /**
+   * Un seul bouton, « Terminé ». Le premier appui lit la phrase ; si le
+   * lecteur a tout compris, la fiche s'ouvre dans la foulée, sans demander un
+   * second geste pour confirmer ce que l'usager vient d'écrire lui-même.
+   *
+   * L'écran ne retient que ce qui a besoin de lui : une question à trancher,
+   * ou un message à lire. Le même bouton referme ensuite.
+   */
+  const terminer = () => {
+    if (fiche && fiche.action === 'quart') {
+      continuer();
+      return;
+    }
     const resultat = lire(phrase, contexte);
     if (resultat.action === 'incompris' || resultat.action === 'nonPrisEnCharge') {
       onIncomprise(phrase, resultat.action === 'incompris' ? 'incompris' : resultat.raison);
     }
     if (resultat.action === 'pharmacie') {
       onPharmacie(resultat.recherche);
+      onFermer();
+      return;
+    }
+    if (suiteDeLaLecture(resultat) === 'fermer' && resultat.action === 'quart') {
+      onQuart(resultat);
       onFermer();
       return;
     }
@@ -97,7 +115,7 @@ export function Dictee({
             multiline
             autoFocus
             returnKeyType="done"
-            onSubmitEditing={lancer}
+            onSubmitEditing={terminer}
           />
           <View style={styles.indice}>
             <Ionicons name="mic-outline" size={16} color={couleurs.doux} />
@@ -140,11 +158,11 @@ export function Dictee({
             </Text>
           )}
 
-          {fiche?.action === 'quart' ? (
-            <Bouton titre={t('dictee.ouvrir')} onPress={continuer} />
-          ) : (
-            <Bouton titre={t('dictee.lire')} onPress={lancer} desactive={phrase.trim().length === 0} />
-          )}
+          <Bouton
+            titre={t('dictee.termine')}
+            onPress={terminer}
+            desactive={phrase.trim().length === 0}
+          />
           <Pressable onPress={onFermer} hitSlop={8}>
             <Text style={styles.annuler}>{t('commun.annuler')}</Text>
           </Pressable>

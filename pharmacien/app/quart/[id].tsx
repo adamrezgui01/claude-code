@@ -15,6 +15,8 @@ import {
 import { delaisSecondaires, obtenirReglages } from '../../src/db/profil';
 import { calculerSiPossible } from '../../src/lib/distance';
 import { defautsQuart } from '../../src/lib/defauts';
+import { parametresNouvellePharmacie, valeursDictees } from '../../src/lib/dictee';
+import { reprendrePharmacieCreee } from '../../src/lib/retourPharmacie';
 import { joursDeLaSerie, repartirRecurrence } from '../../src/lib/recurrence';
 import {
   DISTANCE_INCONNUE,
@@ -105,6 +107,14 @@ export default function FormulaireQuart() {
   const [modeDeplacement, setModeDeplacement] = useState<ModeDeplacement>('aucun');
   const [creationPharmacie, setCreationPharmacie] = useState(false);
   const [nouvellePharmacie, setNouvellePharmacie] = useState('');
+  /**
+   * Le nom entendu par la dictée, absent du répertoire. Il ne devient jamais
+   * une pharmacie tout seul : il s'affiche sous le champ, et il faut passer
+   * par la fiche de pharmacie pour qu'il en devienne une.
+   */
+  const [nomEntendu, setNomEntendu] = useState<string | null>(null);
+  /** Ce que la dictée a posé sur cette fiche, gardé pour le reposer ensuite. */
+  const [dictee] = useState(() => valeursDictees(params));
 
   const [date, setDate] = useState(params.date ?? aujourdhui());
   const [heureDebut, setHeureDebut] = useState(params.heure ?? '09:00');
@@ -209,13 +219,8 @@ export default function FormulaireQuart() {
     // ce qui a été dit à voix haute l'emporte sur une valeur par défaut.
     // Zéro est une valeur : « sans pause » se dicte, et ne doit pas retomber
     // sur la pause habituelle de la pharmacie.
-    if (params.taux !== undefined) setTaux(params.taux);
-    if (params.pause !== undefined) setPause(Number(params.pause));
-    if (params.pausePayee !== undefined) setPausePayee(params.pausePayee === '1');
-    if (params.creer) {
-      setCreationPharmacie(true);
-      setNouvellePharmacie(params.creer);
-    }
+    reposerDictee();
+    if (params.creer) setNomEntendu(params.creer);
     if (params.jours) {
       const jours = params.jours.split(',').filter(Boolean);
       if (jours.length > 1) {
@@ -228,8 +233,31 @@ export default function FormulaireQuart() {
   useFocusEffect(
     useCallback(() => {
       if (quartId) setFrais(listerFrais(quartId));
+
+      // Retour de la fiche de pharmacie. Cette fiche-ci n'a jamais été
+      // démontée : tout ce qui avait été dicté est encore à l'écran, et il ne
+      // reste qu'à sélectionner la pharmacie qui vient d'être créée.
+      const creee = reprendrePharmacieCreee();
+      if (creee !== null) {
+        setPharmacies(listerPharmacies());
+        setRecentes(listerPharmaciesRecentes());
+        appliquerPharmacie(creee);
+        setNomEntendu(null);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [quartId])
   );
+
+  /**
+   * La dictée pose ses valeurs par-dessus celles héritées de la pharmacie : ce
+   * qui a été dit à voix haute l'emporte sur une valeur par défaut. Zéro est
+   * une valeur ; seul ce qui n'a pas été dicté hérite.
+   */
+  function reposerDictee() {
+    if (dictee.taux !== null) setTaux(dictee.taux);
+    if (dictee.pause !== null) setPause(dictee.pause);
+    if (dictee.pausePayee !== null) setPausePayee(dictee.pausePayee);
+  }
 
   /** Reprend les conditions de la pharmacie : taux, déplacement, repas, pause. */
   function appliquerPharmacie(id: number) {
@@ -256,6 +284,8 @@ export default function FormulaireQuart() {
     if (p.mode_deplacement === 'km' && defauts.kilometrage === null) {
       void completerDistance(p);
     }
+
+    reposerDictee();
   }
 
   async function completerDistance(p: Pharmacie) {
@@ -641,6 +671,26 @@ export default function FormulaireQuart() {
           </View>
         )}
 
+        {/* Un nom entendu que le répertoire ne connaît pas. La dictée ne crée
+            rien : elle propose, et la fiche de pharmacie reste le seul endroit
+            où une pharmacie se crée. */}
+        {nomEntendu !== null && pharmacieId === null && !creationPharmacie && (
+          <Fondu>
+            <View style={styles.proposition}>
+              <Bouton
+                titre={t('quart.creerEntendue', { nom: nomEntendu })}
+                variante="secondaire"
+                onPress={() =>
+                  router.push(
+                    `/pharmacie/nouvelle?${parametresNouvellePharmacie(nomEntendu, taux)}`
+                  )
+                }
+              />
+              <Doux>{t('quart.creerEntendueAide')}</Doux>
+            </View>
+          </Fondu>
+        )}
+
         {/* Un rappel de son propre drapeau, pour ne pas réaccepter par
             distraction. Il n'empêche rien. */}
         {aEviter && (
@@ -945,6 +995,10 @@ export default function FormulaireQuart() {
 const styles = StyleSheet.create({
   espacement: {
     marginTop: espace.m,
+  },
+  proposition: {
+    marginTop: espace.m,
+    gap: espace.s,
   },
   rangee: {
     flexDirection: 'row',

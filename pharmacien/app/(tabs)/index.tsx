@@ -35,6 +35,7 @@ import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notificatio
 import { detecterChevauchements } from '../../src/lib/stats';
 import type { ContexteLecteur, Fiche } from '../../src/lib/lecteur';
 import { Calendrier } from '../../src/ui/Calendrier';
+import { parametresDuQuart } from '../../src/lib/dictee';
 import { Dictee } from '../../src/ui/Dictee';
 import {
   BandeauAide,
@@ -590,26 +591,6 @@ function BoutonMicro({ onPress }: { onPress: () => void }) {
       <Ionicons name="mic-outline" size={22} color={accent} />
     </Pressable>
   );
-}
-
-/**
- * La fiche lue devient des paramètres de route : le formulaire de quart reste
- * le seul endroit où un quart se crée, et il s'ouvre pré-rempli comme après
- * n'importe quel autre geste.
- */
-function parametresDuQuart(fiche: Extract<Fiche, { action: 'quart' }>): string {
-  const parametres = new URLSearchParams();
-  if (fiche.dates.length > 0) parametres.set('date', fiche.dates[0]);
-  else if (fiche.calendrier) parametres.set('date', fiche.calendrier);
-  if (fiche.dates.length > 1) parametres.set('jours', fiche.dates.join(','));
-  if (fiche.heureDebut) parametres.set('heure', fiche.heureDebut);
-  if (fiche.heureFin) parametres.set('fin', fiche.heureFin);
-  if (fiche.pharmacieId !== null) parametres.set('pharmacie', `${fiche.pharmacieId}`);
-  if (fiche.pharmacieInconnue) parametres.set('creer', fiche.pharmacieInconnue);
-  if (fiche.taux !== null) parametres.set('taux', `${fiche.taux}`);
-  if (fiche.pauseMinutes !== null) parametres.set('pause', `${fiche.pauseMinutes}`);
-  if (fiche.pausePayee !== null) parametres.set('pausePayee', fiche.pausePayee ? '1' : '0');
-  return parametres.toString();
 }
 
 const styles = StyleSheet.create({

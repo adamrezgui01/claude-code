@@ -57,6 +57,7 @@ import {
   Separateur,
   SousTitre,
 } from '../../src/ui/composants';
+import { deposerPharmacieCreee } from '../../src/lib/retourPharmacie';
 import { SaisieAdresse } from '../../src/ui/SaisieAdresse';
 import { SelecteurDuree } from '../../src/ui/Selecteurs';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
@@ -69,7 +70,14 @@ export default function FichePharmacie() {
   const { t } = useTextes();
   const router = useRouter();
   const accent = useAccent();
-  const params = useLocalSearchParams<{ id: string; recherche?: string }>();
+  const params = useLocalSearchParams<{
+    id: string;
+    recherche?: string;
+    taux?: string;
+    /* « quart » : la fiche a été ouverte depuis un quart en cours de saisie,
+       qui attend derrière. Voir src/lib/retourPharmacie.ts. */
+    retour?: string;
+  }>();
   const nouvelle = params.id === 'nouvelle';
   const pharmacieId = nouvelle ? null : Number(params.id);
 
@@ -82,7 +90,8 @@ export default function FichePharmacie() {
   const [contactCourriel, setContactCourriel] = useState('');
   const [notes, setNotes] = useState('');
 
-  const [tauxHoraire, setTauxHoraire] = useState('');
+  /** Taux dicté : il vient de la phrase, pas du répertoire, et se corrige. */
+  const [tauxHoraire, setTauxHoraire] = useState(nouvelle ? (params.taux ?? '') : '');
   const [perDiem, setPerDiem] = useState('');
   const [pause, setPause] = useState(0);
   const [pausePayee, setPausePayee] = useState(false);
@@ -295,6 +304,10 @@ export default function FichePharmacie() {
 
     const id = pharmacieId ?? creerPharmacie(entree);
     if (pharmacieId) modifierPharmacie(pharmacieId, entree);
+    // Le quart resté derrière la reprend en revenant au premier plan. Rien
+    // n'est déposé quand la fiche a été ouverte depuis le répertoire : aucun
+    // quart n'attend cette pharmacie-là.
+    else if (params.retour === 'quart') deposerPharmacieCreee(id);
     await ecrireCodes(id, codes);
     await ecrireIdentifiants(id, { utilisateur: utilisateur.trim(), motDePasse, nip: nip.trim() });
     router.back();
