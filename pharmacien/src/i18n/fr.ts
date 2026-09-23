@@ -568,7 +568,7 @@ export const fr = {
     rappelActif: 'Rappel quotidien',
     rappelDetail: 'Un seul par jour, et seulement s’il y a quelque chose à faire',
     heureRappel: 'À quelle heure ?',
-    plafond: 'Révisions par jour',
+    plafond: 'Notes à revoir chaque soir',
     plafondAide: 'Les révisions en trop glissent au lendemain. Dix se font en cinq minutes.',
     bandeauReglage: 'Proposer d’écrire une note',
     bandeauReglageDetail: 'Au retour d’un lien consulté depuis l’application',

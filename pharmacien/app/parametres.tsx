@@ -11,6 +11,7 @@ import { facturesEnAttente } from '../src/db/factures';
 import { compterIncomprises, effacerIncomprises, listerIncomprises } from '../src/db/lecteur';
 import { definirReglageVeille, reglagesVeille } from '../src/db/veille';
 import { replanifierVeille } from '../src/lib/veille/planifier';
+import { PLAFOND_MAX, PLAFOND_MIN } from '../src/lib/veille/file';
 import {
   definirReglage,
   delaisSecondaires,
@@ -36,6 +37,7 @@ import {
 } from '../src/ui/composants';
 import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
 import { SelecteurHeure } from '../src/ui/Selecteurs';
+import { Compteur } from '../src/ui/Compteur';
 
 /** Délais proposés pour le rappel secondaire, en minutes. */
 const DELAIS = [30, 60, 120, 180];
@@ -243,13 +245,13 @@ export default function Parametres() {
             onChange={(v) => changerVeille('veille_heure', v, { heure: v })}
           />
         )}
-        <Champ
-          nu
+        <Compteur
           label={t('veille.plafond')}
-          valeur={`${veille.plafond}`}
-          onChange={(v) => changerVeille('veille_plafond', Number(v) || 0, { plafond: Number(v) || 0 })}
-          clavier="number-pad"
           aide={t('veille.plafondAide')}
+          valeur={veille.plafond}
+          min={PLAFOND_MIN}
+          max={PLAFOND_MAX}
+          onChange={(v) => changerVeille('veille_plafond', v, { plafond: v })}
         />
         <Interrupteur
           label={t('veille.bandeauReglage')}

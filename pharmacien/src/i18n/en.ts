@@ -567,7 +567,7 @@ export const en: Dictionnaire = {
     rappelActif: 'Daily reminder',
     rappelDetail: 'One a day at most, and only when there is something to do',
     heureRappel: 'At what time?',
-    plafond: 'Reviews per day',
+    plafond: 'Notes to review each evening',
     plafondAide: 'Extras slide to the next day. Ten take five minutes.',
     bandeauReglage: 'Offer to write a note',
     bandeauReglageDetail: 'When you come back from a link opened in the app',

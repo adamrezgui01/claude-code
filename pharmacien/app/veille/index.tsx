@@ -110,7 +110,7 @@ export default function Veille() {
   }
 
   return (
-    <Ecran>
+    <Ecran style={styles.contenu}>
       <Fondu>
         <Carte style={styles.tete}>
           <Text style={[styles.compte, { color: accent }]}>
@@ -243,6 +243,10 @@ export default function Veille() {
 }
 
 const styles = StyleSheet.create({
+  // La première carte porte une ombre, et l'en-tête de navigation mord
+  // dessus : au repos, son titre était coupé et ne se lisait qu'après avoir
+  // fait défiler. Un peu d'air en haut, et elle est entière à l'ouverture.
+  contenu: { paddingTop: espace.xl },
   tete: { gap: espace.m },
   compte: { fontSize: 22, fontFamily: police.gras },
   ligne: {

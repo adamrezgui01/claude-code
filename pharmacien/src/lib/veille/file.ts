@@ -1,3 +1,5 @@
+import { ajusterCompteur } from '../compteur';
+
 /**
  * La file du jour.
  *
@@ -24,6 +26,22 @@ export type NoteEnFile = {
 
 /** Dix par jour se font en cinq minutes. Quarante ne se font pas. */
 export const PLAFOND_DEFAUT = 10;
+
+/**
+ * Les bornes du réglage.
+ *
+ * En dessous de une, le réglage voudrait dire « ne plus rien réviser », et ça
+ * se dit autrement : en coupant le rappel. Au-dessus de cinquante, la file ne
+ * se fait plus, et une file qu'on ne fait pas est une file qu'on cesse
+ * d'ouvrir.
+ */
+export const PLAFOND_MIN = 1;
+export const PLAFOND_MAX = 50;
+
+/** Le pas des boutons − et +, avec ses bornes. */
+export function ajusterPlafond(valeur: number, pas: number): number {
+  return ajusterCompteur(valeur, pas, PLAFOND_MIN, PLAFOND_MAX);
+}
 
 /**
  * Une note sort de la file seulement quand **tous** ses sujets dorment.
