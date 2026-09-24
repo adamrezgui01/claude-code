@@ -93,6 +93,20 @@ export function plageValide(debut: string, fin: string): boolean {
   return minutes(fin) > minutes(debut);
 }
 
+/** Dernier cran de la journée : aucune disponibilité ne traverse minuit. */
+const DERNIER_CRAN = '23:30';
+
+/**
+ * L'heure de fin proposée dès que le début est choisi. La fin de journée de
+ * l'usager, sauf quand le début la dépasse déjà : on prend alors une heure de
+ * plus, sans jamais franchir minuit.
+ */
+export function finProposee(debut: string, bornes: Bornes): string {
+  if (minutes(debut) < minutes(bornes.fin)) return bornes.fin;
+  const uneHeureApres = minutes(debut) + 60;
+  return minutesEnHeure(Math.min(uneHeureApres, minutes(DERNIER_CRAN)));
+}
+
 /**
  * Les plages d'une même journée, ramenées au strict nécessaire.
  *

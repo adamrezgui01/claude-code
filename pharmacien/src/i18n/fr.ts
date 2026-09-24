@@ -833,6 +833,10 @@ export const fr = {
     rienDePrive:
       'L’image ne montre aucun nom de pharmacie, aucune heure et aucun montant.',
     partager: 'Partager mes disponibilités',
+    jeSuisDisponible: 'Je suis disponible',
+    deHeure: 'de',
+    aHeure: 'à',
+    finAvantDebut: 'La fin doit venir après le début. Une disponibilité ne traverse pas minuit.',
     rienDeclare: 'Rien d’offert ce jour-là.',
     journeeEntiere: 'Journée entière',
     bornes: 'Bornes de la journée',

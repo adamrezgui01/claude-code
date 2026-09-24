@@ -60,15 +60,24 @@ function Feuille({
           <View style={styles.poignee} />
           <Text style={styles.feuilleTitre}>{titre}</Text>
           {children}
-          <Pressable
-            style={({ pressed }) => [
-              styles.valider,
-              { backgroundColor: accent },
-              pressed && { opacity: 0.8 },
-            ]}
-            onPress={onFermer}>
-            <Text style={styles.validerTexte}>{t('commun.termine')}</Text>
-          </Pressable>
+          {/*
+            Un crochet, en bas à droite. Le mot « Terminé » n'apprenait rien
+            que la roulette ne disait déjà, et la commande n'engage rien : elle
+            referme. Elle garde son étiquette pour VoiceOver.
+          */}
+          <View style={styles.validerRangee}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('commun.termine')}
+              style={({ pressed }) => [
+                styles.valider,
+                { backgroundColor: accent },
+                pressed && { opacity: 0.8 },
+              ]}
+              onPress={onFermer}>
+              <Ionicons name="checkmark" size={24} color="#FFFFFF" />
+            </Pressable>
+          </View>
         </Pressable>
       </Pressable>
     </Modal>
@@ -549,15 +558,17 @@ const styles = StyleSheet.create({
     fontFamily: police.demi,
     marginTop: espace.m,
   },
-  valider: {
-    borderRadius: rayon,
-    paddingVertical: espace.m,
-    alignItems: 'center',
+  validerRangee: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
     marginTop: espace.l,
   },
-  validerTexte: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: police.demi,
+  /** Cible tactile de 48 points, même si le crochet en occupe 24. */
+  valider: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

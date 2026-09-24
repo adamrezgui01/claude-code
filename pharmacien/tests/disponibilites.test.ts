@@ -7,6 +7,7 @@ import {
   apresLeGlisser,
   joursTraverses,
   disponibilites,
+  finProposee,
   fusionner,
   joursOfferts,
   moisCouverts,
@@ -158,6 +159,21 @@ describe('groupe 3 — les heures', () => {
     expect(plageNommee('matin', bornes)).toEqual({ debut: '07:00', fin: '12:00' });
     expect(plageNommee('apresMidi', bornes)).toEqual({ debut: '12:00', fin: '17:00' });
     expect(plageNommee('soir', bornes)).toEqual({ debut: '17:00', fin: '23:00' });
+  });
+
+  test('la fin proposée suit la borne de fin de journée', () => {
+    expect(finProposee('09:00', BORNES_DEFAUT)).toBe('21:00');
+  });
+
+  test('un début après la borne propose une heure de plus', () => {
+    // Personne n'offre de neuf heures du soir à neuf heures du soir : quand le
+    // début dépasse la borne, la fin prend une heure d'avance sur lui.
+    expect(finProposee('21:00', BORNES_DEFAUT)).toBe('22:00');
+    expect(finProposee('22:30', BORNES_DEFAUT)).toBe('23:30');
+  });
+
+  test('la fin proposée ne traverse jamais minuit', () => {
+    expect(finProposee('23:30', BORNES_DEFAUT)).toBe('23:30');
   });
 
   test('les bornes par défaut sont 8 h et 21 h', () => {

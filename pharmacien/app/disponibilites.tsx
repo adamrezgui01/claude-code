@@ -13,8 +13,11 @@ import {
 import { obtenirReglages } from '../src/db/profil';
 import { useTextes } from '../src/i18n';
 import {
+  aimanterHeure,
   disponibilites,
+  finProposee,
   joursOfferts,
+  plageValide,
   moisCouverts,
   resumerPlages,
   SEMAINES,
@@ -25,6 +28,7 @@ import { aujourdhui, formatDateCourte, formatDateLongue, joursCourts } from '../
 import { Bouton, Doux, Onglets, SousTitre } from '../src/ui/composants';
 import { FeuilleSurgissante, type PointEcran } from '../src/ui/FeuilleSurgissante';
 import { GrilleDispos } from '../src/ui/GrilleDispos';
+import { SelecteurHeure } from '../src/ui/Selecteurs';
 import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
 
 /**
@@ -53,6 +57,12 @@ export default function Disponibilites() {
   const blocs = useMemo(() => moisCouverts(periode), [periode]);
   const initiales = joursCourts(langue);
   const [heures, setHeures] = useState<{ date: string; point: PointEcran } | null>(null);
+  const bornes = { debut: reglages.dispo_debut, fin: reglages.dispo_fin };
+  const [debutSaisi, setDebutSaisi] = useState(bornes.debut);
+  const [finSaisie, setFinSaisie] = useState(bornes.fin);
+  /** Le champ ouvert : le second s'ouvre tout seul dès que le premier ferme. */
+  const [champOuvert, setChampOuvert] = useState<'debut' | 'fin' | null>(null);
+  const [refus, setRefus] = useState(false);
 
   /**
    * Le geste s'écrit tout de suite. Rien à enregistrer : une disponibilité
@@ -72,7 +82,44 @@ export default function Disponibilites() {
   }
 
   function ouvrirHeures(date: string, point: PointEcran) {
+    // La fenêtre s'ouvre sur ce que la journée porte déjà, ou sur les bornes
+    // de la journée : dans les deux cas, il n'y a qu'à corriger.
+    const jour = periode.jours.find((j) => j.date === date);
+    const premiere = jour?.plages[0];
+    setDebutSaisi(premiere?.debut ?? bornes.debut);
+    setFinSaisie(premiere?.fin ?? bornes.fin);
+    setRefus(false);
+    setChampOuvert(null);
     setHeures({ date, point });
+  }
+
+  /**
+   * Le début choisi ouvre la fin dans la foulée : c'est un geste de moins sur
+   * le chemin fréquent, et la fin suit toujours le début.
+   */
+  function choisirDebut(valeur: string) {
+    const cale = aimanterHeure(valeur);
+    setDebutSaisi(cale);
+    setFinSaisie(finProposee(cale, bornes));
+    setRefus(false);
+  }
+
+  function enregistrerHeures() {
+    if (!heures) return;
+    if (!plageValide(debutSaisi, finSaisie)) {
+      setRefus(true);
+      return;
+    }
+    declarerJournee(heures.date, [
+      {
+        date: heures.date,
+        toute_la_journee: false,
+        heure_debut: debutSaisi,
+        heure_fin: finSaisie,
+      },
+    ]);
+    setPlages(listerDisponibilites());
+    setHeures(null);
   }
 
   async function partager() {
@@ -159,6 +206,32 @@ export default function Disponibilites() {
           <>
             <SousTitre>{formatDateLongue(heures.date, langue)}</SousTitre>
             <Doux>{resumerJournee(heures.date)}</Doux>
+            <Text style={styles.phrase}>{t('disponibilites.jeSuisDisponible')}</Text>
+            <View style={styles.deuxChamps}>
+              <SelecteurHeure
+                label={t('disponibilites.deHeure')}
+                valeur={debutSaisi}
+                ouvert={champOuvert === 'debut'}
+                onOuvert={(v) => setChampOuvert(v ? 'debut' : 'fin')}
+                onChange={choisirDebut}
+              />
+              <SelecteurHeure
+                label={t('disponibilites.aHeure')}
+                valeur={finSaisie}
+                ouvert={champOuvert === 'fin'}
+                onOuvert={(v) => setChampOuvert(v ? 'fin' : null)}
+                onChange={(v) => {
+                  setFinSaisie(aimanterHeure(v));
+                  setRefus(false);
+                }}
+              />
+            </View>
+            {refus && <Text style={styles.refus}>{t('disponibilites.finAvantDebut')}</Text>}
+            <Bouton
+              titre={t('commun.enregistrer')}
+              icone={<Ionicons name="checkmark" size={18} color="#FFFFFF" />}
+              onPress={enregistrerHeures}
+            />
           </>
         )}
       </FeuilleSurgissante>
@@ -285,5 +358,19 @@ const styles = StyleSheet.create({
   actions: {
     marginTop: espace.s,
     marginBottom: espace.m,
+  },
+  phrase: {
+    fontSize: 15,
+    fontFamily: police.normal,
+    color: couleurs.texte,
+  },
+  deuxChamps: {
+    flexDirection: 'row',
+    gap: espace.m,
+  },
+  refus: {
+    fontSize: 14,
+    fontFamily: police.demi,
+    color: couleurs.alerte,
   },
 });
