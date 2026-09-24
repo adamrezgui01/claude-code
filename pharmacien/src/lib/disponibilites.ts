@@ -31,11 +31,30 @@ export type PlageDispo = {
 
 export type EtatJour = 'neutre' | 'complet' | 'partiel';
 
+export type Heures = { debut: string; fin: string };
+
 export type JourDisponible = {
   date: string;
   etat: EtatJour;
   /** Les heures offertes. Vide pour une journée entière ou non déclarée. */
-  plages: { debut: string; fin: string }[];
+  plages: Heures[];
+  /**
+   * Les quarts déjà inscrits ce jour-là. Un repère, jamais un verrou : un
+   * quart de neuf heures à une heure laisse l'après-midi entièrement libre,
+   * et l'usager reste seul juge de ce qu'il offre.
+   *
+   * Ils ne sortent pas dans l'image : ce qu'on envoie dit ce qu'on offre, pas
+   * où l'on travaille déjà.
+   */
+  quarts: Heures[];
+};
+
+/** Un quart, vu d'ici : une date, deux heures, et l'annulation. */
+export type QuartDuJour = {
+  date: string;
+  heure_debut: string;
+  heure_fin: string;
+  annule?: number;
 };
 
 export type Disponibilites = {
@@ -158,8 +177,18 @@ export function fusionner(plages: PlageDispo[]): PlageDispo[] {
 export function disponibilites(
   plages: PlageDispo[],
   debut: string,
-  semaines: number
+  semaines: number,
+  quarts: QuartDuJour[] = []
 ): Disponibilites {
+  const prisParJour = new Map<string, Heures[]>();
+  for (const q of quarts) {
+    if (q.annule) continue;
+    prisParJour.set(q.date, [
+      ...(prisParJour.get(q.date) ?? []),
+      { debut: q.heure_debut, fin: q.heure_fin },
+    ]);
+  }
+
   const declarees = new Map<string, PlageDispo[]>();
   for (const p of fusionner(plages)) {
     declarees.set(p.date, [...(declarees.get(p.date) ?? []), p]);
@@ -168,14 +197,16 @@ export function disponibilites(
   const jours = Array.from({ length: semaines * 7 }, (_, i) => {
     const date = ajouterJours(debut, i);
     const dujour = declarees.get(date) ?? [];
-    if (dujour.length === 0) return { date, etat: 'neutre' as const, plages: [] };
+    const pris = prisParJour.get(date) ?? [];
+    if (dujour.length === 0) return { date, etat: 'neutre' as const, plages: [], quarts: pris };
     if (dujour.some((p) => p.toute_la_journee)) {
-      return { date, etat: 'complet' as const, plages: [] };
+      return { date, etat: 'complet' as const, plages: [], quarts: pris };
     }
     return {
       date,
       etat: 'partiel' as const,
       plages: dujour.map((p) => ({ debut: p.heure_debut, fin: p.heure_fin })),
+      quarts: pris,
     };
   });
 
@@ -265,4 +296,47 @@ export function resumerPlages(plages: { debut: string; fin: string }[]): string 
 function court(heure: string): string {
   const { h, min } = analyserHeure(heure);
   return min === 0 ? `${h}` : `${h}:${`${min}`.padStart(2, '0')}`;
+}
+
+/**
+ * Le quart que cette plage recouvre, s'il y en a un.
+ *
+ * Un quart de nuit appartient au jour où il commence, et s'arrête à minuit :
+ * celui du jeudi 22 h au vendredi 7 h occupe la fin du jeudi, jamais le début
+ * du vendredi. C'est la même règle que partout ailleurs.
+ */
+export function chevauchement(plage: Heures, quarts: QuartDuJour[]): Heures | null {
+  for (const q of quarts) {
+    if (q.annule) continue;
+    const debut = minutes(q.heure_debut);
+    const fin = minutes(q.heure_fin) <= debut ? 24 * 60 : minutes(q.heure_fin);
+    if (debut < minutes(plage.fin) && fin > minutes(plage.debut)) {
+      return { debut: q.heure_debut, fin: q.heure_fin };
+    }
+  }
+  return null;
+}
+
+/**
+ * La plage, réduite pour éviter le quart.
+ *
+ * Un quart au milieu couperait la plage en deux ; l'écran des heures n'en
+ * porte qu'une, alors on garde le plus grand morceau — et le matin quand les
+ * deux se valent. L'usager reste libre d'offrir l'autre moitié par un second
+ * appui long.
+ */
+export function ajusterAutourDuQuart(plage: Heures, quart: Heures): Heures | null {
+  const debutPlage = minutes(plage.debut);
+  const finPlage = minutes(plage.fin);
+  const debutQuart = minutes(quart.debut);
+  const finQuart = minutes(quart.fin) <= debutQuart ? 24 * 60 : minutes(quart.fin);
+
+  const avant = { debut: debutPlage, fin: Math.min(finPlage, debutQuart) };
+  const apres = { debut: Math.max(debutPlage, finQuart), fin: finPlage };
+  const dureeAvant = avant.fin - avant.debut;
+  const dureeApres = apres.fin - apres.debut;
+
+  if (dureeAvant <= 0 && dureeApres <= 0) return null;
+  const retenu = dureeAvant >= dureeApres ? avant : apres;
+  return { debut: minutesEnHeure(retenu.debut), fin: minutesEnHeure(retenu.fin) };
 }

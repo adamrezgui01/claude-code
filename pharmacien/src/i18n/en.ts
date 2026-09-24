@@ -829,6 +829,13 @@ export const en: Dictionnaire = {
     resume_other: '{{count}} days offered in this period.',
     rienDePrive: 'The image shows no pharmacy name, no hours and no amounts.',
     partager: 'Share my availability',
+    consigne:
+      'Tap a day to offer it, drag to take several, hold to pick hours.',
+    dejaUnQuart: 'You already have a shift',
+    dejaUnQuartDetail: 'On {{jour}}, from {{debut}} to {{fin}}.',
+    garderQuandMeme: 'Keep it anyway',
+    ajuster: 'Adjust',
+    gererCeQuart: 'Manage that shift',
     jeSuisDisponible: 'I am available',
     deHeure: 'from',
     aHeure: 'to',

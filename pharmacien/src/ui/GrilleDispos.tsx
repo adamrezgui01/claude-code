@@ -44,6 +44,7 @@ export function GrilleDispos({
   initiales,
   langue,
   accent,
+  montrerQuarts = false,
   onGeste,
   onHeures,
 }: {
@@ -51,8 +52,14 @@ export function GrilleDispos({
   initiales: string[];
   langue: Langue;
   accent: string;
-  onGeste: (dates: string[], geste: Geste) => void;
-  onHeures: (date: string, point: PointEcran) => void;
+  /**
+   * Les quarts déjà inscrits se voient dans la grille qu'on modifie, jamais
+   * dans celle qu'on envoie : l'image dit ce qu'on offre, pas où l'on
+   * travaille déjà.
+   */
+  montrerQuarts?: boolean;
+  onGeste?: (dates: string[], geste: Geste) => void;
+  onHeures?: (date: string, point: PointEcran) => void;
 }) {
   /** Aperçu du glissement en cours : rien n'est écrit avant le relâchement. */
   const [apercu, setApercu] = useState<{ dates: Set<string>; geste: Geste } | null>(null);
@@ -123,7 +130,7 @@ export function GrilleDispos({
           ouvert.current = true;
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
           // Le point est celui de l'écran : la fenêtre s'ouvre à partir de lui.
-          onHeures(date, { x: pageX, y: pageY });
+          onHeures?.(date, { x: pageX, y: pageY });
         }, MAINTIEN_LONG);
       },
 
@@ -145,11 +152,11 @@ export function GrilleDispos({
         if (!debut || ouvert.current) return;
 
         if (!glisse.current) {
-          onGeste([debut], apresLaTape(etats.current.get(debut) ?? 'neutre'));
+          onGeste?.([debut], apresLaTape(etats.current.get(debut) ?? 'neutre'));
           return;
         }
         const date = dateSous(e.nativeEvent.locationX, e.nativeEvent.locationY);
-        onGeste(joursTraverses(debut, date ?? debut), geste.current);
+        onGeste?.(joursTraverses(debut, date ?? debut), geste.current);
       },
 
       onPanResponderTerminate: () => {
@@ -165,9 +172,12 @@ export function GrilleDispos({
     grilles.current.set(mois, { haut: y, hauteur: height });
   }
 
+  // Sans gestes, la grille n'est qu'une image : c'est celle qui part.
+  const gestes = onGeste || onHeures ? pan.panHandlers : {};
+
   return (
     <View
-      {...pan.panHandlers}
+      {...gestes}
       onLayout={(e) => {
         largeur.current = e.nativeEvent.layout.width;
       }}>
@@ -185,7 +195,13 @@ export function GrilleDispos({
             {bloc.semaines.map((semaine, i) => (
               <View key={i} style={styles.ligne}>
                 {semaine.map((jour, j) => (
-                  <Case key={j} jour={jour} accent={accent} apercu={apercu} />
+                  <Case
+                    key={j}
+                    jour={jour}
+                    accent={accent}
+                    apercu={apercu}
+                    montrerQuarts={montrerQuarts}
+                  />
                 ))}
               </View>
             ))}
@@ -204,15 +220,18 @@ function Case({
   jour,
   accent,
   apercu,
+  montrerQuarts,
 }: {
   jour: JourDisponible | null;
   accent: string;
   apercu: { dates: Set<string>; geste: Geste } | null;
+  montrerQuarts: boolean;
 }) {
   if (!jour) return <View style={styles.case} />;
 
   const vise = apercu?.dates.has(jour.date) ?? false;
   const etat: EtatJour = vise ? (apercu?.geste === 'offrir' ? 'complet' : 'neutre') : jour.etat;
+  const quart = montrerQuarts && jour.quarts.length > 0;
 
   return (
     <View style={styles.case}>
@@ -230,6 +249,17 @@ function Case({
             {resumerPlages(jour.plages)}
           </Text>
         )}
+        {/*
+          Un quart déjà inscrit. Il n'empêche rien : il rappelle. Ses heures
+          s'écrivent quand la case est libre — c'est là qu'on décide — et un
+          simple point suffit quand les heures offertes occupent déjà la place.
+        */}
+        {quart && etat === 'neutre' && (
+          <Text style={styles.quartHeures} numberOfLines={1}>
+            {resumerPlages(jour.quarts)}
+          </Text>
+        )}
+        {quart && etat !== 'neutre' && <View style={styles.pointQuart} />}
       </View>
     </View>
   );
@@ -274,4 +304,15 @@ const styles = StyleSheet.create({
   chiffre: { fontSize: 15, fontFamily: police.demi, color: '#6E6875' },
   chiffreOffert: { color: '#FFFFFF', fontFamily: police.gras },
   heures: { fontSize: 8, fontFamily: police.demi, color: '#FFFFFF' },
+  quartHeures: { fontSize: 8, fontFamily: police.demi, color: '#8A8592' },
+  pointQuart: {
+    position: 'absolute',
+    top: 3,
+    right: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#FFFFFF',
+    opacity: 0.85,
+  },
 });

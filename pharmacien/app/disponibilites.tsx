@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Sharing from 'expo-sharing';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import ViewShot, { captureRef } from 'react-native-view-shot';
@@ -11,9 +11,12 @@ import {
   listerDisponibilites,
 } from '../src/db/disponibilites';
 import { obtenirReglages } from '../src/db/profil';
+import { listerQuarts } from '../src/db/quarts';
 import { useTextes } from '../src/i18n';
 import {
   aimanterHeure,
+  ajusterAutourDuQuart,
+  chevauchement,
   disponibilites,
   finProposee,
   joursOfferts,
@@ -24,7 +27,13 @@ import {
   SEMAINES_DEFAUT,
   type Geste,
 } from '../src/lib/disponibilites';
-import { aujourdhui, formatDateCourte, formatDateLongue, joursCourts } from '../src/lib/dates';
+import {
+  aujourdhui,
+  formatDateCourte,
+  formatDateLongue,
+  formatHeure,
+  joursCourts,
+} from '../src/lib/dates';
 import { Bouton, Doux, Onglets, SousTitre } from '../src/ui/composants';
 import { FeuilleSurgissante, type PointEcran } from '../src/ui/FeuilleSurgissante';
 import { GrilleDispos } from '../src/ui/GrilleDispos';
@@ -45,14 +54,16 @@ import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
 export default function Disponibilites() {
   const { t, langue } = useTextes();
   const accent = useAccent();
+  const router = useRouter();
   const capture = useRef<React.ComponentRef<typeof ViewShot>>(null);
   const [semaines, setSemaines] = useState<number>(SEMAINES_DEFAUT);
   const [plages, setPlages] = useState(listerDisponibilites);
+  const [quarts] = useState(listerQuarts);
   const [reglages] = useState(obtenirReglages);
 
   const periode = useMemo(
-    () => disponibilites(plages, aujourdhui(), semaines),
-    [plages, semaines]
+    () => disponibilites(plages, aujourdhui(), semaines, quarts),
+    [plages, quarts, semaines]
   );
   const blocs = useMemo(() => moisCouverts(periode), [periode]);
   const initiales = joursCourts(langue);
@@ -110,16 +121,73 @@ export default function Disponibilites() {
       setRefus(true);
       return;
     }
-    declarerJournee(heures.date, [
-      {
-        date: heures.date,
-        toute_la_journee: false,
-        heure_debut: debutSaisi,
-        heure_fin: finSaisie,
-      },
+    const plage = { debut: debutSaisi, fin: finSaisie };
+    const pris = chevauchement(plage, quartsDuJour(heures.date));
+    if (pris) {
+      avertirDuQuart(heures.date, plage, pris);
+      return;
+    }
+    ecrireHeures(heures.date, plage);
+  }
+
+  function ecrireHeures(date: string, plage: { debut: string; fin: string }) {
+    declarerJournee(date, [
+      { date, toute_la_journee: false, heure_debut: plage.debut, heure_fin: plage.fin },
     ]);
     setPlages(listerDisponibilites());
     setHeures(null);
+  }
+
+  /**
+   * Le chevauchement s'annonce, il ne s'interdit pas : l'usager sait ce qu'il
+   * fait, et il peut vouloir offrir la fin d'une journée déjà entamée.
+   *
+   * Ce que l'alerte ne propose pas : annuler ou remplacer le quart. Un quart
+   * est un engagement pris avec une pharmacie. Le supprimer par réflexe, au
+   * milieu d'une sélection de disponibilités, est un accident qui coûte cher.
+   * La fiche du quart s'ouvre d'ici, et la suppression y vit avec sa
+   * confirmation.
+   */
+  function avertirDuQuart(
+    date: string,
+    plage: { debut: string; fin: string },
+    pris: { debut: string; fin: string }
+  ) {
+    const ajuste = ajusterAutourDuQuart(plage, pris);
+    const boutons = [
+      { text: t('disponibilites.garderQuandMeme'), onPress: () => ecrireHeures(date, plage) },
+      { text: t('disponibilites.gererCeQuart'), onPress: () => ouvrirLeQuart(date) },
+    ];
+    if (ajuste) {
+      boutons.unshift({
+        text: t('disponibilites.ajuster'),
+        onPress: () => {
+          setDebutSaisi(ajuste.debut);
+          setFinSaisie(ajuste.fin);
+          setRefus(false);
+        },
+      });
+    }
+    Alert.alert(
+      t('disponibilites.dejaUnQuart'),
+      t('disponibilites.dejaUnQuartDetail', {
+        jour: formatDateLongue(date, langue),
+        debut: formatHeure(pris.debut, langue),
+        fin: formatHeure(pris.fin, langue),
+      }),
+      boutons
+    );
+  }
+
+  function quartsDuJour(date: string) {
+    return quarts.filter((q) => q.date === date);
+  }
+
+  function ouvrirLeQuart(date: string) {
+    const premier = quartsDuJour(date).find((q) => !q.annule);
+    if (!premier) return;
+    setHeures(null);
+    router.push(`/quart/${premier.id}`);
   }
 
   async function partager() {
@@ -141,6 +209,19 @@ export default function Disponibilites() {
     <View style={styles.cadre}>
       <Stack.Screen options={{ title: t('disponibilites.titre') }} />
       <ScrollView contentContainerStyle={styles.contenu}>
+        <Doux>{t('disponibilites.consigne')}</Doux>
+        <View style={styles.editeur}>
+          <GrilleDispos
+            blocs={blocs}
+            initiales={initiales}
+            langue={langue}
+            accent={accent}
+            montrerQuarts
+            onGeste={appliquer}
+            onHeures={ouvrirHeures}
+          />
+        </View>
+
         <Onglets
           libelle={t('disponibilites.periode')}
           options={SEMAINES.map((n) => ({
@@ -166,14 +247,8 @@ export default function Disponibilites() {
             })}
           </Text>
 
-          <GrilleDispos
-            blocs={blocs}
-            initiales={initiales}
-            langue={langue}
-            accent={accent}
-            onGeste={appliquer}
-            onHeures={ouvrirHeures}
-          />
+          {/* La même grille, sans les gestes ni les quarts : c'est l'image. */}
+          <GrilleDispos blocs={blocs} initiales={initiales} langue={langue} accent={accent} />
 
           <View style={styles.legende}>
             <View style={styles.legendeEntree}>
@@ -367,6 +442,9 @@ const styles = StyleSheet.create({
   deuxChamps: {
     flexDirection: 'row',
     gap: espace.m,
+  },
+  editeur: {
+    marginBottom: espace.l,
   },
   refus: {
     fontSize: 14,

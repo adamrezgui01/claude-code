@@ -833,6 +833,13 @@ export const fr = {
     rienDePrive:
       'L’image ne montre aucun nom de pharmacie, aucune heure et aucun montant.',
     partager: 'Partager mes disponibilités',
+    consigne:
+      'Touchez une journée pour l’offrir, glissez pour en prendre plusieurs, maintenez pour choisir des heures.',
+    dejaUnQuart: 'Vous avez déjà un quart',
+    dejaUnQuartDetail: 'Le {{jour}}, de {{debut}} à {{fin}}.',
+    garderQuandMeme: 'Garder quand même',
+    ajuster: 'Ajuster',
+    gererCeQuart: 'Gérer ce quart',
     jeSuisDisponible: 'Je suis disponible',
     deHeure: 'de',
     aHeure: 'à',

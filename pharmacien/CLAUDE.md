@@ -118,6 +118,17 @@ qu'on ne les redécouvre pas trois fois.
 - Le nombre de kilomètres dicté est toujours la distance jusqu'à la pharmacie,
   aller simple, comme le champ de la fiche. « Aller-retour » ne fait que cocher
   la case qui la double ; le lecteur ne divise ni ne multiplie rien tout seul.
+- Un quart n'empêche jamais d'offrir une journée : il se montre, il ne
+  bloque pas. Un quart de neuf heures à une heure laisse l'après-midi et la
+  soirée libres, et l'usager reste seul juge de ce qu'il offre. Quand une
+  disponibilité mord sur un quart, on le dit — et on ne propose jamais
+  d'annuler ni de remplacer le quart. C'est un engagement pris avec une
+  pharmacie ; le supprimer par réflexe, au milieu d'une sélection de
+  disponibilités, est un accident qui coûte cher. La fiche du quart s'ouvre
+  d'un lien, et la suppression y vit avec sa confirmation.
+- Ce qui part dans l'image des disponibilités dit ce qu'on offre, jamais où
+  l'on travaille déjà. Les quarts se voient dans la grille qu'on modifie et
+  nulle part ailleurs.
 - Le surnom d'une pharmacie sert à la reconnaître, jamais à la désigner
   ailleurs. Une facture porte le nom légal ; « le gros PJC » ne sort pas de
   l'appareil.

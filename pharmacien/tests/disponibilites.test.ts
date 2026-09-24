@@ -5,6 +5,8 @@ import {
   aimanterHeure,
   apresLaTape,
   apresLeGlisser,
+  ajusterAutourDuQuart,
+  chevauchement,
   joursTraverses,
   disponibilites,
   finProposee,
@@ -250,6 +252,75 @@ describe('groupe 3c — les gestes', () => {
 
   test('un glisser qui n’a pas bougé ne touche qu’une journée', () => {
     expect(joursTraverses('2026-09-24', '2026-09-24')).toEqual(['2026-09-24']);
+  });
+});
+
+// ===========================================================================
+// Groupe 3d — un quart ne bloque pas la journée
+// ===========================================================================
+
+describe('groupe 3d — les quarts', () => {
+  const QUART = { date: '2026-09-24', heure_debut: '09:00', heure_fin: '13:00' };
+
+  test('un quart ne rend pas la journée disponible', () => {
+    const periode = disponibilites([], DEPART, 2, [QUART]);
+    expect(periode.jours.find((j) => j.date === '2026-09-24')?.etat).toBe('neutre');
+  });
+
+  test('un quart ne retire pas une journée déclarée', () => {
+    // Un quart de neuf heures à une heure laisse l'après-midi et la soirée
+    // entièrement libres. La journée reste offerte ; le quart se voit.
+    const periode = disponibilites([plage('2026-09-24')], DEPART, 2, [QUART]);
+    const jeudi = periode.jours.find((j) => j.date === '2026-09-24');
+    expect(jeudi?.etat).toBe('complet');
+    expect(jeudi?.quarts).toEqual([{ debut: '09:00', fin: '13:00' }]);
+  });
+
+  test('un quart annulé ne se montre pas', () => {
+    const periode = disponibilites([], DEPART, 2, [{ ...QUART, annule: 1 }]);
+    expect(periode.jours.find((j) => j.date === '2026-09-24')?.quarts).toEqual([]);
+  });
+
+  test('une plage qui mord sur un quart est signalée', () => {
+    expect(chevauchement({ debut: '08:00', fin: '12:00' }, [QUART])).toEqual({
+      debut: '09:00',
+      fin: '13:00',
+    });
+  });
+
+  test('une plage qui suit le quart ne chevauche rien', () => {
+    expect(chevauchement({ debut: '13:00', fin: '17:00' }, [QUART])).toBeNull();
+  });
+
+  test('un quart de nuit occupe jusqu’à minuit, jamais le lendemain', () => {
+    const nuit = { date: '2026-09-24', heure_debut: '22:00', heure_fin: '07:00' };
+    expect(chevauchement({ debut: '21:00', fin: '23:00' }, [nuit])).not.toBeNull();
+    expect(chevauchement({ debut: '08:00', fin: '12:00' }, [nuit])).toBeNull();
+  });
+
+  test('ajuster retire le quart du début de la plage', () => {
+    expect(ajusterAutourDuQuart({ debut: '09:00', fin: '17:00' }, { debut: '09:00', fin: '13:00' }))
+      .toEqual({ debut: '13:00', fin: '17:00' });
+  });
+
+  test('ajuster retire le quart de la fin de la plage', () => {
+    expect(ajusterAutourDuQuart({ debut: '09:00', fin: '17:00' }, { debut: '13:00', fin: '17:00' }))
+      .toEqual({ debut: '09:00', fin: '13:00' });
+  });
+
+  test('un quart au milieu laisse le plus grand morceau', () => {
+    expect(ajusterAutourDuQuart({ debut: '08:00', fin: '20:00' }, { debut: '12:00', fin: '14:00' }))
+      .toEqual({ debut: '14:00', fin: '20:00' });
+  });
+
+  test('à morceaux égaux, celui du matin l’emporte', () => {
+    expect(ajusterAutourDuQuart({ debut: '09:00', fin: '17:00' }, { debut: '12:00', fin: '14:00' }))
+      .toEqual({ debut: '09:00', fin: '12:00' });
+  });
+
+  test('un quart qui couvre tout ne laisse rien à ajuster', () => {
+    expect(ajusterAutourDuQuart({ debut: '09:00', fin: '17:00' }, { debut: '08:00', fin: '18:00' }))
+      .toBeNull();
   });
 });
 
