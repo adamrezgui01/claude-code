@@ -17,6 +17,7 @@ import {
 import type { Pharmacie, QuartDetaille } from '../../src/db/types';
 import { fenetreHeures, pixelsParHeure } from '../../src/lib/agenda';
 import { etatQuart, heuresAvant, urgenceQuart } from '../../src/lib/echeance';
+import { etatFacturation } from '../../src/lib/facturation';
 import {
   ajouterJours,
   ajouterMois,
@@ -175,6 +176,16 @@ export default function Horaire() {
   const verrouilles = useMemo(
     () => new Set(quarts.filter(quartVerrouille).map((q) => q.id)),
     [quarts]
+  );
+
+  /**
+   * Faits, et pas encore facturés. Ils gardent leur couleur — c'est sur eux
+   * qu'il reste du travail, et c'est l'étape qui rapporte — et portent une
+   * pastille pour se distinguer de ce qui s'en vient.
+   */
+  const aFacturer = useMemo(
+    () => new Set(quarts.filter((q) => etatFacturation(q, maintenant) === 'aFacturer').map((q) => q.id)),
+    [quarts, maintenant]
   );
 
   const parJour = useMemo(() => {
@@ -417,6 +428,7 @@ export default function Horaire() {
               quartsParJour={parJour}
               chevauchements={chevauchements}
               verrouilles={verrouilles}
+              aFacturer={aFacturer}
               jourSelectionne={jour}
               onSelectionner={choisirJour}
               onChangerMois={(delta) => setMois(ajouterMois(mois, delta))}
@@ -456,6 +468,7 @@ export default function Horaire() {
                     plage={plage}
                     pxParMinute={pxParMinute}
                     verrouilles={verrouilles}
+                    aFacturer={aFacturer}
                     onOuvrir={ouvrirQuart}
                     onDeplacer={deplacer}
                     onDupliquer={dupliquer}
@@ -478,6 +491,7 @@ export default function Horaire() {
                         quart={q}
                         enConflit={chevauchements.has(q.id)}
                         verrouille={verrouilles.has(q.id)}
+                        aFacturer={aFacturer.has(q.id)}
                         enCours={enCoursIds.has(q.id)}
                         onPress={() => ouvrirQuart(q.id)}
                         onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
@@ -536,6 +550,7 @@ export default function Horaire() {
                   enCours
                   afficherDate
                   verrouille={verrouilles.has(q.id)}
+                  aFacturer={aFacturer.has(q.id)}
                   onPress={() => ouvrirQuart(q.id)}
                   onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
                 />
@@ -550,6 +565,7 @@ export default function Horaire() {
                     afficherDate
                     enConflit={chevauchements.has(q.id)}
                     verrouille={verrouilles.has(q.id)}
+                  aFacturer={aFacturer.has(q.id)}
                     onPress={() => ouvrirQuart(q.id)}
                     onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
                   />

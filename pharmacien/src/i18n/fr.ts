@@ -211,6 +211,7 @@ export const fr = {
     distanceInconnue: 'Distance inconnue',
     heuresCorrigees: 'Heures corrigées',
     nAPasEuLieu: 'N’a pas eu lieu',
+    aFacturer: 'À facturer',
     facturePar: 'Facturé · {{numero}}',
   },
 

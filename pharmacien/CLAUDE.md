@@ -86,7 +86,15 @@ qu'on ne les redécouvre pas trois fois.
   une. Elles ne se confondent pas, et l'inconnu ne s'affiche jamais comme 0 $.
 - Une fin d'horaire inférieure ou égale au début veut dire le lendemain.
 - Un quart bascule dans « Antérieurs » quand il est fini, pas quand sa date
-  est passée.
+  est passée. « Fini » se calcule à un seul endroit — `etatQuart` — et sert à
+  trois choses : la bascule, le verrou de facturation et la couleur. Deux
+  définitions finiraient par diverger, et le verrou est celle qui protège une
+  facture déjà envoyée.
+- Le gris ne dit qu'une chose : **facturé, donc figé**. Un quart fait mais pas
+  encore facturé est exactement le contraire — c'est celui sur lequel il reste
+  du travail, et c'est l'étape qui rapporte. Il garde sa couleur et porte une
+  pastille ; le griser dirait « rien à voir ici » sur la seule chose qui
+  attend.
 - Toute somme sortie d'un calcul est arrondie au cent avant d'être conservée.
 - Un montant facturable se calcule et s'arrondit **une seule fois**, sur le
   quart. Factures et statistiques additionnent des montants déjà arrondis :

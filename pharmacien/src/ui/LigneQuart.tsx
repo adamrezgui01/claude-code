@@ -13,6 +13,7 @@ export function LigneQuart({
   enConflit,
   afficherDate,
   verrouille,
+  aFacturer,
   enCours,
   onPress,
   onPressPharmacie,
@@ -22,6 +23,8 @@ export function LigneQuart({
   afficherDate?: boolean;
   /** Effectué et facturé : consultable, plus modifiable. */
   verrouille?: boolean;
+  /** Fait, pas encore facturé : il reste du travail dessus. */
+  aFacturer?: boolean;
   /**
    * Le quart de maintenant. Il n'a pas d'onglet à lui — il serait vide la
    * quasi-totalité du temps — alors il s'épingle en haut, en rouge.
@@ -85,6 +88,13 @@ export function LigneQuart({
         {verrouille && !annule && (
           <View style={styles.etiquette}>
             <Etiquette texte={t('quart.facturePar', { numero: quart.numero_facture })} ton="attente" />
+          </View>
+        )}
+        {/* Fait, et pas encore facturé : c'est la seule ligne de la liste sur
+            laquelle il reste quelque chose à faire. */}
+        {aFacturer && !annule && (
+          <View style={styles.etiquette}>
+            <Etiquette texte={t('quart.aFacturer')} ton="succes" />
           </View>
         )}
       </View>

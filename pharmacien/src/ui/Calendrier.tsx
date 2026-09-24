@@ -12,6 +12,7 @@ export function Calendrier({
   quartsParJour,
   chevauchements,
   verrouilles,
+  aFacturer,
   jourSelectionne,
   onSelectionner,
   onChangerMois,
@@ -21,6 +22,8 @@ export function Calendrier({
   chevauchements: Set<number>;
   /** Quarts effectués et facturés : leur point passe au gris. */
   verrouilles: Set<number>;
+  /** Faits, pas encore facturés : leur point se creuse au lieu de pâlir. */
+  aFacturer: Set<number>;
   jourSelectionne: string;
   onSelectionner: (iso: string) => void;
   onChangerMois: (delta: number) => void;
@@ -93,6 +96,13 @@ export function Calendrier({
                           style={[
                             styles.point,
                             { backgroundColor: verrouilles.has(q.id) ? couleurs.attente : accent },
+                            // Un point creux plutôt qu'un point plein : à cette
+                            // taille, une teinte de plus ne se verrait pas.
+                            aFacturer.has(q.id) && {
+                              backgroundColor: 'transparent',
+                              borderWidth: 2,
+                              borderColor: accent,
+                            },
                             chevauchements.has(q.id) && styles.pointConflit,
                           ]}
                         />

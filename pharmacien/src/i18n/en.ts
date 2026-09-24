@@ -213,6 +213,7 @@ export const en: Dictionnaire = {
     distanceInconnue: 'Distance unknown',
     heuresCorrigees: 'Hours corrected',
     nAPasEuLieu: 'Did not happen',
+    aFacturer: 'To invoice',
     facturePar: 'Invoiced · {{numero}}',
   },
 

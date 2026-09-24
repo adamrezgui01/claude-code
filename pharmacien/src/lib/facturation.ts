@@ -1,5 +1,5 @@
 import type { Quart } from '../db/types';
-import { finDuQuartInstant } from './echeance';
+import { etatQuart, finDuQuartInstant } from './echeance';
 
 /**
  * Les règles qui décident ce qu'une facture peut porter, et ce qu'un quart
@@ -86,6 +86,34 @@ export function quartVerrouille(quart: QuartFacturable, maintenant = Date.now())
   return (
     !!quart.numero_facture && !quart.annule && finDuQuartInstant(quart).getTime() <= maintenant
   );
+}
+
+/**
+ * L'état d'un quart, tel qu'il se lit d'un coup d'œil.
+ *
+ * Trois choses différentes, et une seule règle pour les trois écrans qui les
+ * affichent — l'agenda, la liste et le mois — plutôt que trois calculs qui
+ * finiraient par diverger.
+ *
+ * Le gris ne dit qu'une chose : **facturé, donc figé**. La facture est partie
+ * chez le client. Un quart fait mais pas encore facturé est exactement le
+ * contraire : c'est celui sur lequel il reste du travail, et c'est l'étape qui
+ * rapporte. Le griser dirait « rien à voir ici » sur la seule chose qui
+ * attend ; il garde donc sa couleur, et porte une pastille.
+ */
+export type EtatFacturation = 'annule' | 'aVenir' | 'aFacturer' | 'facture';
+
+export function etatFacturation(
+  quart: QuartFacturable,
+  maintenant = Date.now()
+): EtatFacturation {
+  if (quart.annule) return 'annule';
+  if (quartVerrouille(quart, maintenant)) return 'facture';
+  // « Fini » vient d'`etatQuart` : la même définition sert à la bascule vers
+  // « Antérieurs », au verrou de facturation et à la couleur. Deux
+  // définitions finiraient par diverger, et le verrou est celle qui protège
+  // une facture déjà envoyée.
+  return etatQuart(quart, maintenant) === 'anterieur' ? 'aFacturer' : 'aVenir';
 }
 
 /** L'inverse, écrit à l'endroit : ce quart accepte-t-il encore une retouche ? */

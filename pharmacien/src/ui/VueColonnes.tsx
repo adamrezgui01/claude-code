@@ -71,6 +71,7 @@ export function VueColonnes({
   plage,
   pxParMinute,
   verrouilles,
+  aFacturer,
   onOuvrir,
   onDeplacer,
   onDupliquer,
@@ -91,6 +92,8 @@ export function VueColonnes({
    * peut maintenir aussi longtemps qu'il veut, il ne se passe rien.
    */
   verrouilles: Set<number>;
+  /** Faits, pas encore facturés : ils gardent leur couleur et portent une pastille. */
+  aFacturer: Set<number>;
   onOuvrir: (id: number) => void;
   onDeplacer: (quartId: number, date: string, heure: string) => void;
   onDupliquer: (quartId: number, date: string, heure: string) => void;
@@ -380,6 +383,7 @@ export function VueColonnes({
         {rectangles.map(({ quart, x, y, largeur: l, hauteur: h }) => {
           const annule = !!quart.annule;
           const verrouille = verrouilles.has(quart.id);
+          const attendLaFacture = aFacturer.has(quart.id);
           const enCours = source?.id === quart.id;
           return (
             <View
@@ -405,6 +409,10 @@ export function VueColonnes({
                   opacity: enCours ? 0.3 : 1,
                 },
               ]}>
+              {/* Fait, pas encore facturé. La pastille rappelle qu'il reste
+                  quelque chose à faire ; la couleur reste vive parce que
+                  c'est vrai. */}
+              {attendLaFacture && <View style={[styles.pastilleFacture, { borderColor: accent }]} />}
               <Text style={[styles.blocNom, annule && styles.barre]} numberOfLines={unSeulJour ? 1 : 2}>
                 {quart.pharmacie_nom}
               </Text>
@@ -541,6 +549,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: espace.s,
     paddingVertical: 3,
     overflow: 'hidden',
+  },
+  pastilleFacture: {
+    position: 'absolute',
+    top: 3,
+    right: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    borderWidth: 2,
+    backgroundColor: '#FFFFFF',
   },
   blocNom: {
     fontSize: 12,
