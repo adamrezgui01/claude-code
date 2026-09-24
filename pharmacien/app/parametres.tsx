@@ -219,6 +219,22 @@ export default function Parametres() {
         />
       </Section>
 
+      <SousTitre>{t('disponibilites.bornes')}</SousTitre>
+      <Doux>{t('disponibilites.bornesAide')}</Doux>
+      <View style={styles.espacement} />
+      <Section>
+        <SelecteurHeure
+          label={t('disponibilites.borneDebut')}
+          valeur={reglages.dispo_debut}
+          onChange={(v) => modifier('dispo_debut', v)}
+        />
+        <SelecteurHeure
+          label={t('disponibilites.borneFin')}
+          valeur={reglages.dispo_fin}
+          onChange={(v) => modifier('dispo_fin', v)}
+        />
+      </Section>
+
       <SousTitre>{t('parametres.langue')}</SousTitre>
       <Doux>{t('parametres.langueAide')}</Doux>
       <View style={styles.espacement} />

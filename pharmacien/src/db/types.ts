@@ -175,6 +175,12 @@ export type Reglages = {
   rappel_delais: string;
   /** Langue choisie : « auto », « fr » ou « en ». */
   langue: ChoixLangue;
+  /**
+   * Bornes de la journée offerte. Elles ne servent qu'aux plages nommées :
+   * « jeudi matin » part de `dispo_debut`, « jeudi soir » finit à `dispo_fin`.
+   */
+  dispo_debut: string;
+  dispo_fin: string;
   /** Date du dernier bandeau de vérification des factures. */
   dernier_rappel_factures: string;
   /** Jours avant de relancer une facture restée en attente de paiement. */

@@ -825,13 +825,19 @@ export const fr = {
     /* L'image part chez un propriétaire : elle porte le mot au long. */
     titreImage: 'Disponibilités',
     periode: 'Période',
-    libre: 'Libre',
-    pris: 'Pris',
-    resume_one: '{{count}} jour libre sur la période.',
-    resume_other: '{{count}} jours libres sur la période.',
+    offert: 'Offert',
+    nonDeclare: 'Non déclaré',
+    partageImpossible: 'Le partage n’a pas fonctionné.',
+    resume_one: '{{count}} journée offerte sur la période.',
+    resume_other: '{{count}} journées offertes sur la période.',
     rienDePrive:
       'L’image ne montre aucun nom de pharmacie, aucune heure et aucun montant.',
     partager: 'Partager mes disponibilités',
+    bornes: 'Bornes de la journée',
+    borneDebut: 'Début de journée',
+    borneFin: 'Fin de journée',
+    bornesAide:
+      'Ce que « matin » et « soir » veulent dire quand vous les dictez. Le matin part du début, le soir finit à la fin.',
   },
 
   liensContenu: {

@@ -5,13 +5,14 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 
+import { listerDisponibilites } from '../src/db/disponibilites';
 import { obtenirReglages } from '../src/db/profil';
-import { listerQuarts } from '../src/db/quarts';
 import { useTextes } from '../src/i18n';
 import {
   disponibilites,
-  joursLibres,
+  joursOfferts,
   moisCouverts,
+  resumerPlages,
   SEMAINES,
   SEMAINES_DEFAUT,
 } from '../src/lib/disponibilites';
@@ -35,12 +36,12 @@ export default function Disponibilites() {
   const accent = useAccent();
   const capture = useRef<React.ComponentRef<typeof ViewShot>>(null);
   const [semaines, setSemaines] = useState<number>(SEMAINES_DEFAUT);
-  const [quarts] = useState(listerQuarts);
+  const [plages] = useState(listerDisponibilites);
   const [reglages] = useState(obtenirReglages);
 
   const periode = useMemo(
-    () => disponibilites(quarts, aujourdhui(), semaines),
-    [quarts, semaines]
+    () => disponibilites(plages, aujourdhui(), semaines),
+    [plages, semaines]
   );
   const blocs = useMemo(() => moisCouverts(periode), [periode]);
   const initiales = joursCourts(langue);
@@ -51,12 +52,12 @@ export default function Disponibilites() {
       // carte seule, sans le sélecteur de période ni le bouton.
       const uri = await captureRef(capture, { format: 'png', quality: 1, result: 'tmpfile' });
       if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert(t('facture.partageImpossible'));
+        Alert.alert(t('disponibilites.partageImpossible'));
         return;
       }
       await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('disponibilites.titre') });
     } catch (erreur) {
-      Alert.alert(t('facture.partageImpossible'), `${erreur}`);
+      Alert.alert(t('disponibilites.partageImpossible'), `${erreur}`);
     }
   }
 
@@ -107,13 +108,25 @@ export default function Disponibilites() {
                         <View
                           style={[
                             styles.pastille,
-                            jour.pris
-                              ? { backgroundColor: couleurs.grisPale }
+                            jour.etat === 'neutre'
+                              ? { backgroundColor: '#F1EEF1' }
                               : { backgroundColor: accent },
+                            jour.etat === 'partiel' && styles.pastillePartielle,
                           ]}>
-                          <Text style={[styles.chiffre, !jour.pris && styles.chiffreLibre]}>
+                          <Text
+                            style={[
+                              styles.chiffre,
+                              jour.etat !== 'neutre' && styles.chiffreOffert,
+                            ]}>
                             {Number(jour.date.slice(8))}
                           </Text>
+                          {/* Les heures dans la case même : une journée offerte à
+                              moitié ne se lit pas sans elles. */}
+                          {jour.etat === 'partiel' && (
+                            <Text style={styles.heures} numberOfLines={1}>
+                              {resumerPlages(jour.plages)}
+                            </Text>
+                          )}
                         </View>
                       )}
                     </View>
@@ -126,18 +139,16 @@ export default function Disponibilites() {
           <View style={styles.legende}>
             <View style={styles.legendeEntree}>
               <View style={[styles.puce, { backgroundColor: accent }]} />
-              <Text style={styles.legendeTexte}>{t('disponibilites.libre')}</Text>
+              <Text style={styles.legendeTexte}>{t('disponibilites.offert')}</Text>
             </View>
             <View style={styles.legendeEntree}>
-              <View style={[styles.puce, { backgroundColor: couleurs.grisPale }]} />
-              <Text style={styles.legendeTexte}>{t('disponibilites.pris')}</Text>
+              <View style={[styles.puce, { backgroundColor: '#F1EEF1' }]} />
+              <Text style={styles.legendeTexte}>{t('disponibilites.nonDeclare')}</Text>
             </View>
           </View>
         </ViewShot>
 
-        <Doux>
-          {t('disponibilites.resume', { count: joursLibres(periode) })}
-        </Doux>
+        <Doux>{t('disponibilites.resume', { count: joursOfferts(periode) })}</Doux>
         <View style={styles.actions}>
           <Bouton
             titre={t('commun.partager')}
@@ -225,9 +236,19 @@ const styles = StyleSheet.create({
     fontFamily: police.demi,
     color: '#6E6875',
   },
-  chiffreLibre: {
+  chiffreOffert: {
     color: '#FFFFFF',
     fontFamily: police.gras,
+  },
+  /** Une bordure pâle dit « pas toute la journée » sans changer la couleur. */
+  pastillePartielle: {
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  heures: {
+    fontSize: 8,
+    fontFamily: police.demi,
+    color: '#FFFFFF',
   },
   legende: {
     flexDirection: 'row',

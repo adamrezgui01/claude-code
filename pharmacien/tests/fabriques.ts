@@ -97,6 +97,8 @@ export function desReglages(champs: Partial<Reglages> = {}): Reglages {
     rappel_secondaire_actif: 0,
     rappel_delais: '[180]',
     langue: 'auto',
+    dispo_debut: '08:00',
+    dispo_fin: '21:00',
     dernier_rappel_factures: '',
     delai_relance_factures: 30,
     aide_horaire_vues: 0,

@@ -182,6 +182,18 @@ const SCHEMA = `
     le TEXT NOT NULL
   );
 
+  /* Les journées offertes. Une ligne par plage : deux plages le même jour —
+     le matin et le soir, avec un rendez-vous entre les deux — sont deux
+     lignes. Rien ici ne se déduit des quarts. */
+  CREATE TABLE IF NOT EXISTS disponibilites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,
+    toute_la_journee INTEGER NOT NULL DEFAULT 0,
+    heure_debut TEXT NOT NULL DEFAULT '',
+    heure_fin TEXT NOT NULL DEFAULT '',
+    horodatage_creation TEXT NOT NULL DEFAULT ''
+  );
+
   CREATE TABLE IF NOT EXISTS liens (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     /* Repère de traduction, vide pour un lien ajouté par l'usager. */
@@ -309,6 +321,9 @@ export function initialiserBase() {
   // Le nom que l'usager donne à une pharmacie. La dictée le reconnaît, et le
   // répertoire le cherche.
   ajouterColonne('pharmacies', 'surnom', "TEXT NOT NULL DEFAULT ''");
+  // Les bornes de la journée : ce que « matin » et « soir » veulent dire.
+  ajouterColonne('reglages', 'dispo_debut', "TEXT NOT NULL DEFAULT '08:00'");
+  ajouterColonne('reglages', 'dispo_fin', "TEXT NOT NULL DEFAULT '21:00'");
 
   // Le volet clinique. Un signet devient une source : mêmes lignes, quelques
   // colonnes de plus, pour que les deux listes ne divergent jamais.

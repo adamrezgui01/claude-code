@@ -822,12 +822,18 @@ export const en: Dictionnaire = {
     titre: 'My availability',
     titreImage: 'Availability',
     periode: 'Period',
-    libre: 'Free',
-    pris: 'Booked',
-    resume_one: '{{count}} free day in this period.',
-    resume_other: '{{count}} free days in this period.',
+    offert: 'Offered',
+    nonDeclare: 'Not declared',
+    partageImpossible: 'Sharing did not work.',
+    resume_one: '{{count}} day offered in this period.',
+    resume_other: '{{count}} days offered in this period.',
     rienDePrive: 'The image shows no pharmacy name, no hours and no amounts.',
     partager: 'Share my availability',
+    bornes: 'Day boundaries',
+    borneDebut: 'Day starts at',
+    borneFin: 'Day ends at',
+    bornesAide:
+      'What “morning” and “evening” mean when you dictate them. Morning starts at the first, evening ends at the second.',
   },
 
   liensContenu: {
