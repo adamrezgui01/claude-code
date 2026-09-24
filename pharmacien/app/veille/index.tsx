@@ -199,7 +199,11 @@ export default function Veille() {
           returnKeyType="search"
         />
         {recherche.length > 0 && (
-          <Pressable onPress={() => setRecherche('')} hitSlop={8}>
+          <Pressable
+            onPress={() => setRecherche('')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('commun.effacerRecherche')}>
             <Ionicons name="close-circle" size={16} color={couleurs.doux} />
           </Pressable>
         )}

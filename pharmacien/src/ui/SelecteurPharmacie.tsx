@@ -61,7 +61,11 @@ export function SelecteurPharmacie({
           autoCorrect={false}
         />
         {cherche && (
-          <Pressable onPress={() => setRecherche('')} hitSlop={8}>
+          <Pressable
+            onPress={() => setRecherche('')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('commun.effacerRecherche')}>
             <Ionicons name="close-circle" size={16} color={couleurs.doux} />
           </Pressable>
         )}
@@ -121,6 +125,8 @@ export function SelecteurPharmacie({
       {restantes > 0 && (
         <Pressable
           onPress={() => setToutAfficher(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t('commun.toutAfficher')}
           hitSlop={10}
           style={({ pressed }) => [styles.derouler, pressed && { opacity: 0.6 }]}>
           <Ionicons name="chevron-down" size={20} color={accent} />

@@ -135,6 +135,18 @@ qu'on ne les redécouvre pas trois fois.
 - Quand deux lectures d'une phrase tiennent debout, on pose une question avec
   des réponses à toucher. Une supposition silencieuse qui se trompe d'une
   demi-journée coûte un déplacement inutile ; une question coûte un geste.
+- **Aucune commande n'est du texte seul.** Une icône seule quand le sens est
+  évident sans explication — retour, fermer, rechercher, partager, imprimer,
+  dupliquer, supprimer, favori. Une icône *et* un mot quand l'icône seule
+  serait ambiguë : trois grilles de calendrier se ressemblent trop à 24 points
+  pour dire laquelle est le jour, la semaine et le mois. Les boutons qui
+  engagent gardent leur mot — Enregistrer, Supprimer, Annuler un quart : un
+  geste irréversible se lit avant de se faire.
+  Une icône seule porte toujours son `accessibilityLabel`, traduit : elle se
+  lit d'un coup d'œil quand on voit l'écran, et ne dit rien du tout quand on ne
+  le voit pas. Un test lit les écrans et refuse une commande muette. Un seul
+  jeu d'icônes dans toute l'application — Ionicons —, et une cible tactile d'au
+  moins 44 points même quand l'icône en occupe 24.
 - Un texte affiché vit dans `src/i18n`, jamais en dur dans un écran. La
   facture fait exception dans l'autre sens : elle est toujours en français,
   quelle que soit la langue choisie.

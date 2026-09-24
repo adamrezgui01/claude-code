@@ -148,6 +148,8 @@ export default function Clinique() {
                 refuserBandeauRecherche(aRevoir);
                 setARevoir(null);
               }}
+              accessibilityRole="button"
+              accessibilityLabel={t('commun.fermer')}
               hitSlop={10}>
               <Ionicons name="close" size={18} color={couleurs.doux} />
             </Pressable>
@@ -185,7 +187,11 @@ export default function Clinique() {
           returnKeyType="search"
         />
         {cherche && (
-          <Pressable onPress={() => setRecherche('')} hitSlop={8}>
+          <Pressable
+            onPress={() => setRecherche('')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('commun.effacerRecherche')}>
             <Ionicons name="close-circle" size={16} color={couleurs.doux} />
           </Pressable>
         )}
@@ -267,7 +273,11 @@ function LigneSource({
           </Text>
         )}
       </View>
-      <Pressable onPress={() => router.push(`/lien/${source.id}`)} hitSlop={12}>
+      <Pressable
+        onPress={() => router.push(`/lien/${source.id}`)}
+        accessibilityRole="button"
+        accessibilityLabel={traduire('commun.details')}
+        hitSlop={12}>
         <Ionicons name="ellipsis-horizontal" size={18} color={couleurs.doux} />
       </Pressable>
     </Pressable>

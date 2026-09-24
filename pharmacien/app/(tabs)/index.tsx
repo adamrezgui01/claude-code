@@ -377,9 +377,13 @@ export default function Horaire() {
           que là où il a un sens : en agenda. */}
       <Onglets
         options={[
-          { valeur: 'agenda' as const, texte: t('horaire.vueAgenda') },
-          { valeur: 'liste' as const, texte: t('horaire.vueListe') },
-          { valeur: 'carte' as const, texte: t('horaire.vueCarte') },
+          {
+            valeur: 'agenda' as const,
+            texte: t('horaire.vueAgenda'),
+            icone: 'calendar-outline' as const,
+          },
+          { valeur: 'liste' as const, texte: t('horaire.vueListe'), icone: 'list-outline' as const },
+          { valeur: 'carte' as const, texte: t('horaire.vueCarte'), icone: 'map-outline' as const },
         ]}
         valeur={vue}
         onChange={setVue}
@@ -390,9 +394,13 @@ export default function Horaire() {
           <Onglets
             libelle={t('horaire.affichage')}
             options={[
-              { valeur: 'jour' as const, texte: t('horaire.jour') },
-              { valeur: 'semaine' as const, texte: t('horaire.semaine') },
-              { valeur: 'mois' as const, texte: t('horaire.mois') },
+              { valeur: 'jour' as const, texte: t('horaire.jour'), icone: 'today-outline' as const },
+              {
+                valeur: 'semaine' as const,
+                texte: t('horaire.semaine'),
+                icone: 'calendar-number-outline' as const,
+              },
+              { valeur: 'mois' as const, texte: t('horaire.mois'), icone: 'grid-outline' as const },
             ]}
             valeur={affichage}
             onChange={setAffichage}
@@ -413,7 +421,11 @@ export default function Horaire() {
           ) : (
             <>
               <View style={styles.navigation}>
-                <Pressable onPress={() => setJour(ajouterJours(jour, -pas))} hitSlop={10}>
+                <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('commun.periodePrecedente')}
+        onPress={() => setJour(ajouterJours(jour, -pas))}
+        hitSlop={10}>
                   <Ionicons name="chevron-back" size={22} color={accent} />
                 </Pressable>
                 <Text style={styles.periode}>
@@ -421,7 +433,11 @@ export default function Horaire() {
                     ? formatDateLongue(jour)
                     : `${formatJourCourt(semaine[0])} – ${formatJourCourt(semaine[6])}`}
                 </Text>
-                <Pressable onPress={() => setJour(ajouterJours(jour, pas))} hitSlop={10}>
+                <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('commun.periodeSuivante')}
+        onPress={() => setJour(ajouterJours(jour, pas))}
+        hitSlop={10}>
                   <Ionicons name="chevron-forward" size={22} color={accent} />
                 </Pressable>
               </View>
@@ -493,8 +509,16 @@ export default function Horaire() {
           */}
           <Onglets
             options={[
-              { valeur: 'aVenir' as const, texte: t('horaire.aVenir') },
-              { valeur: 'anterieurs' as const, texte: t('horaire.anterieurs') },
+              {
+                valeur: 'aVenir' as const,
+                texte: t('horaire.aVenir'),
+                icone: 'arrow-forward-outline' as const,
+              },
+              {
+                valeur: 'anterieurs' as const,
+                texte: t('horaire.anterieurs'),
+                icone: 'arrow-back-outline' as const,
+              },
             ]}
             valeur={sens}
             onChange={setSens}

@@ -313,6 +313,8 @@ export function SelecteurDate({
       <Feuille ouvert={ouvert} titre={label} onFermer={() => setOuvert(false)}>
         <View style={styles.enteteMois}>
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('commun.moisPrecedent')}
             onPress={() => setMois(ajouterMois(mois, -1))}
             hitSlop={12}
             style={styles.fleche}>
@@ -320,6 +322,8 @@ export function SelecteurDate({
           </Pressable>
           <Text style={styles.titreMois}>{formatMoisAnnee(mois)}</Text>
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('commun.moisSuivant')}
             onPress={() => setMois(ajouterMois(mois, 1))}
             hitSlop={12}
             style={styles.fleche}>

@@ -19,6 +19,7 @@ import {
   type MoisChiffre,
 } from '../lib/mensuel';
 import { Pageur } from './Pageur';
+import { useTextes } from '../i18n';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 
 /**
@@ -330,6 +331,7 @@ export function Graphique({
   /** Changer cette valeur rejoue l'animation d'apparition. */
   rejouer: number;
 }) {
+  const { t } = useTextes();
   const accent = useAccent();
   const [forme, setForme] = useState<Forme>('barres');
   const [largeur, setLargeur] = useState(0);
@@ -380,8 +382,8 @@ export function Graphique({
       <View style={styles.formes}>
         {(
           [
-            { valeur: 'barres' as const, icone: 'stats-chart' as const },
-            { valeur: 'ligne' as const, icone: 'trending-up' as const },
+            { valeur: 'barres' as const, icone: 'stats-chart' as const, cle: 'commun.enBarres' },
+            { valeur: 'ligne' as const, icone: 'trending-up' as const, cle: 'commun.enLigne' },
           ]
         ).map((choix) => (
           <Pressable
@@ -391,6 +393,8 @@ export function Graphique({
               setRejeuForme((n) => n + 1);
             }}
             hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t(choix.cle)}
             style={styles.forme}>
             <Ionicons
               name={choix.icone}

@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { useTextes } from '../i18n';
 import { ajusterCompteur } from '../lib/compteur';
 import { couleurs, espace, police, rayon, useAccent } from './theme';
 
@@ -82,11 +83,14 @@ function Bouton({
   desactive: boolean;
   onPress: () => void;
 }) {
+  const { t } = useTextes();
   const accent = useAccent();
   return (
     <Pressable
       onPress={onPress}
       disabled={desactive}
+      accessibilityRole="button"
+      accessibilityLabel={t(icone === 'add' ? 'commun.augmenter' : 'commun.diminuer')}
       hitSlop={8}
       style={({ pressed }) => [
         styles.rond,

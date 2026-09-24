@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { QuartDetaille } from '../db/types';
 import { ajouterMois, aujourdhui, formatMoisAnnee, grilleMois, JOURS_COURTS } from '../lib/dates';
+import { useTextes } from '../i18n';
 import { Pageur } from './Pageur';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 
@@ -24,17 +25,28 @@ export function Calendrier({
   onSelectionner: (iso: string) => void;
   onChangerMois: (delta: number) => void;
 }) {
+  const { t } = useTextes();
   const accent = useAccent();
   const ceJour = aujourdhui();
 
   return (
     <View style={styles.cadre}>
       <View style={styles.entete}>
-        <Pressable onPress={() => onChangerMois(-1)} hitSlop={12} style={styles.fleche}>
+        <Pressable
+          onPress={() => onChangerMois(-1)}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={t('commun.moisPrecedent')}
+          style={styles.fleche}>
           <Ionicons name="chevron-back" size={20} color={accent} />
         </Pressable>
         <Text style={styles.mois}>{formatMoisAnnee(mois)}</Text>
-        <Pressable onPress={() => onChangerMois(1)} hitSlop={12} style={styles.fleche}>
+        <Pressable
+          onPress={() => onChangerMois(1)}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={t('commun.moisSuivant')}
+          style={styles.fleche}>
           <Ionicons name="chevron-forward" size={20} color={accent} />
         </Pressable>
       </View>

@@ -11,6 +11,7 @@ import {
   JOURS_COURTS,
 } from '../lib/dates';
 import { Pageur } from './Pageur';
+import { useTextes } from '../i18n';
 import { couleurs, espace, police, rayon, useAccent } from './theme';
 
 /**
@@ -30,6 +31,7 @@ export function CalendrierMultiple({
   occupes: Set<string>;
   onBasculer: (iso: string) => void;
 }) {
+  const { t } = useTextes();
   const accent = useAccent();
   const [mois, setMois] = useState(depart);
   const ceJour = aujourdhui();
@@ -37,11 +39,19 @@ export function CalendrierMultiple({
   return (
     <View style={styles.cadre}>
       <View style={styles.entete}>
-        <Pressable onPress={() => setMois(ajouterMois(mois, -1))} hitSlop={12} style={styles.fleche}>
+        <Pressable
+          onPress={() => setMois(ajouterMois(mois, -1))}
+          accessibilityRole="button"
+          accessibilityLabel={t('commun.moisPrecedent')}
+          hitSlop={12} style={styles.fleche}>
           <Ionicons name="chevron-back" size={20} color={accent} />
         </Pressable>
         <Text style={styles.mois}>{formatMoisAnnee(mois)}</Text>
-        <Pressable onPress={() => setMois(ajouterMois(mois, 1))} hitSlop={12} style={styles.fleche}>
+        <Pressable
+          onPress={() => setMois(ajouterMois(mois, 1))}
+          accessibilityRole="button"
+          accessibilityLabel={t('commun.moisSuivant')}
+          hitSlop={12} style={styles.fleche}>
           <Ionicons name="chevron-forward" size={20} color={accent} />
         </Pressable>
       </View>

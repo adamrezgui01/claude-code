@@ -59,7 +59,11 @@ export default function Repertoire() {
               returnKeyType="search"
             />
             {cherche && (
-              <Pressable onPress={() => setRecherche('')} hitSlop={8}>
+              <Pressable
+            onPress={() => setRecherche('')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('commun.effacerRecherche')}>
                 <Ionicons name="close-circle" size={16} color={couleurs.doux} />
               </Pressable>
             )}
@@ -132,7 +136,11 @@ function LignePharmacie({
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
       {/* L'étoile se bascule d'un geste, sans ouvrir la fiche. */}
-      <Pressable onPress={onEtoile} hitSlop={10}>
+      <Pressable
+        onPress={onEtoile}
+        accessibilityRole="button"
+        accessibilityLabel={t('pharmacie.favori')}
+        hitSlop={10}>
         <Ionicons
           name={pharmacie.favori ? 'star' : 'star-outline'}
           size={18}

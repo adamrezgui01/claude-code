@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useId, useRef, useState } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { ReactNode, useEffect, useId, useRef, useState, type ComponentProps } from 'react';
 import {
   Animated,
   Easing,
@@ -457,7 +458,12 @@ export function Onglets<T extends string>({
 }: {
   /** Ce que la rangée règle. « A – Z » posé seul ne dit pas qu'il s'agit du tri. */
   libelle?: string;
-  options: { valeur: T; texte: string }[];
+  /**
+   * Une icône facultative devant le mot. Trois grilles de calendrier se
+   * ressemblent trop à 24 points pour se passer de leur nom : l'icône donne
+   * le repère, le mot donne la réponse.
+   */
+  options: { valeur: T; texte: string; icone?: ComponentProps<typeof Ionicons>['name'] }[];
   valeur: T;
   onChange: (v: T) => void;
 }) {
@@ -512,6 +518,13 @@ export function Onglets<T extends string>({
               }}
               style={styles.onglet}
               hitSlop={6}>
+              {!!option.icone && (
+                <Ionicons
+                  name={option.icone}
+                  size={15}
+                  color={i === actif ? accent : couleurs.doux}
+                />
+              )}
               <Animated.Text
                 style={[
                   styles.ongletTexte,
@@ -759,8 +772,13 @@ const styles = StyleSheet.create({
     paddingBottom: espace.s,
   },
   onglet: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace.xs,
     paddingHorizontal: espace.m,
     paddingVertical: espace.xs,
+    /* La cible reste confortable même quand le mot est court. */
+    minHeight: 44,
   },
   ongletTexte: {
     fontSize: 15,

@@ -105,6 +105,8 @@ export function BandeauCapture() {
             suivreSujet(aSuivre.id, 'consultation');
             setASuivre(null);
           }}
+          accessibilityRole="button"
+          accessibilityLabel={t('veille.bandeauSuivre')}
           hitSlop={8}
           style={styles.secondaire}>
           <Ionicons name="bookmark-outline" size={18} color={accent} />
@@ -116,6 +118,8 @@ export function BandeauCapture() {
           definirReglageVeille('veille_consultation_source', 0);
           setSource(null);
         }}
+        accessibilityRole="button"
+        accessibilityLabel={t('commun.fermer')}
         hitSlop={10}>
         <Ionicons name="close" size={18} color={couleurs.doux} />
       </Pressable>
