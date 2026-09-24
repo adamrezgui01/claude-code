@@ -477,6 +477,7 @@ export const fr = {
     effacer: 'Effacer',
   },
   sujets: {
+    calculateurs: 'Calculateurs',
     mpoc: 'MPOC',
     dyslipidemie: 'Dyslipidémie',
     personnesAgees: 'Personnes âgées',

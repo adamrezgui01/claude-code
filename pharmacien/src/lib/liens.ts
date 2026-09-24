@@ -64,3 +64,18 @@ export function parCategorie(liens: Lien[]): { categorie: string; liens: Lien[] 
   }
   return [...groupes.entries()].map(([categorie, liste]) => ({ categorie, liens: liste }));
 }
+
+/**
+ * L'adresse qui s'ouvre au toucher.
+ *
+ * Le document d'abord. Quand il manque — un calculateur dont l'adresse exacte
+ * reste à trouver —, c'est la page officielle qui prend le relais : l'usager
+ * atterrit sur l'accueil de l'organisme plutôt que sur rien, et il complétera
+ * l'adresse au fil de l'usage.
+ */
+export function adresseDouverture(source: {
+  url_document: string;
+  url_reference: string;
+}): string | null {
+  return source.url_document.trim() || source.url_reference.trim() || null;
+}

@@ -142,6 +142,11 @@ qu'on ne les redécouvre pas trois fois.
   pourcentage, ni une série de jours consécutifs. Il compte ce qu'il reste à
   faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;
   elle n'évalue pas le pharmacien.
+- **Les calculs cliniques ne sont jamais implémentés dans l'application.** Elle
+  pointe vers des calculateurs reconnus — MDCalc et compagnie —, elle n'en est
+  pas un. Recopier une formule, c'est prendre la responsabilité d'un calcul de
+  dose ; un lien, non. Et une source sans document ouvre sa page officielle :
+  une entrée incomplète mène à l'accueil de l'organisme plutôt qu'à rien.
 - Le volet organisation — horaire, répertoire, factures, statistiques —
   n'importe rien du volet clinique. Les seules exceptions sont des fichiers de
   charpente : le menu, le démarrage, les réglages, et la reprogrammation des

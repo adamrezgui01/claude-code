@@ -18,6 +18,12 @@ export type SujetDepart = {
 
 export const SUJETS_DEPART: SujetDepart[] = [
   {
+    cle: 'calculateurs',
+    nom: 'Calculateurs',
+    synonymes:
+      'calcul, calculette, score, formule, clairance, creatinine, calculator, score, formula, renal',
+  },
+  {
     cle: 'infectionsUrinaires',
     nom: 'Infections urinaires',
     synonymes: 'cystite, IVU, UTI, urinary tract infection, bladder infection, pyélonéphrite, dysurie',
@@ -106,6 +112,8 @@ export type TypeSource =
   | 'monographie'
   | 'revue'
   | 'local'
+  /** Un calculateur : on y entre des chiffres, il en rend un autre. */
+  | 'outil'
   | 'autre';
 
 export type SourceDepart = {
@@ -375,5 +383,119 @@ export const SOURCES_DEPART: SourceDepart[] = [
     officielle: true,
     sujets: ['personnesAgees'],
     motsCles: 'STOPP, START, personne agee, geriatrie, deprescription, elderly',
+  },
+
+  /*
+   * Les calculateurs cliniques. Une source comme les autres : on pointe vers
+   * la page publique, on ne recopie rien. Un calcul maison qui se trompe de
+   * dose, c'est sur nous ; un lien, non.
+   *
+   * MDCalc — pas MedCalc, qui est un logiciel de statistiques sans rapport.
+   * Le format des adresses est `mdcalc.com/calc/<numéro>`, et un seul numéro
+   * est vérifié à ce jour. Les autres restent vides plutôt qu'inventés : une
+   * adresse fausse mène à un calculateur qui n'est pas celui qu'on cherchait,
+   * et l'accueil de MDCalc est une réponse honnête en attendant.
+   *
+   * MDCalc est en anglais seulement. Les mots-clés portent quand même les deux
+   * langues : on cherche « clairance » et on trouve.
+   */
+  {
+    cle: 'mdcalc_cockcroft',
+    titre: 'Clairance à la créatinine (Cockcroft-Gault)',
+    url_document: 'https://www.mdcalc.com/calc/43',
+    url_reference: 'https://www.mdcalc.com',
+    organisation: 'MDCalc',
+    type: 'outil',
+    officielle: false,
+    sujets: ['calculateurs'],
+    motsCles: 'clairance, creatinine, clcr, cockcroft, gault, fonction renale, creatinine clearance, renal function, kidney',
+  },
+  {
+    cle: 'mdcalc_chads_vasc',
+    titre: 'CHA₂DS₂-VASc',
+    url_document: '',
+    url_reference: 'https://www.mdcalc.com',
+    organisation: 'MDCalc',
+    type: 'outil',
+    officielle: false,
+    sujets: ['calculateurs'],
+    motsCles: 'chads, chadsvasc, cha2ds2, fibrillation auriculaire, FA, risque AVC, anticoagulation, atrial fibrillation, stroke risk',
+  },
+  {
+    cle: 'mdcalc_has_bled',
+    titre: 'HAS-BLED',
+    url_document: '',
+    url_reference: 'https://www.mdcalc.com',
+    organisation: 'MDCalc',
+    type: 'outil',
+    officielle: false,
+    sujets: ['calculateurs'],
+    motsCles: 'hasbled, has bled, risque saignement, hemorragie, anticoagulation, bleeding risk, warfarin, AOD',
+  },
+  {
+    cle: 'mdcalc_ckd_epi',
+    titre: 'CKD-EPI (débit de filtration glomérulaire)',
+    url_document: '',
+    url_reference: 'https://www.mdcalc.com',
+    organisation: 'MDCalc',
+    type: 'outil',
+    officielle: false,
+    sujets: ['calculateurs'],
+    motsCles: 'ckdepi, ckd epi, DFG, debit filtration glomerulaire, eGFR, GFR, fonction renale, renal function',
+  },
+  {
+    cle: 'mdcalc_mdrd',
+    titre: 'MDRD (débit de filtration glomérulaire)',
+    url_document: '',
+    url_reference: 'https://www.mdcalc.com',
+    organisation: 'MDCalc',
+    type: 'outil',
+    officielle: false,
+    sujets: ['calculateurs'],
+    motsCles: 'mdrd, DFG, debit filtration glomerulaire, eGFR, GFR, fonction renale, renal function',
+  },
+  {
+    cle: 'mdcalc_child_pugh',
+    titre: 'Child-Pugh',
+    url_document: '',
+    url_reference: 'https://www.mdcalc.com',
+    organisation: 'MDCalc',
+    type: 'outil',
+    officielle: false,
+    sujets: ['calculateurs'],
+    motsCles: 'child pugh, childpugh, cirrhose, foie, hepatique, liver, cirrhosis, hepatic',
+  },
+  {
+    cle: 'mdcalc_curb_65',
+    titre: 'CURB-65',
+    url_document: '',
+    url_reference: 'https://www.mdcalc.com',
+    organisation: 'MDCalc',
+    type: 'outil',
+    officielle: false,
+    sujets: ['calculateurs'],
+    motsCles: 'curb, curb65, pneumonie, severite, hospitalisation, pneumonia, severity, CAP',
+  },
+  {
+    cle: 'mdcalc_wells_tvp',
+    titre: 'Score de Wells — thrombose veineuse profonde',
+    url_document: '',
+    url_reference: 'https://www.mdcalc.com',
+    organisation: 'MDCalc',
+    type: 'outil',
+    officielle: false,
+    sujets: ['calculateurs'],
+    motsCles: 'wells, TVP, thrombose veineuse profonde, phlebite, DVT, deep vein thrombosis, clot',
+  },
+  {
+    cle: 'mdcalc_wells_ep',
+    titre: 'Score de Wells — embolie pulmonaire',
+    url_document: '',
+    url_reference: 'https://www.mdcalc.com',
+    organisation: 'MDCalc',
+    type: 'outil',
+    officielle: false,
+    sujets: ['calculateurs'],
+    motsCles: 'wells, EP, embolie pulmonaire, PE, pulmonary embolism, clot, poumon',
   },
 ];

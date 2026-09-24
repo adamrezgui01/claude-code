@@ -13,10 +13,34 @@ import { SOURCES_DEPART, SUJETS_DEPART } from '../src/lib/veille/depart';
  */
 
 describe('les sujets de départ', () => {
+  test('les calculateurs pointent vers MDCalc, jamais vers MedCalc', () => {
+    // MedCalc tout court est un logiciel de statistiques, sans rapport.
+    const calculateurs = SOURCES_DEPART.filter((s) => s.sujets.includes('calculateurs'));
+    expect(calculateurs.length).toBe(9);
+    for (const source of calculateurs) {
+      expect({ cle: source.cle, organisation: source.organisation }).toEqual({
+        cle: source.cle,
+        organisation: 'MDCalc',
+      });
+      expect(source.url_reference).toBe('https://www.mdcalc.com');
+    }
+  });
+
+  test('la clairance à la créatinine est la seule adresse vérifiée', () => {
+    const clcr = SOURCES_DEPART.find((s) => s.cle === 'mdcalc_cockcroft');
+    expect(clcr?.url_document).toBe('https://www.mdcalc.com/calc/43');
+    const autres = SOURCES_DEPART.filter(
+      (s) => s.sujets.includes('calculateurs') && s.cle !== 'mdcalc_cockcroft'
+    );
+    // On n'invente pas les numéros des autres : une adresse fausse mène à un
+    // calculateur qui n'est pas celui qu'on cherchait.
+    expect(autres.map((s) => s.url_document)).toEqual(autres.map(() => ''));
+  });
+
   test('seize : les douze du 1.5, et quatre qu’a réclamés le répertoire vérifié', () => {
     // MPOC, dyslipidémie, personnes âgées, allergies médicamenteuses. Les
     // sources de la 2.2 les nommaient, et aucun des douze ne leur allait.
-    expect(SUJETS_DEPART).toHaveLength(16);
+    expect(SUJETS_DEPART).toHaveLength(17);
   });
 
   test('chaque clé est unique', () => {
@@ -50,8 +74,8 @@ describe('les sujets de départ', () => {
 });
 
 describe('le répertoire vérifié', () => {
-  test('dix-neuf documents', () => {
-    expect(SOURCES_DEPART).toHaveLength(19);
+  test('dix-neuf documents, et neuf calculateurs', () => {
+    expect(SOURCES_DEPART).toHaveLength(28);
   });
 
   test('chacun porte une page officielle', () => {
@@ -62,9 +86,19 @@ describe('le répertoire vérifié', () => {
     expect(sans.map((s) => s.cle)).toEqual([]);
   });
 
-  test('chacun porte aussi son document', () => {
-    const sans = SOURCES_DEPART.filter((s) => !s.url_document.trim());
+  test('chacun mène quelque part', () => {
+    // Un calculateur dont l'adresse exacte reste à trouver n'a pas de
+    // document : c'est sa page officielle qui prend le relais, et l'usager
+    // atterrit sur l'accueil de MDCalc plutôt que sur rien.
+    const sans = SOURCES_DEPART.filter(
+      (s) => !s.url_document.trim() && !s.url_reference.trim()
+    );
     expect(sans.map((s) => s.cle)).toEqual([]);
+  });
+
+  test('seuls les calculateurs ont le droit d’arriver sans document', () => {
+    const sans = SOURCES_DEPART.filter((s) => !s.url_document.trim());
+    expect(sans.every((s) => s.sujets.includes('calculateurs'))).toBe(true);
   });
 
   test('une même page officielle peut couvrir plusieurs documents', () => {

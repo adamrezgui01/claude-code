@@ -1,4 +1,7 @@
 import { etatVeille, quelqueChoseAFaire, type NoteDuTableau } from '../src/lib/veille/tableau';
+import { SOURCES_DEPART } from '../src/lib/veille/depart';
+import { adresseDouverture } from '../src/lib/liens';
+import { filtrerSources } from '../src/lib/veille/recherche';
 
 /**
  * Le tableau de bord, et le texte de la notification, partent du même calcul.
@@ -84,5 +87,54 @@ describe('y a-t-il quelque chose à faire', () => {
     // Revérifier une note demande d'ouvrir une source et de réfléchir. Ça ne
     // se fait pas sur le pouce, et ça ne justifie pas de sonner le soir.
     expect(quelqueChoseAFaire({ revisions: 0, sourcesARevoir: 0, notesARevoir: 5 })).toBe(false);
+  });
+});
+
+describe('une source sans document', () => {
+  test('c’est la page officielle qui s’ouvre', () => {
+    // Un calculateur dont l'adresse exacte reste à trouver mène à l'accueil de
+    // MDCalc. L'usager complétera l'adresse au fil de l'usage, comme il
+    // complète les sources manquantes des recherches sans réponse.
+    expect(
+      adresseDouverture({ url_document: '', url_reference: 'https://www.mdcalc.com' })
+    ).toBe('https://www.mdcalc.com');
+  });
+
+  test('le document l’emporte quand il existe', () => {
+    expect(
+      adresseDouverture({
+        url_document: 'https://www.mdcalc.com/calc/43',
+        url_reference: 'https://www.mdcalc.com',
+      })
+    ).toBe('https://www.mdcalc.com/calc/43');
+  });
+
+  test('sans adresse du tout, rien à ouvrir', () => {
+    expect(adresseDouverture({ url_document: '', url_reference: '' })).toBeNull();
+  });
+});
+
+describe('la recherche des calculateurs', () => {
+  const CALCULATEURS = SOURCES_DEPART.filter((s) => s.sujets.includes('calculateurs')).map(
+    (s, i) => ({
+      id: i + 1,
+      titre: s.titre,
+      categorie: '',
+      motsCles: s.motsCles,
+      sujets: ['Calculateurs'],
+    })
+  );
+
+  test('« clairance » remonte Cockcroft-Gault', () => {
+    const trouves = filtrerSources(CALCULATEURS, 'clairance');
+    expect(trouves.map((s) => s.titre)).toEqual(['Clairance à la créatinine (Cockcroft-Gault)']);
+  });
+
+  test('« creatinine clearance » aussi, en anglais', () => {
+    expect(filtrerSources(CALCULATEURS, 'creatinine clearance')).toHaveLength(1);
+  });
+
+  test('« cockcroft » aussi, par le nom de la formule', () => {
+    expect(filtrerSources(CALCULATEURS, 'cockcroft')).toHaveLength(1);
   });
 });

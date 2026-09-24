@@ -476,6 +476,7 @@ export const en: Dictionnaire = {
     effacer: 'Clear',
   },
   sujets: {
+    calculateurs: 'Calculators',
     mpoc: 'COPD',
     dyslipidemie: 'Dyslipidemia',
     personnesAgees: 'Older adults',

@@ -1,6 +1,7 @@
 import { Linking } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 
+import { adresseDouverture } from '../liens';
 import { noterConsultation } from '../../db/veille';
 
 /**
@@ -18,19 +19,21 @@ import { noterConsultation } from '../../db/veille';
  * pour une revue payante. Au comptoir, chercher une dose est un geste pressé.
  */
 export async function ouvrirSource(
-  source: { id: number; url_document: string },
+  source: { id: number; url_document: string; url_reference: string },
   navigateurIntegre: boolean
 ) {
+  const adresse = adresseDouverture(source);
+  if (!adresse) return;
   noterConsultation(source.id);
   if (navigateurIntegre) {
     try {
-      await WebBrowser.openBrowserAsync(source.url_document);
+      await WebBrowser.openBrowserAsync(adresse);
       return;
     } catch {
       // Un PDF que le navigateur intégré refuse ne doit pas rester fermé.
     }
   }
-  await Linking.openURL(source.url_document);
+  await Linking.openURL(adresse);
 }
 
 /**
