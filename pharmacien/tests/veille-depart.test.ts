@@ -16,7 +16,7 @@ describe('les sujets de départ', () => {
   test('les calculateurs pointent vers MDCalc, jamais vers MedCalc', () => {
     // MedCalc tout court est un logiciel de statistiques, sans rapport.
     const calculateurs = SOURCES_DEPART.filter((s) => s.sousSection === 'outils');
-    expect(calculateurs.length).toBe(9);
+    expect(calculateurs.length).toBe(10);
     for (const source of calculateurs) {
       expect({ cle: source.cle, organisation: source.organisation }).toEqual({
         cle: source.cle,
@@ -26,15 +26,34 @@ describe('les sujets de départ', () => {
     }
   });
 
-  test('la clairance à la créatinine est la seule adresse vérifiée', () => {
-    const clcr = SOURCES_DEPART.find((s) => s.cle === 'mdcalc_cockcroft');
-    expect(clcr?.url_document).toBe('https://www.mdcalc.com/calc/43');
-    const autres = SOURCES_DEPART.filter(
-      (s) => s.sousSection === 'outils' && s.cle !== 'mdcalc_cockcroft'
+  test('trois calculateurs ont leur adresse vérifiée', () => {
+    const adresses = new Map(SOURCES_DEPART.map((s) => [s.cle, s.url_document]));
+    expect(adresses.get('mdcalc_cockcroft')).toBe(
+      'https://www.mdcalc.com/calc/43/creatinine-clearance-cockcroft-gault-equation'
     );
-    // On n'invente pas les numéros des autres : une adresse fausse mène à un
-    // calculateur qui n'est pas celui qu'on cherchait.
-    expect(autres.map((s) => s.url_document)).toEqual(autres.map(() => ''));
+    expect(adresses.get('mdcalc_ckd_epi')).toBe(
+      'https://www.mdcalc.com/calc/3939/ckd-epi-equations-glomerular-filtration-rate-gfr'
+    );
+    expect(adresses.get('mdcalc_imc_sc')).toBe(
+      'https://www.mdcalc.com/calc/29/body-mass-index-bmi-body-surface-area-bsa'
+    );
+  });
+
+  test('les sept autres restent sans adresse, et personne ne l’invente', () => {
+    // Une adresse fausse mène à un calculateur qui n'est pas celui qu'on
+    // cherchait : ceux-là ouvrent l'accueil de MDCalc, ce qui est honnête.
+    const vides = SOURCES_DEPART.filter(
+      (s) => s.sousSection === 'outils' && !s.url_document
+    );
+    expect(vides.map((s) => s.cle).sort()).toEqual([
+      'mdcalc_chads_vasc',
+      'mdcalc_child_pugh',
+      'mdcalc_curb_65',
+      'mdcalc_has_bled',
+      'mdcalc_mdrd',
+      'mdcalc_wells_ep',
+      'mdcalc_wells_tvp',
+    ]);
   });
 
   test('seize : les douze du 1.5, et quatre qu’a réclamés le répertoire vérifié', () => {
@@ -74,8 +93,8 @@ describe('les sujets de départ', () => {
 });
 
 describe('le répertoire vérifié', () => {
-  test('dix-neuf documents, et neuf calculateurs', () => {
-    expect(SOURCES_DEPART).toHaveLength(28);
+  test('dix-neuf documents, et dix calculateurs', () => {
+    expect(SOURCES_DEPART).toHaveLength(29);
   });
 
   test('chacun porte une page officielle', () => {
@@ -111,7 +130,7 @@ describe('le répertoire vérifié', () => {
   test('les calculateurs sont des outils, tout le reste un lien utile', () => {
     const outils = SOURCES_DEPART.filter((s) => s.sousSection === 'outils');
     expect(outils.every((s) => s.cle.startsWith('mdcalc_'))).toBe(true);
-    expect(outils).toHaveLength(9);
+    expect(outils).toHaveLength(10);
   });
 
   test('une même page officielle peut couvrir plusieurs documents', () => {
