@@ -1,3 +1,5 @@
+import type { SousSection } from '../liens';
+
 /**
  * Ce que le volet clinique sait le premier jour.
  *
@@ -17,12 +19,6 @@ export type SujetDepart = {
 };
 
 export const SUJETS_DEPART: SujetDepart[] = [
-  {
-    cle: 'calculateurs',
-    nom: 'Calculateurs',
-    synonymes:
-      'calcul, calculette, score, formule, clairance, creatinine, calculator, score, formula, renal',
-  },
   {
     cle: 'infectionsUrinaires',
     nom: 'Infections urinaires',
@@ -131,6 +127,8 @@ export type SourceDepart = {
   organisation: string;
   type: TypeSource;
   officielle: boolean;
+  /** « outils » pour un calculateur, « liens_utiles » pour le reste. */
+  sousSection: SousSection;
   sujets: string[];
   /** Synonymes cachés, dans les deux langues. Jamais affichés, cherchés quand même. */
   motsCles: string;
@@ -147,6 +145,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['infectionsUrinaires', 'antibiotherapie'],
     motsCles: 'cystite, IVU, UTI, urinary tract infection, urinaire, pyelonephrite, nitrofurantoine',
   },
@@ -160,6 +159,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['pharyngite', 'antibiotherapie'],
     motsCles: 'gorge, strep, streptocoque, angine, sore throat, tonsillitis, amoxicilline',
   },
@@ -173,6 +173,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['antibiotherapie'],
     motsCles: 'sinusite, rhinosinusite, sinus, sinusitis, congestion',
   },
@@ -186,6 +187,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['antibiotherapie', 'pediatrie'],
     motsCles: 'sinusite, enfant, pediatrique, sinusitis, child',
   },
@@ -199,6 +201,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['antibiotherapie'],
     motsCles: 'pneumonie, PAC, pneumonia, CAP, poumon, toux',
   },
@@ -212,6 +215,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['antibiotherapie', 'pediatrie'],
     motsCles: 'pneumonie, enfant, pediatrique, pneumonia, child',
   },
@@ -225,6 +229,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['antibiotherapie'],
     motsCles: 'bronchite, toux, bronchitis, cough',
   },
@@ -238,6 +243,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['mpoc', 'antibiotherapie'],
     motsCles: 'MPOC, COPD, EAMPOC, exacerbation, bronchopneumopathie, pompe',
   },
@@ -251,6 +257,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['anticoagulation'],
     motsCles: 'FA, fibrillation auriculaire, atrial fibrillation, AFib, CHADS',
   },
@@ -264,6 +271,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['anticoagulation'],
     motsCles: 'TVP, EP, thrombose, embolie, DVT, PE, thromboembolie',
   },
@@ -277,6 +285,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['anticoagulation'],
     motsCles: 'warfarine, INR, coumadin, warfarin, ajustement',
   },
@@ -290,6 +299,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['allergies', 'antibiotherapie'],
     motsCles: 'allergie, penicilline, penicillin allergy, amoxicilline, cephalosporine, reaction',
   },
@@ -303,6 +313,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'CIUSSS de la Capitale-Nationale',
     type: 'local',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['anticoagulation'],
     motsCles: 'AOD, DOAC, apixaban, rivaroxaban, edoxaban, dabigatran, eliquis, xarelto',
   },
@@ -316,6 +327,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'Société canadienne de cardiologie',
     type: 'societe',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['insuffisanceCardiaque'],
     motsCles: 'insuffisance cardiaque, heart failure, HFrEF, oedeme, diuretique, sacubitril',
   },
@@ -329,6 +341,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'Société canadienne de cardiologie',
     type: 'societe',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['anticoagulation'],
     motsCles: 'antiplaquettaire, antiplatelet, clopidogrel, ticagrelor, aspirine, DAPT, stent',
   },
@@ -342,6 +355,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'Société canadienne de cardiologie',
     type: 'societe',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['dyslipidemie'],
     motsCles: 'lipides, cholesterol, LDL, statine, statin, dyslipidemie, lipids',
   },
@@ -355,6 +369,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'Hypertension Canada',
     type: 'ligneDirectrice',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['hypertension'],
     motsCles: 'HTA, pression, tension arterielle, blood pressure, BP, antihypertenseur',
   },
@@ -368,6 +383,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'American Geriatrics Society',
     type: 'societe',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['personnesAgees'],
     motsCles: 'Beers, personne agee, geriatrie, deprescription, potentially inappropriate, elderly',
   },
@@ -381,6 +397,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'European Geriatric Medicine',
     type: 'revue',
     officielle: true,
+    sousSection: 'liens_utiles',
     sujets: ['personnesAgees'],
     motsCles: 'STOPP, START, personne agee, geriatrie, deprescription, elderly',
   },
@@ -407,7 +424,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'MDCalc',
     type: 'outil',
     officielle: false,
-    sujets: ['calculateurs'],
+    sousSection: 'outils',
+    sujets: [],
     motsCles: 'clairance, creatinine, clcr, cockcroft, gault, fonction renale, creatinine clearance, renal function, kidney',
   },
   {
@@ -418,7 +436,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'MDCalc',
     type: 'outil',
     officielle: false,
-    sujets: ['calculateurs'],
+    sousSection: 'outils',
+    sujets: [],
     motsCles: 'chads, chadsvasc, cha2ds2, fibrillation auriculaire, FA, risque AVC, anticoagulation, atrial fibrillation, stroke risk',
   },
   {
@@ -429,7 +448,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'MDCalc',
     type: 'outil',
     officielle: false,
-    sujets: ['calculateurs'],
+    sousSection: 'outils',
+    sujets: [],
     motsCles: 'hasbled, has bled, risque saignement, hemorragie, anticoagulation, bleeding risk, warfarin, AOD',
   },
   {
@@ -440,7 +460,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'MDCalc',
     type: 'outil',
     officielle: false,
-    sujets: ['calculateurs'],
+    sousSection: 'outils',
+    sujets: [],
     motsCles: 'ckdepi, ckd epi, DFG, debit filtration glomerulaire, eGFR, GFR, fonction renale, renal function',
   },
   {
@@ -451,7 +472,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'MDCalc',
     type: 'outil',
     officielle: false,
-    sujets: ['calculateurs'],
+    sousSection: 'outils',
+    sujets: [],
     motsCles: 'mdrd, DFG, debit filtration glomerulaire, eGFR, GFR, fonction renale, renal function',
   },
   {
@@ -462,7 +484,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'MDCalc',
     type: 'outil',
     officielle: false,
-    sujets: ['calculateurs'],
+    sousSection: 'outils',
+    sujets: [],
     motsCles: 'child pugh, childpugh, cirrhose, foie, hepatique, liver, cirrhosis, hepatic',
   },
   {
@@ -473,7 +496,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'MDCalc',
     type: 'outil',
     officielle: false,
-    sujets: ['calculateurs'],
+    sousSection: 'outils',
+    sujets: [],
     motsCles: 'curb, curb65, pneumonie, severite, hospitalisation, pneumonia, severity, CAP',
   },
   {
@@ -484,7 +508,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'MDCalc',
     type: 'outil',
     officielle: false,
-    sujets: ['calculateurs'],
+    sousSection: 'outils',
+    sujets: [],
     motsCles: 'wells, TVP, thrombose veineuse profonde, phlebite, DVT, deep vein thrombosis, clot',
   },
   {
@@ -495,7 +520,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
     organisation: 'MDCalc',
     type: 'outil',
     officielle: false,
-    sujets: ['calculateurs'],
+    sousSection: 'outils',
+    sujets: [],
     motsCles: 'wells, EP, embolie pulmonaire, PE, pulmonary embolism, clot, poumon',
   },
 ];

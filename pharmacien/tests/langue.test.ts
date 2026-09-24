@@ -121,6 +121,7 @@ describe('liens utiles', () => {
       motsCles:
         'cystite, infection urinaire, urine, brûlement, IVU, prescrire, UTI, urinary tract infection, bladder infection, dysuria',
       rang: 1,
+      sous_section: 'liens_utiles' as const,
     },
     {
       id: 2,
@@ -131,6 +132,7 @@ describe('liens utiles', () => {
       categorie: 'Guides de pratique',
       motsCles: 'diabète, glycémie, insuline, diabetes, blood sugar, insulin',
       rang: 2,
+      sous_section: 'liens_utiles' as const,
     },
   ];
 
@@ -165,6 +167,7 @@ describe('liens utiles', () => {
       categorie: 'Protocoles de prescription',
       motsCles: 'conjonctivite, oeil rouge, pink eye, conjunctivitis, red eye',
       rang: 3,
+      sous_section: 'liens_utiles' as const,
     };
     expect(filtrerLiens([conjonctivite], 'pink eye')).toHaveLength(1);
     expect(filtrerLiens([conjonctivite], 'conjonctivite')).toHaveLength(1);

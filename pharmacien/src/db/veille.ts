@@ -467,6 +467,8 @@ export type Source = {
   statut: string;
   notes_source: string;
   capture_desactivee: number;
+  /** « outils » ou « liens_utiles ». Voir `lib/liens`. */
+  sous_section: string;
 };
 
 export function listerSources(): Source[] {

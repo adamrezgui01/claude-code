@@ -27,9 +27,18 @@ const DEPART: EntreeLien[] = SOURCES_DEPART.map((source) => ({
   url_reference: source.url_reference,
   categorie: '',
   motsCles: source.motsCles,
+  sous_section: source.sousSection,
 }));
 
-const CHAMPS = ['cle', 'titre', 'url_document', 'url_reference', 'categorie', 'motsCles'] as const;
+const CHAMPS = [
+  'cle',
+  'titre',
+  'url_document',
+  'url_reference',
+  'categorie',
+  'motsCles',
+  'sous_section',
+] as const;
 
 /**
  * `url` est l'ancien nom de `url_document`.

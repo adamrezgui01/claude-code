@@ -328,6 +328,13 @@ export function initialiserBase() {
   // exactement ce que les favoris et les « à éviter » doivent voir.
   ajouterColonne('quarts', 'annule_par', "TEXT NOT NULL DEFAULT ''");
   ajouterColonne('quarts', 'annule_le', "TEXT NOT NULL DEFAULT ''");
+  // Les deux sous-sections de l'onglet Clinique. Tout ce qui existait est un
+  // lien utile ; seuls les calculateurs sont des outils.
+  ajouterColonne('liens', 'sous_section', "TEXT NOT NULL DEFAULT 'liens_utiles'");
+  if (!dejaFait('liens_sous_section')) {
+    db.execSync("UPDATE liens SET sous_section = 'outils' WHERE cle LIKE 'mdcalc_%'");
+    marquerFait('liens_sous_section');
+  }
 
   // Le volet clinique. Un signet devient une source : mêmes lignes, quelques
   // colonnes de plus, pour que les deux listes ne divergent jamais.

@@ -537,6 +537,8 @@ export const fr = {
     revisionsDuJour_other: '{{count}} notes à revoir ce soir',
     chercher: 'Chercher — cystite, AOD, DFGe…',
     aucunResultat: 'Aucune source ne correspond.',
+    outils: 'Outils',
+    liensUtiles: 'Liens utiles',
     sansSujet: 'Références générales',
     maVeille: 'Mes sujets et mes notes',
     pageOfficielle: 'Voir la page officielle',

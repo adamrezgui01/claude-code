@@ -21,8 +21,16 @@ export type Lien = {
   categorie: string;
   /** Synonymes courants, séparés par des virgules. Jamais affichés. */
   motsCles: string;
+  /**
+   * « outils » ou « liens_utiles ». Un calculateur et un guide de pratique ne
+   * se consultent pas pour les mêmes raisons : l'un sert à obtenir un chiffre
+   * tout de suite, l'autre à vérifier une conduite.
+   */
+  sous_section: SousSection;
   rang: number;
 };
+
+export type SousSection = 'outils' | 'liens_utiles';
 
 export type EntreeLien = Omit<Lien, 'id' | 'rang'>;
 
@@ -78,4 +86,17 @@ export function adresseDouverture(source: {
   url_reference: string;
 }): string | null {
   return source.url_document.trim() || source.url_reference.trim() || null;
+}
+
+/**
+ * Les deux sous-sections de l'onglet Clinique, dans leur ordre d'affichage.
+ * Les outils d'abord : on les ouvre au comptoir, un patient devant soi.
+ */
+export function parSousSection<T extends { sous_section?: string }>(
+  sources: T[]
+): { outils: T[]; liensUtiles: T[] } {
+  return {
+    outils: sources.filter((s) => s.sous_section === 'outils'),
+    liensUtiles: sources.filter((s) => s.sous_section !== 'outils'),
+  };
 }

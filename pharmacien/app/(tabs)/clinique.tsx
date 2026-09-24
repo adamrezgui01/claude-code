@@ -24,6 +24,7 @@ import { aujourdhui } from '../../src/lib/dates';
 import { titreDuLien } from '../../src/lib/liens';
 import { ouvrirSource } from '../../src/lib/veille/ouvrir';
 import { filtrerSources, parSujet, type SourceCherchable } from '../../src/lib/veille/recherche';
+import { parSousSection } from '../../src/lib/liens';
 import { cleARevoir } from '../../src/lib/veille/recherches';
 import { nomDuSujet } from '../../src/lib/veille/sujets';
 import { etatVeille } from '../../src/lib/veille/tableau';
@@ -110,9 +111,11 @@ export default function Clinique() {
     return () => clearTimeout(minuterie);
   }, [recherche, sources]);
 
+  const trouvees = useMemo(() => filtrerSources(sources, recherche), [sources, recherche]);
+  const { outils, liensUtiles } = useMemo(() => parSousSection(trouvees), [trouvees]);
   const groupes = useMemo(
-    () => parSujet(filtrerSources(sources, recherche), t('clinique.sansSujet')),
-    [sources, recherche, t]
+    () => parSujet(liensUtiles, t('clinique.sansSujet')),
+    [liensUtiles, t]
   );
 
   const cherche = recherche.trim().length > 0;
@@ -197,23 +200,48 @@ export default function Clinique() {
         )}
       </View>
 
-      {groupes.length === 0 ? (
+      {trouvees.length === 0 ? (
         <Vide texte={t('clinique.aucunResultat')} />
       ) : (
-        groupes.map((groupe) => (
-          <Fondu key={groupe.sujet}>
-            <SousTitre>{groupe.sujet}</SousTitre>
-            {groupe.sources.map((source) => (
-              <LigneSource
-                key={`${groupe.sujet}-${source.id}`}
-                source={source}
-                traduire={traduire}
-                onOuvrir={() => noterSourceOuverte(notee, source.id)}
-              />
-            ))}
-            <View style={styles.espace} />
-          </Fondu>
-        ))
+        <>
+          {/* Les outils d'abord : on les ouvre au comptoir, un patient devant
+              soi. Les références ensuite, groupées par sujet. */}
+          {outils.length > 0 && (
+            <Fondu>
+              <SousTitre>{t('clinique.outils')}</SousTitre>
+              {outils.map((source) => (
+                <LigneSource
+                  key={`outil-${source.id}`}
+                  source={source}
+                  traduire={traduire}
+                  onOuvrir={() => noterSourceOuverte(notee, source.id)}
+                />
+              ))}
+              <View style={styles.espace} />
+            </Fondu>
+          )}
+
+          {liensUtiles.length > 0 && (
+            <Fondu>
+              <SousTitre>{t('clinique.liensUtiles')}</SousTitre>
+              <View style={styles.espace} />
+            </Fondu>
+          )}
+          {groupes.map((groupe) => (
+            <Fondu key={groupe.sujet}>
+              <SousTitre>{groupe.sujet}</SousTitre>
+              {groupe.sources.map((source) => (
+                <LigneSource
+                  key={`${groupe.sujet}-${source.id}`}
+                  source={source}
+                  traduire={traduire}
+                  onOuvrir={() => noterSourceOuverte(notee, source.id)}
+                />
+              ))}
+              <View style={styles.espace} />
+            </Fondu>
+          ))}
+        </>
       )}
 
       {!cherche && (

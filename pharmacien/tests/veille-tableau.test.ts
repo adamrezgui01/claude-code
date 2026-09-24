@@ -2,6 +2,7 @@ import { etatVeille, quelqueChoseAFaire, type NoteDuTableau } from '../src/lib/v
 import { SOURCES_DEPART } from '../src/lib/veille/depart';
 import { adresseDouverture } from '../src/lib/liens';
 import { filtrerSources } from '../src/lib/veille/recherche';
+import { parSousSection } from '../src/lib/liens';
 
 /**
  * Le tableau de bord, et le texte de la notification, partent du même calcul.
@@ -115,15 +116,13 @@ describe('une source sans document', () => {
 });
 
 describe('la recherche des calculateurs', () => {
-  const CALCULATEURS = SOURCES_DEPART.filter((s) => s.sujets.includes('calculateurs')).map(
-    (s, i) => ({
-      id: i + 1,
-      titre: s.titre,
-      categorie: '',
-      motsCles: s.motsCles,
-      sujets: ['Calculateurs'],
-    })
-  );
+  const CALCULATEURS = SOURCES_DEPART.filter((s) => s.sousSection === 'outils').map((s, i) => ({
+    id: i + 1,
+    titre: s.titre,
+    categorie: '',
+    motsCles: s.motsCles,
+    sujets: [],
+  }));
 
   test('« clairance » remonte Cockcroft-Gault', () => {
     const trouves = filtrerSources(CALCULATEURS, 'clairance');
@@ -136,5 +135,29 @@ describe('la recherche des calculateurs', () => {
 
   test('« cockcroft » aussi, par le nom de la formule', () => {
     expect(filtrerSources(CALCULATEURS, 'cockcroft')).toHaveLength(1);
+  });
+});
+
+describe('les deux sous-sections', () => {
+  const SOURCES = [
+    { id: 1, sous_section: 'outils' as const, titre: 'Clairance' },
+    { id: 2, sous_section: 'liens_utiles' as const, titre: 'INESSS' },
+    { id: 3, sous_section: 'outils' as const, titre: 'CKD-EPI' },
+  ];
+
+  test('les outils d’abord, le reste ensuite', () => {
+    // Un calculateur et un guide de pratique ne se consultent pas pour les
+    // mêmes raisons : l'un donne un chiffre tout de suite, l'autre vérifie une
+    // conduite.
+    const { outils, liensUtiles } = parSousSection(SOURCES);
+    expect(outils.map((s) => s.id)).toEqual([1, 3]);
+    expect(liensUtiles.map((s) => s.id)).toEqual([2]);
+  });
+
+  test('une valeur inconnue tombe du côté des liens utiles', () => {
+    // Le défaut de la colonne, et le comportement des liens ajoutés à la main.
+    const { outils, liensUtiles } = parSousSection([{ id: 9, sous_section: '' }]);
+    expect(outils).toEqual([]);
+    expect(liensUtiles.map((s) => s.id)).toEqual([9]);
   });
 });

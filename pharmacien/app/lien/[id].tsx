@@ -63,6 +63,9 @@ export default function FormulaireLien() {
       url_reference: reference.trim(),
       categorie: categorie.trim(),
       motsCles: motsCles.trim(),
+      // Un lien ajouté à la main est une référence, pas un outil : l'usager
+      // n'écrit pas de calculateur.
+      sous_section: 'liens_utiles' as const,
     };
     const id = lienId ?? creerLien(entree);
     if (lienId) modifierLien(lienId, entree);

@@ -15,7 +15,7 @@ import { SOURCES_DEPART, SUJETS_DEPART } from '../src/lib/veille/depart';
 describe('les sujets de départ', () => {
   test('les calculateurs pointent vers MDCalc, jamais vers MedCalc', () => {
     // MedCalc tout court est un logiciel de statistiques, sans rapport.
-    const calculateurs = SOURCES_DEPART.filter((s) => s.sujets.includes('calculateurs'));
+    const calculateurs = SOURCES_DEPART.filter((s) => s.sousSection === 'outils');
     expect(calculateurs.length).toBe(9);
     for (const source of calculateurs) {
       expect({ cle: source.cle, organisation: source.organisation }).toEqual({
@@ -30,7 +30,7 @@ describe('les sujets de départ', () => {
     const clcr = SOURCES_DEPART.find((s) => s.cle === 'mdcalc_cockcroft');
     expect(clcr?.url_document).toBe('https://www.mdcalc.com/calc/43');
     const autres = SOURCES_DEPART.filter(
-      (s) => s.sujets.includes('calculateurs') && s.cle !== 'mdcalc_cockcroft'
+      (s) => s.sousSection === 'outils' && s.cle !== 'mdcalc_cockcroft'
     );
     // On n'invente pas les numéros des autres : une adresse fausse mène à un
     // calculateur qui n'est pas celui qu'on cherchait.
@@ -40,7 +40,7 @@ describe('les sujets de départ', () => {
   test('seize : les douze du 1.5, et quatre qu’a réclamés le répertoire vérifié', () => {
     // MPOC, dyslipidémie, personnes âgées, allergies médicamenteuses. Les
     // sources de la 2.2 les nommaient, et aucun des douze ne leur allait.
-    expect(SUJETS_DEPART).toHaveLength(17);
+    expect(SUJETS_DEPART).toHaveLength(16);
   });
 
   test('chaque clé est unique', () => {
@@ -96,9 +96,22 @@ describe('le répertoire vérifié', () => {
     expect(sans.map((s) => s.cle)).toEqual([]);
   });
 
-  test('seuls les calculateurs ont le droit d’arriver sans document', () => {
+  test('seuls les outils ont le droit d’arriver sans document', () => {
     const sans = SOURCES_DEPART.filter((s) => !s.url_document.trim());
-    expect(sans.every((s) => s.sujets.includes('calculateurs'))).toBe(true);
+    expect(sans.every((s) => s.sousSection === 'outils')).toBe(true);
+  });
+
+  test('chaque source appartient à une sous-section connue', () => {
+    const inconnues = SOURCES_DEPART.filter(
+      (s) => s.sousSection !== 'outils' && s.sousSection !== 'liens_utiles'
+    );
+    expect(inconnues.map((s) => s.cle)).toEqual([]);
+  });
+
+  test('les calculateurs sont des outils, tout le reste un lien utile', () => {
+    const outils = SOURCES_DEPART.filter((s) => s.sousSection === 'outils');
+    expect(outils.every((s) => s.cle.startsWith('mdcalc_'))).toBe(true);
+    expect(outils).toHaveLength(9);
   });
 
   test('une même page officielle peut couvrir plusieurs documents', () => {
@@ -143,10 +156,13 @@ describe('le répertoire vérifié', () => {
     expect(inconnus).toEqual([]);
   });
 
-  test('chacun porte au moins un sujet', () => {
+  test('chaque lien utile porte au moins un sujet', () => {
     // Le répertoire vérifié n'a plus de référence générale sans sujet : les
-    // dix-neuf documents portent tous sur quelque chose de précis.
-    const sans = SOURCES_DEPART.filter((s) => s.sujets.length === 0);
+    // dix-neuf documents portent tous sur quelque chose de précis. Les outils,
+    // eux, n'en ont pas : leur sous-section les classe déjà.
+    const sans = SOURCES_DEPART.filter(
+      (s) => s.sousSection === 'liens_utiles' && s.sujets.length === 0
+    );
     expect(sans.map((s) => s.cle)).toEqual([]);
   });
 

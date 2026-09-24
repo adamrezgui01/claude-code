@@ -536,6 +536,8 @@ export const en: Dictionnaire = {
     revisionsDuJour_other: '{{count}} notes to review tonight',
     chercher: 'Search — cystitis, DOAC, eGFR…',
     aucunResultat: 'No source matches.',
+    outils: 'Tools',
+    liensUtiles: 'Useful links',
     sansSujet: 'General references',
     maVeille: 'My subjects and notes',
     pageOfficielle: 'View the official page',
