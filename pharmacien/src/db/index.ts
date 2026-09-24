@@ -194,6 +194,18 @@ const SCHEMA = `
     horodatage_creation TEXT NOT NULL DEFAULT ''
   );
 
+  /* Les raccourcis du calculateur de dose. L'application est livrée sans
+     aucun : ils se créent à l'usage, comme la bibliothèque de sources. */
+  CREATE TABLE IF NOT EXISTS raccourcis_dose (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nom TEXT NOT NULL,
+    dose REAL NOT NULL DEFAULT 0,
+    unite TEXT NOT NULL DEFAULT 'parJour',
+    prises INTEGER NOT NULL DEFAULT 3,
+    concentration_mg REAL NOT NULL DEFAULT 0,
+    concentration_ml REAL NOT NULL DEFAULT 0
+  );
+
   CREATE TABLE IF NOT EXISTS liens (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     /* Repère de traduction, vide pour un lien ajouté par l'usager. */

@@ -25,6 +25,7 @@ import { titreDuLien } from '../../src/lib/liens';
 import { ouvrirSource } from '../../src/lib/veille/ouvrir';
 import { filtrerSources, parSujet, type SourceCherchable } from '../../src/lib/veille/recherche';
 import { parSousSection } from '../../src/lib/liens';
+import { MOTS_CLES_DOSE } from '../../src/lib/dose';
 import { cleARevoir } from '../../src/lib/veille/recherches';
 import { nomDuSujet } from '../../src/lib/veille/sujets';
 import { etatVeille } from '../../src/lib/veille/tableau';
@@ -112,6 +113,20 @@ export default function Clinique() {
   }, [recherche, sources]);
 
   const trouvees = useMemo(() => filtrerSources(sources, recherche), [sources, recherche]);
+
+  /**
+   * Le calculateur de dose est un écran, pas un lien. Il se cherche comme une
+   * source quand même : on tape « mg/kg » sans savoir si ce qu'on cherche est
+   * une page ou un outil.
+   */
+  const doseVisible = useMemo(
+    () =>
+      filtrerSources(
+        [{ id: -1, titre: t('dose.titre'), categorie: '', motsCles: MOTS_CLES_DOSE, sujets: [] }],
+        recherche
+      ).length > 0,
+    [recherche, t]
+  );
   const { outils, liensUtiles } = useMemo(() => parSousSection(trouvees), [trouvees]);
   const groupes = useMemo(
     () => parSujet(liensUtiles, t('clinique.sansSujet')),
@@ -200,15 +215,27 @@ export default function Clinique() {
         )}
       </View>
 
-      {trouvees.length === 0 ? (
+      {trouvees.length === 0 && !doseVisible ? (
         <Vide texte={t('clinique.aucunResultat')} />
       ) : (
         <>
           {/* Les outils d'abord : on les ouvre au comptoir, un patient devant
               soi. Les références ensuite, groupées par sujet. */}
-          {outils.length > 0 && (
+          {(outils.length > 0 || doseVisible) && (
             <Fondu>
               <SousTitre>{t('clinique.outils')}</SousTitre>
+              {doseVisible && (
+                <Pressable
+                  onPress={() => router.push('/clinique/dose')}
+                  style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
+                  <Ionicons name="calculator-outline" size={18} color={accent} />
+                  <View style={styles.texte}>
+                    <Text style={styles.titre}>{t('dose.titre')}</Text>
+                    <Text style={styles.detail}>{t('dose.avis')}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={couleurs.doux} />
+                </Pressable>
+              )}
               {outils.map((source) => (
                 <LigneSource
                   key={`outil-${source.id}`}
