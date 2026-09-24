@@ -23,6 +23,8 @@
  * | `invalidateDependentContent()` | `contenusAPerimer()`, ici, et son écriture dans `db/veille` |
  */
 
+import { decalerMois } from '../dates';
+
 /** Une source se revérifie deux fois par année. */
 export const MOIS_VERIFICATION_SOURCE = 6;
 
@@ -32,30 +34,6 @@ export const MOIS_VERIFICATION_SOURCE = 6;
  * version. Au bout d'un an, on regarde de toute façon.
  */
 export const MOIS_VALIDATION_CONTENU = 12;
-
-function deux(n: number): string {
-  return `${n}`.padStart(2, '0');
-}
-
-/**
- * La même date, quelques mois plus tard.
- *
- * Le 31 février n'existe pas : six mois après le 31 août, c'est le 28 février,
- * ou le 29 en année bissextile. Sans cette précaution le calcul déborde au
- * 3 mars, et une source reste trois jours de trop hors de la liste.
- *
- * La fonction `ajouterMois` de `lib/dates` ne fait pas ça : elle met d'abord
- * le jour au 1er du mois, parce qu'elle sert à naviguer dans le calendrier.
- */
-export function decalerMois(iso: string, mois: number): string {
-  const [annee, m, jour] = iso.split('-').map(Number);
-  const cible = new Date(Date.UTC(annee, m - 1 + mois, 1));
-  const dernierJour = new Date(
-    Date.UTC(cible.getUTCFullYear(), cible.getUTCMonth() + 1, 0)
-  ).getUTCDate();
-  const retenu = Math.min(jour, dernierJour);
-  return `${cible.getUTCFullYear()}-${deux(cible.getUTCMonth() + 1)}-${deux(retenu)}`;
-}
 
 /** La date est-elle assez vieille ? La limite est incluse. */
 function echue(depuis: string, mois: number, aujourdhui: string): boolean {

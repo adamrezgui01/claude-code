@@ -479,9 +479,10 @@ describe('groupe 11 — ce qui ne doit jamais créer de quart', () => {
   });
 
   test('les actions reconnues mais non prises en charge se nomment', () => {
+    // L'annulation, elle, est prise en charge depuis la 2.4 : elle résout un
+    // quart et ouvre un écran de confirmation. Elle ne supprime toujours rien.
     expect(lire('Annule mon shift de jeudi', CONTEXTE)).toMatchObject({
-      action: 'nonPrisEnCharge',
-      raison: 'annulation',
+      action: 'annulation',
     });
     expect(lire('Déplace mon shift de jeudi à vendredi', CONTEXTE)).toMatchObject({
       action: 'nonPrisEnCharge',

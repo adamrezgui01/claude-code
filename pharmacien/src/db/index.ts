@@ -324,6 +324,10 @@ export function initialiserBase() {
   // Les bornes de la journée : ce que « matin » et « soir » veulent dire.
   ajouterColonne('reglages', 'dispo_debut', "TEXT NOT NULL DEFAULT '08:00'");
   ajouterColonne('reglages', 'dispo_fin', "TEXT NOT NULL DEFAULT '21:00'");
+  // Qui a annulé un quart, et quand. Une pharmacie qui annule trois fois est
+  // exactement ce que les favoris et les « à éviter » doivent voir.
+  ajouterColonne('quarts', 'annule_par', "TEXT NOT NULL DEFAULT ''");
+  ajouterColonne('quarts', 'annule_le', "TEXT NOT NULL DEFAULT ''");
 
   // Le volet clinique. Un signet devient une source : mêmes lignes, quelques
   // colonnes de plus, pour que les deux listes ne divergent jamais.

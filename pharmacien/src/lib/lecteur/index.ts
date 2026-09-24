@@ -4,9 +4,11 @@ import { extraireHeures, horairesProposes, type LectureHeures } from './heures';
 import { trouverPharmacie, retrouverBrut, jetonsUtiles, type PharmacieConnue } from './pharmacies';
 import { lireNombre } from './nombres';
 import { estUneDispo, lireDispo, type FicheDispo } from './dispos';
+import { estUneAnnulation, lireAnnulation, type FicheAnnulation, type QuartVise } from './annulation';
 import type { Bornes } from '../disponibilites';
 
 export type { FicheDispo, DeclarationDispo } from './dispos';
+export type { FicheAnnulation, QuartVise } from './annulation';
 
 /**
  * Le lecteur de commandes.
@@ -28,10 +30,14 @@ export type { FicheDispo, DeclarationDispo } from './dispos';
 export type { PharmacieConnue };
 
 export type QuartConnu = {
+  /** L'identifiant du quart. C'est lui que l'annulation rend à l'écran. */
+  id?: number;
   pharmacieId: number;
   date: string;
   heureDebut: string;
   heureFin: string;
+  facture?: boolean;
+  annule?: boolean;
 };
 
 export type ContexteLecteur = {
@@ -79,6 +85,7 @@ export type FicheQuart = {
 export type Fiche =
   | FicheQuart
   | FicheDispo
+  | FicheAnnulation
   | { action: 'pharmacie'; recherche: string }
   | { action: 'nonPrisEnCharge'; raison: 'annulation' | 'modification' | 'question' | 'plusieurs' | 'chaine' }
   | { action: 'incompris' };
@@ -394,7 +401,16 @@ export function lire(phrase: string, contexte: ContexteLecteur): Fiche {
     return lireDispo(prepare, contexte.aujourdhui, contexte.bornes) ?? { action: 'incompris' };
   }
 
-  if (ANNULATION.test(prepare)) return { action: 'nonPrisEnCharge', raison: 'annulation' };
+  // L'annulation résout un quart et ouvre un écran ; elle ne supprime rien.
+  if (estUneAnnulation(prepare)) {
+    const resolue = lireAnnulation(prepare, brut, {
+      aujourdhui: contexte.aujourdhui,
+      pharmacies: contexte.pharmacies,
+      quarts: contexte.quarts.filter((q): q is QuartVise => q.id !== undefined),
+      bornes: contexte.bornes,
+    });
+    return resolue ?? { action: 'incompris' };
+  }
   if (MODIFICATION.test(prepare)) return { action: 'nonPrisEnCharge', raison: 'modification' };
 
   const recherche = lireAjoutPharmacie(prepare, brut);

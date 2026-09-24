@@ -61,6 +61,28 @@ export function ajouterMois(iso: string, n: number): string {
   return dateISO(d);
 }
 
+/**
+ * La même date, quelques mois plus tard.
+ *
+ * Le 31 février n'existe pas : six mois après le 31 août, c'est le 28 février,
+ * ou le 29 en année bissextile. Sans cette précaution le calcul déborde au
+ * 3 mars.
+ *
+ * `ajouterMois` ne fait pas ça : elle met d'abord le jour au 1er du mois,
+ * parce qu'elle sert à naviguer dans le calendrier. Les deux existent, et
+ * elles ne se remplacent pas.
+ */
+export function decalerMois(iso: string, mois: number): string {
+  const [annee, m, jour] = iso.split('-').map(Number);
+  const cible = new Date(Date.UTC(annee, m - 1 + mois, 1));
+  const dernierJour = new Date(
+    Date.UTC(cible.getUTCFullYear(), cible.getUTCMonth() + 1, 0)
+  ).getUTCDate();
+  const retenu = Math.min(jour, dernierJour);
+  const deux = (n: number) => `${n}`.padStart(2, '0');
+  return `${cible.getUTCFullYear()}-${deux(cible.getUTCMonth() + 1)}-${deux(retenu)}`;
+}
+
 /** Lundi de la semaine qui contient cette date. */
 export function debutSemaine(iso: string): string {
   const d = analyserDate(iso);

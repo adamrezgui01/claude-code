@@ -88,6 +88,10 @@ export type Quart = {
   heure_fin_reelle: string;
   /** 1 si le quart n'a finalement pas eu lieu. */
   annule: number;
+  /** « pharmacie » ou « moi ». Vide tant que le quart tient. */
+  annule_par: string;
+  /** Date de l'annulation, `AAAA-MM-JJ`. */
+  annule_le: string;
   taux_horaire: number;
   /**
    * Aller simple, en kilomètres. Négatif tant que la distance n'a pas été

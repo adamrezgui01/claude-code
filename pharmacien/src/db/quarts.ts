@@ -12,6 +12,8 @@ export type EntreeQuart = Omit<
   | 'heure_debut_reelle'
   | 'heure_fin_reelle'
   | 'annule'
+  | 'annule_par'
+  | 'annule_le'
   | 'serie_id'
   | 'numero_facture'
 >;
@@ -143,9 +145,23 @@ export function rappelsDuQuart(quart: Quart): string[] {
  * seule exception à la règle : un quart est travaillé selon ses heures prévues
  * tant que personne ne dit le contraire.
  */
-export function definirAnnule(id: number, annule: boolean) {
+export type QuiAnnule = 'pharmacie' | 'moi';
+
+/**
+ * Un quart annulé reste en base : il quitte l'horaire et les statistiques de
+ * revenus, mais sa ligne demeure sur la fiche de la pharmacie. Trois
+ * annulations de la même pharmacie, c'est une information ; trois lignes
+ * effacées, ce n'est rien.
+ */
+export function definirAnnule(id: number, annule: boolean, par?: QuiAnnule) {
   refuserSiVerrouille(id);
-  db.runSync('UPDATE quarts SET annule = ? WHERE id = ?', annule ? 1 : 0, id);
+  db.runSync(
+    'UPDATE quarts SET annule = ?, annule_par = ?, annule_le = ? WHERE id = ?',
+    annule ? 1 : 0,
+    annule && par ? par : '',
+    annule ? aujourdhui() : '',
+    id
+  );
 }
 
 /**
@@ -233,4 +249,18 @@ export function finDuQuart(quart: Quart): Date {
   const fin = new Date(a, m - 1, j, hf, mf, 0, 0);
   if (hf * 60 + mf <= hd * 60 + md) fin.setDate(fin.getDate() + 1);
   return fin;
+}
+
+/**
+ * Les quarts annulés d'une pharmacie, du plus récent au plus ancien.
+ *
+ * Ils ne comptent nulle part dans les revenus. Ils restent sur la fiche parce
+ * qu'une pharmacie qui annule trois fois est exactement ce que les favoris et
+ * les « à éviter » doivent voir.
+ */
+export function quartsAnnulesPharmacie(pharmacieId: number): Quart[] {
+  return db.getAllSync<Quart>(
+    'SELECT * FROM quarts WHERE pharmacie_id = ? AND annule = 1 ORDER BY date DESC',
+    pharmacieId
+  );
 }

@@ -4,7 +4,15 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 
 import { useTextes } from '../i18n';
 import { suiteDeLaLecture } from '../lib/dictee';
-import { lire, type ContexteLecteur, type DeclarationDispo, type Fiche, type FicheDispo, type Question } from '../lib/lecteur';
+import {
+  lire,
+  type ContexteLecteur,
+  type DeclarationDispo,
+  type Fiche,
+  type FicheAnnulation,
+  type FicheDispo,
+  type Question,
+} from '../lib/lecteur';
 import { formatDateCourte } from '../lib/dates';
 import type { Langue } from '../lib/langue';
 import { Bouton } from './composants';
@@ -28,6 +36,7 @@ export function Dictee({
   onFermer,
   onQuart,
   onDispo,
+  onAnnulation,
   onPharmacie,
   onIncomprise,
 }: {
@@ -36,6 +45,7 @@ export function Dictee({
   onFermer: () => void;
   onQuart: (fiche: Extract<Fiche, { action: 'quart' }>) => void;
   onDispo: (fiche: FicheDispo) => void;
+  onAnnulation: (fiche: FicheAnnulation) => void;
   onPharmacie: (recherche: string) => void;
   onIncomprise: (phrase: string, raison: string) => void;
 }) {
@@ -74,6 +84,12 @@ export function Dictee({
       return;
     }
     const resultat = lire(phrase, contexte);
+    // L'annulation ouvre son écran de confirmation : rien n'est supprimé ici.
+    if (resultat.action === 'annulation') {
+      onAnnulation(resultat);
+      onFermer();
+      return;
+    }
     if (resultat.action === 'incompris' || resultat.action === 'nonPrisEnCharge') {
       onIncomprise(phrase, resultat.action === 'incompris' ? 'incompris' : resultat.raison);
     }

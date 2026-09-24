@@ -21,6 +21,8 @@ export function suiteDeLaLecture(resultat: Fiche): 'fermer' | 'rester' {
   // Une disponibilité s'écrit depuis la dictée : l'écran montre ce qu'il a
   // compris, et c'est l'usager qui enregistre. Le lecteur ne crée rien seul.
   if (resultat.action === 'dispo') return 'rester';
+  // L'annulation quitte la dictée pour son écran de confirmation.
+  if (resultat.action === 'annulation') return 'fermer';
   // Une recherche de pharmacie quitte l'horaire : la dictée n'a plus rien à
   // montrer derrière elle.
   if (resultat.action === 'pharmacie') return 'fermer';

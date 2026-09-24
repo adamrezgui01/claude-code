@@ -13,8 +13,16 @@ import {
   supprimerPharmacie,
   type EntreePharmacie,
 } from '../../src/db/pharmacies';
+import { quartsAnnulesPharmacie } from '../../src/db/quarts';
 import { obtenirReglages } from '../../src/db/profil';
-import { LOGICIELS, type Adresse, type CodeAcces, type ModeDeplacement } from '../../src/db/types';
+import {
+  LOGICIELS,
+  type Adresse,
+  type CodeAcces,
+  type ModeDeplacement,
+  type Quart,
+} from '../../src/db/types';
+import { formatDateLongue } from '../../src/lib/dates';
 import {
   adresseDesReglages,
   adresseRenseignee,
@@ -67,7 +75,7 @@ import { useTextes } from '../../src/i18n';
 const PAUSES = [30, 45, 60];
 
 export default function FichePharmacie() {
-  const { t } = useTextes();
+  const { t, langue } = useTextes();
   const router = useRouter();
   const accent = useAccent();
   const params = useLocalSearchParams<{
@@ -129,6 +137,8 @@ export default function FichePharmacie() {
   const [secretsVisibles, setSecretsVisibles] = useState(false);
   const [lieuDeploye, setLieuDeploye] = useState(false);
   const [nombreQuarts, setNombreQuarts] = useState(0);
+  /** Les quarts tombés. Ils ne comptent pas, mais ils se voient. */
+  const [annules, setAnnules] = useState<Quart[]>([]);
   const [favori, setFavori] = useState(false);
   const [aEviter, setAEviter] = useState(false);
 
@@ -187,6 +197,7 @@ export default function FichePharmacie() {
       }
     }
     setNombreQuarts(compterQuartsPharmacie(pharmacieId));
+    setAnnules(quartsAnnulesPharmacie(pharmacieId));
     lireCodes(pharmacieId).then(setCodes);
     lireIdentifiants(pharmacieId).then((i) => {
       setUtilisateur(i.utilisateur);
@@ -456,6 +467,21 @@ export default function FichePharmacie() {
                 icone={<Ionicons name="navigate-outline" size={18} color={couleurs.texte} />}
                 onPress={() => ouvrirItineraireVers(adresseUneLigne(adresse))}
               />
+            )}
+
+            {!nouvelle && annules.length > 0 && (
+              <>
+                <Separateur />
+                <SousTitre>{t('pharmacie.quartsAnnules')}</SousTitre>
+                {annules.map((quart) => (
+                  <Text key={quart.id} style={styles.annule}>
+                    {t('annulation.ligneFiche', {
+                      jour: formatDateLongue(quart.date, langue),
+                    })}
+                    {quart.annule_par ? ` · ${t(`annulation.parQui_${quart.annule_par}`)}` : ''}
+                  </Text>
+                ))}
+              </>
             )}
 
             {!nouvelle && (
@@ -894,6 +920,12 @@ export default function FichePharmacie() {
 }
 
 const styles = StyleSheet.create({
+  annule: {
+    fontSize: 14,
+    fontFamily: police.normal,
+    color: couleurs.doux,
+    paddingVertical: 2,
+  },
   reperes: {
     flexDirection: 'row',
     gap: espace.s,

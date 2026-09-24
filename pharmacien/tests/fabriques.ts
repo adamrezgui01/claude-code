@@ -16,6 +16,8 @@ export function unQuart(champs: Partial<QuartDetaille> = {}): QuartDetaille {
     heure_debut_reelle: '',
     heure_fin_reelle: '',
     annule: 0,
+    annule_par: '',
+    annule_le: '',
     taux_horaire: 65,
     kilometrage: -1,
     taux_par_km: 0,

@@ -235,6 +235,7 @@ export const en: Dictionnaire = {
     adresseNonSituee:
       'This address could not be located: the pharmacy will not appear on the map. Correct it above and save again.',
     itineraire: 'Get directions',
+    quartsAnnules: 'Cancelled shifts',
     favori: 'Favourite',
     aEviter: 'To avoid',
     expliqueFavori: 'A favourite moves to the top of the directory. The two marks are exclusive.',
@@ -450,6 +451,21 @@ export const en: Dictionnaire = {
     tauxParKmAide: 'Prefills a new pharmacy record, at {{montant}} per kilometre.',
     perDiemDefaut: 'Default per diem ($)',
     perDiemAide: 'Prefills a new pharmacy record.',
+  },
+
+  annulation: {
+    titre: 'Cancel a shift',
+    lequel: 'Which one?',
+    aucun: 'No shift found on {{jour}}.',
+    facture: 'That shift is invoiced. Go through the invoice.',
+    parLaPharmacie: 'Cancelled by the pharmacy',
+    parMoi: 'Cancelled by me',
+    faite: 'Shift cancelled',
+    faiteDetail: 'On {{jour}}. It leaves your schedule, and its reminders with it.',
+    rendreDispo: 'Make yourself available that day?',
+    ligneFiche: 'Shift cancelled — {{jour}}',
+    parQui_pharmacie: 'cancelled by the pharmacy',
+    parQui_moi: 'cancelled by you',
   },
 
   dictee: {

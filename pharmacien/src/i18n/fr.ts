@@ -233,6 +233,7 @@ export const fr = {
     adresseNonSituee:
       'Cette adresse n’a pas pu être située : la pharmacie n’apparaît pas sur la carte. Corrigez-la ci-dessus et enregistrez de nouveau.',
     itineraire: 'Obtenir un itinéraire',
+    quartsAnnules: 'Quarts annulés',
     favori: 'Favori',
     aEviter: 'À éviter',
     expliqueFavori: 'Un favori remonte en haut du répertoire. Les deux repères s’excluent.',
@@ -451,6 +452,21 @@ export const fr = {
       'Préremplit une nouvelle fiche de pharmacie, à {{montant}} le kilomètre.',
     perDiemDefaut: 'Per diem par défaut ($)',
     perDiemAide: 'Préremplit une nouvelle fiche de pharmacie.',
+  },
+
+  annulation: {
+    titre: 'Annuler un quart',
+    lequel: 'Lequel ?',
+    aucun: 'Aucun quart trouvé le {{jour}}.',
+    facture: 'Ce quart est facturé. Passez par la facture.',
+    parLaPharmacie: 'Annulé par la pharmacie',
+    parMoi: 'Annulé par moi',
+    faite: 'Quart annulé',
+    faiteDetail: 'Le {{jour}}. Il quitte votre horaire, et ses rappels avec lui.',
+    rendreDispo: 'Vous rendre dispo ce jour-là ?',
+    ligneFiche: 'Quart annulé — {{jour}}',
+    parQui_pharmacie: 'annulé par la pharmacie',
+    parQui_moi: 'annulé par vous',
   },
 
   dictee: {

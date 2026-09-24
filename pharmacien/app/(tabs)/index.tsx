@@ -329,10 +329,13 @@ export default function Horaire() {
         surnom: p.surnom,
       })),
       quarts: quarts.map((q) => ({
+        id: q.id,
         pharmacieId: q.pharmacie_id,
         date: q.date,
         heureDebut: q.heure_debut,
         heureFin: q.heure_fin,
+        facture: !!q.numero_facture,
+        annule: !!q.annule,
       })),
       // Ce que « jeudi matin » et « jeudi soir » veulent dire.
       bornes,
@@ -615,6 +618,12 @@ export default function Horaire() {
         onFermer={() => setDictee(false)}
         onQuart={(fiche) => router.push(`/quart/nouveau?${parametresDuQuart(fiche)}`)}
         onDispo={ecrireDispo}
+        onAnnulation={(fiche) =>
+          router.push(
+            `/quart/annuler?ids=${fiche.candidats.map((q) => q.id).join(',')}` +
+              (fiche.date ? `&date=${fiche.date}` : '')
+          )
+        }
         onPharmacie={(recherche) =>
           router.push(`/pharmacie/nouvelle?recherche=${encodeURIComponent(recherche)}`)
         }

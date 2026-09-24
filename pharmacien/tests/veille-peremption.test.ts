@@ -1,6 +1,6 @@
+import { decalerMois } from '../src/lib/dates';
 import {
   contenusAPerimer,
-  decalerMois,
   etatContenu,
   etatSource,
   MOIS_VALIDATION_CONTENU,

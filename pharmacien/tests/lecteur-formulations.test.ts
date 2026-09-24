@@ -345,13 +345,20 @@ describe('groupe 9 — les refus', () => {
     ['Avance mon quart de jeudi à mercredi', 'modification'],
     ['Repousse mon quart de jeudi', 'modification'],
     ['Switch mon quart de jeudi avec celui de vendredi', 'modification'],
-    ['Delete mon quart de jeudi', 'annulation'],
-    ['J’ai plus mon quart de jeudi', 'annulation'],
   ];
 
   test.each(cas)('« %s » : %s', (phrase, raison) => {
     expect(refus(phrase)).toBe(raison);
   });
+
+  test.each(['Delete mon quart de jeudi', 'J’ai plus mon quart de jeudi'])(
+    '« %s » résout une annulation plutôt que de refuser',
+    (phrase) => {
+      // Depuis la 2.4, annuler se dit. Le lecteur résout le quart et ouvre un
+      // écran ; c'est la tape qui supprime, jamais la phrase.
+      expect(lire(phrase, CONTEXTE).action).toBe('annulation');
+    }
+  );
 });
 
 // ===========================================================================

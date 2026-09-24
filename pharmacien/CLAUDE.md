@@ -103,6 +103,14 @@ qu'on ne les redécouvre pas trois fois.
   le pouvoir.
 - Un quart appartient à la date de son début, quart de nuit compris.
 - Un dépôt aimante à la demi-heure la plus proche ; la demie exacte monte.
+- **Le lecteur ne détruit rien**, au même titre qu'il ne crée rien. Une phrase
+  d'annulation *résout* un quart : elle mène à un écran qui montre la
+  pharmacie, la date, les heures et le montant, et la suppression demande une
+  tape. Jamais le premier candidat par défaut, jamais tous d'un coup. Un quart
+  annulé quitte l'horaire et les revenus, mais sa ligne reste sur la fiche de
+  la pharmacie, avec qui a annulé : une pharmacie qui annule trois fois est
+  exactement ce que les favoris et les « à éviter » doivent voir. Et la journée
+  ne redevient pas disponible toute seule — une dispo se déclare.
 - Le lecteur de commandes ne crée jamais rien. Il remplit une fiche, l'usager
   confirme, et c'est la création ordinaire qui s'exécute — mêmes défauts,
   mêmes contrôles de chevauchement, même règle de minuit.
@@ -170,12 +178,14 @@ qu'on ne les redécouvre pas trois fois.
 Ces choix-là ont été pesés puis tranchés. Ils sont écrits ici pour ne pas être
 reproposés à chaque version. Chacun se rouvre, mais sur un argument neuf.
 
-- La dictée n'ajoute que des quarts. Modifier, déplacer, dupliquer ou supprimer
-  passe par la fiche. Une phrase mal comprise à la création ne coûte qu'un
-  abandon : rien n'existait encore. La même phrase sur un quart déjà entré
-  écrase du travail, et souvent sans que ça se voie. Une seule exception à
-  rouvrir plus tard : la duplication récurrente — « pareil tous les mardis
-  d'octobre » — qui n'écrase rien puisqu'elle ne fait qu'ajouter.
+- Le lecteur ne modifie, ne déplace et ne duplique aucun quart : ces gestes
+  obligent l'application à deviner deux choses, quel quart et quelle
+  destination. Il peut en revanche **annuler** un quart, parce qu'il n'y a
+  qu'une seule chose à deviner, et parce que l'annulation arrive précisément
+  quand les mains sont prises : au volant, au comptoir, au téléphone avec la
+  pharmacie. Une exception à rouvrir plus tard : la duplication récurrente —
+  « pareil tous les mardis d'octobre » — qui n'écrase rien puisqu'elle ne fait
+  qu'ajouter.
 - Pas de lecteur de commandes pour le répertoire. Une pharmacie se crée une
   fois, avec une adresse, un taux, des codes d'accès, et se corrige rarement.
   Dicter tout ça prendrait plus de temps que de le taper, et le lecteur devrait
