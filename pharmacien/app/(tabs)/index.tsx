@@ -33,7 +33,8 @@ import {
 } from '../../src/lib/rappelFactures';
 import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
 import { detecterChevauchements } from '../../src/lib/stats';
-import type { ContexteLecteur, Fiche } from '../../src/lib/lecteur';
+import type { ContexteLecteur, Fiche, FicheDispo } from '../../src/lib/lecteur';
+import { declarerJournee, effacerJournee } from '../../src/db/disponibilites';
 import { Calendrier } from '../../src/ui/Calendrier';
 import { parametresDuQuart } from '../../src/lib/dictee';
 import { Dictee } from '../../src/ui/Dictee';
@@ -72,6 +73,8 @@ export default function Horaire() {
   const hauteurAgenda = Math.max(280, height - 400);
   const [quarts, setQuarts] = useState<QuartDetaille[]>([]);
   const [dictee, setDictee] = useState(false);
+  /** Les bornes de la journée, pour ce que « jeudi soir » veut dire. */
+  const [bornes, setBornes] = useState({ debut: '08:00', fin: '21:00' });
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
   const [vue, setVue] = useState<Vue>('agenda');
   // Le mois s'ouvre en premier : c'est lui qui donne la vue d'ensemble.
@@ -95,6 +98,7 @@ export default function Horaire() {
       setMaintenant(Date.now());
       const reglages = obtenirReglages();
       setRappelFactures(doitRappelerFactures(reglages));
+      setBornes({ debut: reglages.dispo_debut, fin: reglages.dispo_fin });
       // Le bandeau accompagne les trois premières ouvertures, puis ne revient
       // plus : le débutant est guidé, l'habitué ne voit plus rien.
       const vues = reglages.aide_horaire_vues;
@@ -137,6 +141,30 @@ export default function Horaire() {
       ),
     });
   }, [navigation, accent, router, t]);
+
+  /**
+   * Une disponibilité dictée s'écrit ici, puis l'écran des dispos s'ouvre :
+   * l'usager voit tout de suite ce qui a été porté au calendrier.
+   */
+  function ecrireDispo(fiche: FicheDispo) {
+    for (const declaration of fiche.declarations) {
+      for (const date of declaration.dates) {
+        if (fiche.retirer) {
+          effacerJournee(date);
+          continue;
+        }
+        declarerJournee(date, [
+          {
+            date,
+            toute_la_journee: declaration.touteLaJournee,
+            heure_debut: declaration.heureDebut ?? '',
+            heure_fin: declaration.heureFin ?? '',
+          },
+        ]);
+      }
+    }
+    router.push('/disponibilites');
+  }
 
   const chevauchements = useMemo(() => detecterChevauchements(quarts), [quarts]);
 
@@ -306,8 +334,10 @@ export default function Horaire() {
         heureDebut: q.heure_debut,
         heureFin: q.heure_fin,
       })),
+      // Ce que « jeudi matin » et « jeudi soir » veulent dire.
+      bornes,
     }),
-    [pharmacies, quarts]
+    [bornes, pharmacies, quarts]
   );
 
   return (
@@ -560,6 +590,7 @@ export default function Horaire() {
         contexte={contexteLecteur}
         onFermer={() => setDictee(false)}
         onQuart={(fiche) => router.push(`/quart/nouveau?${parametresDuQuart(fiche)}`)}
+        onDispo={ecrireDispo}
         onPharmacie={(recherche) =>
           router.push(`/pharmacie/nouvelle?recherche=${encodeURIComponent(recherche)}`)
         }

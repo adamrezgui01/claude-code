@@ -461,6 +461,10 @@ export const en: Dictionnaire = {
       'Two different schedules in one sentence: dictate them one at a time.',
     raisonChaine:
       'Two commands in one sentence: dictate them one at a time.',
+    disposComprises_one: '{{count}} day offered:',
+    disposComprises_other: '{{count}} days offered:',
+    disposRetirees_one: '{{count}} day removed:',
+    disposRetirees_other: '{{count}} days removed:',
     journal: 'Sentences not understood',
     journalDetail_one: '{{count}} sentence kept',
     journalDetail_other: '{{count}} sentences kept',

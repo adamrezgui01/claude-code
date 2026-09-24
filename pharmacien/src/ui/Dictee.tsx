@@ -4,7 +4,9 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 
 import { useTextes } from '../i18n';
 import { suiteDeLaLecture } from '../lib/dictee';
-import { lire, type ContexteLecteur, type Fiche, type Question } from '../lib/lecteur';
+import { lire, type ContexteLecteur, type DeclarationDispo, type Fiche, type FicheDispo, type Question } from '../lib/lecteur';
+import { formatDateCourte } from '../lib/dates';
+import type { Langue } from '../lib/langue';
 import { Bouton } from './composants';
 import { couleurs, espace, police, rayon, useAccent } from './theme';
 
@@ -25,6 +27,7 @@ export function Dictee({
   contexte,
   onFermer,
   onQuart,
+  onDispo,
   onPharmacie,
   onIncomprise,
 }: {
@@ -32,11 +35,12 @@ export function Dictee({
   contexte: ContexteLecteur;
   onFermer: () => void;
   onQuart: (fiche: Extract<Fiche, { action: 'quart' }>) => void;
+  onDispo: (fiche: FicheDispo) => void;
   onPharmacie: (recherche: string) => void;
   onIncomprise: (phrase: string, raison: string) => void;
 }) {
   const accent = useAccent();
-  const { t } = useTextes();
+  const { t, langue } = useTextes();
   const [phrase, setPhrase] = useState('');
   const [fiche, setFiche] = useState<Fiche | null>(null);
   const [reponses, setReponses] = useState<Record<number, number>>({});
@@ -60,6 +64,13 @@ export function Dictee({
   const terminer = () => {
     if (fiche && fiche.action === 'quart') {
       continuer();
+      return;
+    }
+    // Une disponibilité lue attend son « Enregistrer » : c'est le seul endroit
+    // où la dictée écrit quelque chose, alors elle le demande.
+    if (fiche && fiche.action === 'dispo') {
+      onDispo(fiche);
+      onFermer();
       return;
     }
     const resultat = lire(phrase, contexte);
@@ -151,6 +162,21 @@ export function Dictee({
             </View>
           )}
 
+          {fiche?.action === 'dispo' && (
+            <View style={styles.resultat}>
+              <Text style={styles.resume}>
+                {t(fiche.retirer ? 'dictee.disposRetirees' : 'dictee.disposComprises', {
+                  count: fiche.declarations.reduce((n, d) => n + d.dates.length, 0),
+                })}
+              </Text>
+              {fiche.declarations.map((d, rang) => (
+                <Text key={rang} style={styles.questionTexte}>
+                  {resumerDeclaration(d, langue, t)}
+                </Text>
+              ))}
+            </View>
+          )}
+
           {fiche?.action === 'incompris' && <Text style={styles.echec}>{t('dictee.incompris')}</Text>}
           {fiche?.action === 'nonPrisEnCharge' && (
             <Text style={styles.echec}>
@@ -159,7 +185,7 @@ export function Dictee({
           )}
 
           <Bouton
-            titre={t('dictee.termine')}
+            titre={t(fiche?.action === 'dispo' ? 'commun.enregistrer' : 'dictee.termine')}
             onPress={terminer}
             desactive={phrase.trim().length === 0}
           />
@@ -170,6 +196,17 @@ export function Dictee({
       </Pressable>
     </Modal>
   );
+}
+
+/** Une déclaration de disponibilité, en une ligne lisible. */
+function resumerDeclaration(
+  declaration: DeclarationDispo,
+  langue: Langue,
+  traduire: (cle: string, valeurs?: Record<string, unknown>) => string
+): string {
+  const jours = declaration.dates.map((d) => formatDateCourte(d, langue)).join(', ');
+  if (declaration.touteLaJournee) return jours;
+  return `${jours} · ${declaration.heureDebut} – ${declaration.heureFin}`;
 }
 
 /** Les réponses à toucher, telles qu'elles se lisent. */

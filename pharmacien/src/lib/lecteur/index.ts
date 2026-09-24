@@ -3,6 +3,10 @@ import { extraireDates } from './dates';
 import { extraireHeures, horairesProposes, type LectureHeures } from './heures';
 import { trouverPharmacie, retrouverBrut, jetonsUtiles, type PharmacieConnue } from './pharmacies';
 import { lireNombre } from './nombres';
+import { estUneDispo, lireDispo, type FicheDispo } from './dispos';
+import type { Bornes } from '../disponibilites';
+
+export type { FicheDispo, DeclarationDispo } from './dispos';
 
 /**
  * Le lecteur de commandes.
@@ -35,6 +39,8 @@ export type ContexteLecteur = {
   aujourdhui: string;
   pharmacies: PharmacieConnue[];
   quarts: QuartConnu[];
+  /** Bornes de la journée offerte, pour « jeudi matin » et « jeudi soir ». */
+  bornes?: Bornes;
 };
 
 export type Question =
@@ -72,6 +78,7 @@ export type FicheQuart = {
 
 export type Fiche =
   | FicheQuart
+  | FicheDispo
   | { action: 'pharmacie'; recherche: string }
   | { action: 'nonPrisEnCharge'; raison: 'annulation' | 'modification' | 'question' | 'plusieurs' | 'chaine' }
   | { action: 'incompris' };
@@ -379,6 +386,14 @@ export function lire(phrase: string, contexte: ContexteLecteur): Fiche {
   if (!prepare) return { action: 'incompris' };
 
   if (QUESTION.test(prepare)) return { action: 'nonPrisEnCharge', raison: 'question' };
+
+  // Les disponibilités se lisent avant les refus : « enlève ma dispo de
+  // jeudi » contient « enlève », qui refuserait la phrase comme une
+  // suppression de quart.
+  if (estUneDispo(prepare)) {
+    return lireDispo(prepare, contexte.aujourdhui, contexte.bornes) ?? { action: 'incompris' };
+  }
+
   if (ANNULATION.test(prepare)) return { action: 'nonPrisEnCharge', raison: 'annulation' };
   if (MODIFICATION.test(prepare)) return { action: 'nonPrisEnCharge', raison: 'modification' };
 

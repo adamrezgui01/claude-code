@@ -53,34 +53,32 @@ function lireMoment(mots: string[], i: number): Moment | null {
   if (mots[i] === 'midi') return finirMoment(mots, i, i, 12 * 60, true);
   if (mots[i] === 'minuit') return finirMoment(mots, i, i, 0, true);
 
+  // Un seul mot qui porte tout : « 9:30 », « 9h30 », et « 9h » tout court.
+  // Ce dernier sort de la dictée aussi souvent que « 9 h » en deux mots, et il
+  // ne se lisait pas : `lireNombre` ne voit pas de nombre dans « 9h ».
+  const colle = /^(\d{1,2})[h:](\d{2})?$/.exec(mots[i] ?? '');
+  if (colle) {
+    const heure = Number(colle[1]);
+    if (heure > 24) return null;
+    const min = Number(colle[2] ?? 0);
+    if (min > 59) return null;
+    return finirMoment(mots, i, i, heure * 60 + min, heure === 0 || heure > 12);
+  }
+
   const nombre = lireNombre(mots.slice(i));
   if (!nombre || nombre.valeur > 24) return null;
   let j = i + nombre.mots;
-  let heures = nombre.valeur;
+  const heures = nombre.valeur;
   let minutes = 0;
-  let explicite = heures === 0 || heures > 12;
+  const explicite = heures === 0 || heures > 12;
 
-  // « 9:30 » arrive en un seul mot, « 9 h 30 » en trois.
-  const colonne = /^(\d{1,2}):(\d{2})$/.exec(mots[i] ?? '');
-  if (colonne) {
-    heures = Number(colonne[1]);
-    minutes = Number(colonne[2]);
-    explicite = heures === 0 || heures > 12;
-    j = i + 1;
-  } else {
-    const colle = /^(\d{1,2})h(\d{2})$/.exec(mots[i] ?? '');
-    if (colle) {
-      heures = Number(colle[1]);
-      minutes = Number(colle[2]);
-      explicite = heures === 0 || heures > 12;
-      j = i + 1;
-    } else if (mots[j] === 'h' || mots[j] === 'heure' || mots[j] === 'heures') {
-      j += 1;
-      const suivant = lireNombre(mots.slice(j));
-      if (suivant && suivant.valeur < 60 && mots[j] !== undefined && /^\d+$/.test(mots[j])) {
-        minutes = suivant.valeur;
-        j += suivant.mots;
-      }
+  // « 9 h 30 » arrive en trois mots.
+  if (mots[j] === 'h' || mots[j] === 'heure' || mots[j] === 'heures') {
+    j += 1;
+    const suivant = lireNombre(mots.slice(j));
+    if (suivant && suivant.valeur < 60 && mots[j] !== undefined && /^\d+$/.test(mots[j])) {
+      minutes = suivant.valeur;
+      j += suivant.mots;
     }
   }
 

@@ -162,6 +162,18 @@ describe('groupe 3 — dates écrites', () => {
 // ===========================================================================
 
 describe('groupe 4 — une seule borne', () => {
+  test('« 9h » collé se lit comme « 9 h » séparé', () => {
+    // La dictée écrit les deux formes. `lireNombre` ne voyait pas de nombre
+    // dans « 9h », et l'horaire se perdait en silence.
+    const f = quart('Ajoute un quart jeudi de 9h à 17h au Familiprix');
+    expect({ debut: f.heureDebut, fin: f.heureFin }).toEqual({ debut: '09:00', fin: '17:00' });
+  });
+
+  test('« 9h30 » garde ses minutes', () => {
+    const f = quart('Ajoute un quart jeudi de 9h30 à 17h30 au Familiprix');
+    expect({ debut: f.heureDebut, fin: f.heureFin }).toEqual({ debut: '09:30', fin: '17:30' });
+  });
+
   test('« de 9 h à la fermeture » garde le début et laisse la fin vide', () => {
     const f = quart('Ajoute un quart jeudi de 9 h à la fermeture au Familiprix');
     expect(f.heureDebut).toBe('09:00');

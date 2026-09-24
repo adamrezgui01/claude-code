@@ -18,6 +18,9 @@ import type { Fiche, FicheQuart } from './lecteur';
  */
 export function suiteDeLaLecture(resultat: Fiche): 'fermer' | 'rester' {
   if (resultat.action === 'quart') return resultat.questions.length === 0 ? 'fermer' : 'rester';
+  // Une disponibilité s'écrit depuis la dictée : l'écran montre ce qu'il a
+  // compris, et c'est l'usager qui enregistre. Le lecteur ne crée rien seul.
+  if (resultat.action === 'dispo') return 'rester';
   // Une recherche de pharmacie quitte l'horaire : la dictée n'a plus rien à
   // montrer derrière elle.
   if (resultat.action === 'pharmacie') return 'fermer';

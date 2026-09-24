@@ -462,6 +462,10 @@ export const fr = {
       'Deux quarts d’horaires différents dans une phrase : dictez-les l’un après l’autre.',
     raisonChaine:
       'Deux commandes dans une phrase : dictez-les l’une après l’autre.',
+    disposComprises_one: '{{count}} journée offerte :',
+    disposComprises_other: '{{count}} journées offertes :',
+    disposRetirees_one: '{{count}} journée retirée :',
+    disposRetirees_other: '{{count}} journées retirées :',
     journal: 'Phrases incomprises',
     journalDetail_one: '{{count}} phrase gardée',
     journalDetail_other: '{{count}} phrases gardées',

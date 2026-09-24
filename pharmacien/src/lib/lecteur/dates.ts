@@ -53,7 +53,7 @@ const JOURS: Record<string, number> = {
 };
 
 /** Mots qui relient deux dates d'une même énumération. */
-const LIAISONS = new Set([',', 'et', 'and', 'ou', 'puis']);
+const LIAISONS = new Set([',', 'et', 'and', 'ou', 'puis', 'pis']);
 
 /**
  * « début », « mi », « fin » : le repère où ouvrir le calendrier quand la
@@ -114,10 +114,18 @@ function jourSemaine(jours: number): number {
   return new Date(jours * JOUR_EN_MS).getUTCDay();
 }
 
-/** La prochaine occurrence de ce jour de semaine, strictement après `base`. */
-function prochainJour(base: number, cible: number): number {
+/**
+ * La prochaine occurrence de ce jour de semaine, après `base`.
+ *
+ * `inclusif` décide du jour même. Pour un quart, « lundi » dit un lundi veut
+ * dire lundi prochain : on note rarement après coup un quart qu'on est en
+ * train de faire. Pour une disponibilité, c'est l'inverse — « je suis dispo
+ * lundi », dit le lundi matin, parle de la journée qui commence.
+ */
+function prochainJour(base: number, cible: number, inclusif = false): number {
   const ecart = (cible - jourSemaine(base) + 7) % 7;
-  return base + (ecart === 0 ? 7 : ecart);
+  if (ecart === 0) return inclusif ? base : base + 7;
+  return base + ecart;
 }
 
 /** La dernière occurrence de ce jour de semaine, strictement avant `base`. */
@@ -209,7 +217,8 @@ function lireAtome(
   i: number,
   base: number,
   passe: boolean,
-  precedent: Atome | null
+  precedent: Atome | null,
+  inclusif: boolean
 ): Atome | null {
   const mot = mots[i];
   if (mot === undefined) return null;
@@ -291,7 +300,7 @@ function lireAtome(
 
   // « du 12 au 16 octobre », « du lundi au vendredi la semaine prochaine ».
   if (mot === 'du' || mot === 'des') {
-    const intervalle = lireIntervalle(mots, i, base, passe);
+    const intervalle = lireIntervalle(mots, i, base, passe, inclusif);
     if (intervalle) return intervalle;
   }
 
@@ -359,7 +368,13 @@ function lireAtome(
 }
 
 /** « du 12 au 16 octobre », « du 30 décembre au 2 janvier », « du lundi au vendredi ». */
-function lireIntervalle(mots: string[], i: number, base: number, passe: boolean): Atome | null {
+function lireIntervalle(
+  mots: string[],
+  i: number,
+  base: number,
+  passe: boolean,
+  inclusif: boolean
+): Atome | null {
   // Deux jours de la semaine : « du lundi au vendredi [la semaine prochaine] ».
   const jourA = JOURS[mots[i + 1] ?? ''];
   if (jourA !== undefined && mots[i + 2] === 'au') {
@@ -371,7 +386,7 @@ function lireIntervalle(mots: string[], i: number, base: number, passe: boolean)
         ? dansLaSemaine(lundiProchain(base), jourA)
         : cadre.cadre === 'passe'
           ? precedentJour(base, jourA)
-          : prochainJour(base, jourA);
+          : prochainJour(base, jourA, inclusif);
     let arrivee = depart;
     while (jourSemaine(arrivee) !== jourB) arrivee += 1;
     return {
@@ -575,13 +590,19 @@ function resoudreQuantieme(
 // Assemblage
 // ---------------------------------------------------------------------------
 
-export function extraireDates(phrase: string, aujourdhui: string, passe: boolean): LectureDates {
+export function extraireDates(
+  phrase: string,
+  aujourdhui: string,
+  passe: boolean,
+  /** Vrai quand un jour nommé peut désigner aujourd'hui. Voir `prochainJour`. */
+  inclusif = false
+): LectureDates {
   const mots = phrase.split(' ').filter(Boolean);
   const base = enJours(aujourdhui);
   const atomes: Atome[] = [];
   let i = 0;
   while (i < mots.length) {
-    const atome = lireAtome(mots, i, base, passe, atomes[atomes.length - 1] ?? null);
+    const atome = lireAtome(mots, i, base, passe, atomes[atomes.length - 1] ?? null, inclusif);
     if (atome) {
       atomes.push(atome);
       i = atome.fin + 1;
@@ -603,7 +624,7 @@ export function extraireDates(phrase: string, aujourdhui: string, passe: boolean
   }
 
   const retenue = series[0];
-  const { dates, calendrier, invalide } = resoudreSerie(retenue, base, passe);
+  const { dates, calendrier, invalide } = resoudreSerie(retenue, base, passe, inclusif);
   const efface = [...mots];
   for (const atome of retenue) {
     for (let n = atome.debut; n <= atome.fin; n++) efface[n] = '';
@@ -620,7 +641,8 @@ export function extraireDates(phrase: string, aujourdhui: string, passe: boolean
 function resoudreSerie(
   serie: Atome[],
   base: number,
-  passe: boolean
+  passe: boolean,
+  inclusif = false
 ): { dates: string[]; calendrier: string | null; invalide: boolean } {
   // « jeudi le 1er octobre » : la date de calendrier l'emporte sur le nom du
   // jour, qui n'est là que pour confirmer.
@@ -668,7 +690,9 @@ function resoudreSerie(
         ? dansLaSemaine(lundiProchain(base), atome.jour)
         : atome.cadre === 'passe' || passe
           ? precedentJour(depart, atome.jour)
-          : prochainJour(depart, atome.jour);
+          // Seul le premier jour d'une énumération peut être aujourd'hui :
+          // « lundi mardi mercredi » avance, il ne piétine pas.
+          : prochainJour(depart, atome.jour, inclusif && dates.length === 0);
     dates.push(enIso(jour));
     dernier = jour;
   }
