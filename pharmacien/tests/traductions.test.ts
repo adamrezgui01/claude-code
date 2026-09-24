@@ -98,3 +98,27 @@ describe('les écrans n’appellent que des clés existantes', () => {
     expect(fautes).toEqual([]);
   });
 });
+
+describe('le menu', () => {
+  /**
+   * Les entrées du menu appellent leurs textes par un gabarit —
+   * `t(`menu.${cle}`)` — et le test des clés littérales ne les voit pas. Une
+   * entrée ajoutée sans ses textes afficherait « menu.dispos » à l'usager.
+   */
+  test('chaque entrée porte ses trois clés, dans les deux langues', () => {
+    const source = readFileSync(join('app', '(tabs)', 'menu.tsx'), 'utf8');
+    const bloc = source.slice(source.indexOf('const ENTREES'), source.indexOf('] as const'));
+    const cles = [...bloc.matchAll(/cle: '(\w+)'/g)].map((t) => t[1]);
+    expect(cles.length).toBeGreaterThan(0);
+
+    const manquantes: string[] = [];
+    for (const cle of cles) {
+      for (const suffixe of ['', 'Detail', 'Mots']) {
+        const complete = `menu.${cle}${suffixe}`;
+        if (!FR.has(complete)) manquantes.push(`fr → ${complete}`);
+        if (!EN.has(complete)) manquantes.push(`en → ${complete}`);
+      }
+    }
+    expect(manquantes).toEqual([]);
+  });
+});

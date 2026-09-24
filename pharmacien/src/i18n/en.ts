@@ -650,12 +650,15 @@ export const en: Dictionnaire = {
   },
 
   menu: {
+    disposMots: 'availability, available, free, days, schedule, share, text, dispos, disponibilites',
     profilMots: 'name, licence, opq, address, invoice, training, documents, insurance, nom, permis, adresse, facture, formation',
     liensMots: 'bookmarks, inesss, protocol, vaccine, emergency, info-santé, poison, signets, protocole, urgence',
     parametresMots: 'reminder, notification, colour, color, accent, purple, key, openrouteservice, rappel, couleur, clé, language, langue',
     titre: 'Menu',
     rechercher: 'Find a section',
     aucuneSection: 'No section matches.',
+    dispos: 'My availability',
+    disposDetail: 'The days you are offering, as an image',
     profil: 'Profile',
     profilDetail: 'Continuing education, documents, details',
     parametres: 'Settings',
@@ -816,7 +819,8 @@ export const en: Dictionnaire = {
   },
 
   disponibilites: {
-    titre: 'Availability',
+    titre: 'My availability',
+    titreImage: 'Availability',
     periode: 'Period',
     libre: 'Free',
     pris: 'Booked',

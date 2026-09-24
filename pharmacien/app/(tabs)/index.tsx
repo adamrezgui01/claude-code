@@ -104,9 +104,13 @@ export default function Horaire() {
   );
 
   /**
-   * Deux icônes dans l'en-tête, et pas une de plus : l'aide, qu'on lit une
-   * fois, et le partage des disponibilités, qu'on utilise chaque fois qu'un
-   * propriétaire demande « t'es libre quand ? ».
+   * Deux commandes dans l'en-tête, et pas une de plus : l'aide, qu'on lit une
+   * fois, et « Mes dispos », qu'on ouvre chaque fois qu'un propriétaire
+   * demande « t'es libre quand ? ».
+   *
+   * « Mes dispos » porte son nom. En icône seule — un carré avec une flèche —
+   * elle est restée là des mois sans que personne ne la touche : rien ne
+   * laissait deviner ce qu'elle faisait.
    */
   useEffect(() => {
     navigation.setOptions({
@@ -114,17 +118,25 @@ export default function Horaire() {
         <View style={styles.enTete}>
           <Pressable
             onPress={() => router.push('/disponibilites')}
-            hitSlop={12}
-            style={styles.icone}>
-            <Ionicons name="share-outline" size={22} color={accent} />
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('disponibilites.titre')}
+            style={styles.dispos}>
+            <Ionicons name="calendar-clear-outline" size={18} color={accent} />
+            <Text style={[styles.disposTexte, { color: accent }]}>{t('disponibilites.titre')}</Text>
           </Pressable>
-          <Pressable onPress={() => setAideOuverte(true)} hitSlop={12} style={styles.icone}>
+          <Pressable
+            onPress={() => setAideOuverte(true)}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={t('horaire.aideTitre')}
+            style={styles.icone}>
             <Ionicons name="help-circle-outline" size={24} color={accent} />
           </Pressable>
         </View>
       ),
     });
-  }, [navigation, accent, router]);
+  }, [navigation, accent, router, t]);
 
   const chevauchements = useMemo(() => detecterChevauchements(quarts), [quarts]);
 
@@ -595,6 +607,18 @@ function BoutonMicro({ onPress }: { onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  /** Icône et mot ensemble ; la cible reste à 44 points de haut. */
+  dispos: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace.xs,
+    minHeight: 44,
+    paddingHorizontal: espace.xs,
+  },
+  disposTexte: {
+    fontSize: 15,
+    fontFamily: police.demi,
+  },
   ligneAjout: {
     flexDirection: 'row',
     alignItems: 'stretch',

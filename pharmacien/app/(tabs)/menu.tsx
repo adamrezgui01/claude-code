@@ -15,6 +15,7 @@ import { useTextes } from '../../src/i18n';
  * un menu à trois barres.
  */
 const ENTREES = [
+  { chemin: '/disponibilites', icone: 'calendar-clear-outline' as const, cle: 'dispos' },
   { chemin: '/profil', icone: 'person-outline' as const, cle: 'profil' },
   { chemin: '/parametres', icone: 'options-outline' as const, cle: 'parametres' },
 ] as const;

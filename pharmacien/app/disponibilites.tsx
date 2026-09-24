@@ -80,7 +80,7 @@ export default function Disponibilites() {
           messagerie.
         */}
         <ViewShot ref={capture} style={styles.image}>
-          <Text style={styles.titre}>{t('disponibilites.titre')}</Text>
+          <Text style={styles.titre}>{t('disponibilites.titreImage')}</Text>
           {!!reglages.nom.trim() && <Text style={styles.nom}>{reglages.nom.trim()}</Text>}
           <Text style={styles.periodeTexte}>
             {t('commun.duAu', {

@@ -651,12 +651,15 @@ export const fr = {
   },
 
   menu: {
+    disposMots: 'dispos, disponibilites, disponibilités, libre, libres, horaire, partage, texto, availability, free, share',
     profilMots: 'nom, permis, opq, adresse, facture, formation, documents, assurance, name, licence, address, invoice, training, insurance',
     liensMots: 'signets, inesss, protocole, vaccin, urgence, info-santé, antipoison, bookmarks, protocol, vaccine, emergency, poison',
     parametresMots: 'rappel, notification, couleur, accent, mauve, clé, openrouteservice, reminder, colour, key, language, langue',
     titre: 'Menu',
     rechercher: 'Trouver une section',
     aucuneSection: 'Aucune section ne correspond.',
+    dispos: 'Mes dispos',
+    disposDetail: 'Les journées que vous offrez, en image',
     profil: 'Profil',
     profilDetail: 'Formation continue, documents, coordonnées',
     parametres: 'Paramètres',
@@ -818,7 +821,9 @@ export const fr = {
   },
 
   disponibilites: {
-    titre: 'Disponibilités',
+    titre: 'Mes dispos',
+    /* L'image part chez un propriétaire : elle porte le mot au long. */
+    titreImage: 'Disponibilités',
     periode: 'Période',
     libre: 'Libre',
     pris: 'Pris',
