@@ -4,6 +4,7 @@ import { LayoutChangeEvent, PanResponder, StyleSheet, Text, View } from 'react-n
 
 import type { QuartDetaille } from '../db/types';
 import { aimanter, minutesDebut, minutesEnHeure, minutesFin } from '../lib/agenda';
+import { MAINTIEN_COURT, MAINTIEN_LONG, TOLERANCE_IMMOBILE } from '../lib/gestes';
 import { analyserDate, aujourdhui } from '../lib/dates';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 import { useTextes } from '../i18n';
@@ -21,12 +22,12 @@ import { useTextes } from '../i18n';
  */
 
 const LARGEUR_AXE = 44;
-/** Maintien qui attache le bloc au doigt. */
-const MAINTIEN_DEPLACER = 180;
-/** Maintien immobile supplémentaire qui bascule en duplication. */
-const MAINTIEN_DUPLIQUER = 650;
-/** Au-delà, le doigt glisse : on ne bascule plus en duplication. */
-const TOLERANCE_IMMOBILE = 8;
+/**
+ * Les seuils viennent de `lib/gestes` : « Mes dispos » s'en sert aussi, et un
+ * doigt ne doit avoir qu'une durée à apprendre.
+ */
+const MAINTIEN_DEPLACER = MAINTIEN_COURT;
+const MAINTIEN_DUPLIQUER = MAINTIEN_LONG;
 const JOURS_COURTS = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'];
 /** Hauteur approximative du libellé d'heure, pour le centrer sur son trait. */
 const HAUTEUR_LIBELLE = 13;

@@ -168,6 +168,37 @@ export function disponibilites(
   return { debut, fin: jours[jours.length - 1].date, semaines, jours };
 }
 
+/**
+ * Ce qu'un geste fait d'une journée.
+ *
+ * Une journée est offerte ou elle ne l'est pas ; le geste applique l'autre
+ * état. Offerte en partie compte comme offerte : la tape la retire, et les
+ * heures se reprennent par l'appui long, qui est le geste fait pour ça.
+ */
+export type Geste = 'offrir' | 'retirer';
+
+export function apresLaTape(etat: EtatJour): Geste {
+  return etat === 'neutre' ? 'offrir' : 'retirer';
+}
+
+/**
+ * Le glisser applique à tout ce qu'il traverse l'inverse de l'état de sa
+ * première journée — c'est la sélection multiple de Photos, que tout le monde
+ * connaît sans l'avoir apprise. Décider journée par journée donnerait un
+ * damier à chaque geste.
+ */
+export function apresLeGlisser(depart: EtatJour): Geste {
+  return apresLaTape(depart);
+}
+
+/** Les journées entre deux cases, bornes comprises, dans l'ordre du calendrier. */
+export function joursTraverses(depart: string, arrivee: string): string[] {
+  const [premier, dernier] = depart <= arrivee ? [depart, arrivee] : [arrivee, depart];
+  const jours: string[] = [];
+  for (let date = premier; date <= dernier; date = ajouterJours(date, 1)) jours.push(date);
+  return jours;
+}
+
 export type BlocMois = {
   /** Premier jour du mois, `AAAA-MM-01`. */
   mois: string;

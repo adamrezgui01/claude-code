@@ -3,6 +3,9 @@ import { join } from 'node:path';
 
 import {
   aimanterHeure,
+  apresLaTape,
+  apresLeGlisser,
+  joursTraverses,
   disponibilites,
   fusionner,
   joursOfferts,
@@ -178,6 +181,59 @@ describe('groupe 3b — les heures, en très court', () => {
         { debut: '17:00', fin: '21:00' },
       ])
     ).toBe('8\u201312, 17\u201321');
+  });
+});
+
+// ===========================================================================
+// Groupe 3c — les gestes
+// ===========================================================================
+
+describe('groupe 3c — les gestes', () => {
+  test('la tape offre une journée non déclarée', () => {
+    expect(apresLaTape('neutre')).toBe('offrir');
+  });
+
+  test('une deuxième tape la retire', () => {
+    expect(apresLaTape('complet')).toBe('retirer');
+  });
+
+  test('la tape sur une journée offerte en partie la retire aussi', () => {
+    // Elle est offerte : la tape enlève ce qui est offert. Les heures se
+    // reprennent par l'appui long, qui est le geste fait pour ça.
+    expect(apresLaTape('partiel')).toBe('retirer');
+  });
+
+  test('le glisser applique l’inverse de sa première journée', () => {
+    expect(apresLeGlisser('neutre')).toBe('offrir');
+    expect(apresLeGlisser('complet')).toBe('retirer');
+    expect(apresLeGlisser('partiel')).toBe('retirer');
+  });
+
+  test('le glisser traverse les journées dans l’ordre', () => {
+    expect(joursTraverses('2026-09-22', '2026-09-25')).toEqual([
+      '2026-09-22',
+      '2026-09-23',
+      '2026-09-24',
+      '2026-09-25',
+    ]);
+  });
+
+  test('le glisser fonctionne à reculons', () => {
+    expect(joursTraverses('2026-09-25', '2026-09-23')).toEqual([
+      '2026-09-23',
+      '2026-09-24',
+      '2026-09-25',
+    ]);
+  });
+
+  test('le glisser traverse les semaines', () => {
+    // Du vendredi au lundi suivant : la fin de semaine est traversée comme le
+    // reste, la grille n'y change rien.
+    expect(joursTraverses('2026-09-25', '2026-09-28')).toHaveLength(4);
+  });
+
+  test('un glisser qui n’a pas bougé ne touche qu’une journée', () => {
+    expect(joursTraverses('2026-09-24', '2026-09-24')).toEqual(['2026-09-24']);
   });
 });
 

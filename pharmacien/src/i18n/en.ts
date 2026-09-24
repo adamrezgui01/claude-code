@@ -829,6 +829,8 @@ export const en: Dictionnaire = {
     resume_other: '{{count}} days offered in this period.',
     rienDePrive: 'The image shows no pharmacy name, no hours and no amounts.',
     partager: 'Share my availability',
+    rienDeclare: 'Nothing offered that day.',
+    journeeEntiere: 'Whole day',
     bornes: 'Day boundaries',
     borneDebut: 'Day starts at',
     borneFin: 'Day ends at',

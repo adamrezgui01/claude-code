@@ -5,7 +5,11 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 
-import { listerDisponibilites } from '../src/db/disponibilites';
+import {
+  declarerJournee,
+  effacerJournee,
+  listerDisponibilites,
+} from '../src/db/disponibilites';
 import { obtenirReglages } from '../src/db/profil';
 import { useTextes } from '../src/i18n';
 import {
@@ -15,9 +19,12 @@ import {
   resumerPlages,
   SEMAINES,
   SEMAINES_DEFAUT,
+  type Geste,
 } from '../src/lib/disponibilites';
-import { aujourdhui, formatDateCourte, formatMoisAnnee, joursCourts } from '../src/lib/dates';
-import { Bouton, Doux, Onglets } from '../src/ui/composants';
+import { aujourdhui, formatDateCourte, formatDateLongue, joursCourts } from '../src/lib/dates';
+import { Bouton, Doux, Onglets, SousTitre } from '../src/ui/composants';
+import { FeuilleSurgissante, type PointEcran } from '../src/ui/FeuilleSurgissante';
+import { GrilleDispos } from '../src/ui/GrilleDispos';
 import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
 
 /**
@@ -36,7 +43,7 @@ export default function Disponibilites() {
   const accent = useAccent();
   const capture = useRef<React.ComponentRef<typeof ViewShot>>(null);
   const [semaines, setSemaines] = useState<number>(SEMAINES_DEFAUT);
-  const [plages] = useState(listerDisponibilites);
+  const [plages, setPlages] = useState(listerDisponibilites);
   const [reglages] = useState(obtenirReglages);
 
   const periode = useMemo(
@@ -45,6 +52,28 @@ export default function Disponibilites() {
   );
   const blocs = useMemo(() => moisCouverts(periode), [periode]);
   const initiales = joursCourts(langue);
+  const [heures, setHeures] = useState<{ date: string; point: PointEcran } | null>(null);
+
+  /**
+   * Le geste s'écrit tout de suite. Rien à enregistrer : une disponibilité
+   * déclarée est une disponibilité, et l'écran la relit aussitôt.
+   */
+  function appliquer(dates: string[], geste: Geste) {
+    for (const date of dates) {
+      if (geste === 'offrir') {
+        declarerJournee(date, [
+          { date, toute_la_journee: true, heure_debut: '', heure_fin: '' },
+        ]);
+      } else {
+        effacerJournee(date);
+      }
+    }
+    setPlages(listerDisponibilites());
+  }
+
+  function ouvrirHeures(date: string, point: PointEcran) {
+    setHeures({ date, point });
+  }
 
   async function partager() {
     try {
@@ -90,51 +119,14 @@ export default function Disponibilites() {
             })}
           </Text>
 
-          {blocs.map((bloc) => (
-            <View key={bloc.mois} style={styles.bloc}>
-              <Text style={styles.mois}>{formatMoisAnnee(bloc.mois, langue)}</Text>
-              <View style={styles.ligne}>
-                {initiales.map((jour, i) => (
-                  <Text key={i} style={styles.initiale}>
-                    {jour}
-                  </Text>
-                ))}
-              </View>
-              {bloc.semaines.map((semaine, i) => (
-                <View key={i} style={styles.ligne}>
-                  {semaine.map((jour, j) => (
-                    <View key={j} style={styles.case}>
-                      {jour && (
-                        <View
-                          style={[
-                            styles.pastille,
-                            jour.etat === 'neutre'
-                              ? { backgroundColor: '#F1EEF1' }
-                              : { backgroundColor: accent },
-                            jour.etat === 'partiel' && styles.pastillePartielle,
-                          ]}>
-                          <Text
-                            style={[
-                              styles.chiffre,
-                              jour.etat !== 'neutre' && styles.chiffreOffert,
-                            ]}>
-                            {Number(jour.date.slice(8))}
-                          </Text>
-                          {/* Les heures dans la case même : une journée offerte à
-                              moitié ne se lit pas sans elles. */}
-                          {jour.etat === 'partiel' && (
-                            <Text style={styles.heures} numberOfLines={1}>
-                              {resumerPlages(jour.plages)}
-                            </Text>
-                          )}
-                        </View>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              ))}
-            </View>
-          ))}
+          <GrilleDispos
+            blocs={blocs}
+            initiales={initiales}
+            langue={langue}
+            accent={accent}
+            onGeste={appliquer}
+            onHeures={ouvrirHeures}
+          />
 
           <View style={styles.legende}>
             <View style={styles.legendeEntree}>
@@ -158,8 +150,28 @@ export default function Disponibilites() {
         </View>
         <Doux>{t('disponibilites.rienDePrive')}</Doux>
       </ScrollView>
+
+      <FeuilleSurgissante
+        ouvert={heures !== null}
+        origine={heures?.point ?? null}
+        onFermer={() => setHeures(null)}>
+        {heures && (
+          <>
+            <SousTitre>{formatDateLongue(heures.date, langue)}</SousTitre>
+            <Doux>{resumerJournee(heures.date)}</Doux>
+          </>
+        )}
+      </FeuilleSurgissante>
     </View>
   );
+
+  /** Ce que la journée porte déjà, en une ligne. */
+  function resumerJournee(date: string): string {
+    const jour = periode.jours.find((j) => j.date === date);
+    if (!jour || jour.etat === 'neutre') return t('disponibilites.rienDeclare');
+    if (jour.etat === 'complet') return t('disponibilites.journeeEntiere');
+    return resumerPlages(jour.plages);
+  }
 }
 
 const styles = StyleSheet.create({
