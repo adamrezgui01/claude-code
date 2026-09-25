@@ -28,6 +28,7 @@ const DEPART: EntreeLien[] = SOURCES_DEPART.map((source) => ({
   categorie: '',
   motsCles: source.motsCles,
   sous_section: source.sousSection,
+  theme: source.theme,
 }));
 
 const CHAMPS = [
@@ -38,6 +39,7 @@ const CHAMPS = [
   'categorie',
   'motsCles',
   'sous_section',
+  'theme',
 ] as const;
 
 /**

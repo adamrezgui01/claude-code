@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { SECTIONS, type Lien as LienFixe } from '../../src/content/liens';
@@ -23,8 +23,8 @@ import { useTextes } from '../../src/i18n';
 import { aujourdhui } from '../../src/lib/dates';
 import { titreDuLien } from '../../src/lib/liens';
 import { ouvrirSource } from '../../src/lib/veille/ouvrir';
-import { filtrerSources, parSujet, type SourceCherchable } from '../../src/lib/veille/recherche';
-import { parSousSection } from '../../src/lib/liens';
+import { filtrerSources, type SourceCherchable } from '../../src/lib/veille/recherche';
+import { parTheme, type Theme } from '../../src/lib/liens';
 import { MOTS_CLES_DOSE } from '../../src/lib/dose';
 import { cleARevoir } from '../../src/lib/veille/recherches';
 import { nomDuSujet } from '../../src/lib/veille/sujets';
@@ -33,6 +33,23 @@ import { Doux, Ecran, Fondu, SousTitre, Vide } from '../../src/ui/composants';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 
 type SourceListee = Source & SourceCherchable;
+
+/**
+ * L'icône de chaque thème. Elle accompagne le mot, elle ne le remplace pas :
+ * huit pictogrammes posés seuls ne se distinguent pas à dix-sept points, et
+ * personne n'apprend une légende pour lire une liste.
+ */
+const ICONES_THEME: Record<Theme, ComponentProps<typeof Ionicons>['name']> = {
+  calculateurs: 'calculator-outline',
+  respiratoire: 'cloud-outline',
+  antibio: 'bandage-outline',
+  itss: 'shield-half-outline',
+  cardioSang: 'heart-outline',
+  metabolique: 'pulse-outline',
+  douleur: 'medkit-outline',
+  ainees: 'accessibility-outline',
+  autres: 'bookmark-outline',
+};
 
 /**
  * L'onglet Clinique.
@@ -127,11 +144,16 @@ export default function Clinique() {
       ).length > 0,
     [recherche, t]
   );
-  const { outils, liensUtiles } = useMemo(() => parSousSection(trouvees), [trouvees]);
-  const groupes = useMemo(
-    () => parSujet(liensUtiles, t('clinique.sansSujet')),
-    [liensUtiles, t]
-  );
+  /**
+   * Les signets, groupés par thème.
+   *
+   * Quarante-cinq entrées ne se lisent pas en liste. On les regroupe par ce
+   * qu'on a en tête au moment de chercher — une plaie qui s'étend, une
+   * ordonnance d'azithromycine à valider, une créatinine à convertir — plutôt
+   * que par le sujet de veille auquel elles sont rattachées : un même guide
+   * porte souvent deux sujets, et il apparaissait alors deux fois.
+   */
+  const groupes = useMemo(() => parTheme(trouvees), [trouvees]);
 
   const cherche = recherche.trim().length > 0;
 
@@ -219,12 +241,18 @@ export default function Clinique() {
         <Vide texte={t('clinique.aucunResultat')} />
       ) : (
         <>
-          {/* Les outils d'abord : on les ouvre au comptoir, un patient devant
-              soi. Les références ensuite, groupées par sujet. */}
-          {(outils.length > 0 || doseVisible) && (
-            <Fondu>
-              <SousTitre>{t('clinique.outils')}</SousTitre>
-              {doseVisible && (
+          {groupes.map((groupe) => (
+            <Fondu key={groupe.theme}>
+              {/* L'icône accompagne le mot, elle ne le remplace pas : huit
+                  pictogrammes seuls ne se distinguent pas à cette taille, et
+                  personne n'apprend une légende pour lire une liste. */}
+              <View style={styles.entete}>
+                <Ionicons name={ICONES_THEME[groupe.theme]} size={17} color={accent} />
+                <SousTitre>{t(`themes.${groupe.theme}`)}</SousTitre>
+              </View>
+              {/* Le calculateur de dose est un écran, pas un signet. Il ouvre
+                  la section des calculateurs, là où on le cherche. */}
+              {groupe.theme === 'calculateurs' && doseVisible && (
                 <Pressable
                   onPress={() => router.push('/clinique/dose')}
                   style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
@@ -236,30 +264,9 @@ export default function Clinique() {
                   <Ionicons name="chevron-forward" size={16} color={couleurs.doux} />
                 </Pressable>
               )}
-              {outils.map((source) => (
+              {groupe.liens.map((source) => (
                 <LigneSource
-                  key={`outil-${source.id}`}
-                  source={source}
-                  traduire={traduire}
-                  onOuvrir={() => noterSourceOuverte(notee, source.id)}
-                />
-              ))}
-              <View style={styles.espace} />
-            </Fondu>
-          )}
-
-          {liensUtiles.length > 0 && (
-            <Fondu>
-              <SousTitre>{t('clinique.liensUtiles')}</SousTitre>
-              <View style={styles.espace} />
-            </Fondu>
-          )}
-          {groupes.map((groupe) => (
-            <Fondu key={groupe.sujet}>
-              <SousTitre>{groupe.sujet}</SousTitre>
-              {groupe.sources.map((source) => (
-                <LigneSource
-                  key={`${groupe.sujet}-${source.id}`}
+                  key={`${groupe.theme}-${source.id}`}
                   source={source}
                   traduire={traduire}
                   onOuvrir={() => noterSourceOuverte(notee, source.id)}
@@ -268,6 +275,22 @@ export default function Clinique() {
               <View style={styles.espace} />
             </Fondu>
           ))}
+
+          {/* Le calculateur cherché seul, sans qu'aucun signet ne réponde. */}
+          {groupes.length === 0 && doseVisible && (
+            <Fondu>
+              <Pressable
+                onPress={() => router.push('/clinique/dose')}
+                style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
+                <Ionicons name="calculator-outline" size={18} color={accent} />
+                <View style={styles.texte}>
+                  <Text style={styles.titre}>{t('dose.titre')}</Text>
+                  <Text style={styles.detail}>{t('dose.avis')}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={couleurs.doux} />
+              </Pressable>
+            </Fondu>
+          )}
         </>
       )}
 
@@ -410,5 +433,10 @@ const styles = StyleSheet.create({
   texte: { flex: 1, gap: 2 },
   titre: { flex: 1, fontSize: 15, fontFamily: police.demi, color: couleurs.texte },
   detail: { fontSize: 13, fontFamily: police.normal, color: couleurs.doux },
+  entete: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace.s,
+  },
   espace: { marginTop: espace.m },
 });

@@ -27,6 +27,8 @@ export type Lien = {
    * tout de suite, l'autre à vérifier une conduite.
    */
   sous_section: SousSection;
+  /** Le thème sous lequel le signet se range. Vide pour ceux de l'usager. */
+  theme: string;
   rang: number;
 };
 
@@ -89,14 +91,70 @@ export function adresseDouverture(source: {
 }
 
 /**
- * Les deux sous-sections de l'onglet Clinique, dans leur ordre d'affichage.
- * Les outils d'abord : on les ouvre au comptoir, un patient devant soi.
+ * Les thèmes du répertoire clinique.
+ *
+ * Trente-quatre documents et onze calculateurs ne se lisent pas en liste. On
+ * les regroupe par ce qu'on a en tête au moment de chercher : un patient au
+ * comptoir avec une plaie qui s'étend, une ordonnance d'azithromycine à
+ * valider, une créatinine à convertir.
+ *
+ * Le regroupement par sujet de veille, qu'on a essayé avant, montrait le même
+ * guide deux fois — un guide porte souvent deux sujets — et donnait des
+ * sections d'une entrée. Le thème est une place, une seule.
+ *
+ * Les calculateurs viennent en premier parce qu'ils s'utilisent en pleine
+ * conversation, et qu'une clairance à calculer ne peut pas attendre qu'on
+ * défile. « Mes signets » ferme la liste et recueille ce que l'usager a ajouté
+ * lui-même : ses liens n'ont pas de thème, et ils ne doivent pas disparaître
+ * pour autant.
  */
-export function parSousSection<T extends { sous_section?: string }>(
-  sources: T[]
-): { outils: T[]; liensUtiles: T[] } {
-  return {
-    outils: sources.filter((s) => s.sous_section === 'outils'),
-    liensUtiles: sources.filter((s) => s.sous_section !== 'outils'),
-  };
+export type Theme =
+  | 'calculateurs'
+  | 'respiratoire'
+  | 'antibio'
+  | 'itss'
+  | 'cardioSang'
+  | 'metabolique'
+  | 'douleur'
+  | 'ainees'
+  | 'autres';
+
+/** L'ordre d'affichage. C'est lui que l'écran suit, pas l'ordre de la base. */
+export const THEMES: Theme[] = [
+  'calculateurs',
+  'respiratoire',
+  'antibio',
+  'itss',
+  'cardioSang',
+  'metabolique',
+  'douleur',
+  'ainees',
+  'autres',
+];
+
+/**
+ * Un thème inconnu — une base écrite par une version plus récente — se range
+ * avec les signets de l'usager plutôt que de disparaître.
+ */
+function themeConnu(valeur: string | undefined): Theme {
+  return THEMES.includes(valeur as Theme) ? (valeur as Theme) : 'autres';
+}
+
+/**
+ * Regroupe par thème, dans l'ordre des thèmes. Un thème sans signet ne paraît
+ * pas : une section vide s'apprend à ne plus se lire, et elle emporte avec elle
+ * celles qui ne le sont pas.
+ */
+export function parTheme<T extends { theme?: string }>(
+  liens: T[]
+): { theme: Theme; liens: T[] }[] {
+  const groupes = new Map<Theme, T[]>();
+  for (const lien of liens) {
+    const theme = themeConnu(lien.theme);
+    groupes.set(theme, [...(groupes.get(theme) ?? []), lien]);
+  }
+  return THEMES.filter((theme) => (groupes.get(theme)?.length ?? 0) > 0).map((theme) => ({
+    theme,
+    liens: groupes.get(theme) ?? [],
+  }));
 }

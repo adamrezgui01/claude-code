@@ -359,6 +359,9 @@ export function initialiserBase() {
   // Les deux sous-sections de l'onglet Clinique. Tout ce qui existait est un
   // lien utile ; seuls les calculateurs sont des outils.
   ajouterColonne('liens', 'sous_section', "TEXT NOT NULL DEFAULT 'liens_utiles'");
+  /* Le thème sous lequel le signet se range dans l'onglet Clinique. Vide pour
+     les signets de l'usager : ils se rangent sous « Mes signets ». */
+  ajouterColonne('liens', 'theme', "TEXT NOT NULL DEFAULT ''");
   if (!dejaFait('liens_sous_section')) {
     db.execSync("UPDATE liens SET sous_section = 'outils' WHERE cle LIKE 'mdcalc_%'");
     marquerFait('liens_sous_section');

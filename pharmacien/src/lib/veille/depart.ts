@@ -1,4 +1,4 @@
-import type { SousSection } from '../liens';
+import type { SousSection, Theme } from '../liens';
 
 /**
  * Ce que le volet clinique sait le premier jour.
@@ -19,6 +19,36 @@ export type SujetDepart = {
 };
 
 export const SUJETS_DEPART: SujetDepart[] = [
+  {
+    cle: 'itss',
+    nom: 'ITSS',
+    synonymes: 'ITS, MTS, STI, STBBI, chlamydia, gonorrhée, syphilis, herpès, condylome, dépistage',
+  },
+  {
+    cle: 'infectionsPeau',
+    nom: 'Peau et plaies',
+    synonymes: 'cellulite, érysipèle, plaie, ulcère, abcès, skin, wound, cellulitis',
+  },
+  {
+    cle: 'digestif',
+    nom: 'Digestif',
+    synonymes: 'estomac, ulcère, diarrhée, colite, reflux, gastro, stomach, gut',
+  },
+  {
+    cle: 'migraine',
+    nom: 'Migraine',
+    synonymes: 'céphalée, mal de tête, triptan, aura, headache, migraine prophylaxis',
+  },
+  {
+    cle: 'menopause',
+    nom: 'Ménopause',
+    synonymes: 'hormonothérapie, bouffées de chaleur, œstrogène, HRT, hot flashes, périménopause',
+  },
+  {
+    cle: 'covid',
+    nom: 'COVID-19',
+    synonymes: 'covid, SARS-CoV-2, coronavirus, paxlovid, nirmatrelvir, antiviral',
+  },
   {
     cle: 'infectionsUrinaires',
     nom: 'Infections urinaires',
@@ -129,6 +159,11 @@ export type SourceDepart = {
   officielle: boolean;
   /** « outils » pour un calculateur, « liens_utiles » pour le reste. */
   sousSection: SousSection;
+  /**
+   * Le thème sous lequel le signet se range dans l'onglet Clinique. C'est ce
+   * qu'on a en tête au moment de chercher, pas la discipline qui l'a publié.
+   */
+  theme: Theme;
   sujets: string[];
   /** Synonymes cachés, dans les deux langues. Jamais affichés, cherchés quand même. */
   motsCles: string;
@@ -146,6 +181,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'antibio',
     sujets: ['infectionsUrinaires', 'antibiotherapie'],
     motsCles: 'cystite, IVU, UTI, urinary tract infection, urinaire, pyelonephrite, nitrofurantoine',
   },
@@ -160,6 +196,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'respiratoire',
     sujets: ['pharyngite', 'antibiotherapie'],
     motsCles: 'gorge, strep, streptocoque, angine, sore throat, tonsillitis, amoxicilline',
   },
@@ -174,6 +211,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'respiratoire',
     sujets: ['antibiotherapie'],
     motsCles: 'sinusite, rhinosinusite, sinus, sinusitis, congestion',
   },
@@ -188,6 +226,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'respiratoire',
     sujets: ['antibiotherapie', 'pediatrie'],
     motsCles: 'sinusite, enfant, pediatrique, sinusitis, child',
   },
@@ -202,6 +241,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'respiratoire',
     sujets: ['antibiotherapie'],
     motsCles: 'pneumonie, PAC, pneumonia, CAP, poumon, toux',
   },
@@ -216,6 +256,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'respiratoire',
     sujets: ['antibiotherapie', 'pediatrie'],
     motsCles: 'pneumonie, enfant, pediatrique, pneumonia, child',
   },
@@ -230,6 +271,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'respiratoire',
     sujets: ['antibiotherapie'],
     motsCles: 'bronchite, toux, bronchitis, cough',
   },
@@ -237,13 +279,14 @@ export const SOURCES_DEPART: SourceDepart[] = [
     cle: 'inesss_mpoc',
     titre: 'Exacerbation aiguë de la MPOC',
     url_document:
-      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/INESSS_GUO_EAMPOC.pdf',
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Usage_optimal/INESSS_MPOC_GUO_FR.pdf',
     url_reference:
       'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
     organisation: 'INESSS',
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'respiratoire',
     sujets: ['mpoc', 'antibiotherapie'],
     motsCles: 'MPOC, COPD, EAMPOC, exacerbation, bronchopneumopathie, pompe',
   },
@@ -258,6 +301,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'cardioSang',
     sujets: ['anticoagulation'],
     motsCles: 'FA, fibrillation auriculaire, atrial fibrillation, AFib, CHADS',
   },
@@ -272,6 +316,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'cardioSang',
     sujets: ['anticoagulation'],
     motsCles: 'TVP, EP, thrombose, embolie, DVT, PE, thromboembolie',
   },
@@ -286,6 +331,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'cardioSang',
     sujets: ['anticoagulation'],
     motsCles: 'warfarine, INR, coumadin, warfarin, ajustement',
   },
@@ -300,6 +346,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'antibio',
     sujets: ['allergies', 'antibiotherapie'],
     motsCles: 'allergie, penicilline, penicillin allergy, amoxicilline, cephalosporine, reaction',
   },
@@ -314,6 +361,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'local',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'cardioSang',
     sujets: ['anticoagulation'],
     motsCles: 'AOD, DOAC, apixaban, rivaroxaban, edoxaban, dabigatran, eliquis, xarelto',
   },
@@ -328,6 +376,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'societe',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'cardioSang',
     sujets: ['insuffisanceCardiaque'],
     motsCles: 'insuffisance cardiaque, heart failure, HFrEF, oedeme, diuretique, sacubitril',
   },
@@ -342,6 +391,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'societe',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'cardioSang',
     sujets: ['anticoagulation'],
     motsCles: 'antiplaquettaire, antiplatelet, clopidogrel, ticagrelor, aspirine, DAPT, stent',
   },
@@ -356,6 +406,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'societe',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'cardioSang',
     sujets: ['dyslipidemie'],
     motsCles: 'lipides, cholesterol, LDL, statine, statin, dyslipidemie, lipids',
   },
@@ -370,6 +421,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'ligneDirectrice',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'cardioSang',
     sujets: ['hypertension'],
     motsCles: 'HTA, pression, tension arterielle, blood pressure, BP, antihypertenseur',
   },
@@ -384,6 +436,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'societe',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'ainees',
     sujets: ['personnesAgees'],
     motsCles: 'Beers, personne agee, geriatrie, deprescription, potentially inappropriate, elderly',
   },
@@ -398,10 +451,276 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'revue',
     officielle: true,
     sousSection: 'liens_utiles',
+    theme: 'ainees',
     sujets: ['personnesAgees'],
     motsCles: 'STOPP, START, personne agee, geriatrie, deprescription, elderly',
   },
 
+  /*
+   * Les guides fournis par l'usager en 2.5. Même règle que les autres : on
+   * pointe vers le document publié, jamais vers une page d'accueil, et la page
+   * officielle reste là pour le jour où l'adresse du document changera.
+   *
+   * Les sept guides ITSS forment à eux seuls un thème : c'est un domaine où
+   * l'on vérifie une posologie précise, souvent sous les yeux du patient, et
+   * où la conduite change d'une année à l'autre.
+   */
+  {
+    cle: 'inesss_otite_enfant',
+    titre: 'Otite moyenne aiguë chez l’enfant',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/CDM/UsageOptimal/Guides-serieI/Guide-Otite-Enfant.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'respiratoire',
+    sujets: ['pediatrie', 'antibiotherapie'],
+    motsCles:
+      'otite, oreille, OMA, otitis, ear infection, enfant, amoxicilline, tympan',
+  },
+  {
+    cle: 'inesss_covid',
+    titre: 'COVID-19 — traitements en première ligne',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/COVID-19/2024-GUO_COVID-19_VF.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/covid-19.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'respiratoire',
+    sujets: ['covid'],
+    motsCles:
+      'covid, covid 19, sars cov 2, nirmatrelvir, paxlovid, coronavirus, antiviral',
+  },
+  {
+    cle: 'inesss_cellulite',
+    titre: 'Cellulite infectieuse chez l’adulte',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/GUO/Cellulite/INESSS-GUO_Cellulite_Adulte1.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'antibio',
+    sujets: ['antibiotherapie', 'infectionsPeau'],
+    motsCles:
+      'cellulite, erysipele, peau, plaie, cellulitis, skin infection, cephalexine, rougeur',
+  },
+  {
+    cle: 'inesss_cdifficile',
+    titre: 'Diarrhée à Clostridioides difficile',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Traitement/Guide_Cdifficile_FINAL.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'antibio',
+    sujets: ['antibiotherapie', 'digestif'],
+    motsCles:
+      'c difficile, clostridium, clostridioides, diarrhee, colite, vancomycine, fidaxomicine, CDI',
+  },
+  {
+    cle: 'inesss_hpylori',
+    titre: 'Helicobacter pylori — dépistage et traitement',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Biologie_medicale/GUO_H_Pylori_INESSS.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'antibio',
+    sujets: ['digestif', 'antibiotherapie'],
+    motsCles:
+      'h pylori, helicobacter, ulcere, gastrite, estomac, quadritherapie, pylera, IPP',
+  },
+  {
+    cle: 'inesss_itss_syndromes',
+    titre: 'ITSS — approche syndromique',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/Guides_ITSS/Guide_ITSS-Syndromes.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-sujets/itss.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'itss',
+    sujets: ['itss'],
+    motsCles:
+      'itss, syndrome, ecoulement, uretrite, cervicite, discharge, ITS, MTS, depistage',
+  },
+  {
+    cle: 'inesss_itss_chlamydia',
+    titre: 'Chlamydia trachomatis et Neisseria gonorrhoeae',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/Guides_ITSS/Guide_ITSS-Chlamydia_gonorrhoeae.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-sujets/itss.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'itss',
+    sujets: ['itss'],
+    motsCles:
+      'chlamydia, gonorrhee, gonocoque, gonorrhea, doxycycline, ceftriaxone, azithromycine, ITSS',
+  },
+  {
+    cle: 'inesss_itss_syphilis',
+    titre: 'Syphilis',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/Guides_ITSS/ITSS_Syphilis_WEB_FR.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-sujets/itss.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'itss',
+    sujets: ['itss'],
+    motsCles:
+      'syphilis, treponeme, penicilline benzathine, VDRL, chancre, ITSS, RPR',
+  },
+  {
+    cle: 'inesss_itss_herpes',
+    titre: 'Herpès génital',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/Guides_ITSS/INESSS_GUIDE_ITSS_Herpes_genital_GUO.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-sujets/itss.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'itss',
+    sujets: ['itss'],
+    motsCles:
+      'herpes, HSV, genital, valacyclovir, acyclovir, poussee, ITSS',
+  },
+  {
+    cle: 'inesss_itss_condylomes',
+    titre: 'Condylomes',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/Guides_ITSS/Guide_ITSS_Condylomes.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-sujets/itss.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'itss',
+    sujets: ['itss'],
+    motsCles:
+      'condylome, VPH, HPV, verrue genitale, warts, imiquimod, podofilox, ITSS',
+  },
+  {
+    cle: 'inesss_itss_mycoplasma',
+    titre: 'Mycoplasma genitalium',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Usage_optimal/Guide_ITSS_Mycoplasma_genitalium.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-sujets/itss.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'itss',
+    sujets: ['itss'],
+    motsCles:
+      'mycoplasma, genitalium, uretrite, moxifloxacine, azithromycine, resistance, ITSS',
+  },
+  {
+    cle: 'inesss_itss_trichomonas',
+    titre: 'Trichomonas vaginalis',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Usage_optimal/Guide_ITSS_Trichomonas_vaginalis_INESSS.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-sujets/itss.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'itss',
+    sujets: ['itss'],
+    motsCles:
+      'trichomonas, vaginalis, vaginite, metronidazole, trichomoniase, ITSS, vaginose',
+  },
+  {
+    cle: 'inesss_pied_diabetique',
+    titre: 'Pied diabétique — prévention et traitement',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Usage_optimal/GUO_pied_diabetique_INESSS_VF.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'metabolique',
+    sujets: ['diabete', 'infectionsPeau'],
+    motsCles:
+      'pied diabetique, ulcere, plaie, diabetic foot, neuropathie, decharge, amputation',
+  },
+  {
+    cle: 'inesss_hormonotherapie',
+    titre: 'Hormonothérapie de la ménopause',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Usage_optimal/Hormonotherapie/INESSS_Hormono_Outil_prise_charge_FRANCAIS_VF.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'metabolique',
+    sujets: ['menopause'],
+    motsCles:
+      'menopause, hormonotherapie, bouffees de chaleur, estrogene, progesterone, HRT, hot flashes',
+  },
+  {
+    cle: 'inesss_migraine',
+    titre: 'Migraine chez l’adulte',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Medicaments/Outil_migraine_adulte_INESSS_vfinale.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'douleur',
+    sujets: ['migraine'],
+    motsCles:
+      'migraine, cephalee, mal de tete, triptan, sumatriptan, headache, aura, prophylaxie',
+  },
+  {
+    cle: 'mdcalc_framingham',
+    titre: 'Score de Framingham — risque coronarien',
+    url_document:
+      'https://www.mdcalc.com/calc/38/framingham-risk-score-hard-coronary-heart-disease',
+    url_reference:
+      'https://www.mdcalc.com',
+    organisation: 'MDCalc',
+    type: 'outil',
+    officielle: false,
+    sousSection: 'outils',
+    theme: 'calculateurs',
+    sujets: [],
+    motsCles:
+      'framingham, risque cardiovasculaire, coronarien, cardiovascular risk, lipides, statine, prevention',
+  },
   /*
    * Les calculateurs cliniques. Une source comme les autres : on pointe vers
    * la page publique, on ne recopie rien. Un calcul maison qui se trompe de
@@ -425,6 +744,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'outil',
     officielle: false,
     sousSection: 'outils',
+    theme: 'calculateurs',
     sujets: [],
     motsCles: 'clairance, creatinine, clcr, cockcroft, gault, fonction renale, creatinine clearance, renal function',
   },
@@ -437,6 +757,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'outil',
     officielle: false,
     sousSection: 'outils',
+    theme: 'calculateurs',
     sujets: [],
     motsCles: 'chads, chadsvasc, cha2ds2, fibrillation auriculaire, FA, risque AVC, anticoagulation, atrial fibrillation, stroke risk',
   },
@@ -449,6 +770,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'outil',
     officielle: false,
     sousSection: 'outils',
+    theme: 'calculateurs',
     sujets: [],
     motsCles: 'hasbled, has bled, risque saignement, hemorragie, anticoagulation, bleeding risk, warfarin, AOD',
   },
@@ -461,6 +783,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'outil',
     officielle: false,
     sousSection: 'outils',
+    theme: 'calculateurs',
     sujets: [],
     motsCles: 'dfge, egfr, filtration glomerulaire, ckd, insuffisance renale, irc, gfr, kidney function',
   },
@@ -473,6 +796,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'outil',
     officielle: false,
     sousSection: 'outils',
+    theme: 'calculateurs',
     sujets: [],
     motsCles: 'imc, bmi, surface corporelle, body surface area, bsa, m2, poids, taille',
   },
@@ -485,6 +809,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'outil',
     officielle: false,
     sousSection: 'outils',
+    theme: 'calculateurs',
     sujets: [],
     motsCles: 'mdrd, DFG, debit filtration glomerulaire, eGFR, GFR, fonction renale, renal function',
   },
@@ -497,6 +822,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'outil',
     officielle: false,
     sousSection: 'outils',
+    theme: 'calculateurs',
     sujets: [],
     motsCles: 'child pugh, childpugh, cirrhose, foie, hepatique, liver, cirrhosis, hepatic',
   },
@@ -509,6 +835,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'outil',
     officielle: false,
     sousSection: 'outils',
+    theme: 'calculateurs',
     sujets: [],
     motsCles: 'curb, curb65, pneumonie, severite, hospitalisation, pneumonia, severity, CAP',
   },
@@ -521,6 +848,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'outil',
     officielle: false,
     sousSection: 'outils',
+    theme: 'calculateurs',
     sujets: [],
     motsCles: 'wells, TVP, thrombose veineuse profonde, phlebite, DVT, deep vein thrombosis, clot',
   },
@@ -533,6 +861,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     type: 'outil',
     officielle: false,
     sousSection: 'outils',
+    theme: 'calculateurs',
     sujets: [],
     motsCles: 'wells, EP, embolie pulmonaire, PE, pulmonary embolism, clot, poumon',
   },

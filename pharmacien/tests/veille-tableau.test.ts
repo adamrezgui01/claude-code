@@ -2,7 +2,7 @@ import { etatVeille, quelqueChoseAFaire, type NoteDuTableau } from '../src/lib/v
 import { SOURCES_DEPART } from '../src/lib/veille/depart';
 import { adresseDouverture } from '../src/lib/liens';
 import { filtrerSources } from '../src/lib/veille/recherche';
-import { parSousSection } from '../src/lib/liens';
+import { parTheme } from '../src/lib/liens';
 
 /**
  * Le tableau de bord, et le texte de la notification, partent du même calcul.
@@ -138,26 +138,38 @@ describe('la recherche des calculateurs', () => {
   });
 });
 
-describe('les deux sous-sections', () => {
+describe('les thèmes du répertoire', () => {
   const SOURCES = [
-    { id: 1, sous_section: 'outils' as const, titre: 'Clairance' },
-    { id: 2, sous_section: 'liens_utiles' as const, titre: 'INESSS' },
-    { id: 3, sous_section: 'outils' as const, titre: 'CKD-EPI' },
+    { id: 1, theme: 'cardioSang' },
+    { id: 2, theme: 'calculateurs' },
+    { id: 3, theme: 'cardioSang' },
+    { id: 4, theme: '' },
   ];
 
-  test('les outils d’abord, le reste ensuite', () => {
-    // Un calculateur et un guide de pratique ne se consultent pas pour les
-    // mêmes raisons : l'un donne un chiffre tout de suite, l'autre vérifie une
-    // conduite.
-    const { outils, liensUtiles } = parSousSection(SOURCES);
-    expect(outils.map((s) => s.id)).toEqual([1, 3]);
-    expect(liensUtiles.map((s) => s.id)).toEqual([2]);
+  test('l’ordre est celui des thèmes, pas celui de la base', () => {
+    // Les calculateurs en premier : ils s'ouvrent en pleine conversation, et
+    // une clairance à calculer ne peut pas attendre qu'on défile.
+    const groupes = parTheme(SOURCES);
+    expect(groupes.map((g) => g.theme)).toEqual(['calculateurs', 'cardioSang', 'autres']);
+    expect(groupes[1].liens.map((s) => s.id)).toEqual([1, 3]);
   });
 
-  test('une valeur inconnue tombe du côté des liens utiles', () => {
-    // Le défaut de la colonne, et le comportement des liens ajoutés à la main.
-    const { outils, liensUtiles } = parSousSection([{ id: 9, sous_section: '' }]);
-    expect(outils).toEqual([]);
-    expect(liensUtiles.map((s) => s.id)).toEqual([9]);
+  test('un signet sans thème tombe sous « Mes signets », il ne disparaît pas', () => {
+    // C'est le cas de tout ce que l'usager ajoute lui-même.
+    const groupes = parTheme([{ id: 9, theme: '' }]);
+    expect(groupes).toHaveLength(1);
+    expect(groupes[0].theme).toBe('autres');
+  });
+
+  test('un thème inconnu tombe au même endroit', () => {
+    // Une base écrite par une version plus récente, ouverte par une plus
+    // ancienne : le signet se voit, à la mauvaise place plutôt que nulle part.
+    expect(parTheme([{ id: 9, theme: 'quelquechose' }])[0].theme).toBe('autres');
+  });
+
+  test('un thème sans signet ne prend pas de section', () => {
+    // Une section vide s'apprend à ne plus se lire, et elle emporte avec elle
+    // celles qui ne le sont pas.
+    expect(parTheme([{ id: 1, theme: 'itss' }]).map((g) => g.theme)).toEqual(['itss']);
   });
 });

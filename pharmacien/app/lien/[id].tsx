@@ -66,6 +66,9 @@ export default function FormulaireLien() {
       // Un lien ajouté à la main est une référence, pas un outil : l'usager
       // n'écrit pas de calculateur.
       sous_section: 'liens_utiles' as const,
+      // Et il n'a pas de thème : il se range sous « Mes signets », là où
+      // l'usager ira le chercher parce que c'est lui qui l'a mis.
+      theme: '',
     };
     const id = lienId ?? creerLien(entree);
     if (lienId) modifierLien(lienId, entree);

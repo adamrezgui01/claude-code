@@ -226,6 +226,20 @@ qu'on ne les redécouvre pas trois fois.
   pourcentage, ni une série de jours consécutifs. Il compte ce qu'il reste à
   faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;
   elle n'évalue pas le pharmacien.
+- Le répertoire clinique se groupe par **thème**, pas par sujet de veille :
+  quarante-cinq entrées ne se lisent pas en liste, et un guide qui porte deux
+  sujets apparaissait deux fois. Le thème est une place, une seule, et c'est
+  celle qu'on a en tête au moment de chercher — une plaie qui s'étend, une
+  ordonnance à valider, une créatinine à convertir. Les calculateurs viennent en
+  premier : ils s'ouvrent en pleine conversation. Un thème vide ne prend pas de
+  section, un signet sans thème connu se range sous « Mes signets » plutôt que
+  de disparaître, et chaque section porte une icône **en plus** de son mot :
+  huit pictogrammes seuls ne se distinguent pas à dix-sept points.
+- Une adresse de document se recopie telle que l'usager l'a relevée, jamais
+  retapée de mémoire : une adresse fausse mène à une page d'erreur ou, pire, à
+  un guide qui n'est pas celui qu'on cherchait. Et le même document ne paraît
+  jamais deux fois sous deux clés — on l'ouvrirait deux fois en croyant lire
+  deux guides.
 - **L'application n'implémente aucun score clinique ni aucun modèle de
   risque** : elle pointe vers MDCalc. La valeur d'un CHA₂DS₂-VASc est dans son
   modèle, le modèle est révisé, et le recopier crée une dette de mise à jour et

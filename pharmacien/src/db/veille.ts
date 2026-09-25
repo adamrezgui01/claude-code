@@ -3,6 +3,7 @@ import { contenusAPerimer, sourceAChange } from '../lib/veille/peremption';
 import { SOURCES_DEPART, SUJETS_DEPART } from '../lib/veille/depart';
 import { cleDeRecherche, type Recherche, type RefusRecherche } from '../lib/veille/recherches';
 import type { Motif } from '../lib/veille/sujets';
+import { creerLien } from './liens';
 import { db, dejaFait, marquerFait } from './index';
 
 /**
@@ -58,6 +59,7 @@ export function rattacherSujetSource(sujetId: number, sourceId: number) {
  */
 export function amorcerVeille() {
   remplacerRepertoireV22();
+  completerRepertoireV25();
   if (dejaFait('veille_amorcee')) return;
 
   const parCle = new Map<string, number>();
@@ -99,6 +101,54 @@ export function amorcerVeille() {
  * On ne retire que les signets fournis, reconnaissables à leur clé. Ceux que
  * l'usager a ajoutés lui-même n'en ont pas et ne sont jamais touchés.
  */
+/**
+ * Les seize guides de la 2.5, et les thèmes.
+ *
+ * Contrairement à la reprise de la 2.2, celle-ci ne supprime rien. Elle met à
+ * jour ce qui existe déjà — l'adresse d'un document, ses mots-clés, son thème —
+ * et insère ce qui manque. Supprimer puis réinsérer donnerait des identifiants
+ * neufs, et les notes que l'usager a rattachées à un guide pointeraient dans le
+ * vide.
+ *
+ * Le titre, lui, n'est jamais écrasé : un usager qui a renommé « Cystite » en
+ * « UTI » garde son nom, comme il garde ses sujets.
+ */
+function completerRepertoireV25() {
+  if (dejaFait('repertoire_v2_5')) return;
+
+  for (const source of SOURCES_DEPART) {
+    const lien = db.getFirstSync<{ id: number }>('SELECT id FROM liens WHERE cle = ?', source.cle);
+    if (lien) {
+      db.runSync(
+        `UPDATE liens SET url_document = ?, url_reference = ?, motsCles = ?,
+           sous_section = ?, theme = ? WHERE id = ?`,
+        source.url_document,
+        source.url_reference,
+        source.motsCles,
+        source.sousSection,
+        source.theme,
+        lien.id
+      );
+      continue;
+    }
+    creerLien({
+      cle: source.cle,
+      titre: source.titre,
+      url_document: source.url_document,
+      url_reference: source.url_reference,
+      categorie: '',
+      motsCles: source.motsCles,
+      sous_section: source.sousSection,
+      theme: source.theme,
+    });
+  }
+
+  // Les sujets des signets neufs ne sont pas encore rattachés : la semaison
+  // repasse, et elle est sans effet sur ce qui l'est déjà.
+  db.runSync('DELETE FROM reprises WHERE repere = ?', 'veille_amorcee');
+  marquerFait('repertoire_v2_5');
+}
+
 function remplacerRepertoireV22() {
   if (dejaFait('repertoire_v2_2')) return;
   const anciennes = ['cystite', 'pharyngite', 'conjonctivite', 'ordonnances', 'hypertension', 'diabete', 'piq', 'bdpp'];
@@ -469,6 +519,8 @@ export type Source = {
   capture_desactivee: number;
   /** « outils » ou « liens_utiles ». Voir `lib/liens`. */
   sous_section: string;
+  /** Le thème d'affichage. Voir `lib/liens`. Vide pour un signet de l'usager. */
+  theme: string;
 };
 
 export function listerSources(): Source[] {
