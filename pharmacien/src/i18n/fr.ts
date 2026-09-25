@@ -916,8 +916,6 @@ export const fr = {
     periode: 'Période',
     semainesCourt: '{{n}} sem.',
     personnalise: 'Personnalisé',
-    plageDebut: 'Du',
-    plageFin: 'Au',
     offert: 'Offert',
     nonDeclare: 'Non déclaré',
     partageImpossible: 'Le partage n’a pas fonctionné.',

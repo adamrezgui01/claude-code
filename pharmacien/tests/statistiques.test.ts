@@ -1,6 +1,8 @@
+import { readFileSync } from 'node:fs';
+
 import { montantHebergement } from '../src/lib/defauts';
 import { rattacher } from '../src/lib/facturation';
-import { serieMensuelle, valeurDe } from '../src/lib/mensuel';
+import { MESURES, mesureVoisine, serieMensuelle, valeurDe } from '../src/lib/mensuel';
 import { calculerStatistiques } from '../src/lib/stats';
 import { unePharmacie, unQuart } from './fabriques';
 
@@ -118,5 +120,66 @@ describe('série des douze mois', () => {
     expect(serie).toHaveLength(12);
     expect(serie.filter((m) => valeurDe(m, 'heures') > 0)).toHaveLength(1);
     expect(serie[serie.length - 1].mois).toBe('2026-09-01');
+  });
+});
+
+/**
+ * Les trois mesures du graphique, et les deux façons d'en changer.
+ *
+ * Le balayage ne se voit pas. Rien, sur un graphique, ne dit qu'il y a deux
+ * autres séries derrière celle qu'on regarde : un sélecteur visible est la
+ * seule chose qui les annonce, et le balayage devient alors un raccourci pour
+ * qui l'a découvert. L'un ne remplace pas l'autre.
+ *
+ * Les deux parcourent la même liste, dans le même ordre. Deux ordres
+ * différents — un pour les onglets, un pour le balayage — donneraient deux
+ * applications dans la même.
+ */
+describe('les mesures du graphique', () => {
+  test('trois mesures, dans cet ordre', () => {
+    // L'argent d'abord : c'est la question qu'on se pose en ouvrant l'écran.
+    expect(MESURES).toEqual(['argent', 'heures', 'kilometres']);
+  });
+
+  test('le balayage vers la gauche passe à la suivante', () => {
+    expect(mesureVoisine(MESURES, 'argent', 1)).toBe('heures');
+    expect(mesureVoisine(MESURES, 'heures', 1)).toBe('kilometres');
+  });
+
+  test('le balayage vers la droite revient à la précédente', () => {
+    expect(mesureVoisine(MESURES, 'kilometres', -1)).toBe('heures');
+    expect(mesureVoisine(MESURES, 'heures', -1)).toBe('argent');
+  });
+
+  test('la liste boucle dans les deux sens', () => {
+    // Un bord dur obligerait à revenir sur ses pas pour atteindre la troisième.
+    expect(mesureVoisine(MESURES, 'kilometres', 1)).toBe('argent');
+    expect(mesureVoisine(MESURES, 'argent', -1)).toBe('kilometres');
+  });
+
+  test('un décalage nul rend la mesure courante', () => {
+    expect(mesureVoisine(MESURES, 'heures', 0)).toBe('heures');
+  });
+
+  test('chaque mesure a son icône et son mot dans le sélecteur', () => {
+    // Une icône seule ne dit pas laquelle des trois : trois abstractions se
+    // ressemblent trop à dix-huit points. L'icône donne le repère, le mot
+    // donne la réponse.
+    const source = readFileSync('app/(tabs)/statistiques.tsx', 'utf8');
+    for (const mesure of MESURES) {
+      const ligne = source
+        .split('\n')
+        .find((l) => l.includes(`valeur: '${mesure}'`));
+      expect(ligne).toBeDefined();
+      expect(ligne).toContain('icone:');
+      expect(ligne).toContain(`statistiques.${mesure}`);
+    }
+  });
+
+  test('le sélecteur et le balayage parcourent la même liste', () => {
+    // Le graphique reçoit `MESURES` ; il n'en garde pas une copie à lui.
+    const source = readFileSync('app/(tabs)/statistiques.tsx', 'utf8');
+    expect(source).toContain('mesures={MESURES}');
+    expect(readFileSync('src/ui/Graphique.tsx', 'utf8')).toContain('mesureVoisine');
   });
 });

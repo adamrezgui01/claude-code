@@ -288,7 +288,7 @@ export default function Disponibilites() {
           <View style={styles.deuxChamps}>
             <View style={styles.moitie}>
               <SelecteurDate
-                label={t('disponibilites.plageDebut')}
+                label={t('commun.du')}
                 valeur={bornee.debut}
                 min={cejour}
                 max={dernierJour}
@@ -301,7 +301,7 @@ export default function Disponibilites() {
             </View>
             <View style={styles.moitie}>
               <SelecteurDate
-                label={t('disponibilites.plageFin')}
+                label={t('commun.au')}
                 valeur={bornee.fin}
                 min={bornee.debut}
                 max={dernierJour}

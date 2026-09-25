@@ -10,7 +10,21 @@ import { calculerStatistiques } from './stats';
 export type Mesure = 'argent' | 'heures' | 'kilometres';
 export type Forme = 'barres' | 'ligne';
 
+/**
+ * L'argent d'abord : c'est la question qu'on se pose en ouvrant l'écran. Cet
+ * ordre est celui du sélecteur visible **et** celui du balayage ; deux ordres
+ * différents donneraient deux applications dans la même.
+ */
 export const MESURES: Mesure[] = ['argent', 'heures', 'kilometres'];
+
+/**
+ * La mesure voisine, en boucle. Un bord dur obligerait à revenir sur ses pas
+ * pour atteindre la troisième.
+ */
+export function mesureVoisine(mesures: Mesure[], mesure: Mesure, decalage: -1 | 0 | 1): Mesure {
+  const index = Math.max(0, mesures.indexOf(mesure));
+  return mesures[(index + decalage + mesures.length) % mesures.length];
+}
 
 export type MoisChiffre = {
   /** Premier jour du mois, `AAAA-MM-01`. */

@@ -13,6 +13,7 @@ import {
 import { argent, heures, nombre } from '../lib/format';
 import {
   maximum,
+  mesureVoisine,
   valeurDe,
   type Forme,
   type Mesure,
@@ -340,9 +341,7 @@ export function Graphique({
   // changement de mesure. Les deux règles sont voulues.
   const [rejeuForme, setRejeuForme] = useState(0);
 
-  const index = Math.max(0, mesures.indexOf(mesure));
-  const voisine = (decalage: -1 | 0 | 1) =>
-    mesures[(index + decalage + mesures.length) % mesures.length];
+  const voisine = (decalage: -1 | 0 | 1) => mesureVoisine(mesures, mesure, decalage);
 
   function mesurerZone(hauteur: number) {
     const arrondie = Math.round(hauteur);

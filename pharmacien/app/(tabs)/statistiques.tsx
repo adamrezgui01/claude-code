@@ -34,7 +34,7 @@ import { useTextes } from '../../src/i18n';
 const DELAI_REJEU = 60 * 1000;
 
 export default function Statistiques() {
-  const { t } = useTextes();
+  const { t, langue } = useTextes();
   const router = useRouter();
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
   const [recentes, setRecentes] = useState<Pharmacie[]>([]);
@@ -113,12 +113,15 @@ export default function Statistiques() {
       />
       {preset === 'personnalisee' ? (
         <>
-          <SelecteurDate label="Du" valeur={debutPerso} onChange={setDebutPerso} />
-          <SelecteurDate label="Au" valeur={finPerso} onChange={setFinPerso} />
+          <SelecteurDate label={t('commun.du')} valeur={debutPerso} onChange={setDebutPerso} />
+          <SelecteurDate label={t('commun.au')} valeur={finPerso} onChange={setFinPerso} />
         </>
       ) : (
         <Doux>
-          Du {formatDateCourte(debut)} au {formatDateCourte(fin)}
+          {t('commun.duAu', {
+            debut: formatDateCourte(debut, langue),
+            fin: formatDateCourte(fin, langue),
+          })}
         </Doux>
       )}
 
@@ -126,12 +129,21 @@ export default function Statistiques() {
 
       {/* Indépendant du sélecteur de période : une série mensuelle a besoin de
           plusieurs mois. */}
-      <SousTitre>12 derniers mois</SousTitre>
+      <SousTitre>{t('statistiques.douzeMois')}</SousTitre>
+      {/*
+        Le balayage ne se voit pas : rien, sur un graphique, ne dit qu'il y a
+        deux autres séries derrière celle qu'on regarde. Ce sélecteur les
+        annonce, et le balayage devient un raccourci pour qui l'a découvert.
+
+        Une icône et un mot : trois abstractions — de l'argent, du temps, une
+        distance — se ressemblent trop à dix-huit points pour dire laquelle est
+        laquelle.
+      */}
       <Onglets
         options={[
-          { valeur: 'argent' as const, texte: t('statistiques.argent') },
-          { valeur: 'heures' as const, texte: t('statistiques.heures') },
-          { valeur: 'kilometres' as const, texte: t('statistiques.kilometres') },
+          { valeur: 'argent' as const, texte: t('statistiques.argent'), icone: 'cash-outline' as const },
+          { valeur: 'heures' as const, texte: t('statistiques.heures'), icone: 'time-outline' as const },
+          { valeur: 'kilometres' as const, texte: t('statistiques.kilometres'), icone: 'car-outline' as const },
         ]}
         valeur={mesure}
         onChange={setMesure}

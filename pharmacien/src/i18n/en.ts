@@ -910,8 +910,6 @@ export const en: Dictionnaire = {
     periode: 'Period',
     semainesCourt: '{{n}} wk',
     personnalise: 'Custom',
-    plageDebut: 'From',
-    plageFin: 'To',
     offert: 'Offered',
     nonDeclare: 'Not declared',
     partageImpossible: 'Sharing did not work.',
