@@ -562,6 +562,7 @@ export const fr = {
     effacer: 'Effacer',
   },
   sujets: {
+    poux: 'Poux de tête',
     contraception: 'Contraception',
     itss: 'ITSS',
     infectionsPeau: 'Peau et plaies',
@@ -590,7 +591,7 @@ export const fr = {
   themes: {
     calculateurs: 'Calculateurs',
     respiratoire: 'ORL et voies respiratoires',
-    antibio: 'Antibiothérapie',
+    antibio: 'Infections et antibiothérapie',
     itss: 'ITSS et santé sexuelle',
     cardioSang: 'Cœur et sang',
     metabolique: 'Hormones et métabolisme',

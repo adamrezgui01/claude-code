@@ -69,6 +69,9 @@ export default function FormulaireLien() {
       // Et il n'a pas de thème : il se range sous « Mes signets », là où
       // l'usager ira le chercher parce que c'est lui qui l'a mis.
       theme: '',
+      // Un lien ajouté à la main n'est pas un feuillet à remettre : l'usager
+      // garde ses propres références pour lui.
+      pour_patient: 0,
     };
     const id = lienId ?? creerLien(entree);
     if (lienId) modifierLien(lienId, entree);

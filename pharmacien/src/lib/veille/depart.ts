@@ -31,6 +31,12 @@ export const SUJETS_DEPART: SujetDepart[] = [
     synonymes: 'ITS, MTS, STI, STBBI, chlamydia, gonorrhée, syphilis, herpès, condylome, dépistage',
   },
   {
+    cle: 'poux',
+    nom: 'Poux de tête',
+    synonymes:
+      'pou, lentes, pédiculose, peigne fin, perméthrine, head lice, nits, garderie, éclosion',
+  },
+  {
     cle: 'infectionsPeau',
     nom: 'Peau et plaies',
     synonymes: 'cellulite, érysipèle, plaie, ulcère, abcès, skin, wound, cellulitis',
@@ -170,6 +176,11 @@ export type SourceDepart = {
    * qu'on a en tête au moment de chercher, pas la discipline qui l'a publié.
    */
   theme: Theme;
+  /**
+   * Vrai pour un feuillet à remettre au patient, plutôt qu'une référence à
+   * consulter soi-même. Faux partout ailleurs, et c'est la valeur par défaut.
+   */
+  pourPatient?: boolean;
   sujets: string[];
   /** Synonymes cachés, dans les deux langues. Jamais affichés, cherchés quand même. */
   motsCles: string;
@@ -727,6 +738,32 @@ export const SOURCES_DEPART: SourceDepart[] = [
     motsCles:
       'framingham, risque cardiovasculaire, coronarien, cardiovascular risk, lipides, statine, prevention',
   },
+  /*
+   * Les poux de tête. La brochure du MSSS, révisée en juin 2026 : examen de la
+   * tête, lentes vivantes contre lentes mortes, principes d'application du
+   * traitement, nettoyage des objets personnels.
+   *
+   * C'est le premier feuillet à remettre au patient plutôt qu'une référence à
+   * consulter, d'où `pourPatient`. Le MSSS renumérote ses publications à chaque
+   * révision — la même brochure est passée de 23-276-01F à 26-276-01F —, donc
+   * l'adresse du PDF mourra un jour et celle de la page, non.
+   */
+  {
+    cle: 'msss_poux',
+    titre: 'Poux de tête',
+    url_document: 'https://publications.msss.gouv.qc.ca/msss/fichiers/2026/26-276-01F.pdf',
+    url_reference: 'https://publications.msss.gouv.qc.ca/msss/document-000129/',
+    organisation: 'MSSS',
+    type: 'gouvernemental',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'antibio',
+    pourPatient: true,
+    sujets: ['poux', 'pediatrie'],
+    motsCles:
+      'poux, pou, poux de tete, pou de tete, lente, lentes, lentes vivantes, lentes mortes, pediculose, pediculose du cuir chevelu, pediculus humanus capitis, infestation, parasite, ectoparasite, head lice, lice, louse, nit, nits, nit comb, pediculosis, pediculosis capitis, scalp, permethrine, pyrethrine, pyrethrines, myristate d’isopropyle, dimethicone, permethrin, pyrethrin, dimeticone, isopropyl myristate, pediculicide, nix, kwellada, kwellada-p, resultz, r&c, peigne fin, peigne, cuir chevelu, demangeaison, prurit, gratte la tete, examen de la tete, sourcils, eclosion, rentree scolaire, garderie, service de garde, mon enfant a des poux, echec de traitement, resistance, deuxieme application',
+  },
+
   /*
    * La contraception d'urgence. L'outil de l'INSPQ tranche entre le stérilet au
    * cuivre, le lévonorgestrel et l'acétate d'ulipristal selon le délai, l'IMC,

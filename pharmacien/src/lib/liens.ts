@@ -29,6 +29,12 @@ export type Lien = {
   sous_section: SousSection;
   /** Le thème sous lequel le signet se range. Vide pour ceux de l'usager. */
   theme: string;
+  /**
+   * 1 pour un feuillet à remettre au patient. C'est un repère sur la ligne, pas
+   * une section à part : on cherche « poux » sans savoir d'avance si la réponse
+   * est pour soi ou pour lui, et la recherche doit rester une seule recherche.
+   */
+  pour_patient: number;
   rang: number;
 };
 

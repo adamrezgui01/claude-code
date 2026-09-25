@@ -121,12 +121,13 @@ function completerRepertoireV25() {
     if (lien) {
       db.runSync(
         `UPDATE liens SET url_document = ?, url_reference = ?, motsCles = ?,
-           sous_section = ?, theme = ? WHERE id = ?`,
+           sous_section = ?, theme = ?, pour_patient = ? WHERE id = ?`,
         source.url_document,
         source.url_reference,
         source.motsCles,
         source.sousSection,
         source.theme,
+        source.pourPatient ? 1 : 0,
         lien.id
       );
       continue;
@@ -140,6 +141,7 @@ function completerRepertoireV25() {
       motsCles: source.motsCles,
       sous_section: source.sousSection,
       theme: source.theme,
+      pour_patient: source.pourPatient ? 1 : 0,
     });
   }
 
@@ -521,6 +523,8 @@ export type Source = {
   sous_section: string;
   /** Le thème d'affichage. Voir `lib/liens`. Vide pour un signet de l'usager. */
   theme: string;
+  /** 1 pour un feuillet à remettre au patient. Voir `lib/liens`. */
+  pour_patient: number;
 };
 
 export function listerSources(): Source[] {

@@ -65,11 +65,12 @@ describe('les sujets de départ', () => {
     ]);
   });
 
-  test('vingt-trois : seize, six de la 2.5, et la contraception', () => {
+  test('vingt-quatre : seize, six de la 2.5, la contraception et les poux', () => {
     // ITSS, peau et plaies, digestif, migraine, ménopause, COVID-19, puis la
-    // contraception. Chacun vient d'un guide qui parle d'autre chose que ce que
-    // les seize couvraient.
-    expect(SUJETS_DEPART).toHaveLength(23);
+    // contraception et les poux. Chacun vient d'un guide qui parle d'autre chose
+    // que ce que les seize couvraient. Les poux ont leur sujet plutôt que de
+    // tomber sous « peau et plaies » : un ectoparasite n'est pas une plaie.
+    expect(SUJETS_DEPART).toHaveLength(24);
   });
 
   test('chaque clé est unique', () => {
@@ -103,10 +104,10 @@ describe('les sujets de départ', () => {
 });
 
 describe('le répertoire vérifié', () => {
-  test('trente-cinq documents, et onze calculateurs', () => {
+  test('trente-six documents, et onze calculateurs', () => {
     const documents = SOURCES_DEPART.filter((s) => s.sousSection === 'liens_utiles');
-    expect(documents).toHaveLength(35);
-    expect(SOURCES_DEPART).toHaveLength(46);
+    expect(documents).toHaveLength(36);
+    expect(SOURCES_DEPART).toHaveLength(47);
   });
 
   test('chacun porte une page officielle', () => {
@@ -620,6 +621,107 @@ describe('on retrouve la contraception d’urgence', () => {
     ];
     for (const [angle, mot] of angles) {
       expect({ angle, present: mots.includes(mot) }).toEqual({ angle, present: true });
+    }
+  });
+});
+
+/**
+ * Les poux de tête.
+ *
+ * La brochure du MSSS, et la première entrée qui s'adresse au patient plutôt
+ * qu'au pharmacien. Ce qui se vérifie ici, comme pour la contraception, c'est
+ * qu'on la retrouve par les mots qu'on prononce — et le parent ne dit pas
+ * « pédiculose », il dit que son gars a des poux.
+ */
+describe('on retrouve les poux de tête', () => {
+  const CLE = 'msss_poux';
+  const CATALOGUE = SOURCES_DEPART.map((source, i) => ({
+    id: i + 1,
+    cle: source.cle,
+    titre: source.titre,
+    categorie: '',
+    motsCles: source.motsCles,
+    sujets: [] as string[],
+  }));
+
+  test.each([
+    'poux',
+    'pou',
+    'lente',
+    'lentes',
+    'pédiculose',
+    'pediculose',
+    'pediculus',
+    'peigne fin',
+    'perméthrine',
+    'permethrine',
+    'nix',
+    'kwellada',
+    'resultz',
+    'cuir chevelu',
+    'démangeaison',
+    'head lice',
+    'lice',
+    'nits',
+    'pediculosis',
+    'garderie',
+    'éclosion',
+  ])('« %s » les remonte', (terme) => {
+    expect(filtrerSources(CATALOGUE, terme).map((s) => s.cle)).toContain(CLE);
+  });
+
+  test('c’est un feuillet à remettre au patient', () => {
+    expect(SOURCES_DEPART.find((s) => s.cle === CLE)?.pourPatient).toBe(true);
+  });
+
+  test('la contraception d’urgence, elle, n’en est pas un', () => {
+    // Elle s'adresse au pharmacien : c'est lui qui tranche entre trois options.
+    const autres = SOURCES_DEPART.filter((s) => s.cle !== CLE);
+    expect(autres.filter((s) => s.pourPatient).map((s) => s.cle)).toEqual([]);
+  });
+
+  test('c’est un lien utile, pas un calculateur', () => {
+    expect(SOURCES_DEPART.find((s) => s.cle === CLE)?.sousSection).toBe('liens_utiles');
+  });
+
+  test('ses adresses sont celles relevées', () => {
+    const source = SOURCES_DEPART.find((s) => s.cle === CLE);
+    expect(source?.url_document).toBe(
+      'https://publications.msss.gouv.qc.ca/msss/fichiers/2026/26-276-01F.pdf'
+    );
+    expect(source?.url_reference).toBe(
+      'https://publications.msss.gouv.qc.ca/msss/document-000129/'
+    );
+  });
+
+  test('le thème s’appelle « Infections et antibiothérapie »', () => {
+    // Un ectoparasite n'est pas un antibiotique : le thème s'élargit plutôt que
+    // de ranger les poux ailleurs que là où on les cherche.
+    expect(SOURCES_DEPART.find((s) => s.cle === CLE)?.theme).toBe('antibio');
+    expect(fr.themes.antibio).toBe('Infections et antibiothérapie');
+  });
+
+  test('les huit angles sont couverts', () => {
+    const mots = SOURCES_DEPART.find((s) => s.cle === CLE)?.motsCles ?? '';
+    const angles: [string, string][] = [
+      ['nom courant', 'poux'],
+      ['nom savant', 'pediculose'],
+      ['sigle ou nom latin', 'pediculus humanus capitis'],
+      ['anglais', 'head lice'],
+      ['molécule', 'permethrine'],
+      ['nom commercial', 'kwellada'],
+      ['objet et geste', 'peigne fin'],
+      ['situation', 'mon enfant a des poux'],
+    ];
+    for (const [angle, mot] of angles) {
+      expect({ angle, present: mots.includes(mot) }).toEqual({ angle, present: true });
+    }
+  });
+
+  test('singulier et pluriel des deux côtés', () => {
+    const mots = SOURCES_DEPART.find((s) => s.cle === CLE)?.motsCles ?? '';
+    for (const mot of ['pou,', 'poux,', 'lente,', 'lentes,', 'nit,', 'nits,']) {
+      expect({ mot, present: mots.includes(mot) }).toEqual({ mot, present: true });
     }
   });
 });

@@ -123,6 +123,7 @@ describe('liens utiles', () => {
       rang: 1,
       sous_section: 'liens_utiles' as const,
       theme: '',
+      pour_patient: 0,
     },
     {
       id: 2,
@@ -135,6 +136,7 @@ describe('liens utiles', () => {
       rang: 2,
       sous_section: 'liens_utiles' as const,
       theme: '',
+      pour_patient: 0,
     },
   ];
 
@@ -171,6 +173,7 @@ describe('liens utiles', () => {
       rang: 3,
       sous_section: 'liens_utiles' as const,
       theme: '',
+      pour_patient: 0,
     };
     expect(filtrerLiens([conjonctivite], 'pink eye')).toHaveLength(1);
     expect(filtrerLiens([conjonctivite], 'conjonctivite')).toHaveLength(1);

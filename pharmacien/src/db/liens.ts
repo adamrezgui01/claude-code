@@ -29,6 +29,7 @@ const DEPART: EntreeLien[] = SOURCES_DEPART.map((source) => ({
   motsCles: source.motsCles,
   sous_section: source.sousSection,
   theme: source.theme,
+  pour_patient: source.pourPatient ? 1 : 0,
 }));
 
 const CHAMPS = [
@@ -40,6 +41,7 @@ const CHAMPS = [
   'motsCles',
   'sous_section',
   'theme',
+  'pour_patient',
 ] as const;
 
 /**
@@ -50,7 +52,7 @@ const CHAMPS = [
  * si peu. On l'écrit donc avec la même valeur que `url_document`, et plus rien
  * ne la lit. C'est le prix de ne jamais toucher aux données de quelqu'un.
  */
-function avecAncienneColonne(entree: EntreeLien): string[] {
+function avecAncienneColonne(entree: EntreeLien): (string | number)[] {
   return [...CHAMPS.map((c) => entree[c]), entree.url_document];
 }
 

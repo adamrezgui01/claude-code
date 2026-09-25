@@ -362,6 +362,10 @@ export function initialiserBase() {
   /* Le thème sous lequel le signet se range dans l'onglet Clinique. Vide pour
      les signets de l'usager : ils se rangent sous « Mes signets ». */
   ajouterColonne('liens', 'theme', "TEXT NOT NULL DEFAULT ''");
+  /* Un feuillet à remettre au patient, plutôt qu'une référence à consulter
+     soi-même. Une colonne et pas une troisième sous-section : on cherche
+     « poux » sans savoir d'avance si la réponse est pour soi ou pour lui. */
+  ajouterColonne('liens', 'pour_patient', 'INTEGER NOT NULL DEFAULT 0');
   if (!dejaFait('liens_sous_section')) {
     db.execSync("UPDATE liens SET sous_section = 'outils' WHERE cle LIKE 'mdcalc_%'");
     marquerFait('liens_sous_section');

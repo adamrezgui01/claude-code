@@ -559,6 +559,7 @@ export const en: Dictionnaire = {
     effacer: 'Clear',
   },
   sujets: {
+    poux: 'Head lice',
     contraception: 'Contraception',
     itss: 'STBBIs',
     infectionsPeau: 'Skin and wounds',
@@ -587,7 +588,7 @@ export const en: Dictionnaire = {
   themes: {
     calculateurs: 'Calculators',
     respiratoire: 'ENT and airways',
-    antibio: 'Antibiotics',
+    antibio: 'Infections and antibiotics',
     itss: 'STBBIs and sexual health',
     cardioSang: 'Heart and blood',
     metabolique: 'Hormones and metabolism',
