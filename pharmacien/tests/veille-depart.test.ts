@@ -266,11 +266,29 @@ describe('la recherche clinique', () => {
   test('« eliquis » remonte le guide des AOD', () => {
     // Le nom commercial ne figure dans aucun titre. C'est pourtant celui que
     // le patient prononce, et celui qui est écrit sur le flacon.
-    expect(cles('eliquis')).toEqual(['ciusss_aod']);
+    expect(cles('eliquis')).toContain('ciusss_aod');
   });
 
   test('« xarelto » aussi', () => {
-    expect(cles('xarelto')).toEqual(['ciusss_aod']);
+    expect(cles('xarelto')).toContain('ciusss_aod');
+  });
+
+  test('un nom commercial remonte tout ce qui le concerne, pas une seule entrée', () => {
+    // C'était l'attente d'avant l'audit de la 2.5.1 : « eliquis » ne remontait
+    // que le guide des AOD, parce que c'était la seule entrée à porter des noms
+    // commerciaux. Depuis que chaque entrée porte ses molécules et ses marques,
+    // « eliquis » remonte aussi la fibrillation, la thrombose, CHA₂DS₂-VASc et
+    // HAS-BLED — et c'est le bon comportement : on tape le nom sur le flacon et
+    // on veut tout ce qui s'y rapporte.
+    const trouves = cles('eliquis');
+    expect(trouves.length).toBeGreaterThan(1);
+    for (const cle of trouves) {
+      const source = SOURCES_DEPART.find((s) => s.cle === cle);
+      expect({ cle, apixaban: source?.motsCles.includes('apixaban') }).toEqual({
+        cle,
+        apixaban: true,
+      });
+    }
   });
 
   test('« pompe » remonte la MPOC', () => {
@@ -837,5 +855,119 @@ describe('le repli quand le document a déménagé', () => {
   test('l’écran affiche l’avis quand il est prévenu', () => {
     const ecran = readFileSync('app/(tabs)/clinique.tsx', 'utf8');
     expect(ecran).toContain("traduire('veille.documentDeplace')");
+  });
+});
+
+/**
+ * L'audit des mots-clés.
+ *
+ * Le plancher de la 2.5.1 : chaque entrée déjà en place doit remonter sur son
+ * sigle, son nom anglais et les molécules qu'elle couvre. Un test par mot-clé,
+ * parce qu'un seul manquant est une porte fermée, et que c'est toujours
+ * celle-là que quelqu'un prendra.
+ */
+describe('le plancher de l’audit', () => {
+  const CATALOGUE = SOURCES_DEPART.map((source, i) => ({
+    id: i + 1,
+    cle: source.cle,
+    titre: source.titre,
+    categorie: '',
+    motsCles: source.motsCles,
+    sujets: [] as string[],
+  }));
+
+  /** Chaque ligne du tableau : l'entrée visée, et ce qui doit la remonter. */
+  const PLANCHER: [string, string[]][] = [
+    [
+      'beers',
+      ['beers', 'personnes âgées', 'aînés', 'gériatrie', 'potentially inappropriate', 'pim', 'déprescription'],
+    ],
+    [
+      'stopp_start',
+      ['stopp', 'start', 'gériatrie', 'aînés', 'déprescription', 'prescription inappropriée'],
+    ],
+    [
+      'ciusss_aod',
+      [
+        'aod', 'aco', 'anticoagulant', 'apixaban', 'rivaroxaban', 'edoxaban', 'dabigatran',
+        'eliquis', 'xarelto', 'lixiana', 'pradaxa', 'fibrillation', 'fa', 'tvp', 'ep', 'warfarine',
+      ],
+    ],
+    [
+      'mdcalc_cockcroft',
+      ['clairance', 'créatinine', 'clcr', 'cockcroft', 'gault', 'fonction rénale', 'creatinine clearance'],
+    ],
+    [
+      'mdcalc_ckd_epi',
+      ['dfge', 'egfr', 'gfr', 'filtration glomérulaire', 'ckd', 'insuffisance rénale', 'irc', 'fonction rénale'],
+    ],
+    ['mdcalc_imc_sc', ['imc', 'bmi', 'surface corporelle', 'bsa', 'poids', 'taille']],
+  ];
+
+  for (const [cle, termes] of PLANCHER) {
+    describe(cle, () => {
+      test.each(termes)('« %s » la remonte', (terme) => {
+        expect(filtrerSources(CATALOGUE, terme).map((s) => s.cle)).toContain(cle);
+      });
+    });
+  }
+
+  /**
+   * Les guides de l'INESSS forment une famille : le plancher porte sur le
+   * groupe, pas sur un document en particulier, parce que « antibiotique » doit
+   * en remonter plusieurs.
+   */
+  describe('les guides INESSS', () => {
+    test.each(['antibiotique', 'antibio', 'infection', 'otite', 'pharyngite', 'sinusite', 'cystite', 'pneumonie'])(
+      '« %s » remonte au moins un guide',
+      (terme) => {
+        const trouves = filtrerSources(CATALOGUE, terme).filter((s) => s.cle.startsWith('inesss_'));
+        expect(trouves.length).toBeGreaterThan(0);
+      }
+    );
+
+    test('« itu » remonte l’infection urinaire', () => {
+      // Le sigle du milieu. « ITU » et « IVU » cohabitent selon l'hôpital où
+      // l'on a appris, et les deux doivent trouver.
+      expect(filtrerSources(CATALOGUE, 'itu').map((s) => s.cle)).toContain('inesss_uti');
+      expect(filtrerSources(CATALOGUE, 'ivu').map((s) => s.cle)).toContain('inesss_uti');
+    });
+
+    test('« inesss » remonte les guides de l’organisme', () => {
+      // Pas par les mots-clés : par l'organisation, que la ligne affiche déjà.
+      const guides = SOURCES_DEPART.filter((s) => s.organisation === 'INESSS');
+      expect(guides.length).toBeGreaterThan(20);
+    });
+  });
+
+  test('chaque entrée porte au moins huit mots-clés', () => {
+    // Huit angles, huit mots-clés au minimum. C'est un plancher grossier, et
+    // c'est voulu : il attrape l'entrée qu'on a ajoutée à la hâte.
+    const maigres = SOURCES_DEPART.filter((s) => s.motsCles.split(',').length < 8);
+    expect(maigres.map((s) => s.cle)).toEqual([]);
+  });
+
+  test('chaque entrée porte au moins une molécule ou un nom commercial', () => {
+    // Le nom sur le flacon est souvent le seul mot dont on se souvient.
+    const SANS_MOLECULE = ['mdcalc_imc_sc'];
+    const muettes = SOURCES_DEPART.filter((source) => {
+      if (SANS_MOLECULE.includes(source.cle)) return false;
+      const mots = source.motsCles.toLowerCase();
+      return !/ine|ol|il|an|ab|ide|mycine|cilline|statine/.test(mots);
+    });
+    expect(muettes.map((s) => s.cle)).toEqual([]);
+  });
+
+  test('chaque entrée porte au moins un mot anglais', () => {
+    // On lit en anglais et on parle en français : la moitié des sigles qu'on
+    // retient viennent d'un article.
+    //
+    // Le filet est grossier — une liste de mots anglais fréquents dans ce
+    // domaine — et il s'allonge quand une entrée arrive. Il n'essaie pas de
+    // reconnaître l'anglais : il attrape l'entrée écrite entièrement en
+    // français, qui est le vrai défaut.
+    const ANGLAIS = /\b(risk|score|infection|disease|failure|therapy|pain|lice|sex|iud|pill|clearance|function|rate|ulcer|acid|guidelines|wound|care|weight|height|colitis|gastritis|warts|herpes|outbreak|discharge|resistance|cough|pneumonia|bronchitis|sinusitis|throat|media|otitis|index|area|surface|thinner|antiplatelet|statin|lipids|hypertension|pressure|monitoring|older|adults|deprescribing|inappropriate|elderly|clot|embolism|thrombosis|anticoagulant|fibrillation|flashes|menopause|hormone|vasomotor|headache|migraine|prophylaxis|treatment|coronary|cardiovascular|kidney|renal|glomerular|filtration|hepatic|cirrhosis|liver|severity|probability|antiviral|coronavirus|covid|abscess|erysipelas|cellulitis|neuropathy|diabetic|foot|bladder|urinary|dysuria|pyelonephritis|tonsillitis|pharyngitis|strep|nasal|congestion|nose|cold|copd|obstructive|exacerbation|ejection|fraction|bleeding|stroke|syphilis|chlamydia|gonorrhea|trichomoniasis|pediculosis|scalp|nit|comb|louse|allergy|rash|anaphylaxis|reactivity|warfarin|adjustment|clinic)\b/;
+    const sansAnglais = SOURCES_DEPART.filter((s) => !ANGLAIS.test(s.motsCles.toLowerCase()));
+    expect(sansAnglais.map((s) => s.cle)).toEqual([]);
   });
 });

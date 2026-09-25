@@ -200,7 +200,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'antibio',
     sujets: ['infectionsUrinaires', 'antibiotherapie'],
-    motsCles: 'cystite, IVU, UTI, urinary tract infection, urinaire, pyelonephrite, nitrofurantoine',
+    motsCles: 'infection urinaire, cystite, infection de la vessie, vessie, pyelonephrite, bacteriurie, uretrite, ITU, IVU, UTI, IU, urinary tract infection, bladder infection, dysuria, pyelonephritis, nitrofurantoine, tmp-smx, trimethoprime, sulfamethoxazole, fosfomycine, cephalexine, ciprofloxacine, macrobid, septra, monurol, cipro, analyse d’urine, culture d’urine, bandelette, smu-dca, ca brule quand j’urine, envie frequente, sang dans les urines, femme enceinte infection urinaire',
   },
   {
     cle: 'inesss_pharyngite',
@@ -215,7 +215,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'respiratoire',
     sujets: ['pharyngite', 'antibiotherapie'],
-    motsCles: 'gorge, strep, streptocoque, angine, sore throat, tonsillitis, amoxicilline',
+    motsCles: 'pharyngite, amygdalite, angine, mal de gorge, gorge, streptocoque, streptocoque du groupe a, tonsillite, SGA, GAS, sore throat, strep throat, strep, tonsillitis, pharyngitis, group a strep, penicilline, amoxicilline, cephalexine, clarithromycine, azithromycine, apo-amoxi, biaxin, test rapide, culture de gorge, score de centor, centor, mal de gorge depuis trois jours, fievre et gorge, enfant mal de gorge',
   },
   {
     cle: 'inesss_rhino_adulte',
@@ -230,7 +230,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'respiratoire',
     sujets: ['antibiotherapie'],
-    motsCles: 'sinusite, rhinosinusite, sinus, sinusitis, congestion',
+    motsCles: 'rhinosinusite, sinusite, sinus, congestion nasale, nez bouche, rhinosinusite aigue, rhinosinusite bacterienne, sinusitis, rhinosinusitis, acute sinusitis, nasal congestion, stuffy nose, amoxicilline, amoxicilline-clavulanate, doxycycline, corticosteroide nasal, fluticasone, mometasone, clavulin, flonase, nasonex, irrigation nasale, rince-nez, eau saline, sinus depuis dix jours, ca fait mal au visage, rhume qui ne part pas',
   },
   {
     cle: 'inesss_rhino_enfant',
@@ -245,7 +245,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'respiratoire',
     sujets: ['antibiotherapie', 'pediatrie'],
-    motsCles: 'sinusite, enfant, pediatrique, sinusitis, child',
+    motsCles: 'rhinosinusite enfant, sinusite, sinus, enfant, pediatrique, rhinosinusite aigue, sinusitis, rhinosinusitis, child, pediatric sinusitis, amoxicilline, amoxicilline-clavulanate, cefprozil, clavulin, irrigation nasale, eau saline, mon enfant a le nez bouche, sinus chez l’enfant, rhume qui traine',
   },
   {
     cle: 'inesss_pneumo_adulte',
@@ -260,7 +260,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'respiratoire',
     sujets: ['antibiotherapie'],
-    motsCles: 'pneumonie, PAC, pneumonia, CAP, poumon, toux',
+    motsCles: 'pneumonie, infection pulmonaire, poumon, toux, pneumonie acquise en communaute, PAC, CAP, community acquired pneumonia, pneumonia, chest infection, amoxicilline, doxycycline, azithromycine, clarithromycine, levofloxacine, moxifloxacine, zithromax, biaxin, avelox, radiographie pulmonaire, saturation, curb-65, curb, toux avec fievre, essoufflement, expectorations',
   },
   {
     cle: 'inesss_pneumo_enfant',
@@ -275,7 +275,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'respiratoire',
     sujets: ['antibiotherapie', 'pediatrie'],
-    motsCles: 'pneumonie, enfant, pediatrique, pneumonia, child',
+    motsCles: 'pneumonie enfant, infection pulmonaire, poumon, enfant, pediatrique, pneumonie acquise en communaute, PAC, CAP, pneumonia, child, pediatric pneumonia, amoxicilline, amoxicilline-clavulanate, azithromycine, clavulin, zithromax, radiographie pulmonaire, saturation, mon enfant tousse et fait de la fievre, respiration rapide, essoufflement',
   },
   {
     cle: 'inesss_bronchite',
@@ -290,7 +290,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'respiratoire',
     sujets: ['antibiotherapie'],
-    motsCles: 'bronchite, toux, bronchitis, cough',
+    motsCles: 'bronchite, bronchite aigue, toux, toux grasse, acute bronchitis, bronchitis, cough, chest cold, salbutamol, dextromethorphane, ventolin, benylin, pas d’antibiotique, antibiotique inutile, sirop, toux depuis deux semaines, toux qui traine, il veut un antibiotique',
   },
   {
     cle: 'inesss_mpoc',
@@ -305,7 +305,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'respiratoire',
     sujets: ['mpoc', 'antibiotherapie'],
-    motsCles: 'MPOC, COPD, EAMPOC, exacerbation, bronchopneumopathie, pompe',
+    motsCles: 'MPOC, exacerbation, bronchopneumopathie, pompe, poumon, exacerbation aigue, EAMPOC, COPD, AECOPD, copd, copd exacerbation, chronic obstructive, salbutamol, ipratropium, tiotropium, formoterol, budesonide, prednisone, azithromycine, ventolin, spiriva, symbicort, trelegy, anoro, breo, pompe de secours, inhalateur, plan d’action, spirometrie, essoufflement, crise de mpoc, il tousse plus que d’habitude',
   },
   {
     cle: 'inesss_fa',
@@ -320,7 +320,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'cardioSang',
     sujets: ['anticoagulation'],
-    motsCles: 'FA, fibrillation auriculaire, atrial fibrillation, AFib, CHADS',
+    motsCles: 'fibrillation auriculaire, arythmie, coeur qui bat vite, FA, AF, AFib, CHADS, atrial fibrillation, afib, rate control, apixaban, rivaroxaban, dabigatran, edoxaban, warfarine, metoprolol, diltiazem, bisoprolol, eliquis, xarelto, pradaxa, lixiana, coumadin, chads-65, ecg, anticoagulation, palpitations, pouls irregulier, risque avc',
   },
   {
     cle: 'inesss_tev',
@@ -335,7 +335,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'cardioSang',
     sujets: ['anticoagulation'],
-    motsCles: 'TVP, EP, thrombose, embolie, DVT, PE, thromboembolie',
+    motsCles: 'thrombose, embolie, phlebite, caillot, thromboembolie, TVP, EP, DVT, PE, TEV, VTE, deep vein thrombosis, pulmonary embolism, venous thromboembolism, clot, apixaban, rivaroxaban, dabigatran, edoxaban, warfarine, tinzaparine, enoxaparine, heparine, eliquis, xarelto, pradaxa, lixiana, innohep, lovenox, score de wells, d-dimeres, echographie doppler, bas de compression, jambe enflee, mollet douloureux, essoufflement subit, douleur thoracique',
   },
   {
     cle: 'inesss_warfarine',
@@ -350,7 +350,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'cardioSang',
     sujets: ['anticoagulation'],
-    motsCles: 'warfarine, INR, coumadin, warfarin, ajustement',
+    motsCles: 'warfarine, INR, ajustement, RNI, PMN, warfarin, inr, anticoagulation clinic, dose adjustment, vitamine k, phytonadione, coumadin, taro-warfarin, prise de sang, protocole medical national, ordonnance collective, inr trop haut, inr trop bas, saignement sous warfarine, antibiotique et warfarine',
   },
   {
     cle: 'inesss_penicillines',
@@ -365,7 +365,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'antibio',
     sujets: ['allergies', 'antibiotherapie'],
-    motsCles: 'allergie, penicilline, penicillin allergy, amoxicilline, cephalosporine, reaction',
+    motsCles: 'allergie, allergie aux penicillines, reaction allergique, hypersensibilite, anaphylaxie, exantheme, penicillin allergy, drug allergy, cross reactivity, rash, anaphylaxis, penicilline, amoxicilline, cephalexine, cefprozil, ceftriaxone, cefuroxime, carbapenem, clavulin, keflex, test cutane, delabellisation, arbre decisionnel, il dit qu’il est allergique, allergie dans le dossier, plaque apres l’amoxil',
   },
   {
     cle: 'ciusss_aod',
@@ -380,7 +380,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'cardioSang',
     sujets: ['anticoagulation'],
-    motsCles: 'AOD, DOAC, apixaban, rivaroxaban, edoxaban, dabigatran, eliquis, xarelto',
+    motsCles: 'anticoagulant oral direct, anticoagulant, fluidifiant du sang, AOD, ACO, DOAC, NOAC, direct oral anticoagulant, doac, noac, blood thinner, apixaban, rivaroxaban, edoxaban, dabigatran, warfarine, eliquis, xarelto, lixiana, pradaxa, ajustement selon la fonction renale, interruption avant une chirurgie, relais, dose oubliee, fibrillation, fa, tvp, ep, il a oublie sa dose, extraction dentaire, saignement',
   },
   {
     cle: 'ccs_ic',
@@ -395,7 +395,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'cardioSang',
     sujets: ['insuffisanceCardiaque'],
-    motsCles: 'insuffisance cardiaque, heart failure, HFrEF, oedeme, diuretique, sacubitril',
+    motsCles: 'insuffisance cardiaque, coeur, oedeme, essoufflement, IC, HF, HFrEF, HFpEF, FEVG, heart failure, hfref, hfpef, ejection fraction, sacubitril, valsartan, bisoprolol, carvedilol, spironolactone, dapagliflozine, empagliflozine, furosemide, entresto, jardiance, forxiga, lasix, aldactone, poids quotidien, pese-personne, restriction en sel, diuretique, jambes enflees, prise de poids rapide, il dort assis',
   },
   {
     cle: 'ccs_antiplaquettaires',
@@ -410,7 +410,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'cardioSang',
     sujets: ['anticoagulation'],
-    motsCles: 'antiplaquettaire, antiplatelet, clopidogrel, ticagrelor, aspirine, DAPT, stent',
+    motsCles: 'antiplaquettaire, aspirine, stent, infarctus, bitherapie, DAPT, SCA, ACS, AAS, antiplatelet, dual antiplatelet therapy, acute coronary syndrome, clopidogrel, ticagrelor, prasugrel, plavix, brilinta, effient, duree de la bitherapie, arret temporaire, apres un infarctus, apres un stent, extraction dentaire',
   },
   {
     cle: 'ccs_lipides',
@@ -425,7 +425,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'cardioSang',
     sujets: ['dyslipidemie'],
-    motsCles: 'lipides, cholesterol, LDL, statine, statin, dyslipidemie, lipids',
+    motsCles: 'cholesterol, lipides, dyslipidemie, statine, LDL, HDL, apoB, lipids, statin, ldl, lipid guidelines, atorvastatine, rosuvastatine, simvastatine, ezetimibe, evolocumab, alirocumab, fenofibrate, lipitor, crestor, zetia, repatha, praluent, bilan lipidique, cible de ldl, risque cardiovasculaire, douleurs musculaires sous statine, cholesterol eleve, prevention',
   },
   {
     cle: 'hc_hta',
@@ -440,7 +440,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'cardioSang',
     sujets: ['hypertension'],
-    motsCles: 'HTA, pression, tension arterielle, blood pressure, BP, antihypertenseur',
+    motsCles: 'hypertension, pression, haute pression, tension arterielle, HTA, TA, BP, MAPA, MPAD, blood pressure, home monitoring, perindopril, ramipril, amlodipine, hydrochlorothiazide, indapamide, candesartan, telmisartan, chlorthalidone, coversyl, norvasc, atacand, micardis, diovan, tensiometre, brassard, mesure a domicile, pression trop haute, ma pression est a 160, mal de tete et pression',
   },
   {
     cle: 'beers',
@@ -455,7 +455,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'ainees',
     sujets: ['personnesAgees'],
-    motsCles: 'Beers, personne agee, geriatrie, deprescription, potentially inappropriate, elderly',
+    motsCles: 'Beers, personne agee, personnes agees, aine, aines, ainee, geriatrie, deprescription, vieillissement, beers criteria, older adults, potentially inappropriate, potentially inappropriate medication, PIM, elderly, deprescribing, benzodiazepine, lorazepam, zopiclone, anticholinergique, diphenhydramine, ains, ativan, imovane, benadryl, revision de la medication, bilan comparatif, liste de medicaments, polypharmacie, chute, confusion, somnolence, trop de medicaments',
   },
   {
     cle: 'stopp_start',
@@ -470,7 +470,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'ainees',
     sujets: ['personnesAgees'],
-    motsCles: 'STOPP, START, personne agee, geriatrie, deprescription, elderly',
+    motsCles: 'STOPP, START, criteres stopp, criteres start, personne agee, personnes agees, aine, aines, geriatrie, deprescription, prescription inappropriee, stopp start criteria, older adults, inappropriate prescribing, deprescribing, omission, elderly, benzodiazepine, ipp, anticholinergique, ains, statine, revision de la medication, medicament a cesser, medicament a ajouter, polypharmacie, chute, trop de medicaments',
   },
 
   /*
@@ -496,7 +496,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'respiratoire',
     sujets: ['pediatrie', 'antibiotherapie'],
     motsCles:
-      'otite, oreille, OMA, otitis, ear infection, enfant, amoxicilline, tympan',
+      'otite, mal d’oreille, oreille, OMA, tympan, enfant, otite moyenne aigue, otorrhee, epanchement, AOM, acute otitis media, otitis, ear infection, earache, amoxicilline, amoxicilline-clavulanate, cefprozil, ceftriaxone, ibuprofene, acetaminophene, clavulin, advil, tylenol, tempra, otoscope, attente vigilante, antibiotique differe, mon enfant a mal aux oreilles, il se tire l’oreille, fievre et oreille',
   },
   {
     cle: 'inesss_covid',
@@ -512,7 +512,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'respiratoire',
     sujets: ['covid'],
     motsCles:
-      'covid, covid 19, sars cov 2, nirmatrelvir, paxlovid, coronavirus, antiviral',
+      'covid, covid 19, coronavirus, antiviral, SARS-CoV-2, SRAS-CoV-2, covid-19, sars cov 2, antiviral treatment, nirmatrelvir, ritonavir, remdesivir, paxlovid, veklury, test rapide, taan, interactions medicamenteuses, cinq jours, test positif, symptomes depuis deux jours, immunosupprime, personne agee covid',
   },
   {
     cle: 'inesss_cellulite',
@@ -528,7 +528,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'antibio',
     sujets: ['antibiotherapie', 'infectionsPeau'],
     motsCles:
-      'cellulite, erysipele, peau, plaie, cellulitis, skin infection, cephalexine, rougeur',
+      'cellulite, erysipele, rougeur, peau, plaie, jambe rouge, cellulite infectieuse, dermohypodermite, abces, cellulitis, skin infection, erysipelas, abscess, cephalexine, cefadroxil, clindamycine, tmp-smx, doxycycline, amoxicilline-clavulanate, keflex, septra, dalacin, delimiter au crayon, elevation, culture de plaie, sa jambe est rouge et chaude, ca s’etend, morsure, piqure infectee',
   },
   {
     cle: 'inesss_cdifficile',
@@ -544,7 +544,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'antibio',
     sujets: ['antibiotherapie', 'digestif'],
     motsCles:
-      'c difficile, clostridium, clostridioides, diarrhee, colite, vancomycine, fidaxomicine, CDI',
+      'c difficile, diarrhee, colite, clostridioides difficile, clostridium difficile, colite pseudomembraneuse, CDI, ICD, c diff, diarrhea, colitis, vancomycine, fidaxomicine, metronidazole, bezlotoxumab, dificid, flagyl, recherche de toxine, selles, arret de l’antibiotique, probiotique, diarrhee apres un antibiotique, recidive, diarrhee a l’hopital',
   },
   {
     cle: 'inesss_hpylori',
@@ -560,7 +560,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'antibio',
     sujets: ['digestif', 'antibiotherapie'],
     motsCles:
-      'h pylori, helicobacter, ulcere, gastrite, estomac, quadritherapie, pylera, IPP',
+      'h pylori, ulcere, estomac, gastrite, brulure d’estomac, helicobacter, helicobacter pylori, ulcere gastroduodenal, dyspepsie, IPP, PPI, peptic ulcer, gastritis, eradication, amoxicilline, clarithromycine, metronidazole, bismuth, tetracycline, pantoprazole, esomeprazole, rabeprazole, quadritherapie, pylera, hp-pac, pantoloc, nexium, dexilant, test respiratoire a l’uree, antigene dans les selles, controle apres traitement, mal a l’estomac, reflux qui persiste, ulcere trouve a l’endoscopie',
   },
   {
     cle: 'inesss_itss_syndromes',
@@ -576,7 +576,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'itss',
     sujets: ['itss'],
     motsCles:
-      'itss, syndrome, ecoulement, uretrite, cervicite, discharge, ITS, MTS, depistage',
+      'itss, its, mts, syndrome, ecoulement, ecoulement uretral, pertes vaginales, uretrite, cervicite, douleur pelvienne, depistage, STI, STBBI, discharge, unprotected sex, sexual health, doxycycline, azithromycine, ceftriaxone, metronidazole, prelevement, taan, traitement du partenaire, notification, brulure en urinant, partenaire positif, depistage annuel',
   },
   {
     cle: 'inesss_itss_chlamydia',
@@ -592,7 +592,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'itss',
     sujets: ['itss'],
     motsCles:
-      'chlamydia, gonorrhee, gonocoque, gonorrhea, doxycycline, ceftriaxone, azithromycine, ITSS',
+      'chlamydia, gonorrhee, gonocoque, itss, chlamydia trachomatis, neisseria gonorrhoeae, uretrite, cervicite, CT, NG, gonorrhea, chlamydia, doxycycline, azithromycine, ceftriaxone, cefixime, gentamicine, vibramycin, zithromax, rocephin, taan, pcr, depistage urinaire, prelevement, traitement du partenaire, brulure en urinant, ecoulement, partenaire positif, depistage annuel',
   },
   {
     cle: 'inesss_itss_syphilis',
@@ -608,7 +608,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'itss',
     sujets: ['itss'],
     motsCles:
-      'syphilis, treponeme, penicilline benzathine, VDRL, chancre, ITSS, RPR',
+      'syphilis, itss, treponeme, treponema pallidum, chancre, syphilis latente, VDRL, RPR, TPHA, syphilis, penicilline g benzathine, penicilline benzathine, doxycycline, ceftriaxone, bicillin, test treponemique, prise de sang, suivi serologique, eruption sur les paumes, depistage en grossesse, partenaire positif',
   },
   {
     cle: 'inesss_itss_herpes',
@@ -624,7 +624,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'itss',
     sujets: ['itss'],
     motsCles:
-      'herpes, HSV, genital, valacyclovir, acyclovir, poussee, ITSS',
+      'herpes, herpes genital, itss, HSV, HSV-1, HSV-2, genital herpes, cold sore, outbreak, valacyclovir, acyclovir, famciclovir, valtrex, zovirax, traitement episodique, traitement suppressif, picotement, premiere poussee, recidive, grossesse et herpes',
   },
   {
     cle: 'inesss_itss_condylomes',
@@ -640,7 +640,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'itss',
     sujets: ['itss'],
     motsCles:
-      'condylome, VPH, HPV, verrue genitale, warts, imiquimod, podofilox, ITSS',
+      'condylome, verrue genitale, itss, condylomatose, VPH, HPV, warts, genital warts, imiquimod, podophyllotoxine, podofilox, acide trichloroacetique, aldara, condyline, wartec, cryotherapie, azote liquide, vaccin vph, gardasil, des bosses, des verrues, vaccination',
   },
   {
     cle: 'inesss_itss_mycoplasma',
@@ -656,7 +656,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'itss',
     sujets: ['itss'],
     motsCles:
-      'mycoplasma, genitalium, uretrite, moxifloxacine, azithromycine, resistance, ITSS',
+      'mycoplasma, mycoplasma genitalium, itss, uretrite, uretrite persistante, MG, macrolide resistance, moxifloxacine, azithromycine, doxycycline, avelox, taan, recherche de resistance, echec de traitement, uretrite qui persiste, resistance aux macrolides',
   },
   {
     cle: 'inesss_itss_trichomonas',
@@ -672,7 +672,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'itss',
     sujets: ['itss'],
     motsCles:
-      'trichomonas, vaginalis, vaginite, metronidazole, trichomoniase, ITSS, vaginose',
+      'trichomonas, trichomonas vaginalis, vaginite, vaginose, itss, trichomoniase, TV, trichomoniasis, metronidazole, tinidazole, flagyl, tindamax, prelevement vaginal, traitement du partenaire, pertes malodorantes, demangeaison vulvaire, partenaire a traiter',
   },
   {
     cle: 'inesss_pied_diabetique',
@@ -688,7 +688,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'metabolique',
     sujets: ['diabete', 'infectionsPeau'],
     motsCles:
-      'pied diabetique, ulcere, plaie, diabetic foot, neuropathie, decharge, amputation',
+      'pied diabetique, plaie au pied, ulcere, diabete, neuropathie, arteriopathie, osteite, ischemie, diabetic foot, diabetic foot ulcer, neuropathy, wound care, cephalexine, amoxicilline-clavulanate, ciprofloxacine, clindamycine, insuline, metformine, keflex, clavulin, decharge, chaussure, pansement, examen des pieds, monofilament, debridement, plaie qui ne guerit pas, il ne sent plus ses pieds, ampoule, orteil noir',
   },
   {
     cle: 'inesss_hormonotherapie',
@@ -704,7 +704,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'metabolique',
     sujets: ['menopause'],
     motsCles:
-      'menopause, hormonotherapie, bouffees de chaleur, estrogene, progesterone, HRT, hot flashes',
+      'menopause, hormonotherapie, bouffees de chaleur, perimenopause, climaterique, atrophie vulvovaginale, HTM, HRT, MHT, hormone therapy, hot flashes, vasomotor symptoms, estradiol, progesterone, estrogene, drospirenone, prasterone, estrogel, divigel, prometrium, premarin, bijuva, intrarosa, estring, vagifem, timbre, gel, anneau vaginal, creme vaginale, plus faible dose, sueurs nocturnes, secheresse vaginale, insomnie, risque de cancer du sein',
   },
   {
     cle: 'inesss_migraine',
@@ -720,7 +720,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'douleur',
     sujets: ['migraine'],
     motsCles:
-      'migraine, cephalee, mal de tete, triptan, sumatriptan, headache, aura, prophylaxie',
+      'migraine, cephalee, mal de tete, aura, migraine avec aura, migraine sans aura, cephalee de tension, headache, migraine, prophylaxis, acute treatment, sumatriptan, rizatriptan, zolmitriptan, naratriptan, naproxene, ibuprofene, metoclopramide, propranolol, topiramate, amitriptyline, candesartan, erenumab, galcanezumab, imitrex, maxalt, zomig, maxeran, topamax, aimovig, emgality, ajovy, journal des migraines, declencheurs, prophylaxie, abus de medication, mal de tete tous les jours, ca commence par des flashs, nausee et mal de tete, il prend des triptans trop souvent',
   },
   {
     cle: 'mdcalc_framingham',
@@ -736,7 +736,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'calculateurs',
     sujets: [],
     motsCles:
-      'framingham, risque cardiovasculaire, coronarien, cardiovascular risk, lipides, statine, prevention',
+      'framingham, risque cardiovasculaire, risque coronarien, prevention, FRS, RCV, framingham risk score, cardiovascular risk, chd risk, hard coronary, statine, atorvastatine, rosuvastatine, aspirine, lipitor, crestor, calcul du risque, cible de ldl, age cardiovasculaire, bilan lipidique, faut-il une statine, risque a dix ans, cholesterol eleve',
   },
   /*
    * Les poux de tête. La brochure du MSSS, révisée en juin 2026 : examen de la
@@ -815,7 +815,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'outils',
     theme: 'calculateurs',
     sujets: [],
-    motsCles: 'clairance, creatinine, clcr, cockcroft, gault, fonction renale, creatinine clearance, renal function',
+    motsCles: 'clairance, creatinine, clcr, cockcroft, gault, fonction renale, CrCl, creatinine clearance, renal function, kidney function, apixaban, rivaroxaban, dabigatran, metformine, gabapentine, nitrofurantoine, eliquis, xarelto, ajustement de dose, poids ideal, poids ajuste, creatinine serique, dose a ajuster, insuffisance renale, personne agee dose',
   },
   {
     cle: 'mdcalc_chads_vasc',
@@ -828,7 +828,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'outils',
     theme: 'calculateurs',
     sujets: [],
-    motsCles: 'chads, chadsvasc, cha2ds2, fibrillation auriculaire, FA, risque AVC, anticoagulation, atrial fibrillation, stroke risk',
+    motsCles: 'chads, chadsvasc, cha2ds2, chads-65, fibrillation auriculaire, FA, risque avc, anticoagulation, atrial fibrillation, stroke risk, apixaban, rivaroxaban, warfarine, eliquis, xarelto, score de risque, faut-il anticoaguler, palpitations, avc',
   },
   {
     cle: 'mdcalc_has_bled',
@@ -841,7 +841,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'outils',
     theme: 'calculateurs',
     sujets: [],
-    motsCles: 'hasbled, has bled, risque saignement, hemorragie, anticoagulation, bleeding risk, warfarin, AOD',
+    motsCles: 'hasbled, has bled, risque saignement, risque de saignement, hemorragie, anticoagulation, HAS-BLED, bleeding risk, warfarin, apixaban, rivaroxaban, warfarine, aod, eliquis, xarelto, coumadin, score de risque, faut-il arreter l’anticoagulant, il saigne, ecchymoses',
   },
   {
     cle: 'mdcalc_ckd_epi',
@@ -854,7 +854,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'outils',
     theme: 'calculateurs',
     sujets: [],
-    motsCles: 'dfge, egfr, filtration glomerulaire, ckd, insuffisance renale, irc, gfr, kidney function',
+    motsCles: 'dfge, egfr, filtration glomerulaire, ckd, insuffisance renale, irc, gfr, ckd-epi, glomerular filtration rate, kidney function, chronic kidney disease, fonction renale, metformine, apixaban, rivaroxaban, gabapentine, nitrofurantoine, creatinine, ajustement de dose, stade de l’insuffisance renale, dfge a 35, dose a ajuster, contre-indication renale',
   },
   {
     cle: 'mdcalc_imc_sc',
@@ -867,7 +867,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'outils',
     theme: 'calculateurs',
     sujets: [],
-    motsCles: 'imc, bmi, surface corporelle, body surface area, bsa, m2, poids, taille',
+    motsCles: 'imc, bmi, surface corporelle, body surface area, bsa, m2, poids, taille, body mass index, height, weight, obesite, calcul de dose, chimiotherapie, mg/m2, dose selon la surface, dose selon le poids, imc eleve, contraception et imc',
   },
   {
     cle: 'mdcalc_mdrd',
@@ -880,7 +880,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'outils',
     theme: 'calculateurs',
     sujets: [],
-    motsCles: 'mdrd, DFG, debit filtration glomerulaire, eGFR, GFR, fonction renale, renal function',
+    motsCles: 'mdrd, DFG, debit filtration glomerulaire, eGFR, GFR, fonction renale, renal function, glomerular filtration rate, insuffisance renale, irc, metformine, apixaban, gabapentine, creatinine, ajustement de dose, ancienne formule, dose a ajuster, contre-indication renale',
   },
   {
     cle: 'mdcalc_child_pugh',
@@ -893,7 +893,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'outils',
     theme: 'calculateurs',
     sujets: [],
-    motsCles: 'child pugh, childpugh, cirrhose, foie, hepatique, liver, cirrhosis, hepatic',
+    motsCles: 'child pugh, childpugh, cirrhose, foie, hepatique, insuffisance hepatique, liver, cirrhosis, hepatic, child-pugh score, ascite, encephalopathie, bilirubine, albumine, inr, ains, acetaminophene, benzodiazepine, statine, score de risque, dose en insuffisance hepatique, cirrhose et medicament',
   },
   {
     cle: 'mdcalc_curb_65',
@@ -906,7 +906,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'outils',
     theme: 'calculateurs',
     sujets: [],
-    motsCles: 'curb, curb65, pneumonie, severite, hospitalisation, pneumonia, severity, CAP',
+    motsCles: 'curb, curb65, curb-65, pneumonie, severite, hospitalisation, pneumonia, severity, CAP, confusion, uree, frequence respiratoire, pression, 65 ans, amoxicilline, doxycycline, azithromycine, score de severite, faut-il hospitaliser, pneumonie a la maison',
   },
   {
     cle: 'mdcalc_wells_tvp',
@@ -919,7 +919,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'outils',
     theme: 'calculateurs',
     sujets: [],
-    motsCles: 'wells, TVP, thrombose veineuse profonde, phlebite, DVT, deep vein thrombosis, clot',
+    motsCles: 'wells, TVP, thrombose veineuse profonde, phlebite, jambe enflee, mollet, DVT, deep vein thrombosis, clot, wells score, d-dimeres, echographie doppler, apixaban, rivaroxaban, tinzaparine, eliquis, xarelto, score de probabilite, sa jambe est enflee, suspicion de tvp',
   },
   {
     cle: 'mdcalc_wells_ep',
@@ -932,6 +932,6 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'outils',
     theme: 'calculateurs',
     sujets: [],
-    motsCles: 'wells, EP, embolie pulmonaire, PE, pulmonary embolism, clot, poumon',
+    motsCles: 'wells, EP, embolie pulmonaire, poumon, essoufflement, douleur thoracique, PE, pulmonary embolism, clot, wells score, d-dimeres, angioscan, tachycardie, apixaban, rivaroxaban, tinzaparine, eliquis, xarelto, score de probabilite, il est essouffle, suspicion d’embolie',
   },
 ];
