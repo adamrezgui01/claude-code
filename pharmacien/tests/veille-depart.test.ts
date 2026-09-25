@@ -4,7 +4,12 @@ import { en } from '../src/i18n/en';
 import { fr } from '../src/i18n/fr';
 import { THEMES } from '../src/lib/liens';
 import { SOURCES_DEPART, SUJETS_DEPART } from '../src/lib/veille/depart';
-import { filtrerSources } from '../src/lib/veille/recherche';
+import {
+  correspond,
+  filtrerSources,
+  LONGUEUR_MIN,
+  type SourceCherchable,
+} from '../src/lib/veille/recherche';
 
 /**
  * Ce que le volet clinique sait le premier jour.
@@ -450,5 +455,77 @@ describe('les guides ajoutés en 2.5', () => {
     // C'est un domaine où l'on vérifie une posologie précise, souvent sous les
     // yeux du patient, et où la conduite change d'une année à l'autre.
     for (const source of itss) expect(source.sujets).toContain('itss');
+  });
+});
+
+/**
+ * Le mécanisme de correspondance.
+ *
+ * Une source introuvable n'existe pas. Le jeu de mots-clés est une moitié du
+ * problème ; l'autre est la façon de les apparier, et c'est celle-ci.
+ *
+ * Un mot-clé de plusieurs mots doit se trouver par n'importe lequel d'entre eux,
+ * sinon l'écrire au long ne sert à rien : personne ne tape « relation sexuelle
+ * non protégée » en entier.
+ */
+describe('comment un terme rencontre un mot-clé', () => {
+  function uneSource(motsCles: string, titre = 'Un document'): SourceCherchable {
+    return { id: 1, titre, categorie: '', motsCles, sujets: [] };
+  }
+
+  test('un terme contenu dans un mot-clé le trouve', () => {
+    expect(correspond(uneSource('lentes vivantes, lentes mortes'), 'lente')).toBe(true);
+  });
+
+  test('un terme au milieu d’un mot-clé le trouve aussi', () => {
+    // « protégée » est le troisième mot : chercher par le premier seulement
+    // obligerait à connaître la formulation exacte du mot-clé.
+    expect(correspond(uneSource('relation sexuelle non protegee'), 'protegee')).toBe(true);
+  });
+
+  test('le début d’un mot suffit', () => {
+    expect(correspond(uneSource('sterilet au cuivre'), 'steri')).toBe(true);
+  });
+
+  test('deux mots-clés voisins ne se recollent pas', () => {
+    // Recollée, la liste « pou, de tête » contiendrait « pou, de » et
+    // répondrait à des termes qui ne sont dans aucun mot-clé.
+    expect(correspond(uneSource('pou, de tete'), 'pou, de')).toBe(false);
+  });
+
+  test('deux caractères ne renvoient rien', () => {
+    expect(LONGUEUR_MIN).toBe(3);
+    expect(correspond(uneSource('poux, pou, pediculose'), 'po')).toBe(false);
+  });
+
+  test('sauf un sigle écrit tel quel, en correspondance exacte', () => {
+    // « cu » est un mot-clé de la contraception d'urgence. « cui » ne l'est pas,
+    // et ne doit pas remonter par le cuivre du même mot-clé.
+    expect(correspond(uneSource('cu, cou, sterilet au cuivre'), 'cu')).toBe(true);
+    expect(correspond(uneSource('fa, fibrillation auriculaire'), 'fa')).toBe(true);
+    expect(correspond(uneSource('sterilet au cuivre'), 'cu')).toBe(false);
+  });
+
+  test('les accents ne comptent pas, dans les deux sens', () => {
+    expect(correspond(uneSource('pediculose'), 'pédiculose')).toBe(true);
+    expect(correspond(uneSource('pédiculose'), 'pediculose')).toBe(true);
+  });
+
+  test('l’apostrophe courbe du clavier trouve l’apostrophe droite du mot-clé', () => {
+    // C'est le clavier de l'iPhone qui écrit « d’urgence » ; les mots-clés sont
+    // écrits avec l'apostrophe droite.
+    expect(correspond(uneSource("contraception d'urgence"), 'contraception d’urgence')).toBe(true);
+  });
+
+  test('le titre et les sujets répondent aussi', () => {
+    const source: SourceCherchable = {
+      id: 1,
+      titre: 'Hypertension chez l’adulte en première ligne',
+      categorie: '',
+      motsCles: 'HTA',
+      sujets: ['Hypertension'],
+    };
+    expect(correspond(source, 'premiere')).toBe(true);
+    expect(correspond(source, 'hypertension')).toBe(true);
   });
 });

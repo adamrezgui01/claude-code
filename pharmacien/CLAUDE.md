@@ -235,6 +235,31 @@ qu'on ne les redécouvre pas trois fois.
   section, un signet sans thème connu se range sous « Mes signets » plutôt que
   de disparaître, et chaque section porte une icône **en plus** de son mot :
   huit pictogrammes seuls ne se distinguent pas à dix-sept points.
+- **Une source introuvable n'existe pas.** Chercher « DFGE » et ne rien obtenir
+  revient exactement au même que de ne pas avoir l'entrée CKD-EPI du tout. Toute
+  entrée de `liens` porte donc des mots-clés couvrant **huit angles** : le nom
+  courant, le nom savant, le sigle, le nom anglais, les molécules en cause, les
+  noms commerciaux courants au Québec, l'objet ou le geste associé, et la
+  situation qui amène la question. Le dernier est celui qu'on oublie, et c'est
+  souvent le vrai : le patient ne dit pas « pédiculose », il dit que son gars a
+  des poux ; il ne dit pas « contraception d'urgence », il dit que le condom a
+  brisé. Singulier et pluriel des deux côtés — `lente` et `lentes`, `pou` et
+  `poux`.
+  Les noms commerciaux sont des aides à la recherche, pas du contenu clinique :
+  aucune posologie, aucune équivalence, aucune indication, juste un mot qui mène
+  au bon document. Ils vieillissent, et un produit retiré laisse un mot-clé
+  inutile mais inoffensif.
+- La correspondance se fait **mot-clé par mot-clé**, jamais sur la liste
+  recollée : « pou, de » trouverait sinon deux mots-clés qui se touchent par
+  hasard. Trois caractères au moins avant de filtrer — sans plancher, « cu »
+  remonte le cuivre, le cuir chevelu et la cystite, et la liste devient du bruit
+  au deuxième caractère. Un terme plus court ne répond qu'aux **sigles écrits
+  tels quels**, en correspondance exacte : « cu » remonte la contraception
+  d'urgence parce que « cu » est un de ses mots-clés. Au-delà, le terme se
+  cherche **n'importe où dans** un mot-clé, pas seulement en tête : « stéri »
+  trouve « stérilet au cuivre », « protégée » trouve « relation sexuelle non
+  protégée ». C'est ce qui rend un mot-clé de plusieurs mots utile, puisque
+  personne ne le tape en entier.
 - Une adresse de document se recopie telle que l'usager l'a relevée, jamais
   retapée de mémoire : une adresse fausse mène à une page d'erreur ou, pire, à
   un guide qui n'est pas celui qu'on cherchait. Et le même document ne paraît
