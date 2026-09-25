@@ -3,9 +3,10 @@ import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
-import { listerFactures } from '../../src/db/factures';
+import { compterFacturesEnAttente, listerFactures } from '../../src/db/factures';
 import { noterIncomprise } from '../../src/db/lecteur';
 import { listerPharmacies } from '../../src/db/pharmacies';
+import { listerDocuments } from '../../src/db/profil';
 import { definirReglage, delaisSecondaires, obtenirReglages } from '../../src/db/profil';
 import {
   deplacerQuart,
@@ -16,6 +17,7 @@ import {
 } from '../../src/db/quarts';
 import type { Pharmacie, QuartDetaille } from '../../src/db/types';
 import { fenetreHeures, pixelsParHeure } from '../../src/lib/agenda';
+import { bandeEcartee, type ComptesAttente, type GenreAttente } from '../../src/lib/attente';
 import { heuresAvant, urgenceQuart } from '../../src/lib/echeance';
 import { parJour as grouperParJour, quartsVisibles, repartir } from '../../src/lib/horaire';
 import { etatsDesQuarts } from '../../src/lib/facturation';
@@ -50,6 +52,7 @@ import {
   Onglets,
   Vide,
 } from '../../src/ui/composants';
+import { BandeAttente } from '../../src/ui/BandeAttente';
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { Pageur } from '../../src/ui/Pageur';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
@@ -63,6 +66,13 @@ type Sens = 'aVenir' | 'anterieurs';
 
 /** Nombre d'ouvertures accompagnées du bandeau d'aide, avant qu'il ne se taise. */
 const OUVERTURES_AIDEES = 3;
+
+/**
+ * Combien de jours en arrière la bande d'attente cherche des heures à
+ * confirmer. Au-delà, un quart de mars n'attend plus rien de personne, et le
+ * compte deviendrait un reproche permanent.
+ */
+const FENETRE_HEURES_JOURS = 14;
 
 export default function Horaire() {
   const { t } = useTextes();
@@ -97,6 +107,14 @@ export default function Horaire() {
    * sur le quart : c'est elle qu'on marque payée, et elle en porte plusieurs.
    */
   const [numerosPayes, setNumerosPayes] = useState<Set<string>>(new Set());
+  /** Ce qui traîne, et le jour où l'usager l'a écarté d'un balayage. */
+  const [attente, setAttente] = useState<ComptesAttente>({
+    heures: 0,
+    aFacturer: 0,
+    factures: 0,
+    documents: 0,
+  });
+  const [attenteEcartee, setAttenteEcartee] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -111,6 +129,7 @@ export default function Horaire() {
       );
       setMaintenant(Date.now());
       const reglages = obtenirReglages();
+      setAttenteEcartee(reglages.attente_ecartee_le);
       setRappelFactures(doitRappelerFactures(reglages));
       setBornes({ debut: reglages.dispo_debut, fin: reglages.dispo_fin });
       // Le bandeau accompagne les trois premières ouvertures, puis ne revient
@@ -202,6 +221,49 @@ export default function Horaire() {
   );
 
   const parJour = useMemo(() => grouperParJour(visibles), [visibles]);
+
+  /**
+   * Les comptes de la bande d'attente. Ils se relisent à chaque venue sur
+   * l'écran, en même temps que le reste : une facture payée entre-temps ne doit
+   * pas rester affichée comme impayée.
+   */
+  useEffect(() => {
+    const ceJour = aujourdhui();
+    const limite = ajouterJours(ceJour, -FENETRE_HEURES_JOURS);
+    setAttente({
+      // Finis récemment, pas encore facturés, et dont personne n'a touché aux
+      // heures. C'est la fenêtre où une correction change encore un montant.
+      heures: visibles.filter(
+        (q) =>
+          etats.get(q.id) === 'aFacturer' &&
+          q.date >= limite &&
+          !q.heure_debut_reelle &&
+          !q.heure_fin_reelle
+      ).length,
+      aFacturer: visibles.filter((q) => etats.get(q.id) === 'aFacturer').length,
+      factures: compterFacturesEnAttente(),
+      documents: listerDocuments().filter(
+        (d) => ajouterJours(d.date_expiration, -d.jours_avant_rappel) <= ceJour
+      ).length,
+    });
+  }, [visibles, etats]);
+
+  function ecarterAttente() {
+    const ceJour = aujourdhui();
+    definirReglage('attente_ecartee_le', ceJour);
+    setAttenteEcartee(ceJour);
+  }
+
+  /** Toucher une ligne mène là où le travail se fait. */
+  function ouvrirAttente(genre: GenreAttente) {
+    if (genre === 'factures') router.push('/factures');
+    else if (genre === 'documents') router.push('/profil');
+    else {
+      // Les heures et la facturation se règlent dans « Antérieurs ».
+      setVue('liste');
+      setSens('anterieurs');
+    }
+  }
 
   const quartsDuJour = parJour.get(jour) ?? [];
 
@@ -378,6 +440,12 @@ export default function Horaire() {
             </View>
           </Carte>
         </Fondu>
+      )}
+
+      {/* Ce qui traîne, une fois, en haut de l'horaire. Nulle part ailleurs :
+          répétée sur quatre onglets, la bande devient du décor. */}
+      {!bandeEcartee(attenteEcartee, aujourdhui()) && (
+        <BandeAttente comptes={attente} onEcarter={ecarterAttente} onOuvrir={ouvrirAttente} />
       )}
 
       {/* Une seule apparence pour la même fonction, et le sous-choix n'apparaît

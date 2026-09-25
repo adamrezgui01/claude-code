@@ -203,6 +203,15 @@ qu'on ne les redécouvre pas trois fois.
   « 4 révisions, 2 factures » se balaie sans y penser, et un troisième nom
   serait tronqué. Les comptes ont leur place dans l'application — la bande
   d'attente de l'horaire les porte — jamais sur un écran verrouillé.
+- La **bande d'attente** de l'horaire est le pendant du rendez-vous du soir, et
+  les comptes y sont permis : l'application est ouverte, et un chiffre dit s'il
+  y a dix minutes de travail ou une heure. Trois lignes au plus, puis « Voir
+  tout » — au-delà, elle pousse hors de vue l'horaire qu'on est venu voir. Rien
+  à zéro ne prend de ligne. Un balayage vers la droite l'écarte **pour la
+  journée**, jamais pour toujours : ce qui traîne traîne encore demain, et une
+  bande qu'on pourrait éteindre définitivement finirait par cacher une facture
+  de mille dollars. Elle ne vit que dans l'horaire ; répétée sur quatre
+  onglets, elle devient du décor.
 - L'écran de révision ne montre jamais un nombre de bonnes réponses, un
   pourcentage, ni une série de jours consécutifs. Il compte ce qu'il reste à
   faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;

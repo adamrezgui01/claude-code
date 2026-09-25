@@ -810,6 +810,19 @@ export const en: Dictionnaire = {
     dejaTravaille: 'Worked here before',
   },
 
+  attente: {
+    heures_one: '{{count}} shift with unconfirmed hours',
+    heures_other: '{{count}} shifts with unconfirmed hours',
+    heuresDetail: 'If you change nothing, the planned hours will stand.',
+    aFacturer_one: '{{count}} shift to invoice',
+    aFacturer_other: '{{count}} shifts to invoice',
+    factures_one: '{{count}} unpaid invoice',
+    factures_other: '{{count}} unpaid invoices',
+    documents_one: '{{count}} document to renew',
+    documents_other: '{{count}} documents to renew',
+    voirTout: 'View all',
+  },
+
   rendezVous: {
     reglages: 'The evening check-in',
     actif: 'Daily check-in',

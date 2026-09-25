@@ -26,6 +26,7 @@ const REGLAGES_VIDES: Reglages = {
   dernier_rappel_factures: '',
   delai_relance_factures: 30,
   aide_horaire_vues: 0,
+  attente_ecartee_le: '',
 };
 
 const CHAMPS = Object.keys(REGLAGES_VIDES) as (keyof Reglages)[];

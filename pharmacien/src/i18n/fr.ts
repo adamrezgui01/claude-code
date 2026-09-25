@@ -813,6 +813,19 @@ export const fr = {
     dejaTravaille: 'Déjà travaillé ici',
   },
 
+  attente: {
+    heures_one: '{{count}} quart dont les heures ne sont pas confirmées',
+    heures_other: '{{count}} quarts dont les heures ne sont pas confirmées',
+    heuresDetail: 'Sans changement, les heures prévues seront retenues.',
+    aFacturer_one: '{{count}} quart à facturer',
+    aFacturer_other: '{{count}} quarts à facturer',
+    factures_one: '{{count}} facture impayée',
+    factures_other: '{{count}} factures impayées',
+    documents_one: '{{count}} document à renouveler',
+    documents_other: '{{count}} documents à renouveler',
+    voirTout: 'Voir tout',
+  },
+
   rendezVous: {
     reglages: 'Le rendez-vous du soir',
     actif: 'Rendez-vous quotidien',

@@ -126,7 +126,8 @@ const SCHEMA = `
     /* Jours avant de relancer une facture restée en attente. */
     delai_relance_factures INTEGER NOT NULL DEFAULT 30,
     /* Ouvertures de l'onglet Horaire déjà accompagnées du bandeau d'aide. */
-    aide_horaire_vues INTEGER NOT NULL DEFAULT 0
+    aide_horaire_vues INTEGER NOT NULL DEFAULT 0,
+    attente_ecartee_le TEXT NOT NULL DEFAULT ''
   );
 
   CREATE TABLE IF NOT EXISTS formation_continue (
@@ -334,6 +335,8 @@ export function initialiserBase() {
   // répertoire le cherche.
   ajouterColonne('pharmacies', 'surnom', "TEXT NOT NULL DEFAULT ''");
   // Les bornes de la journée : ce que « matin » et « soir » veulent dire.
+  /* Le jour où la bande d'attente a été écartée. Elle revient le lendemain. */
+  ajouterColonne('reglages', 'attente_ecartee_le', "TEXT NOT NULL DEFAULT ''");
   ajouterColonne('reglages', 'dispo_debut', "TEXT NOT NULL DEFAULT '08:00'");
   ajouterColonne('reglages', 'dispo_fin', "TEXT NOT NULL DEFAULT '21:00'");
   // Qui a annulé un quart, et quand. Une pharmacie qui annule trois fois est

@@ -191,6 +191,8 @@ export type Reglages = {
   delai_relance_factures: number;
   /** Combien de fois le bandeau d'aide de l'horaire a déjà été montré. */
   aide_horaire_vues: number;
+  /** Le jour où la bande d'attente a été écartée, `AAAA-MM-JJ`. */
+  attente_ecartee_le: string;
 };
 
 export type FormationContinue = {

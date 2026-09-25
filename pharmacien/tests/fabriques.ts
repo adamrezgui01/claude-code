@@ -104,6 +104,7 @@ export function desReglages(champs: Partial<Reglages> = {}): Reglages {
     dernier_rappel_factures: '',
     delai_relance_factures: 30,
     aide_horaire_vues: 0,
+    attente_ecartee_le: '',
     ...champs,
   };
 }
