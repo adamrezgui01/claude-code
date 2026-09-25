@@ -3,6 +3,7 @@ import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
+import { listerFactures } from '../../src/db/factures';
 import { noterIncomprise } from '../../src/db/lecteur';
 import { listerPharmacies } from '../../src/db/pharmacies';
 import { definirReglage, delaisSecondaires, obtenirReglages } from '../../src/db/profil';
@@ -11,13 +12,12 @@ import {
   enregistrerRappels,
   listerQuarts,
   obtenirQuart,
-  quartVerrouille,
   rappelsDuQuart,
 } from '../../src/db/quarts';
 import type { Pharmacie, QuartDetaille } from '../../src/db/types';
 import { fenetreHeures, pixelsParHeure } from '../../src/lib/agenda';
 import { etatQuart, heuresAvant, urgenceQuart } from '../../src/lib/echeance';
-import { etatFacturation } from '../../src/lib/facturation';
+import { etatsDesQuarts } from '../../src/lib/facturation';
 import {
   ajouterJours,
   ajouterMois,
@@ -91,11 +91,23 @@ export default function Horaire() {
   const [bandeauAide, setBandeauAide] = useState(false);
   /** Repère de temps, repris à chaque venue sur l'écran. */
   const [maintenant, setMaintenant] = useState(() => Date.now());
+  /**
+   * Les numéros des factures encaissées. Le paiement vit sur la facture, pas
+   * sur le quart : c'est elle qu'on marque payée, et elle en porte plusieurs.
+   */
+  const [numerosPayes, setNumerosPayes] = useState<Set<string>>(new Set());
 
   useFocusEffect(
     useCallback(() => {
       setQuarts(listerQuarts());
       setPharmacies(listerPharmacies());
+      setNumerosPayes(
+        new Set(
+          listerFactures()
+            .filter((f) => f.statut_paiement === 'payee')
+            .map((f) => f.numero)
+        )
+      );
       setMaintenant(Date.now());
       const reglages = obtenirReglages();
       setRappelFactures(doitRappelerFactures(reglages));
@@ -170,22 +182,15 @@ export default function Horaire() {
   const chevauchements = useMemo(() => detecterChevauchements(quarts), [quarts]);
 
   /**
-   * Quarts effectués et facturés. Ils sont gris dans la grille, immuables dans
-   * leur fiche, et sourds au glisser-déposer.
+   * Où en est chaque quart, calculé une fois pour les trois vues.
+   *
+   * Quatre états : à venir, fait mais pas facturé, facturé, payé. Le gris ne
+   * dit qu'une chose — la facture est partie chez le client — et ce sont les
+   * pastilles qui séparent ce qu'il reste à faire de ce qui est réglé.
    */
-  const verrouilles = useMemo(
-    () => new Set(quarts.filter(quartVerrouille).map((q) => q.id)),
-    [quarts]
-  );
-
-  /**
-   * Faits, et pas encore facturés. Ils gardent leur couleur — c'est sur eux
-   * qu'il reste du travail, et c'est l'étape qui rapporte — et portent une
-   * pastille pour se distinguer de ce qui s'en vient.
-   */
-  const aFacturer = useMemo(
-    () => new Set(quarts.filter((q) => etatFacturation(q, maintenant) === 'aFacturer').map((q) => q.id)),
-    [quarts, maintenant]
+  const etats = useMemo(
+    () => etatsDesQuarts(quarts, maintenant, numerosPayes),
+    [quarts, maintenant, numerosPayes]
   );
 
   const parJour = useMemo(() => {
@@ -427,8 +432,7 @@ export default function Horaire() {
               mois={mois}
               quartsParJour={parJour}
               chevauchements={chevauchements}
-              verrouilles={verrouilles}
-              aFacturer={aFacturer}
+              etats={etats}
               jourSelectionne={jour}
               onSelectionner={choisirJour}
               onChangerMois={(delta) => setMois(ajouterMois(mois, delta))}
@@ -467,8 +471,7 @@ export default function Horaire() {
                     quartsParJour={parJour}
                     plage={plage}
                     pxParMinute={pxParMinute}
-                    verrouilles={verrouilles}
-                    aFacturer={aFacturer}
+                    etats={etats}
                     onOuvrir={ouvrirQuart}
                     onDeplacer={deplacer}
                     onDupliquer={dupliquer}
@@ -490,8 +493,7 @@ export default function Horaire() {
                         key={q.id}
                         quart={q}
                         enConflit={chevauchements.has(q.id)}
-                        verrouille={verrouilles.has(q.id)}
-                        aFacturer={aFacturer.has(q.id)}
+                        etat={etats.get(q.id)}
                         enCours={enCoursIds.has(q.id)}
                         onPress={() => ouvrirQuart(q.id)}
                         onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
@@ -549,8 +551,7 @@ export default function Horaire() {
                   quart={q}
                   enCours
                   afficherDate
-                  verrouille={verrouilles.has(q.id)}
-                  aFacturer={aFacturer.has(q.id)}
+                  etat={etats.get(q.id)}
                   onPress={() => ouvrirQuart(q.id)}
                   onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
                 />
@@ -564,8 +565,7 @@ export default function Horaire() {
                     quart={q}
                     afficherDate
                     enConflit={chevauchements.has(q.id)}
-                    verrouille={verrouilles.has(q.id)}
-                  aFacturer={aFacturer.has(q.id)}
+                    etat={etats.get(q.id)}
                     onPress={() => ouvrirQuart(q.id)}
                     onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
                   />
@@ -581,7 +581,7 @@ export default function Horaire() {
                 quart={q}
                 afficherDate
                 enConflit={chevauchements.has(q.id)}
-                verrouille={verrouilles.has(q.id)}
+                etat={etats.get(q.id)}
                 onPress={() => ouvrirQuart(q.id)}
                 onPressPharmacie={() => ouvrirPharmacie(q.pharmacie_id)}
               />

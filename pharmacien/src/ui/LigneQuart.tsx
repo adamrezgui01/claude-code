@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { QuartDetaille } from '../db/types';
 import { formatJourCourt } from '../lib/dates';
+import type { EtatFacturation } from '../lib/facturation';
 import { argent, heures } from '../lib/format';
 import { heuresTravaillees } from '../lib/stats';
 import { Etiquette } from './composants';
@@ -12,8 +13,7 @@ export function LigneQuart({
   quart,
   enConflit,
   afficherDate,
-  verrouille,
-  aFacturer,
+  etat,
   enCours,
   onPress,
   onPressPharmacie,
@@ -21,10 +21,12 @@ export function LigneQuart({
   quart: QuartDetaille;
   enConflit?: boolean;
   afficherDate?: boolean;
-  /** Effectué et facturé : consultable, plus modifiable. */
-  verrouille?: boolean;
-  /** Fait, pas encore facturé : il reste du travail dessus. */
-  aFacturer?: boolean;
+  /**
+   * Où en est ce quart. Une seule valeur plutôt que deux drapeaux : deux
+   * drapeaux se contredisent, et l'un des deux finit par être oublié à un
+   * appel sur quatre.
+   */
+  etat?: EtatFacturation;
   /**
    * Le quart de maintenant. Il n'a pas d'onglet à lui — il serait vide la
    * quasi-totalité du temps — alors il s'épingle en haut, en rouge.
@@ -85,14 +87,26 @@ export function LigneQuart({
             <Etiquette texte={t('quart.nAPasEuLieu')} ton="attente" />
           </View>
         )}
-        {verrouille && !annule && (
+        {/* Facturé et payé portent la même teinte grise : deux nuances de gris
+            ne se comparent pas d'un écran à l'autre. C'est le crochet qui dit
+            que l'argent est entré. */}
+        {etat === 'facture' && !annule && (
           <View style={styles.etiquette}>
             <Etiquette texte={t('quart.facturePar', { numero: quart.numero_facture })} ton="attente" />
           </View>
         )}
+        {etat === 'paye' && !annule && (
+          <View style={styles.etiquette}>
+            <Etiquette
+              texte={t('quart.payePar', { numero: quart.numero_facture })}
+              ton="attente"
+              icone="checkmark-circle"
+            />
+          </View>
+        )}
         {/* Fait, et pas encore facturé : c'est la seule ligne de la liste sur
             laquelle il reste quelque chose à faire. */}
-        {aFacturer && !annule && (
+        {etat === 'aFacturer' && !annule && (
           <View style={styles.etiquette}>
             <Etiquette texte={t('quart.aFacturer')} ton="succes" />
           </View>

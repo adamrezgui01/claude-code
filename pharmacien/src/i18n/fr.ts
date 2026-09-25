@@ -213,6 +213,7 @@ export const fr = {
     nAPasEuLieu: 'N’a pas eu lieu',
     aFacturer: 'À facturer',
     facturePar: 'Facturé · {{numero}}',
+    payePar: 'Payé · {{numero}}',
   },
 
   pharmacie: {

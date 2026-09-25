@@ -95,6 +95,13 @@ qu'on ne les redécouvre pas trois fois.
   du travail, et c'est l'étape qui rapporte. Il garde sa couleur et porte une
   pastille ; le griser dirait « rien à voir ici » sur la seule chose qui
   attend.
+- Facturé et payé partagent ce gris et se distinguent par leur **pastille**,
+  jamais par une nuance de gris : personne ne compare deux gris de mémoire,
+  d'un écran à l'autre, en plein soleil. Une pastille creuse dit qu'il reste un
+  geste à poser — facturer, ou encaisser —, une pastille pleine qu'il n'en
+  reste aucun. Les quatre états sortent d'un seul endroit, `etatFacturation`,
+  et leur apparence d'un seul autre, `marqueDuQuart` : trois vues qui
+  recalculeraient elles-mêmes finiraient par diverger.
 - Toute somme sortie d'un calcul est arrondie au cent avant d'être conservée.
 - Un montant facturable se calcule et s'arrondit **une seule fois**, sur le
   quart. Factures et statistiques additionnent des montants déjà arrondis :

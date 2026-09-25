@@ -215,6 +215,7 @@ export const en: Dictionnaire = {
     nAPasEuLieu: 'Did not happen',
     aFacturer: 'To invoice',
     facturePar: 'Invoiced · {{numero}}',
+    payePar: 'Paid · {{numero}}',
   },
 
   pharmacie: {

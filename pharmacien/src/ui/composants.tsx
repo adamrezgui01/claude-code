@@ -587,13 +587,26 @@ export function Puce({
 }
 
 /** Pastille d'état : gris en attente, vert une fois réglé. */
-export function Etiquette({ texte, ton }: { texte: string; ton: 'attente' | 'succes' | 'alerte' }) {
+export function Etiquette({
+  texte,
+  ton,
+  icone,
+}: {
+  texte: string;
+  ton: 'attente' | 'succes' | 'alerte';
+  /**
+   * Une icône devant le mot, quand deux étiquettes de même teinte doivent se
+   * distinguer d'un coup d'œil. Le mot reste : l'icône ne le remplace pas.
+   */
+  icone?: ComponentProps<typeof Ionicons>['name'];
+}) {
   const fond =
     ton === 'succes' ? couleurs.succesPale : ton === 'alerte' ? couleurs.alertePale : '#EDEBEF';
   const encre =
     ton === 'succes' ? couleurs.succes : ton === 'alerte' ? couleurs.alerte : couleurs.attente;
   return (
     <View style={[styles.etiquette, { backgroundColor: fond }]}>
+      {!!icone && <Ionicons name={icone} size={12} color={encre} />}
       <Text style={[styles.etiquetteTexte, { color: encre }]}>{texte}</Text>
     </View>
   );
@@ -950,6 +963,9 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     paddingHorizontal: espace.m,
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace.xs,
   },
   etiquetteTexte: {
     fontSize: 12,

@@ -6,6 +6,7 @@ import type { QuartDetaille } from '../db/types';
 import { aimanter, minutesDebut, minutesEnHeure, minutesFin } from '../lib/agenda';
 import { MAINTIEN_COURT, MAINTIEN_LONG, TOLERANCE_IMMOBILE } from '../lib/gestes';
 import { analyserDate, aujourdhui } from '../lib/dates';
+import { etatFige, marqueDuQuart, type EtatFacturation } from '../lib/facturation';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 import { useTextes } from '../i18n';
 
@@ -70,8 +71,7 @@ export function VueColonnes({
   quartsParJour,
   plage,
   pxParMinute,
-  verrouilles,
-  aFacturer,
+  etats,
   onOuvrir,
   onDeplacer,
   onDupliquer,
@@ -87,13 +87,13 @@ export function VueColonnes({
   plage: { debut: number; fin: number };
   pxParMinute: number;
   /**
-   * Quarts effectués et facturés. Ils s'affichent en gris et ne répondent à
-   * aucun geste : ni déplacement, ni duplication, et aucun signal — l'usager
-   * peut maintenir aussi longtemps qu'il veut, il ne se passe rien.
+   * L'état de chaque quart, calculé une fois pour tout l'écran.
+   *
+   * Un quart facturé ou payé s'affiche en gris et ne répond à aucun geste : ni
+   * déplacement, ni duplication, et aucun signal — l'usager peut maintenir
+   * aussi longtemps qu'il veut, il ne se passe rien.
    */
-  verrouilles: Set<number>;
-  /** Faits, pas encore facturés : ils gardent leur couleur et portent une pastille. */
-  aFacturer: Set<number>;
+  etats: Map<number, EtatFacturation>;
   onOuvrir: (id: number) => void;
   onDeplacer: (quartId: number, date: string, heure: string) => void;
   onDupliquer: (quartId: number, date: string, heure: string) => void;
@@ -148,6 +148,12 @@ export function VueColonnes({
       })
     );
   }, [jours, quartsParJour, largeurColonne, plage.debut, pxParMinute]);
+
+  /** Figés : la facture est partie, payée ou non. Sourds au glisser-déposer. */
+  const verrouilles = useMemo(
+    () => new Set([...etats].filter(([, e]) => etatFige(e)).map(([id]) => id)),
+    [etats]
+  );
 
   const etat = useRef({ rectangles, largeurColonne, plage, pxParMinute, jours, verrouilles });
   etat.current = { rectangles, largeurColonne, plage, pxParMinute, jours, verrouilles };
@@ -382,8 +388,8 @@ export function VueColonnes({
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         {rectangles.map(({ quart, x, y, largeur: l, hauteur: h }) => {
           const annule = !!quart.annule;
+          const marque = marqueDuQuart(etats.get(quart.id) ?? 'aVenir');
           const verrouille = verrouilles.has(quart.id);
-          const attendLaFacture = aFacturer.has(quart.id);
           const enCours = source?.id === quart.id;
           return (
             <View
@@ -409,10 +415,18 @@ export function VueColonnes({
                   opacity: enCours ? 0.3 : 1,
                 },
               ]}>
-              {/* Fait, pas encore facturé. La pastille rappelle qu'il reste
-                  quelque chose à faire ; la couleur reste vive parce que
-                  c'est vrai. */}
-              {attendLaFacture && <View style={[styles.pastilleFacture, { borderColor: accent }]} />}
+              {/* La pastille dit qu'il reste un geste à poser : facturer, ou
+                  encaisser. Un quart à venir et un quart payé n'en portent
+                  pas — dans les deux cas, il n'y a rien à faire —, et la
+                  teinte du fond les sépare. */}
+              {marque.creuse && !annule && (
+                <View
+                  style={[
+                    styles.pastilleFacture,
+                    { borderColor: marque.ton === 'accent' ? accent : couleurs.attente },
+                  ]}
+                />
+              )}
               <Text style={[styles.blocNom, annule && styles.barre]} numberOfLines={unSeulJour ? 1 : 2}>
                 {quart.pharmacie_nom}
               </Text>

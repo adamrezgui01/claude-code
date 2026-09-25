@@ -91,7 +91,7 @@ export function quartVerrouille(quart: QuartFacturable, maintenant = Date.now())
 /**
  * L'état d'un quart, tel qu'il se lit d'un coup d'œil.
  *
- * Trois choses différentes, et une seule règle pour les trois écrans qui les
+ * Quatre choses différentes, et une seule règle pour les trois écrans qui les
  * affichent — l'agenda, la liste et le mois — plutôt que trois calculs qui
  * finiraient par diverger.
  *
@@ -101,19 +101,79 @@ export function quartVerrouille(quart: QuartFacturable, maintenant = Date.now())
  * rapporte. Le griser dirait « rien à voir ici » sur la seule chose qui
  * attend ; il garde donc sa couleur, et porte une pastille.
  */
-export type EtatFacturation = 'annule' | 'aVenir' | 'aFacturer' | 'facture';
+export type EtatFacturation = 'annule' | 'aVenir' | 'aFacturer' | 'facture' | 'paye';
 
 export function etatFacturation(
   quart: QuartFacturable,
-  maintenant = Date.now()
+  maintenant = Date.now(),
+  /**
+   * Numéros des factures encaissées. La liste vient de la base ; un écran qui
+   * ne la donne pas n'invente aucun paiement.
+   */
+  facturesPayees: ReadonlySet<string> = new Set()
 ): EtatFacturation {
   if (quart.annule) return 'annule';
-  if (quartVerrouille(quart, maintenant)) return 'facture';
+  if (quartVerrouille(quart, maintenant)) {
+    return facturesPayees.has(quart.numero_facture) ? 'paye' : 'facture';
+  }
   // « Fini » vient d'`etatQuart` : la même définition sert à la bascule vers
   // « Antérieurs », au verrou de facturation et à la couleur. Deux
   // définitions finiraient par diverger, et le verrou est celle qui protège
   // une facture déjà envoyée.
   return etatQuart(quart, maintenant) === 'anterieur' ? 'aFacturer' : 'aVenir';
+}
+
+/**
+ * La marque d'un état : une teinte et une forme.
+ *
+ * Facturé et payé sont deux situations distinctes — dans l'une on attend de
+ * l'argent, dans l'autre l'affaire est close —, mais les distinguer par deux
+ * nuances de gris ne les distingue pas du tout : personne ne compare deux
+ * gris de mémoire, d'un écran à l'autre, en plein soleil. Ils partagent donc
+ * le gris, et c'est la pastille qui tranche.
+ *
+ * Creux veut dire « il reste quelque chose » : facturer, ou encaisser. Plein
+ * veut dire « rien à faire » : le quart s'en vient, ou il est réglé.
+ */
+export type MarqueQuart = {
+  ton: 'accent' | 'gris' | 'annule';
+  creuse: boolean;
+};
+
+export function marqueDuQuart(etat: EtatFacturation): MarqueQuart {
+  switch (etat) {
+    case 'annule':
+      return { ton: 'annule', creuse: true };
+    case 'aVenir':
+      return { ton: 'accent', creuse: false };
+    case 'aFacturer':
+      return { ton: 'accent', creuse: true };
+    case 'facture':
+      return { ton: 'gris', creuse: true };
+    case 'paye':
+      return { ton: 'gris', creuse: false };
+  }
+}
+
+/**
+ * Figé : la facture est partie chez le client, payée ou non. C'est ce qui
+ * décide du gris et de la surdité au glisser-déposer, et c'est la même
+ * réponse que `quartVerrouille` donne à partir du quart lui-même.
+ */
+export function etatFige(etat: EtatFacturation): boolean {
+  return etat === 'facture' || etat === 'paye';
+}
+
+/**
+ * L'état de chaque quart, calculé une fois pour tout l'écran. Les trois vues
+ * y lisent la même réponse.
+ */
+export function etatsDesQuarts(
+  quarts: QuartFacturable[],
+  maintenant = Date.now(),
+  facturesPayees: ReadonlySet<string> = new Set()
+): Map<number, EtatFacturation> {
+  return new Map(quarts.map((q) => [q.id, etatFacturation(q, maintenant, facturesPayees)]));
 }
 
 /** L'inverse, écrit à l'endroit : ce quart accepte-t-il encore une retouche ? */

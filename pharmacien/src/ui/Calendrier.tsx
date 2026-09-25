@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { QuartDetaille } from '../db/types';
 import { ajouterMois, aujourdhui, formatMoisAnnee, grilleMois, JOURS_COURTS } from '../lib/dates';
+import { marqueDuQuart, type EtatFacturation } from '../lib/facturation';
 import { useTextes } from '../i18n';
 import { Pageur } from './Pageur';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
@@ -11,8 +12,7 @@ export function Calendrier({
   mois,
   quartsParJour,
   chevauchements,
-  verrouilles,
-  aFacturer,
+  etats,
   jourSelectionne,
   onSelectionner,
   onChangerMois,
@@ -20,10 +20,11 @@ export function Calendrier({
   mois: string;
   quartsParJour: Map<string, QuartDetaille[]>;
   chevauchements: Set<number>;
-  /** Quarts effectués et facturés : leur point passe au gris. */
-  verrouilles: Set<number>;
-  /** Faits, pas encore facturés : leur point se creuse au lieu de pâlir. */
-  aFacturer: Set<number>;
+  /**
+   * L'état de chaque quart, calculé une fois pour tout l'écran. La teinte dit
+   * s'il reste de l'argent en jeu, la forme s'il reste un geste à poser.
+   */
+  etats: Map<number, EtatFacturation>;
   jourSelectionne: string;
   onSelectionner: (iso: string) => void;
   onChangerMois: (delta: number) => void;
@@ -90,23 +91,25 @@ export function Calendrier({
                       {Number(iso.slice(8))}
                     </Text>
                     <View style={styles.points}>
-                      {quarts.slice(0, 3).map((q) => (
-                        <View
-                          key={q.id}
-                          style={[
-                            styles.point,
-                            { backgroundColor: verrouilles.has(q.id) ? couleurs.attente : accent },
-                            // Un point creux plutôt qu'un point plein : à cette
-                            // taille, une teinte de plus ne se verrait pas.
-                            aFacturer.has(q.id) && {
-                              backgroundColor: 'transparent',
-                              borderWidth: 2,
-                              borderColor: accent,
-                            },
-                            chevauchements.has(q.id) && styles.pointConflit,
-                          ]}
-                        />
-                      ))}
+                      {quarts.slice(0, 3).map((q) => {
+                        // Deux teintes et deux formes : quatre états dans un
+                        // point de sept pixels. Une nuance de gris de plus ne
+                        // se verrait pas à cette taille.
+                        const marque = marqueDuQuart(etats.get(q.id) ?? 'aVenir');
+                        const teinte = marque.ton === 'accent' ? accent : couleurs.attente;
+                        return (
+                          <View
+                            key={q.id}
+                            style={[
+                              styles.point,
+                              marque.creuse
+                                ? { borderWidth: 1.5, borderColor: teinte }
+                                : { backgroundColor: teinte },
+                              chevauchements.has(q.id) && styles.pointConflit,
+                            ]}
+                          />
+                        );
+                      })}
                     </View>
                     {enConflit && <View style={styles.bordureConflit} />}
                   </Pressable>
@@ -179,9 +182,10 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   point: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
+    /* Sept pixels : assez pour qu'un point creux se lise comme un anneau. */
+    width: 7,
+    height: 7,
+    borderRadius: 4,
   },
   pointConflit: {
     backgroundColor: couleurs.alerte,
