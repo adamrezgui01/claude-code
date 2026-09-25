@@ -16,7 +16,8 @@ import {
 } from '../../src/db/quarts';
 import type { Pharmacie, QuartDetaille } from '../../src/db/types';
 import { fenetreHeures, pixelsParHeure } from '../../src/lib/agenda';
-import { etatQuart, heuresAvant, urgenceQuart } from '../../src/lib/echeance';
+import { heuresAvant, urgenceQuart } from '../../src/lib/echeance';
+import { parJour as grouperParJour, quartsVisibles, repartir } from '../../src/lib/horaire';
 import { etatsDesQuarts } from '../../src/lib/facturation';
 import {
   ajouterJours,
@@ -179,7 +180,14 @@ export default function Horaire() {
     router.push('/disponibilites');
   }
 
-  const chevauchements = useMemo(() => detecterChevauchements(quarts), [quarts]);
+  /**
+   * Ce que l'horaire montre : tout, sauf les quarts annulés. Le filtre est
+   * posé une fois, ici, et les trois vues partent de là — un filtre écrit vue
+   * par vue s'oublie à la quatrième.
+   */
+  const visibles = useMemo(() => quartsVisibles(quarts), [quarts]);
+
+  const chevauchements = useMemo(() => detecterChevauchements(visibles), [visibles]);
 
   /**
    * Où en est chaque quart, calculé une fois pour les trois vues.
@@ -189,19 +197,11 @@ export default function Horaire() {
    * pastilles qui séparent ce qu'il reste à faire de ce qui est réglé.
    */
   const etats = useMemo(
-    () => etatsDesQuarts(quarts, maintenant, numerosPayes),
-    [quarts, maintenant, numerosPayes]
+    () => etatsDesQuarts(visibles, maintenant, numerosPayes),
+    [visibles, maintenant, numerosPayes]
   );
 
-  const parJour = useMemo(() => {
-    const carte = new Map<string, QuartDetaille[]>();
-    for (const q of quarts) {
-      const liste = carte.get(q.date) ?? [];
-      liste.push(q);
-      carte.set(q.date, liste);
-    }
-    return carte;
-  }, [quarts]);
+  const parJour = useMemo(() => grouperParJour(visibles), [visibles]);
 
   const quartsDuJour = parJour.get(jour) ?? [];
 
@@ -213,22 +213,10 @@ export default function Horaire() {
    * pour ne pas laisser un quart « en cours » une heure de trop, assez stable
    * pour ne pas tout recalculer à chaque rendu.
    */
-  const { enCours, aVenir, anterieurs } = useMemo(() => {
-    const enCours: QuartDetaille[] = [];
-    const aVenir: QuartDetaille[] = [];
-    const anterieurs: QuartDetaille[] = [];
-    for (const q of quarts) {
-      const etat = etatQuart(q, maintenant);
-      if (etat === 'enCours') enCours.push(q);
-      else if (etat === 'anterieur') anterieurs.push(q);
-      else if (!q.annule) aVenir.push(q);
-    }
-    // Du plus récent au plus ancien : on cherche ce qu'on vient de faire.
-    anterieurs.sort((a, b) =>
-      a.date === b.date ? b.heure_debut.localeCompare(a.heure_debut) : b.date.localeCompare(a.date)
-    );
-    return { enCours, aVenir, anterieurs };
-  }, [quarts, maintenant]);
+  const { enCours, aVenir, anterieurs } = useMemo(
+    () => repartir(visibles, maintenant),
+    [visibles, maintenant]
+  );
 
   const enCoursIds = useMemo(() => new Set(enCours.map((q) => q.id)), [enCours]);
 

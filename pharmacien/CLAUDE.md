@@ -126,6 +126,20 @@ qu'on ne les redécouvre pas trois fois.
   la pharmacie, avec qui a annulé : une pharmacie qui annule trois fois est
   exactement ce que les favoris et les « à éviter » doivent voir. Et la journée
   ne redevient pas disponible toute seule — une dispo se déclare.
+- Il quitte **les trois vues d'un coup**, pas seulement « À venir » : barré au
+  milieu d'une semaine, il occupe la place d'un vrai quart et se relit comme un
+  engagement à chaque coup d'œil. Le filtre se pose une fois, en haut de
+  l'écran, et les trois vues partent de là ; écrit vue par vue, il s'oublie à
+  la quatrième. Sa ligne sur la fiche de la pharmacie ouvre sa fiche : depuis
+  qu'il a quitté l'horaire, c'est le seul chemin vers lui, et une annulation
+  par erreur doit pouvoir se défaire.
+- Le signal « annule souvent » se lève à **trois annulations imputables à la
+  pharmacie en douze mois**, et vit dans le répertoire, là où l'on choisit chez
+  qui aller. Deux arrivent à tout le monde ; signaler là, c'est apprendre à
+  l'usager à ne plus lire le signal. Un quart que l'usager a annulé lui-même,
+  ou dont on ne sait pas qui l'a annulé, ne compte pas : on n'impute pas un
+  tort sur une absence d'information. Le signal montre, il ne classe pas —
+  cocher « à éviter » reste un geste de l'usager.
 - Le lecteur de commandes ne crée jamais rien. Il remplit une fiche, l'usager
   confirme, et c'est la création ordinaire qui s'exécute — mêmes défauts,
   mêmes contrôles de chevauchement, même règle de minuit.

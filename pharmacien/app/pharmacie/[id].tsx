@@ -22,7 +22,8 @@ import {
   type ModeDeplacement,
   type Quart,
 } from '../../src/db/types';
-import { formatDateLongue } from '../../src/lib/dates';
+import { aujourdhui, formatDateLongue } from '../../src/lib/dates';
+import { annulationsImputables, pharmacieQuiAnnule } from '../../src/lib/repertoire';
 import {
   adresseDesReglages,
   adresseRenseignee,
@@ -141,6 +142,14 @@ export default function FichePharmacie() {
   const [annules, setAnnules] = useState<Quart[]>([]);
   const [favori, setFavori] = useState(false);
   const [aEviter, setAEviter] = useState(false);
+
+  /**
+   * Celles qu'on peut mettre sur le dos de la pharmacie, dans les douze
+   * derniers mois. Un quart que l'usager a annulé lui-même reste sur la fiche
+   * — c'est de l'histoire — mais ne dit rien sur la pharmacie.
+   */
+  const imputables = useMemo(() => annulationsImputables(annules, aujourdhui()), [annules]);
+  const signale = useMemo(() => pharmacieQuiAnnule(annules, aujourdhui()), [annules]);
 
   /**
    * Ajouter une pharmacie n'arrive qu'une fois par pharmacie : la saisie se
@@ -473,13 +482,32 @@ export default function FichePharmacie() {
               <>
                 <Separateur />
                 <SousTitre>{t('pharmacie.quartsAnnules')}</SousTitre>
+                {/* Trois annulations en un an, c'est un motif. On le dit une
+                    fois, en clair, et l'usager décide seul s'il coche « à
+                    éviter » : l'application ne classe personne à sa place. */}
+                {signale && (
+                  <View style={styles.signal}>
+                    <Ionicons name="alert-circle-outline" size={18} color={couleurs.alerte} />
+                    <Text style={styles.signalTexte}>
+                      {t('pharmacie.annuleSouvent', { count: imputables.length })}
+                    </Text>
+                  </View>
+                )}
+                {/* La ligne s'ouvre : c'est le seul chemin vers un quart annulé
+                    depuis qu'il a quitté l'horaire, et une annulation par
+                    erreur doit pouvoir se défaire. */}
                 {annules.map((quart) => (
-                  <Text key={quart.id} style={styles.annule}>
-                    {t('annulation.ligneFiche', {
-                      jour: formatDateLongue(quart.date, langue),
-                    })}
-                    {quart.annule_par ? ` · ${t(`annulation.parQui_${quart.annule_par}`)}` : ''}
-                  </Text>
+                  <Pressable
+                    key={quart.id}
+                    onPress={() => router.push(`/quart/${quart.id}`)}
+                    hitSlop={4}>
+                    <Text style={styles.annule}>
+                      {t('annulation.ligneFiche', {
+                        jour: formatDateLongue(quart.date, langue),
+                      })}
+                      {quart.annule_par ? ` · ${t(`annulation.parQui_${quart.annule_par}`)}` : ''}
+                    </Text>
+                  </Pressable>
                 ))}
               </>
             )}
@@ -920,6 +948,21 @@ export default function FichePharmacie() {
 }
 
 const styles = StyleSheet.create({
+  signal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace.s,
+    backgroundColor: couleurs.alertePale,
+    borderRadius: rayon,
+    padding: espace.m,
+    marginBottom: espace.s,
+  },
+  signalTexte: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: police.demi,
+    color: couleurs.alerte,
+  },
   annule: {
     fontSize: 14,
     fontFamily: police.normal,

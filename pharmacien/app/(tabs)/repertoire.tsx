@@ -10,8 +10,10 @@ import {
   listerPharmaciesRecemmentTravaillees,
 } from '../../src/db/pharmacies';
 import type { Pharmacie } from '../../src/db/types';
+import { annulationsPharmacie } from '../../src/db/quarts';
 import { ligneVille } from '../../src/lib/adresses';
-import { filtrerPharmacies } from '../../src/lib/repertoire';
+import { aujourdhui } from '../../src/lib/dates';
+import { filtrerPharmacies, pharmacieQuiAnnule } from '../../src/lib/repertoire';
 import { Bouton, Ecran, Fondu, Onglets, Vide } from '../../src/ui/composants';
 import { couleurs, espace, police, rayon } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
@@ -133,6 +135,12 @@ function LignePharmacie({
 }) {
   const { t } = useTextes();
   const aEviter = !!pharmacie.a_eviter;
+  /**
+   * Trois annulations de la pharmacie en un an. Le signal vit ici parce que
+   * c'est ici qu'on choisit chez qui aller — sur la fiche, la décision est
+   * déjà prise.
+   */
+  const annuleSouvent = pharmacieQuiAnnule(annulationsPharmacie(pharmacie.id), aujourdhui());
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
       {/* L'étoile se bascule d'un geste, sans ouvrir la fiche. */}
@@ -154,6 +162,14 @@ function LignePharmacie({
           <Text style={[styles.nom, aEviter && styles.nomEviter]} numberOfLines={1}>
             {pharmacie.nom}
           </Text>
+          {annuleSouvent && (
+            <Ionicons
+              name="alert-circle-outline"
+              size={15}
+              color={couleurs.alerte}
+              accessibilityLabel={t('pharmacie.annuleSouventCourt')}
+            />
+          )}
         </View>
         {/* Le surnom d'abord : c'est par lui qu'on la reconnaît. La ville
             suit, quand il y a de la place pour les deux. */}

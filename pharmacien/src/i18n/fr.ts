@@ -236,6 +236,11 @@ export const fr = {
       'Cette adresse n’a pas pu être située : la pharmacie n’apparaît pas sur la carte. Corrigez-la ci-dessus et enregistrez de nouveau.',
     itineraire: 'Obtenir un itinéraire',
     quartsAnnules: 'Quarts annulés',
+    annuleSouvent_one:
+      'Cette pharmacie a annulé {{count}} quart depuis un an.',
+    annuleSouvent_other:
+      'Cette pharmacie a annulé {{count}} quarts depuis un an.',
+    annuleSouventCourt: 'Annule souvent',
     favori: 'Favori',
     aEviter: 'À éviter',
     expliqueFavori: 'Un favori remonte en haut du répertoire. Les deux repères s’excluent.',

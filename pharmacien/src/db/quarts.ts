@@ -264,3 +264,15 @@ export function quartsAnnulesPharmacie(pharmacieId: number): Quart[] {
     pharmacieId
   );
 }
+
+/**
+ * Juste ce qu'il faut pour décider si une pharmacie annule souvent : la date
+ * et l'auteur. Le répertoire l'appelle une fois par ligne, comme le compte de
+ * quarts ; deux colonnes coûtent moins qu'une fiche entière.
+ */
+export function annulationsPharmacie(pharmacieId: number): { date: string; annule_par: string }[] {
+  return db.getAllSync<{ date: string; annule_par: string }>(
+    'SELECT date, annule_par FROM quarts WHERE pharmacie_id = ? AND annule = 1',
+    pharmacieId
+  );
+}
