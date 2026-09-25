@@ -169,6 +169,16 @@ qu'on ne les redécouvre pas trois fois.
 - Le surnom d'une pharmacie sert à la reconnaître, jamais à la désigner
   ailleurs. Une facture porte le nom légal ; « le gros PJC » ne sort pas de
   l'appareil.
+- Une phrase peut porter **jusqu'à trois commandes**, et le découpage est
+  prudent : on ne coupe à un connecteur que si ce qui le suit **commence par un
+  verbe de commande**. « Jeudi et vendredi de 9 à 5 » est un seul quart à deux
+  jours ; couper là inventerait une commande sans heure ni pharmacie. Au-delà
+  de trois, rien n'est coupé : la phrase entière part au journal, parce qu'en
+  exécuter trois sur quatre est pire que de n'en exécuter aucune. Les commandes
+  s'ouvrent **une à une**, chacune par son écran ordinaire — la création reste
+  la création ordinaire, avec ses défauts, ses contrôles de chevauchement et sa
+  règle de minuit —, et la liste de cartes qui précède existe pour retirer ce
+  que le découpage a mal compris avant que rien ne commence.
 - Quand deux lectures d'une phrase tiennent debout, on pose une question avec
   des réponses à toucher. Une supposition silencieuse qui se trompe d'une
   demi-journée coûte un déplacement inutile ; une question coûte un geste.

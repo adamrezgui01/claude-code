@@ -5,7 +5,7 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { useTextes } from '../i18n';
 import { suiteDeLaLecture } from '../lib/dictee';
 import {
-  lire,
+  lireTout,
   type ContexteLecteur,
   type DeclarationDispo,
   type Fiche,
@@ -38,6 +38,7 @@ export function Dictee({
   onDispo,
   onAnnulation,
   onPharmacie,
+  onCommandes,
   onIncomprise,
 }: {
   ouvert: boolean;
@@ -47,6 +48,11 @@ export function Dictee({
   onDispo: (fiche: FicheDispo) => void;
   onAnnulation: (fiche: FicheAnnulation) => void;
   onPharmacie: (recherche: string) => void;
+  /**
+   * Plusieurs commandes dans une phrase. Elles s'ouvrent une à une : la
+   * création reste la création ordinaire, et l'usager voit chaque fiche.
+   */
+  onCommandes: (fiches: Fiche[]) => void;
   onIncomprise: (phrase: string, raison: string) => void;
 }) {
   const accent = useAccent();
@@ -54,12 +60,15 @@ export function Dictee({
   const [phrase, setPhrase] = useState('');
   const [fiche, setFiche] = useState<Fiche | null>(null);
   const [reponses, setReponses] = useState<Record<number, number>>({});
+  /** Les commandes lues dans une même phrase, avant confirmation. */
+  const [commandes, setCommandes] = useState<Fiche[] | null>(null);
 
   useEffect(() => {
     if (!ouvert) {
       setPhrase('');
       setFiche(null);
       setReponses({});
+      setCommandes(null);
     }
   }, [ouvert]);
 
@@ -83,7 +92,21 @@ export function Dictee({
       onFermer();
       return;
     }
-    const resultat = lire(phrase, contexte);
+    // Une liste de cartes attend son « Confirmer » : le second appui l'envoie.
+    if (commandes && commandes.length > 0) {
+      onCommandes(commandes);
+      onFermer();
+      return;
+    }
+    const resultat = lireTout(phrase, contexte);
+    // Les morceaux que le lecteur n'a pas su lire partent au journal : ils ne
+    // bloquent rien, et leur relecture dit dans quels mots l'application est
+    // sourde.
+    for (const perdu of resultat.ignores ?? []) onIncomprise(perdu, 'incompris');
+    if (resultat.action === 'commandes') {
+      setCommandes(resultat.fiches);
+      return;
+    }
     // L'annulation ouvre son écran de confirmation : rien n'est supprimé ici.
     if (resultat.action === 'annulation') {
       onAnnulation(resultat);
@@ -136,6 +159,7 @@ export function Dictee({
             onChangeText={(texte) => {
               setPhrase(texte);
               setFiche(null);
+              setCommandes(null);
             }}
             placeholder={t('dictee.exemple')}
             placeholderTextColor={couleurs.doux}
@@ -148,6 +172,32 @@ export function Dictee({
             <Ionicons name="mic-outline" size={16} color={couleurs.doux} />
             <Text style={styles.indiceTexte}>{t('dictee.micro')}</Text>
           </View>
+
+          {/*
+            Une carte par commande. Chacune se retire seule — le lecteur a pu
+            couper une phrase là où l'usager ne voulait pas — et un seul
+            « Confirmer » lance le tout, une fiche après l'autre.
+          */}
+          {commandes !== null && (
+            <View style={styles.resultat}>
+              <Text style={styles.resume}>{t('dictee.plusieurs', { count: commandes.length })}</Text>
+              {commandes.map((commande, rang) => (
+                <View key={rang} style={styles.carte}>
+                  <Ionicons name={ICONE_COMMANDE[commande.action] ?? 'ellipse-outline'} size={16} color={accent} />
+                  <Text style={styles.carteTexte} numberOfLines={2}>
+                    {resumerCommande(commande, langue, t)}
+                  </Text>
+                  <Pressable
+                    onPress={() => setCommandes(commandes.filter((_, n) => n !== rang))}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('commun.retirer')}
+                    hitSlop={12}>
+                    <Ionicons name="close" size={16} color={couleurs.doux} />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          )}
 
           {fiche?.action === 'quart' && (
             <View style={styles.resultat}>
@@ -201,9 +251,15 @@ export function Dictee({
           )}
 
           <Bouton
-            titre={t(fiche?.action === 'dispo' ? 'commun.enregistrer' : 'dictee.termine')}
+            titre={t(
+              commandes !== null && commandes.length > 0
+                ? 'commun.confirmer'
+                : fiche?.action === 'dispo'
+                  ? 'commun.enregistrer'
+                  : 'dictee.termine'
+            )}
             onPress={terminer}
-            desactive={phrase.trim().length === 0}
+            desactive={phrase.trim().length === 0 || commandes?.length === 0}
           />
           <Pressable onPress={onFermer} hitSlop={8}>
             <Text style={styles.annuler}>{t('commun.annuler')}</Text>
@@ -212,6 +268,36 @@ export function Dictee({
       </Pressable>
     </Modal>
   );
+}
+
+/** L'icône d'une commande, dans la liste de confirmation. */
+const ICONE_COMMANDE: Partial<Record<Fiche['action'], 'calendar-outline' | 'close-circle-outline' | 'checkmark-circle-outline' | 'business-outline'>> = {
+  quart: 'calendar-outline',
+  annulation: 'close-circle-outline',
+  dispo: 'checkmark-circle-outline',
+  pharmacie: 'business-outline',
+};
+
+/** Une commande, en une ligne, telle qu'elle apparaît sur sa carte. */
+function resumerCommande(
+  commande: Fiche,
+  langue: Langue,
+  traduire: (cle: string, valeurs?: Record<string, unknown>) => string
+): string {
+  if (commande.action === 'quart') return resumer(commande, traduire);
+  if (commande.action === 'dispo') {
+    return commande.declarations.map((d) => resumerDeclaration(d, langue, traduire)).join(' · ');
+  }
+  if (commande.action === 'annulation') {
+    // La carte ne nomme pas la pharmacie : le lecteur peut avoir plusieurs
+    // candidats, et c'est l'écran d'annulation qui les montre un par un.
+    const quand = commande.date ? formatDateCourte(commande.date, langue) : '';
+    return [traduire('annulation.titre'), quand].filter(Boolean).join(' : ');
+  }
+  if (commande.action === 'pharmacie') {
+    return traduire('dictee.creerPharmacie', { nom: commande.recherche });
+  }
+  return traduire('dictee.incompris');
 }
 
 /** Une déclaration de disponibilité, en une ligne lisible. */
@@ -274,6 +360,18 @@ const styles = StyleSheet.create({
   indice: { flexDirection: 'row', alignItems: 'center', gap: espace.s },
   indiceTexte: { fontSize: 13, fontFamily: police.normal, color: couleurs.doux, flex: 1 },
   resultat: { gap: espace.m },
+  carte: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace.s,
+    borderWidth: 1,
+    borderColor: couleurs.bordure,
+    borderRadius: rayon,
+    paddingVertical: espace.s,
+    paddingHorizontal: espace.m,
+    minHeight: 44,
+  },
+  carteTexte: { flex: 1, fontSize: 14, fontFamily: police.normal, color: couleurs.texte },
   resume: { fontSize: 15, fontFamily: police.demi, color: couleurs.texte },
   question: { gap: espace.s },
   questionTexte: { fontSize: 14, fontFamily: police.normal, color: couleurs.doux },

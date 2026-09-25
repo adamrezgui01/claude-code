@@ -47,6 +47,7 @@ export const en: Dictionnaire = {
     autre: 'Other',
     aucune: 'None',
     retirer: 'Remove',
+    confirmer: 'Confirm',
     voir: 'View',
   },
 
@@ -521,6 +522,9 @@ export const en: Dictionnaire = {
   },
 
   dictee: {
+    plusieurs_one: '{{count}} command understood. Remove anything you did not say.',
+    plusieurs_other: '{{count}} commands understood. Remove anything you did not say.',
+    creerPharmacie: 'Create “{{nom}}”',
     titre: 'Dictate a shift',
     micro: 'Tap the microphone on your keyboard to dictate.',
     exemple: 'Add a shift Thursday from 9 to 5 at Familiprix',

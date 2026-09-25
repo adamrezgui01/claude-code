@@ -44,6 +44,7 @@ export const fr = {
     autre: 'Autre',
     aucune: 'Aucune',
     retirer: 'Retirer',
+    confirmer: 'Confirmer',
     voir: 'Voir',
   },
 
@@ -524,6 +525,9 @@ export const fr = {
   },
 
   dictee: {
+    plusieurs_one: '{{count}} commande comprise. Retirez ce qui n’y était pas.',
+    plusieurs_other: '{{count}} commandes comprises. Retirez ce qui n’y était pas.',
+    creerPharmacie: 'Créer « {{nom}} »',
     titre: 'Dicter un quart',
     micro: 'Touchez le micro du clavier pour dicter.',
     exemple: 'Ajoute un quart jeudi de 9 à 5 au Familiprix',

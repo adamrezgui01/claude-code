@@ -1,4 +1,5 @@
 import { preparer, couperAuxCorrections } from './texte';
+import { decouper } from './decouper';
 import { extraireDates } from './dates';
 import { extraireHeures, horairesProposes, type LectureHeures } from './heures';
 import { trouverPharmacie, retrouverBrut, jetonsUtiles, type PharmacieConnue } from './pharmacies';
@@ -386,6 +387,77 @@ function analyser(texte: string, brut: string, contexte: ContexteLecteur, passe:
 // ---------------------------------------------------------------------------
 // Le lecteur
 // ---------------------------------------------------------------------------
+
+/**
+ * Ce que le lecteur rend pour une phrase entière.
+ *
+ * Une seule commande se rend telle quelle, comme avant. Plusieurs se rendent
+ * ensemble, et c'est un écran de confirmation qui les montre : une carte par
+ * commande, retirable, et un seul « Confirmer ».
+ *
+ * `ignores` porte les morceaux que le lecteur n'a pas su lire. Ils ne bloquent
+ * pas les autres — dire « et note euh » à la fin d'une bonne phrase ne doit pas
+ * la perdre — et ils partent au journal, où l'usager les relira.
+ */
+export type Lecture = (Fiche | { action: 'commandes'; fiches: Fiche[] }) & {
+  ignores?: string[];
+};
+
+/**
+ * Une fiche de quart qui ne dit rien du tout.
+ *
+ * « Ajoute » tout seul suffit à nommer une demande de quart, et c'est voulu
+ * pour une phrase unique : l'écran s'ouvre vide, et l'usager le remplit. Au
+ * milieu de plusieurs commandes, en revanche, une carte vide n'est pas une
+ * commande — c'est un morceau de phrase qui s'est perdu, et il part au journal.
+ */
+function ficheVide(fiche: Fiche): boolean {
+  if (fiche.action !== 'quart') return false;
+  return (
+    fiche.dates.length === 0 &&
+    fiche.calendrier === null &&
+    fiche.heureDebut === null &&
+    fiche.heureFin === null &&
+    fiche.pharmacieId === null &&
+    fiche.pharmacieInconnue === null &&
+    fiche.taux === null &&
+    fiche.perDiem === null &&
+    fiche.kilometrage === null &&
+    fiche.montantFixe === null &&
+    fiche.hebergement === null &&
+    fiche.pauseMinutes === null
+  );
+}
+
+/**
+ * Lit une phrase qui peut porter plusieurs commandes.
+ *
+ * C'est l'entrée que la dictée appelle. `lire` reste la lecture d'une commande
+ * unique, et ne bouge pas : toutes les phrases déjà couvertes passent par elle,
+ * exactement comme avant.
+ */
+export function lireTout(phrase: string, contexte: ContexteLecteur): Lecture {
+  const prepare = preparer(phrase.trim());
+  const segments = decouper(prepare);
+  if (segments.length <= 1) return lire(phrase, contexte);
+
+  const fiches: Fiche[] = [];
+  const ignores: string[] = [];
+  for (const segment of segments) {
+    const fiche = lire(segment, contexte);
+    if (fiche.action === 'incompris' || ficheVide(fiche)) {
+      ignores.push(segment);
+      continue;
+    }
+    fiches.push(fiche);
+  }
+
+  if (fiches.length === 0) return { action: 'incompris', ignores };
+  // Une seule commande lisible n'a pas besoin d'un écran de confirmation : elle
+  // suit le chemin ordinaire, et le morceau perdu part au journal.
+  if (fiches.length === 1) return { ...fiches[0], ignores };
+  return { action: 'commandes', fiches, ignores };
+}
 
 export function lire(phrase: string, contexte: ContexteLecteur): Fiche {
   const brut = phrase.trim();

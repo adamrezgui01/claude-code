@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { compterFacturesEnAttente, listerFactures } from '../../src/db/factures';
@@ -37,7 +37,7 @@ import {
 } from '../../src/lib/rappelFactures';
 import { annulerRappels, planifierRappelsQuart } from '../../src/lib/notifications';
 import { detecterChevauchements } from '../../src/lib/stats';
-import type { ContexteLecteur, Fiche, FicheDispo } from '../../src/lib/lecteur';
+import type { ContexteLecteur, Fiche, FicheAnnulation, FicheDispo } from '../../src/lib/lecteur';
 import { declarerJournee, effacerJournee } from '../../src/db/disponibilites';
 import { Calendrier } from '../../src/ui/Calendrier';
 import { parametresDuQuart } from '../../src/lib/dictee';
@@ -137,6 +137,10 @@ export default function Horaire() {
       const vues = reglages.aide_horaire_vues;
       setBandeauAide(vues < OUVERTURES_AIDEES);
       if (vues < OUVERTURES_AIDEES) definirReglage('aide_horaire_vues', vues + 1);
+      // Retour d'une fiche ouverte par une phrase à plusieurs commandes : la
+      // suivante s'ouvre maintenant. La file est vide le reste du temps.
+      executerSuivante();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
   );
 
@@ -179,6 +183,12 @@ export default function Horaire() {
    * Une disponibilité dictée s'écrit ici, puis l'écran des dispos s'ouvre :
    * l'usager voit tout de suite ce qui a été porté au calendrier.
    */
+  function ecrireDispoEtOuvrir(fiche: FicheDispo) {
+    ecrireDispo(fiche);
+    router.push('/disponibilites');
+  }
+
+  /** L'écriture seule, sans quitter l'écran : la file en a besoin. */
   function ecrireDispo(fiche: FicheDispo) {
     for (const declaration of fiche.declarations) {
       for (const date of declaration.dates) {
@@ -196,7 +206,47 @@ export default function Horaire() {
         ]);
       }
     }
-    router.push('/disponibilites');
+  }
+
+  /**
+   * Les commandes d'une même phrase, en attente de leur tour.
+   *
+   * Une seule fiche s'ouvre à la fois : la création reste la création
+   * ordinaire, avec ses défauts, ses contrôles de chevauchement et sa règle de
+   * minuit. Quand l'usager revient sur l'horaire, la suivante s'ouvre.
+   */
+  const file = useRef<Fiche[]>([]);
+
+  function executerSuivante() {
+    // Une disponibilité s'écrit sans quitter l'écran : on enchaîne jusqu'à
+    // tomber sur une commande qui demande un écran à elle.
+    while (file.current.length > 0) {
+      const fiche = file.current.shift();
+      if (!fiche) return;
+      if (fiche.action === 'dispo') {
+        ecrireDispo(fiche);
+        continue;
+      }
+      ouvrirFiche(fiche);
+      return;
+    }
+  }
+
+  function ouvrirFiche(fiche: Fiche) {
+    if (fiche.action === 'quart') {
+      router.push(`/quart/nouveau?${parametresDuQuart(fiche)}`);
+    } else if (fiche.action === 'annulation') {
+      ouvrirAnnulation(fiche);
+    } else if (fiche.action === 'pharmacie') {
+      router.push(`/pharmacie/nouvelle?recherche=${encodeURIComponent(fiche.recherche)}`);
+    }
+  }
+
+  function ouvrirAnnulation(fiche: FicheAnnulation) {
+    router.push(
+      `/quart/annuler?ids=${fiche.candidats.map((q) => q.id).join(',')}` +
+        (fiche.date ? `&date=${fiche.date}` : '')
+    );
   }
 
   /**
@@ -689,16 +739,15 @@ export default function Horaire() {
         contexte={contexteLecteur}
         onFermer={() => setDictee(false)}
         onQuart={(fiche) => router.push(`/quart/nouveau?${parametresDuQuart(fiche)}`)}
-        onDispo={ecrireDispo}
-        onAnnulation={(fiche) =>
-          router.push(
-            `/quart/annuler?ids=${fiche.candidats.map((q) => q.id).join(',')}` +
-              (fiche.date ? `&date=${fiche.date}` : '')
-          )
-        }
+        onDispo={ecrireDispoEtOuvrir}
+        onAnnulation={ouvrirAnnulation}
         onPharmacie={(recherche) =>
           router.push(`/pharmacie/nouvelle?recherche=${encodeURIComponent(recherche)}`)
         }
+        onCommandes={(fiches) => {
+          file.current = [...fiches];
+          executerSuivante();
+        }}
         onIncomprise={noterIncomprise}
       />
 
