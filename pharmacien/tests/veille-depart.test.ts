@@ -1,6 +1,9 @@
+import { readFileSync } from 'node:fs';
+
 import { en } from '../src/i18n/en';
 import { fr } from '../src/i18n/fr';
 import { SOURCES_DEPART, SUJETS_DEPART } from '../src/lib/veille/depart';
+import { filtrerSources } from '../src/lib/veille/recherche';
 
 /**
  * Ce que le volet clinique sait le premier jour.
@@ -198,5 +201,138 @@ describe('le répertoire vérifié', () => {
         vide: false,
       });
     }
+  });
+});
+
+/**
+ * La recherche clinique, telle qu'on la tape au comptoir.
+ *
+ * Personne ne cherche « CKD-EPI, débit de filtration glomérulaire ». On tape
+ * « dfge », parce que c'est ce qui est écrit sur le résultat de laboratoire
+ * qu'on a sous les yeux. C'est à ça que servent les mots-clés cachés, et
+ * c'est la seule chose qui rend le répertoire utilisable en trente secondes.
+ *
+ * Les termes de ces cas sont ceux qu'un pharmacien tape ; les entrées
+ * attendues sont celles qu'il veut voir arriver. Aucune ne vient du code.
+ */
+describe('la recherche clinique', () => {
+  /* Le catalogue tel que l'écran le cherche, sans les sujets : on vérifie ce
+     que le titre et les mots-clés cachés suffisent à trouver. */
+  const CATALOGUE = SOURCES_DEPART.map((source, i) => ({
+    id: i + 1,
+    cle: source.cle,
+    titre: source.titre,
+    categorie: '',
+    motsCles: source.motsCles,
+    sujets: [] as string[],
+  }));
+
+  function cles(terme: string): string[] {
+    return filtrerSources(CATALOGUE, terme).map((s) => s.cle);
+  }
+
+  test('« dfge » remonte CKD-EPI', () => {
+    // Ce que le laboratoire écrit sur le résultat, pas le nom de la formule.
+    expect(cles('dfge')).toContain('mdcalc_ckd_epi');
+  });
+
+  test('« clcr » remonte Cockcroft-Gault', () => {
+    expect(cles('clcr')).toEqual(['mdcalc_cockcroft']);
+  });
+
+  test('« bmi » remonte l’IMC', () => {
+    // L'abréviation anglaise, sur une application en français.
+    expect(cles('bmi')).toEqual(['mdcalc_imc_sc']);
+  });
+
+  test('« beers » remonte les critères de Beers', () => {
+    expect(cles('beers')).toEqual(['beers']);
+  });
+
+  test('« stopp » remonte STOPP/START', () => {
+    expect(cles('stopp')).toEqual(['stopp_start']);
+  });
+
+  test('« eliquis » remonte le guide des AOD', () => {
+    // Le nom commercial ne figure dans aucun titre. C'est pourtant celui que
+    // le patient prononce, et celui qui est écrit sur le flacon.
+    expect(cles('eliquis')).toEqual(['ciusss_aod']);
+  });
+
+  test('« xarelto » aussi', () => {
+    expect(cles('xarelto')).toEqual(['ciusss_aod']);
+  });
+
+  test('« pompe » remonte la MPOC', () => {
+    // Le patient ne dit pas « bronchodilatateur en inhalation ».
+    expect(cles('pompe')).toEqual(['inesss_mpoc']);
+  });
+
+  test('« chads » remonte le calculateur et la ligne directrice', () => {
+    // Les deux sont utiles et pour des raisons différentes : obtenir le score,
+    // et vérifier ce qu'on en fait.
+    const trouves = cles('chads');
+    expect(trouves).toContain('mdcalc_chads_vasc');
+    expect(trouves).toContain('inesss_fa');
+  });
+
+  test('« kidney function » remonte CKD-EPI', () => {
+    expect(cles('kidney function')).toContain('mdcalc_ckd_epi');
+  });
+
+  test('les accents ne comptent pas, dans les deux sens', () => {
+    // On tape sans accent quand on est pressé, et le clavier du téléphone en
+    // met un quand on ne lui demande pas. Les deux doivent trouver.
+
+    // « première » n'existe qu'accentué, et seulement dans un titre.
+    expect(cles('premiere')).toContain('hc_hta');
+    // « pediatrique » n'existe que nu, et seulement dans les mots-clés.
+    expect(cles('pédiatrique')).toEqual(cles('pediatrique'));
+    expect(cles('pédiatrique').length).toBeGreaterThan(0);
+  });
+
+  test('la casse ne compte pas non plus', () => {
+    expect(cles('CLCR')).toEqual(['mdcalc_cockcroft']);
+    expect(cles('ClCr')).toEqual(['mdcalc_cockcroft']);
+    expect(cles('BEERS')).toEqual(['beers']);
+  });
+
+  test('le nom du sujet se cherche aussi', () => {
+    // L'écran attache à chaque source le nom de ses sujets : on cherche
+    // « épilepsie » sans qu'aucun titre ne porte le mot.
+    const avecSujets = [
+      { id: 1, titre: 'Protocole médical national — warfarine', categorie: '', motsCles: '', sujets: ['Anticoagulation'] },
+    ];
+    expect(filtrerSources(avecSujets, 'anticoagulation')).toHaveLength(1);
+  });
+
+  test('les mots-clés ne s’affichent nulle part', () => {
+    // Ils contiennent « pompe », « AFib », « clot » : des repères de recherche,
+    // pas des titres. Un écran qui les montre a l'air d'un index technique.
+    const ecrans = ['app/(tabs)/clinique.tsx', 'app/lien/[id].tsx'];
+    for (const chemin of ecrans) {
+      const source = readFileSync(chemin, 'utf8');
+      for (const ligne of source.split('\n')) {
+        const nu = ligne.trim();
+        if (nu.startsWith('//') || nu.startsWith('*') || nu.startsWith('/*')) continue;
+        // Passé à la recherche, jamais posé dans un <Text>.
+        if (nu.includes('motsCles')) expect(nu).not.toMatch(/<Text|styles\./);
+      }
+    }
+  });
+
+  test('chaque entrée cherchée existe bel et bien', () => {
+    const attendues = [
+      'beers',
+      'ciusss_aod',
+      'inesss_fa',
+      'inesss_mpoc',
+      'mdcalc_ckd_epi',
+      'mdcalc_cockcroft',
+      'mdcalc_imc_sc',
+      'stopp_start',
+    ];
+    const presentes = new Set(SOURCES_DEPART.map((s) => s.cle));
+    expect(attendues.filter((c) => !presentes.has(c))).toEqual([]);
   });
 });
