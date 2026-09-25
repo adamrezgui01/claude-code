@@ -1,16 +1,12 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-import { DELAI_MEMO_HEURES, finDuQuart } from '../db/quarts';
-import type { DocumentProfessionnel, QuartDetaille } from '../db/types';
+import type { QuartDetaille } from '../db/types';
 import { texte } from '../i18n';
 import { langueCourante } from '../i18n';
-import { analyserDate, combiner, formatDateCourte, formatHeure } from './dates';
+import { combiner, formatHeure } from './dates';
 
 const CANAL = 'rappels';
-
-/** Heures avant le début d'un quart pour le rappel principal. */
-export const RAPPEL_PRINCIPAL_HEURES = 48;
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -95,8 +91,17 @@ function delaiEnTexte(minutes: number): string {
 }
 
 /**
- * Programme les rappels d'un quart : le principal 48 h avant, les secondaires
- * choisis par l'usager, et le mémo deux heures après la fin.
+ * Programme les rappels d'un quart : **seulement** ceux que l'usager a réglés
+ * lui-même, à l'avance qu'il a choisie.
+ *
+ * C'est la seule notification automatique qui reste hors du rendez-vous du
+ * soir, et c'est voulu : celle-là, l'usager l'a demandée, parce qu'il lui faut
+ * deux heures de route ou une heure pour déposer un enfant. La noyer dans le
+ * rendez-vous la rendrait inutile.
+ *
+ * Le rappel de 48 h et le mémo de fin de quart, eux, sont partis là-bas : ils
+ * n'ont jamais été demandés par personne, et c'est exactement ce qui faisait
+ * quatre vibrations dans une soirée de novembre.
  */
 export async function planifierRappelsQuart(
   quart: QuartDetaille,
@@ -111,13 +116,6 @@ export async function planifierRappelsQuart(
     langueCourante()
   )}`;
 
-  const principal = await planifierRappel(
-    texte('notifications.quartDans48h'),
-    texte('notifications.corpsQuart', { pharmacie: quart.pharmacie_nom, horaire }),
-    new Date(debut.getTime() - RAPPEL_PRINCIPAL_HEURES * 3600000),
-    { quartId: quart.id }
-  );
-
   const secondaires: string[] = [];
   for (const minutes of delaisSecondaires) {
     const id = await planifierRappel(
@@ -129,31 +127,7 @@ export async function planifierRappelsQuart(
     if (id) secondaires.push(id);
   }
 
-  // Un mémo, pas une demande. Le quart est déjà compté selon ses heures
-  // prévues ; l'ignorer ne coûte rien.
-  const memo = await planifierRappel(
-    texte('notifications.memoTitre'),
-    texte('notifications.memoCorps', { pharmacie: quart.pharmacie_nom, horaire }),
-    new Date(finDuQuart(quart).getTime() + DELAI_MEMO_HEURES * 3600000),
-    { quartId: quart.id, memo: true }
-  );
-
-  return { principal, secondaires, memo };
-}
-
-/** Rappel à 9 h, le nombre de jours convenu avant l'expiration. */
-export async function planifierRappelDocument(
-  doc: Omit<DocumentProfessionnel, 'id' | 'notification_id'>
-): Promise<string | null> {
-  const expiration = analyserDate(doc.date_expiration);
-  const rappel = new Date(expiration.getTime() - doc.jours_avant_rappel * 86400000);
-  rappel.setHours(9, 0, 0, 0);
-  return planifierRappel(
-    texte('notifications.documentTitre'),
-    texte('notifications.documentCorps', {
-      nom: doc.nom,
-      date: formatDateCourte(doc.date_expiration, langueCourante()),
-    }),
-    rappel
-  );
+  // Les colonnes `notification_id` et `notification_memo` restent en base et
+  // reçoivent `null` : la base d'un usager ne se réécrit pas pour si peu.
+  return { principal: null, secondaires, memo: null };
 }

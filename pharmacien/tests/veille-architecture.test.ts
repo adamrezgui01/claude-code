@@ -13,8 +13,9 @@ import { join } from 'node:path';
  * Trois exceptions, et trois seulement :
  *
  * - l'entrée du menu, qui doit bien pointer quelque part ;
- * - la reprogrammation des notifications au changement de langue, qui doit
- *   refaire celle de la veille comme les autres ;
+ * - la programmation des notifications, qui place un seul rendez-vous du soir
+ *   pour les deux volets à la fois — et qui doit donc demander à la veille ce
+ *   qu'elle a à faire réviser ;
  * - le fichier de démarrage, qui assemble toute l'application par nature, sème
  *   les données au premier lancement et pose le bandeau de capture ;
  * - l'écran des réglages, qui porte par construction les réglages de tous les

@@ -9,7 +9,7 @@ import { getLocales } from 'expo-localization';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, AppState, View } from 'react-native';
 
 import { initialiserBase } from '../src/db';
 import { amorcerVeille } from '../src/db/veille';
@@ -21,6 +21,7 @@ import { adresseDesReglages, adresseRenseignee } from '../src/lib/adresses';
 import { preparerTraductions } from '../src/i18n';
 import { langueActive } from '../src/lib/langue';
 import { preparerNotifications } from '../src/lib/notifications';
+import { replanifierRendezVous } from '../src/lib/reprogrammer';
 import { Bienvenue } from '../src/ui/Bienvenue';
 import { ACCENT_DEFAUT, couleurs, FournisseurTheme, police } from '../src/ui/theme';
 import { useTextes } from '../src/i18n';
@@ -57,6 +58,22 @@ export default function Racine() {
       !reglages.nom.trim() || !adresseRenseignee(adresseDesReglages(reglages))
     );
     setPret(true);
+  }, []);
+
+  /**
+   * Le rendez-vous du soir se refait au démarrage et à chaque retour au premier
+   * plan : sept jours sont en file d'avance, et ils se périment dès qu'une note
+   * est révisée, qu'une facture est payée ou qu'un quart est déplacé.
+   *
+   * Il vit ici parce qu'il porte les deux volets à la fois, et que le démarrage
+   * est le seul endroit qui assemble l'application entière.
+   */
+  useEffect(() => {
+    void replanifierRendezVous();
+    const abonnement = AppState.addEventListener('change', (etat) => {
+      if (etat === 'active') void replanifierRendezVous();
+    });
+    return () => abonnement.remove();
   }, []);
 
   const reponse = Notifications.useLastNotificationResponse();

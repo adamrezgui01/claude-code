@@ -31,13 +31,9 @@ jest.mock('expo-notifications', () => ({
   AndroidImportance: { DEFAULT: 3 },
 }));
 
-jest.mock('../src/db/quarts', () => ({
-  DELAI_MEMO_HEURES: 2,
-  finDuQuart: (q: { date: string; heure_fin: string }) => new Date(`${q.date}T${q.heure_fin}:00`),
-}));
-
-import { appliquerLangue, preparerTraductions } from '../src/i18n';
+import { appliquerLangue, preparerTraductions, texte } from '../src/i18n';
 import { planifierRappelsQuart } from '../src/lib/notifications';
+import { rendezVous } from '../src/lib/rendezvous';
 import { unQuart } from './fabriques';
 
 /** Un quart largement dans le futur, sinon rien n'est programmé. */
@@ -59,41 +55,43 @@ beforeEach(() => {
 describe('le texte des rappels suit la langue', () => {
   test('en français', async () => {
     await appliquerLangue('fr');
-    await planifierRappelsQuart(quartFutur(), []);
-    expect(programmees[0].titre).toBe('Quart dans 48 h');
+    await planifierRappelsQuart(quartFutur(), [180]);
+    expect(programmees[0].titre).toBe('Quart dans 3 heures');
     expect(programmees[0].corps).toContain('Familiprix Gatineau');
   });
 
   test('en anglais, après un changement de langue', async () => {
     await appliquerLangue('en');
-    await planifierRappelsQuart(quartFutur(), []);
-    expect(programmees[0].titre).toBe('Shift in 48 h');
-    await appliquerLangue('fr');
-  });
-
-  test('le mémo de fin de quart aussi', async () => {
-    await appliquerLangue('en');
-    await planifierRappelsQuart(quartFutur(), []);
-    const memo = programmees[programmees.length - 1];
-    expect(memo.titre).toBe('Did your hours change?');
-    await appliquerLangue('fr');
-  });
-
-  test('le délai d’un rappel secondaire se traduit et s’accorde', async () => {
-    await appliquerLangue('fr');
     await planifierRappelsQuart(quartFutur(), [180]);
-    expect(programmees[1].titre).toBe('Quart dans 3 heures');
-    await appliquerLangue('en');
-    programmees.length = 0;
-    await planifierRappelsQuart(quartFutur(), [180]);
-    expect(programmees[1].titre).toBe('Shift in 3 hours');
+    expect(programmees[0].titre).toBe('Shift in 3 hours');
     await appliquerLangue('fr');
   });
 
   test('une heure au singulier reste au singulier', async () => {
     await appliquerLangue('fr');
     await planifierRappelsQuart(quartFutur(), [60]);
-    expect(programmees[1].titre).toBe('Quart dans 1 heure');
+    expect(programmees[0].titre).toBe('Quart dans 1 heure');
+  });
+
+  test('sans délai réglé par l’usager, un quart ne programme rien', async () => {
+    // Le rappel de 48 h et le mémo de fin de quart sont partis au rendez-vous
+    // du soir. Ce qui reste ici, c'est ce que l'usager a demandé lui-même.
+    await appliquerLangue('fr');
+    await planifierRappelsQuart(quartFutur(), []);
+    expect(programmees).toEqual([]);
+  });
+
+  test('le rendez-vous du soir se traduit aussi', async () => {
+    // Il porte maintenant cinq des six anciens rappels : s'il restait en
+    // français, le changement de langue ne servirait presque plus à rien.
+    await appliquerLangue('en');
+    const anglais = rendezVous([{ genre: 'quart', nom: 'Familiprix' }], (c, v) => texte(c, v));
+    expect(anglais?.titre).toBe('Shift tomorrow');
+    expect(anglais?.corps).toBe('Tomorrow: Familiprix');
+    await appliquerLangue('fr');
+    const francais = rendezVous([{ genre: 'quart', nom: 'Familiprix' }], (c, v) => texte(c, v));
+    expect(francais?.titre).toBe('Quart demain');
+    expect(francais?.corps).toBe('Demain : Familiprix');
   });
 
   test('plus aucun texte de notification n’est écrit en dur', async () => {

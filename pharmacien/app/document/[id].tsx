@@ -11,7 +11,8 @@ import {
 } from '../../src/db/profil';
 import { ajouterJours, aujourdhui } from '../../src/lib/dates';
 import { analyserNombre } from '../../src/lib/format';
-import { annulerRappel, planifierRappelDocument } from '../../src/lib/notifications';
+import { annulerRappel } from '../../src/lib/notifications';
+import { replanifierRendezVous } from '../../src/lib/reprogrammer';
 import {
   Bouton,
   Champ,
@@ -59,9 +60,12 @@ export default function FormulaireDocument() {
     const id = documentId ?? creerDocument(entree);
     if (documentId) modifierDocument(documentId, entree);
 
+    // Le document n'a plus de rappel à lui : il se dit au rendez-vous du soir,
+    // le jour choisi par l'usager. L'ancien identifiant, s'il en restait un,
+    // s'annule et la colonne se vide.
     await annulerRappel(rappelExistant);
-    const rappel = await planifierRappelDocument(entree);
-    enregistrerRappelDocument(id, rappel);
+    enregistrerRappelDocument(id, null);
+    await replanifierRendezVous();
     router.back();
   }
 

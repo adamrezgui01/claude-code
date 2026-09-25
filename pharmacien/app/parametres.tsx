@@ -7,7 +7,6 @@ import { getLocales } from 'expo-localization';
 
 import * as Clipboard from 'expo-clipboard';
 
-import { facturesEnAttente } from '../src/db/factures';
 import { compterIncomprises, effacerIncomprises, listerIncomprises } from '../src/db/lecteur';
 import {
   definirReglageVeille,
@@ -15,7 +14,7 @@ import {
   recherchesSansReponse,
   reglagesVeille,
 } from '../src/db/veille';
-import { replanifierVeille } from '../src/lib/veille/planifier';
+
 import { PLAFOND_MAX, PLAFOND_MIN } from '../src/lib/veille/file';
 import {
   definirReglage,
@@ -27,8 +26,7 @@ import type { Reglages } from '../src/db/types';
 import { analyserNombre } from '../src/lib/format';
 import { appliquerLangue, useTextes } from '../src/i18n';
 import { LANGUES, type ChoixLangue } from '../src/lib/langue';
-import { programmerRelance } from '../src/lib/relanceFactures';
-import { reprogrammerRappels } from '../src/lib/reprogrammer';
+import { replanifierRendezVous, reprogrammerRappels } from '../src/lib/reprogrammer';
 import {
   Bouton,
   Champ,
@@ -85,7 +83,7 @@ export default function Parametres() {
     }, [])
   );
 
-  /** Un réglage de veille prend effet tout de suite : la file est reprogrammée. */
+  /** Un réglage prend effet tout de suite : le rendez-vous du soir se refait. */
   function changerVeille(
     champ: Parameters<typeof definirReglageVeille>[0],
     valeur: string | number,
@@ -93,7 +91,7 @@ export default function Parametres() {
   ) {
     definirReglageVeille(champ, valeur);
     setVeille((actuel) => ({ ...actuel, ...local }));
-    void replanifierVeille();
+    void replanifierRendezVous();
   }
 
   /** Les recherches restées sans réponse, pour les coller quelque part. */
@@ -135,9 +133,9 @@ export default function Parametres() {
       cle_itineraire: reglages.cle_itineraire.trim(),
       delai_relance_factures: delai,
     });
-    // Le délai a pu changer : les factures encore en attente reprogramment
-    // leur relance, sinon un ancien rappel partirait à l'ancienne date.
-    for (const facture of facturesEnAttente()) await programmerRelance(facture, delai);
+    // Le délai a pu changer : le rendez-vous du soir se refait, sinon une
+    // facture serait nommée à l'ancienne date.
+    await replanifierRendezVous();
     setEnregistre(true);
   }
 
@@ -259,20 +257,29 @@ export default function Parametres() {
         </View>
       </Section>
 
-      <Section titre={t('veille.reglages')}>
+      {/*
+        Le rendez-vous du soir porte tout ce qui est automatique. Il a sa
+        propre section : le chercher sous « Veille clinique » n'aurait plus de
+        sens depuis qu'il annonce aussi un quart de demain et une facture
+        impayée.
+      */}
+      <Section titre={t('rendezVous.reglages')}>
         <Interrupteur
-          label={t('veille.rappelActif')}
-          detail={t('veille.rappelDetail')}
+          label={t('rendezVous.actif')}
+          detail={t('rendezVous.detail')}
           valeur={veille.rappel}
           onChange={(v) => changerVeille('veille_rappel_actif', v ? 1 : 0, { rappel: v })}
         />
         {veille.rappel && (
           <SelecteurHeure
-            label={t('veille.heureRappel')}
+            label={t('rendezVous.heure')}
             valeur={veille.heure}
             onChange={(v) => changerVeille('veille_heure', v, { heure: v })}
           />
         )}
+      </Section>
+
+      <Section titre={t('veille.reglages')}>
         <Compteur
           label={t('veille.plafond')}
           aide={t('veille.plafondAide')}

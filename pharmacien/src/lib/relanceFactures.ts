@@ -1,10 +1,8 @@
 import { enregistrerRelance, reinitialiserRelance, supprimerFacture } from '../db/factures';
 import type { Facture } from '../db/types';
-import { texte } from '../i18n';
-import { langueCourante } from '../i18n';
-import { argent } from './format';
-import { annulerRappel, planifierRappel } from './notifications';
-import { instantRelance, joursEnAttente, relanceDue } from './relance';
+import { annulerRappel } from './notifications';
+import { joursEnAttente, relanceDue } from './relance';
+import { replanifierRendezVous } from './reprogrammer';
 
 /**
  * Relance des factures impayées.
@@ -13,37 +11,29 @@ import { instantRelance, joursEnAttente, relanceDue } from './relance';
  * propriétaire laisse passer, et le trou se découvre des mois plus tard. Un
  * rappel unique, doux, part une fois le délai écoulé. Pas de répétition, pas
  * d'insistance.
+ *
+ * Depuis la 2.5, ce rappel n'a plus de notification à lui : il se dit au
+ * rendez-vous du soir, le jour où le délai tombe. Ce qui reste ici, c'est de
+ * tenir la file propre — un identifiant laissé par une version précédente
+ * partirait encore, à 9 h, avec un texte périmé.
  */
 
 /**
- * Programme la relance d'une facture. Le rappel précédent est annulé d'abord :
- * changer le délai dans Paramètres ne doit pas laisser traîner deux rappels.
+ * La facture entre en scène, ou son délai change. Rien à programmer : on
+ * nettoie ce qui traînait et on refait le rendez-vous du soir, qui la nommera
+ * le bon jour.
  */
-export async function programmerRelance(facture: Facture, delaiJours: number) {
+export async function programmerRelance(facture: Facture, _delaiJours: number) {
   await annulerRappel(facture.notification_relance);
-  if (facture.statut_paiement === 'payee' || delaiJours <= 0) {
-    enregistrerRelance(facture.id, null);
-    return;
-  }
-  const id = await planifierRappel(
-    texte('notifications.relanceTitre'),
-    texte('notifications.relanceCorps', {
-      pharmacie: facture.pharmacie_nom,
-      numero: facture.numero,
-      montant: argent(facture.total, langueCourante()),
-      jours: delaiJours,
-    }),
-    instantRelance(facture, delaiJours),
-    { factureId: facture.id }
-  );
-  enregistrerRelance(facture.id, id);
+  enregistrerRelance(facture.id, null);
+  await replanifierRendezVous();
 }
 
-/** La facture est payée, ou repasse en attente : le rappel suit. */
+/** La facture est payée, ou repasse en attente : le rendez-vous suit. */
 export async function ajusterRelance(facture: Facture, delaiJours: number) {
   if (facture.statut_paiement === 'payee') {
-    await annulerRappel(facture.notification_relance);
-    enregistrerRelance(facture.id, null);
+    await annulerRelance(facture);
+    await replanifierRendezVous();
     return;
   }
   // Repassée en attente : elle a de nouveau droit à un rappel.

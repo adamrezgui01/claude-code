@@ -813,25 +813,33 @@ export const fr = {
     dejaTravaille: 'Déjà travaillé ici',
   },
 
+  rendezVous: {
+    reglages: 'Le rendez-vous du soir',
+    actif: 'Rendez-vous quotidien',
+    detail:
+      'Une seule notification par jour, le soir, et seulement s’il y a quelque chose à faire : un quart demain, des heures à confirmer, un document qui approche, une facture impayée, des notes à réviser.',
+    heure: 'À quelle heure ?',
+  },
+
   notifications: {
     veilleTitre: 'Veille clinique',
-    veilleAReviser: 'À réviser : {{sujets}}',
-    veilleEtAutres_one: 'et {{count}} autre',
-    veilleEtAutres_other: 'et {{count}} autres',
-    veilleSources_one: '{{count}} source à revérifier',
-    veilleSources_other: '{{count}} sources à revérifier',
-    veilleSansSujet: 'Vos révisions du jour',
-    quartDans48h: 'Quart dans 48 h',
+    /* Les titres du rendez-vous du soir, quand il n'y a rien à réviser. Le
+       titre se choisit par élimination, du plus grave au moins grave. */
+    titreDocument: 'Document à renouveler',
+    titreQuart: 'Quart demain',
+    titreFacture: 'Facture toujours impayée',
+    titreMemo: 'Vos heures ont-elles changé ?',
+    /* Les lignes du corps. Aucun chiffre : les comptes sont lisibles dans
+       l'application, pas sur un écran verrouillé. */
+    ligneVeille: 'À réviser : {{nom}}',
+    ligneSources: 'Une source à revérifier',
+    ligneDocument: '{{nom}} approche de son expiration',
+    ligneQuart: 'Demain : {{nom}}',
+    ligneFacture: 'Toujours impayée : {{nom}}',
+    ligneMemo: 'Heures à confirmer : {{nom}}',
+    etDautres: 'Et d’autres choses, dans l’application.',
     quartDans: 'Quart dans {{delai}}',
     corpsQuart: '{{pharmacie}} — {{horaire}}',
-    memoTitre: 'Vos heures ont-elles changé ?',
-    memoCorps:
-      '{{pharmacie}} — {{horaire}}. Corrigez-les seulement si elles étaient différentes.',
-    documentTitre: 'Document à renouveler',
-    documentCorps: '{{nom}} expire le {{date}}.',
-    relanceTitre: 'Facture toujours impayée',
-    relanceCorps:
-      '{{pharmacie}} — facture {{numero}}, {{montant}}, en attente depuis {{jours}} jours.',
     minutes: '{{count}} minutes',
     heure_one: '{{count}} heure',
     heure_other: '{{count}} heures',

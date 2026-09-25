@@ -1,60 +1,32 @@
-import * as Notifications from 'expo-notifications';
-
 import {
-  definirReglageVeille,
   listerContenus,
   listerSources,
-  reglagesVeille,
   statutsDesSujets,
   sujetsDuContenu,
 } from '../../db/veille';
-import { texte as traduire } from '../../i18n';
-import { ajouterJours, aujourdhui, combiner } from '../dates';
-import { annulerRappel, planifierRappel } from '../notifications';
+import type { Element } from '../rendezvous';
 import { fileDuJour } from './file';
 import { etatContenu, etatSource } from './peremption';
-import { heureDuRappel, HEURE_DEFAUT, texteDuRappel, type SujetDu } from './rappel';
+import { sujetsNommes, type SujetDu } from './rappel';
 import { nomDuSujet } from './sujets';
 
 /**
- * Programmer la notification de veille.
+ * Ce que la veille a à faire réviser, un soir donné.
  *
- * Sept jours d'avance, pour qu'elle arrive même si l'application n'est pas
- * ouverte : iOS ne réveille pas une application fermée pour lui demander quoi
- * envoyer. Tout est recalculé à chaque retour au premier plan et après chaque
- * séance, ce qui corrige les jours où l'usager a révisé d'avance.
- *
- * Le texte d'une notification est figé au moment où elle entre en file : le
- * système garde la phrase, pas une référence vers elle. Tout se refait donc à
- * chaque recalcul, et c'est aussi pour ça que le changement de langue doit
- * repasser par ici.
+ * Ce fichier ne programme plus rien : il ne dit que **quoi** signaler, et le
+ * rendez-vous du soir — une seule notification par jour, dans
+ * `lib/reprogrammer` — décide de l'écrire ou pas. Avant, la veille avait sa
+ * propre notification, et il fallait toute une mécanique pour éviter qu'elle
+ * sonne à une heure d'intervalle du mémo d'un quart. Cette mécanique n'a plus
+ * de raison d'être.
  */
 
-const JOURS_DAVANCE = 7;
-
-/** Les heures des notifications déjà en file ce jour-là, hors veille. */
-async function heuresVoisines(jour: string): Promise<string[]> {
-  try {
-    const prevues = await Notifications.getAllScheduledNotificationsAsync();
-    return prevues
-      .filter((n) => !(n.content.data as { veille?: boolean } | undefined)?.veille)
-      .map((n) => {
-        const declencheur = n.trigger as { date?: number | string } | null;
-        const quand = declencheur?.date ? new Date(declencheur.date) : null;
-        return quand;
-      })
-      .filter((d): d is Date => d !== null && !Number.isNaN(d.getTime()))
-      .filter((d) => `${d.getFullYear()}-${`${d.getMonth() + 1}`.padStart(2, '0')}-${`${d.getDate()}`.padStart(2, '0')}` === jour)
-      .map((d) => `${`${d.getHours()}`.padStart(2, '0')}:${`${d.getMinutes()}`.padStart(2, '0')}`);
-  } catch {
-    // Expo Go ne donne pas toujours la file. Sans elle, la veille part à
-    // l'heure choisie : une notification de plus vaut mieux qu'aucune.
-    return [];
-  }
-}
-
 /** Ce qu'il y aurait à faire ce jour-là, si rien ne bougeait d'ici là. */
-function aFaireLe(jour: string, plafond: number): { sujets: SujetDu[]; sources: number } {
+function aFaireLe(
+  jour: string,
+  plafond: number,
+  traduire: (cle: string) => string
+): { sujets: SujetDu[]; sources: number } {
   const contenus = listerContenus();
   const dues = fileDuJour(
     contenus.map((c) => ({
@@ -72,7 +44,7 @@ function aFaireLe(jour: string, plafond: number): { sujets: SujetDu[]; sources: 
   const compte = new Map<string, number>();
   for (const due of dues) {
     for (const sujet of sujetsDuContenu(due.id)) {
-      const nom = nomDuSujet(sujet, (cle) => traduire(cle));
+      const nom = nomDuSujet(sujet, traduire);
       compte.set(nom, (compte.get(nom) ?? 0) + 1);
     }
   }
@@ -83,33 +55,25 @@ function aFaireLe(jour: string, plafond: number): { sujets: SujetDu[]; sources: 
   };
 }
 
-export async function replanifierVeille() {
-  const reglages = reglagesVeille();
-
-  // On annule d'abord, toujours : les textes en file sont périmés dès qu'une
-  // note est révisée ou que la langue change.
-  for (const id of JSON.parse(reglages.veille_rappels || '[]') as string[]) {
-    await annulerRappel(id);
-  }
-  definirReglageVeille('veille_rappels', '[]');
-
-  if (!reglages.veille_rappel_actif) return;
-
-  const heureChoisie = reglages.veille_heure || HEURE_DEFAUT;
-  const poses: string[] = [];
-
-  for (let n = 0; n < JOURS_DAVANCE; n++) {
-    const jour = ajouterJours(aujourdhui(), n);
-    const { sujets, sources } = aFaireLe(jour, reglages.veille_plafond);
-    const texte = texteDuRappel(sujets, sources, (cle, valeurs) => traduire(cle, valeurs));
-    if (!texte) continue;
-
-    const heure = heureDuRappel(heureChoisie, await heuresVoisines(jour));
-    const id = await planifierRappel(texte.titre, texte.corps, combiner(jour, heure), {
-      veille: true,
-    });
-    if (id) poses.push(id);
-  }
-
-  definirReglageVeille('veille_rappels', JSON.stringify(poses));
+/**
+ * Les éléments cliniques du soir : les sujets à réviser, nommés, et les sources
+ * dont la vérification est dépassée.
+ *
+ * Les sujets sont nommés par nombre de notes dues : « Infections urinaires »
+ * se lit d'un coup d'œil sur un écran verrouillé, « 4 révisions » ne dit rien.
+ * Le rendez-vous n'en gardera que deux de toute façon, mais c'est lui qui
+ * tranche, et il tranche sur l'urgence.
+ */
+export function elementsCliniques(
+  jour: string,
+  plafond: number,
+  traduire: (cle: string) => string
+): Element[] {
+  const { sujets, sources } = aFaireLe(jour, plafond, traduire);
+  const elements: Element[] = sujetsNommes(sujets, sujets.length).nommes.map((nom) => ({
+    genre: 'veille' as const,
+    nom,
+  }));
+  if (sources > 0) elements.push({ genre: 'sources', nom: '' });
+  return elements;
 }

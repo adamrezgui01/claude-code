@@ -187,6 +187,22 @@ qu'on ne les redécouvre pas trois fois.
 - Un texte affiché vit dans `src/i18n`, jamais en dur dans un écran. La
   facture fait exception dans l'autre sens : elle est toujours en français,
   quelle que soit la langue choisie.
+- **Une seule notification automatique par jour**, le soir, à la même heure :
+  le rendez-vous. Six rappels vivaient chacun de leur côté — un quart, un mémo
+  de fin de quart, un document qui expire, une facture impayée, des notes à
+  réviser, des sources à revérifier — et rien n'empêchait qu'un mardi de
+  novembre en apporte quatre. Quatre vibrations dans la même soirée, et
+  l'usager coupe les notifications de l'application : toutes, y compris celle
+  qui lui aurait évité de manquer un quart. La seule exception est le rappel
+  avant un quart que l'usager a réglé lui-même, à l'avance qu'il a choisie :
+  celui-là, il l'a demandé.
+- Le titre du rendez-vous se choisit par élimination : « Veille clinique » dès
+  qu'il y a quelque chose à réviser, sinon le poste d'organisation le plus
+  urgent. Le corps porte **deux noms au plus et aucun chiffre** : « À réviser :
+  Infections urinaires » se lit d'un coup d'œil sur un écran verrouillé,
+  « 4 révisions, 2 factures » se balaie sans y penser, et un troisième nom
+  serait tronqué. Les comptes ont leur place dans l'application — la bande
+  d'attente de l'horaire les porte — jamais sur un écran verrouillé.
 - L'écran de révision ne montre jamais un nombre de bonnes réponses, un
   pourcentage, ni une série de jours consécutifs. Il compte ce qu'il reste à
   faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;
