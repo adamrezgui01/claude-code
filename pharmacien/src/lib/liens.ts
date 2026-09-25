@@ -102,6 +102,9 @@ export function adresseDouverture(source: {
  * guide deux fois — un guide porte souvent deux sujets — et donnait des
  * sections d'une entrée. Le thème est une place, une seule.
  *
+ * Le thème des ITSS s'appelle « ITSS et santé sexuelle » depuis qu'il porte la
+ * contraception d'urgence : on la cherche là, et nulle part ailleurs.
+ *
  * Les calculateurs viennent en premier parce qu'ils s'utilisent en pleine
  * conversation, et qu'une clairance à calculer ne peut pas attendre qu'on
  * défile. « Mes signets » ferme la liste et recueille ce que l'usager a ajouté

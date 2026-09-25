@@ -562,6 +562,7 @@ export const fr = {
     effacer: 'Effacer',
   },
   sujets: {
+    contraception: 'Contraception',
     itss: 'ITSS',
     infectionsPeau: 'Peau et plaies',
     digestif: 'Digestif',
@@ -590,7 +591,7 @@ export const fr = {
     calculateurs: 'Calculateurs',
     respiratoire: 'ORL et voies respiratoires',
     antibio: 'Antibiothérapie',
-    itss: 'ITSS',
+    itss: 'ITSS et santé sexuelle',
     cardioSang: 'Cœur et sang',
     metabolique: 'Hormones et métabolisme',
     douleur: 'Douleur et neuro',

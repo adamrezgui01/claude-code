@@ -20,6 +20,12 @@ export type SujetDepart = {
 
 export const SUJETS_DEPART: SujetDepart[] = [
   {
+    cle: 'contraception',
+    nom: 'Contraception',
+    synonymes:
+      'contraception d’urgence, pilule du lendemain, stérilet, lévonorgestrel, ulipristal, emergency contraception, morning after pill, oubli de pilule',
+  },
+  {
     cle: 'itss',
     nom: 'ITSS',
     synonymes: 'ITS, MTS, STI, STBBI, chlamydia, gonorrhée, syphilis, herpès, condylome, dépistage',
@@ -721,6 +727,32 @@ export const SOURCES_DEPART: SourceDepart[] = [
     motsCles:
       'framingham, risque cardiovasculaire, coronarien, cardiovascular risk, lipides, statine, prevention',
   },
+  /*
+   * La contraception d'urgence. L'outil de l'INSPQ tranche entre le stérilet au
+   * cuivre, le lévonorgestrel et l'acétate d'ulipristal selon le délai, l'IMC,
+   * la contraception hormonale récente, les inducteurs du CYP3A4 et
+   * l'allaitement — puis dit comment reprendre la contraception régulière.
+   *
+   * Les mots-clés couvrent les huit angles, et celui de la situation compte
+   * autant que les autres : la personne au comptoir ne dit pas « contraception
+   * d'urgence », elle dit que le condom a brisé.
+   */
+  {
+    cle: 'inspq_contraception_urgence',
+    titre: 'Contraception d’urgence',
+    url_document:
+      'https://www.inspq.qc.ca/sites/default/files/2024-05/3466-outil-contraception-urgence.pdf',
+    url_reference: 'https://www.inspq.qc.ca/services/protocole-contraception',
+    organisation: 'INSPQ',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'itss',
+    sujets: ['contraception'],
+    motsCles:
+      'contraception d’urgence, contraception urgence, contraception orale d’urgence, pilule du lendemain, pillule du lendemain, pilule lendemain, contraception post-coitale, cu, cou, ec, lng, upa, diu, siu, pcq, emergency contraception, morning after pill, morning-after pill, emergency pill, unprotected sex, unprotected intercourse, copper iud, iud, ius, plan b, levonorgestrel, ulipristal, acetate d’ulipristal, ulipristal acetate, option 2, norlevo, ella, mirena, kyleena, mona lisa, sterilet, sterilet au cuivre, sterilet d’urgence, dispositif intra-uterin, systeme intra-uterin, siu-lng, insertion sterilet, test de grossesse, condom brise, condom dechire, condom perce, relation non protegee, relation sexuelle non protegee, rsnp, oubli de pilule, oubli de contraceptif, grossesse non desiree, retard menstruel, allaitement contraception, cyp3a4, inducteur',
+  },
+
   /*
    * Les calculateurs cliniques. Une source comme les autres : on pointe vers
    * la page publique, on ne recopie rien. Un calcul maison qui se trompe de

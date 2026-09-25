@@ -65,10 +65,11 @@ describe('les sujets de départ', () => {
     ]);
   });
 
-  test('vingt-deux : seize, et six qu’ont réclamés les guides de la 2.5', () => {
-    // ITSS, peau et plaies, digestif, migraine, ménopause, COVID-19. Chacun
-    // vient d'un guide qui parle d'autre chose que ce que les seize couvraient.
-    expect(SUJETS_DEPART).toHaveLength(22);
+  test('vingt-trois : seize, six de la 2.5, et la contraception', () => {
+    // ITSS, peau et plaies, digestif, migraine, ménopause, COVID-19, puis la
+    // contraception. Chacun vient d'un guide qui parle d'autre chose que ce que
+    // les seize couvraient.
+    expect(SUJETS_DEPART).toHaveLength(23);
   });
 
   test('chaque clé est unique', () => {
@@ -102,10 +103,10 @@ describe('les sujets de départ', () => {
 });
 
 describe('le répertoire vérifié', () => {
-  test('trente-quatre documents, et onze calculateurs', () => {
+  test('trente-cinq documents, et onze calculateurs', () => {
     const documents = SOURCES_DEPART.filter((s) => s.sousSection === 'liens_utiles');
-    expect(documents).toHaveLength(34);
-    expect(SOURCES_DEPART).toHaveLength(45);
+    expect(documents).toHaveLength(35);
+    expect(SOURCES_DEPART).toHaveLength(46);
   });
 
   test('chacun porte une page officielle', () => {
@@ -449,11 +450,15 @@ describe('les guides ajoutés en 2.5', () => {
     expect(new Set(documents).size).toBe(documents.length);
   });
 
-  test('les sept guides ITSS forment un thème à eux seuls', () => {
-    const itss = SOURCES_DEPART.filter((s) => s.theme === 'itss');
-    expect(itss).toHaveLength(7);
+  test('sept guides ITSS, et la contraception d’urgence avec eux', () => {
     // C'est un domaine où l'on vérifie une posologie précise, souvent sous les
-    // yeux du patient, et où la conduite change d'une année à l'autre.
+    // yeux du patient, et où la conduite change d'une année à l'autre. La
+    // contraception d'urgence se cherche au même endroit — d'où le nom du
+    // thème, « ITSS et santé sexuelle ».
+    const theme = SOURCES_DEPART.filter((s) => s.theme === 'itss');
+    expect(theme).toHaveLength(8);
+    const itss = theme.filter((s) => s.cle.startsWith('inesss_itss_'));
+    expect(itss).toHaveLength(7);
     for (const source of itss) expect(source.sujets).toContain('itss');
   });
 });
@@ -527,5 +532,94 @@ describe('comment un terme rencontre un mot-clé', () => {
     };
     expect(correspond(source, 'premiere')).toBe(true);
     expect(correspond(source, 'hypertension')).toBe(true);
+  });
+});
+
+/**
+ * La contraception d'urgence.
+ *
+ * L'outil de l'INSPQ tranche entre le stérilet au cuivre, le lévonorgestrel et
+ * l'acétate d'ulipristal. Ce qui se vérifie ici n'est pas son contenu — il vit
+ * dans le document — mais le fait qu'on le retrouve, par les mots qu'on
+ * prononce vraiment au comptoir.
+ */
+describe('on retrouve la contraception d’urgence', () => {
+  const CLE = 'inspq_contraception_urgence';
+  const CATALOGUE = SOURCES_DEPART.map((source, i) => ({
+    id: i + 1,
+    cle: source.cle,
+    titre: source.titre,
+    categorie: '',
+    motsCles: source.motsCles,
+    sujets: [] as string[],
+  }));
+
+  test.each([
+    'contraception urgence',
+    'pilule du lendemain',
+    'plan b',
+    'ella',
+    'ulipristal',
+    'levonorgestrel',
+    'lng',
+    'upa',
+    'cou',
+    'stérilet',
+    'steri',
+    'stérilet au cuivre',
+    'condom brisé',
+    'relation non protégée',
+    'rsnp',
+    'emergency contraception',
+    'morning after',
+    'copper iud',
+    'mirena',
+    'oubli de pilule',
+  ])('« %s » la remonte', (terme) => {
+    expect(filtrerSources(CATALOGUE, terme).map((s) => s.cle)).toContain(CLE);
+  });
+
+  test('« cu » la remonte, en correspondance exacte du sigle', () => {
+    // Deux caractères : seuls les sigles écrits tels quels répondent.
+    expect(filtrerSources(CATALOGUE, 'cu').map((s) => s.cle)).toEqual([CLE]);
+  });
+
+  test('elle est un lien utile, pas un calculateur', () => {
+    const source = SOURCES_DEPART.find((s) => s.cle === CLE);
+    expect(source?.sousSection).toBe('liens_utiles');
+  });
+
+  test('elle se range sous « ITSS et santé sexuelle »', () => {
+    // C'est là qu'on la cherche : ni sous les hormones, ni sous les
+    // antibiotiques.
+    expect(SOURCES_DEPART.find((s) => s.cle === CLE)?.theme).toBe('itss');
+    expect(fr.themes.itss).toBe('ITSS et santé sexuelle');
+  });
+
+  test('ses adresses sont celles relevées', () => {
+    const source = SOURCES_DEPART.find((s) => s.cle === CLE);
+    expect(source?.url_document).toBe(
+      'https://www.inspq.qc.ca/sites/default/files/2024-05/3466-outil-contraception-urgence.pdf'
+    );
+    expect(source?.url_reference).toBe('https://www.inspq.qc.ca/services/protocole-contraception');
+  });
+
+  test('les huit angles sont couverts', () => {
+    // Un angle manquant est une porte d'entrée de moins, et c'est toujours
+    // celle-là que quelqu'un prendra.
+    const mots = SOURCES_DEPART.find((s) => s.cle === CLE)?.motsCles ?? '';
+    const angles: [string, string][] = [
+      ['nom courant', 'pilule du lendemain'],
+      ['sigle', 'lng'],
+      ['anglais', 'emergency contraception'],
+      ['molécule', 'levonorgestrel'],
+      ['nom commercial', 'norlevo'],
+      ['objet', 'sterilet au cuivre'],
+      ['geste', 'test de grossesse'],
+      ['situation', 'condom brise'],
+    ];
+    for (const [angle, mot] of angles) {
+      expect({ angle, present: mots.includes(mot) }).toEqual({ angle, present: true });
+    }
   });
 });

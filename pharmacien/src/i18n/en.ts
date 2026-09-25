@@ -559,6 +559,7 @@ export const en: Dictionnaire = {
     effacer: 'Clear',
   },
   sujets: {
+    contraception: 'Contraception',
     itss: 'STBBIs',
     infectionsPeau: 'Skin and wounds',
     digestif: 'Digestive',
@@ -587,7 +588,7 @@ export const en: Dictionnaire = {
     calculateurs: 'Calculators',
     respiratoire: 'ENT and airways',
     antibio: 'Antibiotics',
-    itss: 'STBBIs',
+    itss: 'STBBIs and sexual health',
     cardioSang: 'Heart and blood',
     metabolique: 'Hormones and metabolism',
     douleur: 'Pain and neurology',
