@@ -237,11 +237,27 @@ qu'on ne les redécouvre pas trois fois.
   une valeur périmée dans une liste intégrée se recopie sans réfléchir.
   Et une source sans document ouvre sa page officielle : une entrée incomplète
   mène à l'accueil de l'organisme plutôt qu'à rien.
+- Le **mode démonstration** remplit une année de travail plausible, et
+  plausible veut dire **cohérent** : une pharmacie qui paie 82 $ l'heure en
+  janvier les paie encore en juin, et elle est toujours à la même distance. Des
+  chiffres qui sautent d'un quart à l'autre donnent des statistiques qui ne
+  veulent rien dire, et c'est précisément l'écran qu'on veut montrer. La graine
+  est fixe : deux personnes qui allument le mode voient la même chose, et un
+  test peut donc affirmer quelque chose de précis.
+  Chaque ligne générée porte son drapeau `demo`, et c'est ce drapeau qui permet
+  d'éteindre le mode sans toucher aux données de l'usager — aucun `DELETE` sans
+  `WHERE demo = 1`, jamais. Les lignes passent par les mêmes fonctions de
+  création que tout le reste : deux façons de créer un quart, et l'une des deux
+  finirait par oublier une colonne.
+  Et **rien de tout ça ne programme une notification**. Le rendez-vous du soir
+  ne lit que les lignes réelles : un quart de démonstration ne doit pas faire
+  vibrer le téléphone à 20 h pour un remplacement qui n'existe pas.
 - Le volet organisation — horaire, répertoire, factures, statistiques —
   n'importe rien du volet clinique. Les seules exceptions sont des fichiers de
-  charpente : le menu, le démarrage, les réglages, et la reprogrammation des
-  notifications au changement de langue. Un test les nomme et vérifie
-  qu'aucune fonction du volet organisation ne s'y glisse.
+  charpente : le menu, le démarrage, les réglages, et la programmation des
+  notifications, qui place un seul rendez-vous du soir pour les deux volets à la
+  fois. Un test les nomme et vérifie qu'aucune fonction du volet organisation ne
+  s'y glisse.
 
 # Ce qu'on a décidé de ne pas faire
 

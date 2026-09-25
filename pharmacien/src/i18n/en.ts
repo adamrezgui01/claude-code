@@ -814,6 +814,13 @@ export const en: Dictionnaire = {
     dejaTravaille: 'Worked here before',
   },
 
+  demo: {
+    titre: 'Demo mode',
+    actif: 'Fill with sample data',
+    detail:
+      'A plausible year of work: eight pharmacies, shifts, invoices and a few notes. Nothing is sent anywhere, no reminder is scheduled, and turning it off erases exactly what it wrote.',
+  },
+
   attente: {
     heures_one: '{{count}} shift with unconfirmed hours',
     heures_other: '{{count}} shifts with unconfirmed hours',

@@ -69,6 +69,8 @@ export type Pharmacie = Adresse & {
   favori: number;
   /** Rappel pour soi, jamais un blocage. Exclusif avec `favori`. */
   a_eviter: number;
+  /** 1 pour une ligne du jeu de démonstration. Elle s'efface avec le mode. */
+  demo: number;
 };
 
 export type Quart = {
@@ -126,6 +128,8 @@ export type Quart = {
   notifications_secondaires: string;
   /** Mémo deux heures après la fin. Ne demande aucune confirmation. */
   notification_memo: string | null;
+  /** 1 pour une ligne du jeu de démonstration. Elle s'efface avec le mode. */
+  demo: number;
 };
 
 /** Un quart accompagné des données de sa pharmacie. */
@@ -242,6 +246,8 @@ export type Facture = {
   /** 1 une fois le rappel parti. Il n'y en a jamais un second. */
   relance_faite: number;
   cree_le: string;
+  /** 1 pour une ligne du jeu de démonstration. Elle s'efface avec le mode. */
+  demo: number;
 };
 
 /** Code d'accès d'une pharmacie. La valeur ne transite jamais par SQLite. */

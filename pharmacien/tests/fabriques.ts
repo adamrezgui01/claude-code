@@ -33,6 +33,7 @@ export function unQuart(champs: Partial<QuartDetaille> = {}): QuartDetaille {
     notification_id: null,
     notifications_secondaires: '[]',
     notification_memo: null,
+    demo: 0,
     pharmacie_nom: 'Pharmacie A',
     pharmacie_per_diem: 0,
     pharmacie_taux_par_km: 0,
@@ -74,6 +75,7 @@ export function unePharmacie(champs: Partial<Pharmacie> = {}): Pharmacie {
     hebergement_fourni: 0,
     favori: 0,
     a_eviter: 0,
+    demo: 0,
     ...champs,
   };
 }
@@ -133,6 +135,7 @@ export function uneFacture(champs: Partial<Facture> = {}): Facture {
     date_generation: '2026-09-01',
     notification_relance: null,
     relance_faite: 0,
+    demo: 0,
     cree_le: '2026-09-01T12:00:00.000Z',
     ...champs,
   };

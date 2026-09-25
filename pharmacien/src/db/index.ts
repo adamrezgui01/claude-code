@@ -51,7 +51,9 @@ const SCHEMA = `
        jamais un montant. Rien n'est payé, donc rien n'est calculé. */
     hebergement_fourni INTEGER NOT NULL DEFAULT 0,
     favori INTEGER NOT NULL DEFAULT 0,
-    a_eviter INTEGER NOT NULL DEFAULT 0
+    a_eviter INTEGER NOT NULL DEFAULT 0,
+    /* Ligne du jeu de démonstration. Elle s'efface avec le mode. */
+    demo INTEGER NOT NULL DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS quarts (
@@ -86,7 +88,9 @@ const SCHEMA = `
     numero_facture TEXT NOT NULL DEFAULT '',
     notification_id TEXT,
     notifications_secondaires TEXT NOT NULL DEFAULT '[]',
-    notification_memo TEXT
+    notification_memo TEXT,
+    /* Ligne du jeu de démonstration. Elle s'efface avec le mode. */
+    demo INTEGER NOT NULL DEFAULT 0
   );
 
   CREATE INDEX IF NOT EXISTS idx_quarts_date ON quarts(date);
@@ -170,7 +174,9 @@ const SCHEMA = `
     notification_relance TEXT,
     /* Un seul rappel par facture : doux, sans répétition. */
     relance_faite INTEGER NOT NULL DEFAULT 0,
-    cree_le TEXT NOT NULL
+    cree_le TEXT NOT NULL,
+    /* Ligne du jeu de démonstration. Elle s'efface avec le mode. */
+    demo INTEGER NOT NULL DEFAULT 0
   );
 
   /* Les phrases que le lecteur de commandes n'a pas comprises. Elles ne
@@ -284,7 +290,9 @@ const SCHEMA = `
     statut TEXT NOT NULL DEFAULT 'actif',
     approuve INTEGER NOT NULL DEFAULT 1,
     niveau INTEGER NOT NULL DEFAULT 0,
-    prochaine_revision TEXT NOT NULL DEFAULT ''
+    prochaine_revision TEXT NOT NULL DEFAULT '',
+    /* Ligne du jeu de démonstration. Elle s'efface avec le mode. */
+    demo INTEGER NOT NULL DEFAULT 0
   );
 
   /* Un fait, une ligne. Le journal des consultations est cette table filtrée
@@ -337,6 +345,11 @@ export function initialiserBase() {
   // Les bornes de la journée : ce que « matin » et « soir » veulent dire.
   /* Le jour où la bande d'attente a été écartée. Elle revient le lendemain. */
   ajouterColonne('reglages', 'attente_ecartee_le', "TEXT NOT NULL DEFAULT ''");
+  /* Le mode démonstration. Chaque ligne générée porte son drapeau : c'est ce
+     qui permet de l'éteindre sans toucher aux données de l'usager. */
+  for (const table of ['pharmacies', 'quarts', 'factures', 'contenus']) {
+    ajouterColonne(table, 'demo', 'INTEGER NOT NULL DEFAULT 0');
+  }
   ajouterColonne('reglages', 'dispo_debut', "TEXT NOT NULL DEFAULT '08:00'");
   ajouterColonne('reglages', 'dispo_fin', "TEXT NOT NULL DEFAULT '21:00'");
   // Qui a annulé un quart, et quand. Une pharmacie qui annule trois fois est

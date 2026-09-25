@@ -1,7 +1,7 @@
 import { db } from './index';
 import type { Facture, StatutPaiement } from './types';
 
-export type EntreeFacture = Omit<Facture, 'id' | 'cree_le'>;
+export type EntreeFacture = Omit<Facture, 'id' | 'cree_le' | 'demo'>;
 
 const CHAMPS = [
   'numero',

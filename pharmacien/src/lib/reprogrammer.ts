@@ -59,10 +59,16 @@ export async function replanifierRendezVous() {
 
   const heure = veille.veille_heure || HEURE_DEFAUT;
   const reglages = obtenirReglages();
+  /*
+   * Les lignes du mode démonstration sont écartées ici, et c'est le seul
+   * endroit où il faut y penser : un quart de démonstration ne doit pas faire
+   * vibrer le téléphone à 20 h pour un remplacement qui n'existe pas.
+   */
+  const reel = <T extends { demo: number }>(lignes: T[]) => lignes.filter((l) => !l.demo);
   const donnees = {
-    quarts: listerQuarts(),
+    quarts: reel(listerQuarts()),
     documents: listerDocuments(),
-    factures: listerFactures(),
+    factures: reel(listerFactures()),
     delaiRelance: Math.max(0, Math.round(reglages.delai_relance_factures)),
   };
 

@@ -6,6 +6,7 @@ import type { Quart, QuartDetaille } from './types';
 export type EntreeQuart = Omit<
   Quart,
   | 'id'
+  | 'demo'
   | 'notification_id'
   | 'notifications_secondaires'
   | 'notification_memo'

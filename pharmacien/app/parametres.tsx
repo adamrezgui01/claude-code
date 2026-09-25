@@ -26,6 +26,7 @@ import type { Reglages } from '../src/db/types';
 import { analyserNombre } from '../src/lib/format';
 import { appliquerLangue, useTextes } from '../src/i18n';
 import { LANGUES, type ChoixLangue } from '../src/lib/langue';
+import { allumerDemo, eteindreDemo, modeDemoActif } from '../src/db/demo';
 import { replanifierRendezVous, reprogrammerRappels } from '../src/lib/reprogrammer';
 import {
   Bouton,
@@ -66,12 +67,14 @@ export default function Parametres() {
     navigateur: false,
   });
   const [copiee, setCopiee] = useState(false);
+  const [demo, setDemo] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       setReglages(obtenirReglages());
       setIncomprises(compterIncomprises());
       setSansReponse(recherchesSansReponse().length);
+      setDemo(modeDemoActif());
       const v = reglagesVeille();
       setVeille({
         rappel: !!v.veille_rappel_actif,
@@ -92,6 +95,21 @@ export default function Parametres() {
     definirReglageVeille(champ, valeur);
     setVeille((actuel) => ({ ...actuel, ...local }));
     void replanifierRendezVous();
+  }
+
+  /**
+   * Le mode démonstration s'allume et s'éteint tout de suite : l'usager vient
+   * de le toucher pour voir quelque chose.
+   *
+   * Rien n'est programmé au passage. Un quart de démonstration ne doit pas
+   * faire vibrer le téléphone à 20 h pour un remplacement qui n'existe pas, et
+   * c'est le rendez-vous du soir qui l'ignore, en ne lisant que les lignes
+   * réelles.
+   */
+  function basculerDemo(actif: boolean) {
+    if (actif) allumerDemo();
+    else eteindreDemo();
+    setDemo(actif);
   }
 
   /** Les recherches restées sans réponse, pour les coller quelque part. */
@@ -361,6 +379,20 @@ export default function Parametres() {
             </View>
           </View>
         )}
+      </Section>
+
+      {/*
+        Le mode démonstration. Une application de facturation vide ne se montre
+        pas : sans quarts, il n'y a ni graphique, ni statistique, ni facture.
+        L'éteindre efface exactement ce qu'il a écrit, et rien d'autre.
+      */}
+      <Section titre={t('demo.titre')}>
+        <Interrupteur
+          label={t('demo.actif')}
+          detail={t('demo.detail')}
+          valeur={demo}
+          onChange={basculerDemo}
+        />
       </Section>
 
       <Section titre={t('parametres.serviceAdresses')}>

@@ -19,9 +19,13 @@ import { join } from 'node:path';
  * - le fichier de démarrage, qui assemble toute l'application par nature, sème
  *   les données au premier lancement et pose le bandeau de capture ;
  * - l'écran des réglages, qui porte par construction les réglages de tous les
- *   modules — quelqu'un qui cherche « rappel » va là, pas ailleurs.
+ *   modules — quelqu'un qui cherche « rappel » va là, pas ailleurs ;
+ * - le jeu de démonstration, qui remplit l'application entière. Un mode
+ *   démonstration qui remplirait l'organisation et laisserait la veille vide
+ *   montrerait la moitié de l'application, et c'est justement celle qu'on
+ *   oublie.
  *
- * Les quatre sont des fichiers de charpente. Aucune fonction du volet
+ * Les cinq sont des fichiers de charpente. Aucune fonction du volet
  * organisation — un horaire, une facture, une statistique — n'en fait partie,
  * et c'est ce que la règle protège.
  *
@@ -38,6 +42,7 @@ const EXCEPTIONS = [
   join('app', '_layout.tsx'),
   join('app', 'parametres.tsx'),
   join('src', 'lib', 'reprogrammer.ts'),
+  join('src', 'db', 'demo.ts'),
 ];
 
 /** La frontière : les signets sont les sources. */
@@ -82,10 +87,13 @@ describe('le volet organisation ignore le volet clinique', () => {
     expect(fautifs).toEqual([]);
   });
 
-  test('les quatre exceptions sont nommées, et pas une de plus', () => {
-    // Quatre fichiers de charpente. Le jour où ce chiffre monte, c'est que le
-    // volet clinique déborde, et il faut regarder pourquoi.
-    expect(EXCEPTIONS).toHaveLength(4);
+  test('les cinq exceptions sont nommées, et pas une de plus', () => {
+    // Cinq fichiers de charpente. Le jour où ce chiffre monte, c'est que le
+    // volet clinique déborde, et il faut regarder pourquoi. La cinquième est
+    // arrivée avec le mode démonstration : il remplit l'application entière,
+    // et un jeu de données qui laisserait la veille vide montrerait la moitié
+    // de l'application.
+    expect(EXCEPTIONS).toHaveLength(5);
   });
 
   test('aucune fonction du volet organisation n’est dans les exceptions', () => {

@@ -2,7 +2,7 @@ import { DISTANCE_INCONNUE } from '../lib/deplacement';
 import { db } from './index';
 import type { Pharmacie } from './types';
 
-export type EntreePharmacie = Omit<Pharmacie, 'id'>;
+export type EntreePharmacie = Omit<Pharmacie, 'id' | 'demo'>;
 
 const CHAMPS = [
   'nom',

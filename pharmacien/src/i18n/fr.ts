@@ -817,6 +817,13 @@ export const fr = {
     dejaTravaille: 'Déjà travaillé ici',
   },
 
+  demo: {
+    titre: 'Mode démonstration',
+    actif: 'Remplir avec des données d’exemple',
+    detail:
+      'Une année de travail plausible : huit pharmacies, des quarts, des factures et quelques notes. Rien n’est envoyé nulle part, aucun rappel n’est programmé, et l’éteindre efface exactement ce qu’il a écrit.',
+  },
+
   attente: {
     heures_one: '{{count}} quart dont les heures ne sont pas confirmées',
     heures_other: '{{count}} quarts dont les heures ne sont pas confirmées',
