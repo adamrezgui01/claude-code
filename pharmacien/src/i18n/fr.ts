@@ -904,9 +904,14 @@ export const fr = {
 
   disponibilites: {
     titre: 'Mes dispos',
-    /* L'image part chez un propriétaire : elle porte le mot au long. */
-    titreImage: 'Disponibilités',
+    /* L'image part chez un propriétaire : elle porte le mot au long, et la
+       plage qu'elle couvre, pour qu'on ne la confonde pas avec une autre. */
+    titreImageAvecPlage: 'Disponibilités — {{plage}}',
     periode: 'Période',
+    semainesCourt: '{{n}} sem.',
+    personnalise: 'Personnalisé',
+    plageDebut: 'Du',
+    plageFin: 'Au',
     offert: 'Offert',
     nonDeclare: 'Non déclaré',
     partageImpossible: 'Le partage n’a pas fonctionné.',

@@ -1,14 +1,17 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { formatPlageDates } from '../src/lib/dates';
 import {
   aimanterHeure,
   apresLaTape,
   apresLeGlisser,
   ajusterAutourDuQuart,
+  bornerPlage,
   chevauchement,
   joursTraverses,
   disponibilites,
+  disponibilitesEntre,
   finProposee,
   fusionner,
   joursOfferts,
@@ -342,5 +345,140 @@ describe('groupe 4 — l’image', () => {
       }
     }
     expect(fautes).toEqual([]);
+  });
+});
+
+// ===========================================================================
+// Groupe 5 — la plage personnalisée
+// ===========================================================================
+
+/**
+ * Deux, quatre et huit semaines ne couvrent pas la demande la plus banale :
+ * « t'es libre en décembre ? » posée en septembre. La plage personnalisée
+ * existe pour ça, et ses bornes existent pour qu'elle reste une plage.
+ */
+describe('groupe 5 — les bornes de la plage', () => {
+  test('un début passé remonte à aujourd’hui', () => {
+    // On n'offre pas hier.
+    expect(bornerPlage('2026-08-01', '2026-10-31', DEPART)).toEqual({
+      debut: DEPART,
+      fin: '2026-10-31',
+    });
+  });
+
+  test('une fin au-delà de douze mois s’arrête à la limite', () => {
+    expect(bornerPlage(DEPART, '2028-01-01', DEPART)).toEqual({
+      debut: DEPART,
+      fin: '2027-09-21',
+    });
+  });
+
+  test('une plage entièrement dans les bornes passe telle quelle', () => {
+    expect(bornerPlage('2026-12-01', '2026-12-31', DEPART)).toEqual({
+      debut: '2026-12-01',
+      fin: '2026-12-31',
+    });
+  });
+
+  test('une fin avant le début devient une seule journée', () => {
+    expect(bornerPlage('2026-12-01', '2026-11-01', DEPART)).toEqual({
+      debut: '2026-12-01',
+      fin: '2026-12-01',
+    });
+  });
+
+  test('une plage entièrement passée se replie sur aujourd’hui', () => {
+    expect(bornerPlage('2026-01-01', '2026-02-01', DEPART)).toEqual({
+      debut: DEPART,
+      fin: DEPART,
+    });
+  });
+
+  test('le dernier jour offert est celui-là même, dans douze mois', () => {
+    expect(bornerPlage('2027-09-21', '2027-09-21', DEPART)).toEqual({
+      debut: '2027-09-21',
+      fin: '2027-09-21',
+    });
+  });
+});
+
+describe('groupe 5 — la période entre deux dates', () => {
+  test('les deux bornes sont comprises', () => {
+    const vue = disponibilitesEntre([], '2026-12-01', '2026-12-31');
+    expect(vue.jours).toHaveLength(31);
+    expect(vue.debut).toBe('2026-12-01');
+    expect(vue.fin).toBe('2026-12-31');
+  });
+
+  test('une plage d’un seul jour tient une seule case', () => {
+    const vue = disponibilitesEntre([], '2026-12-01', '2026-12-01');
+    expect(vue.jours).toHaveLength(1);
+    expect(vue.fin).toBe('2026-12-01');
+  });
+
+  test('trois mois traversés donnent trois blocs', () => {
+    const vue = disponibilitesEntre([], '2026-11-15', '2027-01-15');
+    expect(moisCouverts(vue).map((b) => b.mois)).toEqual([
+      '2026-11-01',
+      '2026-12-01',
+      '2027-01-01',
+    ]);
+  });
+
+  test('la grille qu’on modifie couvre l’année entière', () => {
+    // C'est ce que l'écran demande à la grille modifiable : aucun mur devant
+    // soi, quelle que soit la fenêtre qu'on partage.
+    const vue = disponibilitesEntre([], DEPART, '2027-09-21');
+    expect(vue.jours).toHaveLength(366);
+    expect(moisCouverts(vue)).toHaveLength(13);
+  });
+
+  test('une journée déclarée hors de la plage n’y entre pas', () => {
+    const vue = disponibilitesEntre(
+      [plage('2026-11-30'), plage('2026-12-02')],
+      '2026-12-01',
+      '2026-12-31'
+    );
+    expect(joursOfferts(vue)).toBe(1);
+    expect(vue.jours.find((j) => j.date === '2026-12-02')?.etat).toBe('complet');
+  });
+});
+
+describe('groupe 5 — le titre de l’image', () => {
+  test('un même mois ne se répète pas', () => {
+    expect(formatPlageDates('2026-12-01', '2026-12-31', 'fr')).toBe('1er au 31 décembre 2026');
+  });
+
+  test('le français écrit le premier du mois « 1er »', () => {
+    expect(formatPlageDates('2026-12-20', '2027-01-01', 'fr')).toBe(
+      '20 décembre 2026 au 1er janvier 2027'
+    );
+  });
+
+  test('deux mois de la même année ne portent l’année qu’une fois', () => {
+    expect(formatPlageDates('2026-11-28', '2026-12-31', 'fr')).toBe(
+      '28 novembre au 31 décembre 2026'
+    );
+  });
+
+  test('deux années portent chacune la sienne', () => {
+    expect(formatPlageDates('2026-12-28', '2027-01-04', 'fr')).toBe(
+      '28 décembre 2026 au 4 janvier 2027'
+    );
+  });
+
+  test('une seule journée se nomme seule', () => {
+    expect(formatPlageDates('2026-12-01', '2026-12-01', 'fr')).toBe('1er décembre 2026');
+  });
+
+  test('l’anglais garde sa virgule et son tiret', () => {
+    expect(formatPlageDates('2026-12-01', '2026-12-31', 'en')).toBe('December 1 – 31, 2026');
+    expect(formatPlageDates('2026-11-28', '2026-12-31', 'en')).toBe(
+      'November 28 – December 31, 2026'
+    );
+    expect(formatPlageDates('2026-12-28', '2027-01-04', 'en')).toBe(
+      'December 28, 2026 – January 4, 2027'
+    );
+    expect(formatPlageDates('2026-12-01', '2026-12-01', 'en')).toBe('December 1, 2026');
   });
 });

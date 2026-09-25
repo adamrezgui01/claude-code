@@ -284,12 +284,21 @@ export function SelecteurDate({
   valeur,
   onChange,
   joursMarques,
+  min,
+  max,
 }: {
   label: string;
   valeur: string;
   onChange: (iso: string) => void;
   /** Jours portant déjà un quart, marqués d'un point sous le chiffre. */
   joursMarques?: Set<string>;
+  /**
+   * Bornes facultatives. Un jour hors bornes reste visible, pâli, et ne se
+   * touche pas : le retirer de la grille déplacerait tous les autres, et un
+   * calendrier qui change de forme selon le champ ne se lit plus.
+   */
+  min?: string;
+  max?: string;
 }) {
   const { t } = useTextes();
   const accent = useAccent();
@@ -352,14 +361,20 @@ export function SelecteurDate({
                   if (!jour) return <View key={`v${j}`} style={styles.case} />;
                   const choisi = jour === valeur;
                   const cest = jour === cejour;
+                  const horsBornes = (!!min && jour < min) || (!!max && jour > max);
                   return (
                     <Pressable
                       key={jour}
+                      disabled={horsBornes}
                       onPress={() => {
                         onChange(jour);
                         setOuvert(false);
                       }}
-                      style={({ pressed }) => [styles.case, pressed && { opacity: 0.6 }]}>
+                      style={({ pressed }) => [
+                        styles.case,
+                        pressed && { opacity: 0.6 },
+                        horsBornes && styles.caseHorsBornes,
+                      ]}>
                       <View
                         style={[
                           styles.pastille,
@@ -396,6 +411,9 @@ export function SelecteurDate({
 }
 
 const styles = StyleSheet.create({
+  caseHorsBornes: {
+    opacity: 0.25,
+  },
   champ: {
     marginBottom: espace.m,
   },

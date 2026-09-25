@@ -126,6 +126,62 @@ export function formatDateCourte(iso: string, langue: Langue = LANGUE_DEFAUT): s
   }).format(analyserDate(iso));
 }
 
+/**
+ * Une plage de dates, nommée comme on la dit : « 1er au 31 décembre 2026 ».
+ *
+ * Le mois et l'année ne se répètent pas quand ils sont les mêmes des deux
+ * côtés. C'est le titre de l'image des disponibilités : il doit se lire d'un
+ * coup, et « du 1 décembre 2026 au 31 décembre 2026 » se lit deux fois.
+ */
+export function formatPlageDates(
+  debut: string,
+  fin: string,
+  langue: Langue = LANGUE_DEFAUT
+): string {
+  if (debut === fin) return dateNommee(debut, langue);
+  const d = analyserDate(debut);
+  const f = analyserDate(fin);
+  const memeAnnee = d.getFullYear() === f.getFullYear();
+  const memeMois = memeAnnee && d.getMonth() === f.getMonth();
+  if (langue === 'en') {
+    if (memeMois) {
+      return `${moisAuLong(debut, langue)} ${d.getDate()} – ${f.getDate()}, ${f.getFullYear()}`;
+    }
+    if (memeAnnee) {
+      const gauche = `${moisAuLong(debut, langue)} ${d.getDate()}`;
+      return `${gauche} – ${moisAuLong(fin, langue)} ${f.getDate()}, ${f.getFullYear()}`;
+    }
+    return `${dateNommee(debut, langue)} – ${dateNommee(fin, langue)}`;
+  }
+  if (memeMois) {
+    const mois = `${moisAuLong(fin, langue)} ${f.getFullYear()}`;
+    return `${quantieme(d.getDate())} au ${quantieme(f.getDate())} ${mois}`;
+  }
+  if (memeAnnee) {
+    const gauche = `${quantieme(d.getDate())} ${moisAuLong(debut, langue)}`;
+    return `${gauche} au ${quantieme(f.getDate())} ${moisAuLong(fin, langue)} ${f.getFullYear()}`;
+  }
+  return `${dateNommee(debut, langue)} au ${dateNommee(fin, langue)}`;
+}
+
+/** « 1er décembre 2026 », « December 1, 2026 ». */
+function dateNommee(iso: string, langue: Langue): string {
+  const d = analyserDate(iso);
+  if (langue === 'en') {
+    return `${moisAuLong(iso, langue)} ${d.getDate()}, ${d.getFullYear()}`;
+  }
+  return `${quantieme(d.getDate())} ${moisAuLong(iso, langue)} ${d.getFullYear()}`;
+}
+
+function moisAuLong(iso: string, langue: Langue): string {
+  return new Intl.DateTimeFormat(localeDe(langue), { month: 'long' }).format(analyserDate(iso));
+}
+
+/** Le français écrit « 1er » ; tous les autres quantièmes s'écrivent nus. */
+function quantieme(jour: number): string {
+  return jour === 1 ? '1er' : `${jour}`;
+}
+
 export function formatJourCourt(iso: string, langue: Langue = LANGUE_DEFAUT): string {
   return new Intl.DateTimeFormat(localeDe(langue), {
     weekday: 'short',

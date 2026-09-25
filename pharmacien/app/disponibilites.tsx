@@ -16,29 +16,41 @@ import { useTextes } from '../src/i18n';
 import {
   aimanterHeure,
   ajusterAutourDuQuart,
+  bornerPlage,
   chevauchement,
   disponibilites,
+  disponibilitesEntre,
   finProposee,
   joursOfferts,
   plageValide,
   moisCouverts,
   resumerPlages,
+  MOIS_MAX,
   SEMAINES,
   SEMAINES_DEFAUT,
   type Geste,
 } from '../src/lib/disponibilites';
 import {
   aujourdhui,
-  formatDateCourte,
+  debutMois,
+  decalerMois,
+  finMois,
   formatDateLongue,
   formatHeure,
+  formatPlageDates,
   joursCourts,
 } from '../src/lib/dates';
 import { Bouton, Doux, Onglets, SousTitre } from '../src/ui/composants';
 import { FeuilleSurgissante, type PointEcran } from '../src/ui/FeuilleSurgissante';
 import { GrilleDispos } from '../src/ui/GrilleDispos';
-import { SelecteurHeure } from '../src/ui/Selecteurs';
+import { SelecteurDate, SelecteurHeure } from '../src/ui/Selecteurs';
 import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
+
+/**
+ * La valeur de l'onglet qui ouvre les deux sélecteurs de date. Les trois
+ * autres portent un nombre de semaines.
+ */
+const PERSONNALISE = 'perso';
 
 /**
  * Les disponibilités, en une image prête à envoyer.
@@ -56,15 +68,44 @@ export default function Disponibilites() {
   const accent = useAccent();
   const router = useRouter();
   const capture = useRef<React.ComponentRef<typeof ViewShot>>(null);
-  const [semaines, setSemaines] = useState<number>(SEMAINES_DEFAUT);
+  const [choix, setChoix] = useState<string>(`${SEMAINES_DEFAUT}`);
   const [plages, setPlages] = useState(listerDisponibilites);
   const [quarts] = useState(listerQuarts);
   const [reglages] = useState(obtenirReglages);
+  const cejour = aujourdhui();
+  /** La limite dure : on n'offre rien au-delà d'un an. */
+  const dernierJour = decalerMois(cejour, MOIS_MAX);
+  /* Par défaut, le mois prochain en entier : c'est la demande qu'on reçoit. */
+  const moisProchain = decalerMois(cejour, 1);
+  const [debutPlage, setDebutPlage] = useState(debutMois(moisProchain));
+  const [finPlage, setFinPlage] = useState(finMois(moisProchain));
 
-  const periode = useMemo(
-    () => disponibilites(plages, aujourdhui(), semaines, quarts),
-    [plages, quarts, semaines]
+  /**
+   * Deux périodes, et c'est voulu.
+   *
+   * Celle qu'on modifie va jusqu'à la limite d'un an : une journée qu'on veut
+   * offrir en mars ne doit pas attendre que le sélecteur soit réglé sur le bon
+   * nombre de semaines. La grille défile, elle ne bute pas.
+   *
+   * Celle qu'on partage est la fenêtre choisie. On déclare largement, on
+   * envoie ce qui a été demandé.
+   */
+  const edition = useMemo(
+    () => disponibilitesEntre(plages, cejour, dernierJour, quarts),
+    [plages, quarts, cejour, dernierJour]
   );
+  const bornee = useMemo(
+    () => bornerPlage(debutPlage, finPlage, cejour),
+    [debutPlage, finPlage, cejour]
+  );
+  const periode = useMemo(
+    () =>
+      choix === PERSONNALISE
+        ? disponibilitesEntre(plages, bornee.debut, bornee.fin, quarts)
+        : disponibilites(plages, cejour, Number(choix), quarts),
+    [plages, quarts, choix, bornee, cejour]
+  );
+  const blocsEdition = useMemo(() => moisCouverts(edition), [edition]);
   const blocs = useMemo(() => moisCouverts(periode), [periode]);
   const initiales = joursCourts(langue);
   const [heures, setHeures] = useState<{ date: string; point: PointEcran } | null>(null);
@@ -95,7 +136,7 @@ export default function Disponibilites() {
   function ouvrirHeures(date: string, point: PointEcran) {
     // La fenêtre s'ouvre sur ce que la journée porte déjà, ou sur les bornes
     // de la journée : dans les deux cas, il n'y a qu'à corriger.
-    const jour = periode.jours.find((j) => j.date === date);
+    const jour = edition.jours.find((j) => j.date === date);
     const premiere = jour?.plages[0];
     setDebutSaisi(premiere?.debut ?? bornes.debut);
     setFinSaisie(premiere?.fin ?? bornes.fin);
@@ -212,7 +253,7 @@ export default function Disponibilites() {
         <Doux>{t('disponibilites.consigne')}</Doux>
         <View style={styles.editeur}>
           <GrilleDispos
-            blocs={blocs}
+            blocs={blocsEdition}
             initiales={initiales}
             langue={langue}
             accent={accent}
@@ -222,15 +263,53 @@ export default function Disponibilites() {
           />
         </View>
 
-        <Onglets
-          libelle={t('disponibilites.periode')}
-          options={SEMAINES.map((n) => ({
-            valeur: `${n}`,
-            texte: t('compteur.semaine', { count: n }),
-          }))}
-          valeur={`${semaines}`}
-          onChange={(v) => setSemaines(Number(v))}
-        />
+        {/* La rangée défile à l'horizontale : quatre choix ne tiennent pas
+            tous sur la largeur d'un petit téléphone. */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <Onglets
+            libelle={t('disponibilites.periode')}
+            options={[
+              ...SEMAINES.map((n) => ({
+                valeur: `${n}`,
+                texte: t('disponibilites.semainesCourt', { n }),
+              })),
+              {
+                valeur: PERSONNALISE,
+                texte: t('disponibilites.personnalise'),
+                icone: 'calendar-outline' as const,
+              },
+            ]}
+            valeur={choix}
+            onChange={setChoix}
+          />
+        </ScrollView>
+
+        {choix === PERSONNALISE && (
+          <View style={styles.deuxChamps}>
+            <View style={styles.moitie}>
+              <SelecteurDate
+                label={t('disponibilites.plageDebut')}
+                valeur={bornee.debut}
+                min={cejour}
+                max={dernierJour}
+                onChange={(v) => {
+                  setDebutPlage(v);
+                  // Une fin avant le début n'est pas une plage : elle suit.
+                  if (v > finPlage) setFinPlage(v);
+                }}
+              />
+            </View>
+            <View style={styles.moitie}>
+              <SelecteurDate
+                label={t('disponibilites.plageFin')}
+                valeur={bornee.fin}
+                min={bornee.debut}
+                max={dernierJour}
+                onChange={setFinPlage}
+              />
+            </View>
+          </View>
+        )}
 
         {/*
           Fond clair quoi qu'il arrive : l'image part sur le téléphone de
@@ -238,14 +317,16 @@ export default function Disponibilites() {
           messagerie.
         */}
         <ViewShot ref={capture} style={styles.image}>
-          <Text style={styles.titre}>{t('disponibilites.titreImage')}</Text>
-          {!!reglages.nom.trim() && <Text style={styles.nom}>{reglages.nom.trim()}</Text>}
-          <Text style={styles.periodeTexte}>
-            {t('commun.duAu', {
-              debut: formatDateCourte(periode.debut, langue),
-              fin: formatDateCourte(periode.fin, langue),
-            })}
-          </Text>
+          {/* Le titre nomme la plage : l'image se retrouve seule dans une
+              conversation trois semaines plus tard. */}
+          <View style={styles.enteteImage}>
+            <Text style={styles.titre}>
+              {t('disponibilites.titreImageAvecPlage', {
+                plage: formatPlageDates(periode.debut, periode.fin, langue),
+              })}
+            </Text>
+            {!!reglages.nom.trim() && <Text style={styles.nom}>{reglages.nom.trim()}</Text>}
+          </View>
 
           {/* La même grille, sans les gestes ni les quarts : c'est l'image. */}
           <GrilleDispos blocs={blocs} initiales={initiales} langue={langue} accent={accent} />
@@ -315,7 +396,7 @@ export default function Disponibilites() {
 
   /** Ce que la journée porte déjà, en une ligne. */
   function resumerJournee(date: string): string {
-    const jour = periode.jours.find((j) => j.date === date);
+    const jour = edition.jours.find((j) => j.date === date);
     if (!jour || jour.etat === 'neutre') return t('disponibilites.rienDeclare');
     if (jour.etat === 'complet') return t('disponibilites.journeeEntiere');
     return resumerPlages(jour.plages);
@@ -337,8 +418,13 @@ const styles = StyleSheet.create({
     padding: espace.l,
     marginBottom: espace.m,
   },
+  enteteImage: {
+    marginBottom: espace.m,
+  },
   titre: {
-    fontSize: 22,
+    /* Assez gros pour être le titre, assez petit pour que la plage tienne
+       sur deux lignes au pire. */
+    fontSize: 19,
     fontFamily: police.gras,
     color: '#1E1B22',
   },
@@ -347,13 +433,6 @@ const styles = StyleSheet.create({
     fontFamily: police.demi,
     color: '#1E1B22',
     marginTop: 2,
-  },
-  periodeTexte: {
-    fontSize: 13,
-    fontFamily: police.normal,
-    color: '#6E6875',
-    marginTop: 2,
-    marginBottom: espace.m,
   },
   bloc: {
     marginBottom: espace.m,
@@ -442,6 +521,9 @@ const styles = StyleSheet.create({
   deuxChamps: {
     flexDirection: 'row',
     gap: espace.m,
+  },
+  moitie: {
+    flex: 1,
   },
   editeur: {
     marginBottom: espace.l,

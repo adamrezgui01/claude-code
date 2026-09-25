@@ -1,5 +1,12 @@
 import { aimanter, minutesEnHeure } from './agenda';
-import { ajouterJours, analyserHeure, debutMois, grilleMois } from './dates';
+import {
+  ajouterJours,
+  analyserHeure,
+  debutMois,
+  decalerMois,
+  grilleMois,
+  joursEntre,
+} from './dates';
 
 /**
  * Les disponibilités, telles qu'on les déclare.
@@ -169,6 +176,44 @@ export function fusionner(plages: PlageDispo[]): PlageDispo[] {
 }
 
 /**
+ * Jusqu'où l'on peut offrir des journées.
+ *
+ * Rien dans le passé : on n'offre pas hier. Douze mois vers l'avant au
+ * maximum — au-delà, le titre de l'image devient illisible, et aucune
+ * pharmacie ne planifie si loin.
+ */
+export const MOIS_MAX = 12;
+
+export function bornerPlage(
+  debut: string,
+  fin: string,
+  aujourdhui: string
+): { debut: string; fin: string } {
+  const depart = debut < aujourdhui ? aujourdhui : debut;
+  const limite = decalerMois(aujourdhui, MOIS_MAX);
+  const arrivee = fin > limite ? limite : fin;
+  // Une fin avant le début n'est pas une plage : elle devient un seul jour.
+  return { debut: depart, fin: arrivee < depart ? depart : arrivee };
+}
+
+/**
+ * La période entre deux dates, bornes comprises.
+ *
+ * C'est le cas réel de septembre : une pharmacie demande les disponibilités
+ * de décembre. Deux, quatre et huit semaines ne le permettent pas, et c'est
+ * une demande banale.
+ */
+export function disponibilitesEntre(
+  plages: PlageDispo[],
+  debut: string,
+  fin: string,
+  quarts: QuartDuJour[] = []
+): Disponibilites {
+  const jours = Math.max(1, joursEntre(debut, fin) + 1);
+  return periode(plages, debut, jours, quarts);
+}
+
+/**
  * La période à afficher : une case par jour, et l'état déclaré de chacune.
  * Les quarts n'entrent pas ici. Un quart de neuf heures à une heure laisse
  * l'après-midi libre, et une journée sans quart n'est offerte que si elle a
@@ -179,6 +224,16 @@ export function disponibilites(
   debut: string,
   semaines: number,
   quarts: QuartDuJour[] = []
+): Disponibilites {
+  return periode(plages, debut, semaines * 7, quarts, semaines);
+}
+
+function periode(
+  plages: PlageDispo[],
+  debut: string,
+  nombreDeJours: number,
+  quarts: QuartDuJour[],
+  semaines = Math.ceil(nombreDeJours / 7)
 ): Disponibilites {
   const prisParJour = new Map<string, Heures[]>();
   for (const q of quarts) {
@@ -194,7 +249,7 @@ export function disponibilites(
     declarees.set(p.date, [...(declarees.get(p.date) ?? []), p]);
   }
 
-  const jours = Array.from({ length: semaines * 7 }, (_, i) => {
+  const jours = Array.from({ length: nombreDeJours }, (_, i) => {
     const date = ajouterJours(debut, i);
     const dujour = declarees.get(date) ?? [];
     const pris = prisParJour.get(date) ?? [];
