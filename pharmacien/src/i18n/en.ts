@@ -618,6 +618,7 @@ export const en: Dictionnaire = {
     urgences: 'Emergencies',
   },
   veille: {
+    documentDeplace: 'The document has moved. Here is the source page.',
     titre: 'My clinical watch',
     detailMenu: 'Followed subjects, notes, reviews',
     motsCles: 'watch, review, note, subject, source, clinical, veille, révision, sujet',

@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ComponentProps } from 'react';
-import { Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { SECTIONS, type Lien as LienFixe } from '../../src/content/liens';
 import {
@@ -337,7 +337,9 @@ function LigneSource({
     <Pressable
       onPress={() => {
         onOuvrir();
-        void ouvrirSource(source, !!reglagesVeille().veille_navigateur);
+        void ouvrirSource(source, !!reglagesVeille().veille_navigateur, () =>
+          Alert.alert(traduire('veille.documentDeplace'))
+        );
       }}
       onLongPress={() => router.push(`/lien/${source.id}`)}
       delayLongPress={400}

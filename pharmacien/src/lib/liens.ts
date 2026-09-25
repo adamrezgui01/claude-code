@@ -82,18 +82,60 @@ export function parCategorie(liens: Lien[]): { categorie: string; liens: Lien[] 
 }
 
 /**
- * L'adresse qui s'ouvre au toucher.
+ * Ce qui s'ouvre au toucher, et faut-il le dire.
  *
  * Le document d'abord. Quand il manque — un calculateur dont l'adresse exacte
- * reste à trouver —, c'est la page officielle qui prend le relais : l'usager
- * atterrit sur l'accueil de l'organisme plutôt que sur rien, et il complétera
- * l'adresse au fil de l'usage.
+ * reste à trouver —, c'est la page officielle qui prend le relais, sans rien
+ * annoncer : l'usager atterrit sur l'accueil de l'organisme plutôt que sur rien,
+ * et il complétera l'adresse au fil de l'usage.
+ *
+ * `apresEchec` est l'autre cas, et le vrai piège : le document existait, son
+ * adresse est morte. Le MSSS renumérote ses publications à chaque révision — la
+ * même brochure sur les poux est passée de `23-276-01F` à `26-276-01F` —, donc
+ * toute adresse de PDF mourra un jour, et celle de la page, non. On ouvre alors
+ * la page **en le disant** : l'usager a demandé un document et reçoit une page,
+ * il doit savoir pourquoi plutôt que de croire s'être trompé de signet.
  */
+export type Ouverture = { adresse: string; avertir: boolean } | null;
+
+export function ouvertureDuLien(
+  source: { url_document: string; url_reference: string },
+  apresEchec = false
+): Ouverture {
+  const document = source.url_document.trim();
+  const page = source.url_reference.trim();
+  if (!apresEchec) {
+    if (document) return { adresse: document, avertir: false };
+    return page ? { adresse: page, avertir: false } : null;
+  }
+  // Rien d'autre à proposer, ou la même adresse que celle qui vient d'échouer :
+  // la réessayer ne ferait que rejouer l'échec.
+  if (!page || page === document) return null;
+  return { adresse: page, avertir: true };
+}
+
+/** L'adresse seule, pour les appels qui n'ont rien à annoncer. */
 export function adresseDouverture(source: {
   url_document: string;
   url_reference: string;
 }): string | null {
-  return source.url_document.trim() || source.url_reference.trim() || null;
+  return ouvertureDuLien(source)?.adresse ?? null;
+}
+
+/**
+ * Un document introuvable, et pas seulement un serveur de mauvaise humeur.
+ *
+ * Seuls 404 et 410 disent que le document n'est plus là. Un 403 ou un 405 dit
+ * que le serveur n'aime pas notre requête — beaucoup refusent un `HEAD` tout en
+ * servant le `GET` —, et un 500 dit qu'il va mal ce matin. Dans ces cas-là on
+ * ouvre le document quand même : envoyer l'usager sur la page de la source en
+ * annonçant un déménagement qui n'a pas eu lieu serait pire que de le laisser
+ * voir l'erreur du serveur.
+ */
+export const STATUTS_INTROUVABLE = [404, 410];
+
+export function documentIntrouvable(statut: number): boolean {
+  return STATUTS_INTROUVABLE.includes(statut);
 }
 
 /**

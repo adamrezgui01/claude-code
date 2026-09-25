@@ -621,6 +621,7 @@ export const fr = {
     urgences: 'Urgences',
   },
   veille: {
+    documentDeplace: 'Le document a changé d’adresse. Voici la page de la source.',
     titre: 'Ma veille clinique',
     detailMenu: 'Sujets suivis, notes, révisions',
     motsCles: 'veille, révision, note, sujet, source, clinique, watch, review, note, subject, source',

@@ -1,7 +1,7 @@
 import { Linking, Share } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 
-import { adresseDouverture } from '../liens';
+import { adresseDouverture, documentIntrouvable, ouvertureDuLien } from '../liens';
 import { noterConsultation } from '../../db/veille';
 
 /**
@@ -20,11 +20,32 @@ import { noterConsultation } from '../../db/veille';
  */
 export async function ouvrirSource(
   source: { id: number; url_document: string; url_reference: string },
-  navigateurIntegre: boolean
+  navigateurIntegre: boolean,
+  /** Ce que l'écran affiche quand le document a déménagé. Une ligne, pas plus. */
+  avertir?: () => void
 ) {
-  const adresse = adresseDouverture(source);
-  if (!adresse) return;
+  const premier = ouvertureDuLien(source);
+  if (!premier) return;
   noterConsultation(source.id);
+
+  if (await vivant(premier.adresse)) {
+    await ouvrir(premier.adresse, navigateurIntegre);
+    return;
+  }
+
+  // Le document a déménagé. La page de la source, elle, ne bouge pas.
+  const repli = ouvertureDuLien(source, true);
+  if (!repli) {
+    // Rien d'autre à proposer : on ouvre quand même, et l'usager verra l'erreur
+    // du serveur plutôt que rien du tout.
+    await ouvrir(premier.adresse, navigateurIntegre);
+    return;
+  }
+  if (repli.avertir) avertir?.();
+  await ouvrir(repli.adresse, navigateurIntegre);
+}
+
+async function ouvrir(adresse: string, navigateurIntegre: boolean) {
   if (navigateurIntegre) {
     try {
       await WebBrowser.openBrowserAsync(adresse);
@@ -34,6 +55,33 @@ export async function ouvrirSource(
     }
   }
   await Linking.openURL(adresse);
+}
+
+/** Combien de temps on accepte d'attendre avant d'ouvrir malgré tout. */
+const DELAI_VERIFICATION = 2500;
+
+/**
+ * Le document répond-il encore ?
+ *
+ * Une requête `HEAD`, et une seule. Elle ne révèle rien que l'ouverture du lien
+ * ne révélerait de toute façon une seconde plus tard : c'est exactement la même
+ * adresse, sur le même serveur, que Safari va chercher.
+ *
+ * Au moindre doute — pas de réseau, pas de réponse à temps, un serveur qui
+ * refuse la requête —, on répond oui et on ouvre. Un doute ne doit jamais coûter
+ * un geste de plus au comptoir.
+ */
+async function vivant(adresse: string): Promise<boolean> {
+  try {
+    const reponse = await Promise.race([
+      fetch(adresse, { method: 'HEAD' }),
+      new Promise<null>((resoudre) => setTimeout(() => resoudre(null), DELAI_VERIFICATION)),
+    ]);
+    if (!reponse) return true;
+    return !documentIntrouvable(reponse.status);
+  } catch {
+    return true;
+  }
 }
 
 /**

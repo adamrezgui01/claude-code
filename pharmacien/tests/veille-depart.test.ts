@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 
 import { en } from '../src/i18n/en';
 import { fr } from '../src/i18n/fr';
-import { THEMES } from '../src/lib/liens';
+import { documentIntrouvable, ouvertureDuLien, THEMES } from '../src/lib/liens';
 import { SOURCES_DEPART, SUJETS_DEPART } from '../src/lib/veille/depart';
 import {
   correspond,
@@ -767,5 +767,75 @@ describe('le repère du feuillet à remettre', () => {
     // choisir où chercher avant de chercher.
     const themes = (fr.themes as Record<string, string>);
     expect(Object.keys(themes)).not.toContain('patient');
+  });
+});
+
+/**
+ * Quand le document ne s'ouvre pas.
+ *
+ * Le MSSS renumérote ses publications à chaque révision : la même brochure sur
+ * les poux est passée de `23-276-01F` à `26-276-01F`. Toute adresse de PDF
+ * mourra donc un jour, et celle de la page, non.
+ *
+ * La règle de la 2.3 couvrait l'adresse vide. Celle-ci couvre l'adresse morte,
+ * et c'est un cas différent : dans le premier, il n'y a jamais eu de document et
+ * il n'y a rien à annoncer ; dans le second, l'usager a demandé un document et
+ * reçoit une page.
+ */
+describe('le repli quand le document a déménagé', () => {
+  const AVEC = { url_document: 'https://exemple.qc.ca/doc.pdf', url_reference: 'https://exemple.qc.ca/page' };
+
+  test('le document d’abord, sans rien annoncer', () => {
+    expect(ouvertureDuLien(AVEC)).toEqual({ adresse: AVEC.url_document, avertir: false });
+  });
+
+  test('pas de document : la page, et rien à annoncer', () => {
+    // C'est la règle de la 2.3. Il n'y a jamais eu de document : parler d'un
+    // déménagement serait inventer une histoire.
+    expect(ouvertureDuLien({ url_document: '', url_reference: AVEC.url_reference })).toEqual({
+      adresse: AVEC.url_reference,
+      avertir: false,
+    });
+  });
+
+  test('document mort : la page, et on le dit', () => {
+    expect(ouvertureDuLien(AVEC, true)).toEqual({ adresse: AVEC.url_reference, avertir: true });
+  });
+
+  test('rien à proposer : on ne renvoie rien', () => {
+    expect(ouvertureDuLien({ url_document: '', url_reference: '' })).toBeNull();
+    expect(ouvertureDuLien({ url_document: 'https://x/doc.pdf', url_reference: '' }, true)).toBeNull();
+  });
+
+  test('la même adresse des deux côtés ne se réessaie pas', () => {
+    // La rejouer ne ferait que rejouer l'échec.
+    const meme = { url_document: 'https://x/a', url_reference: 'https://x/a' };
+    expect(ouvertureDuLien(meme, true)).toBeNull();
+  });
+
+  test('seuls 404 et 410 disent que le document n’est plus là', () => {
+    expect(documentIntrouvable(404)).toBe(true);
+    expect(documentIntrouvable(410)).toBe(true);
+  });
+
+  test('un serveur de mauvaise humeur n’est pas un déménagement', () => {
+    // Beaucoup de serveurs refusent un HEAD tout en servant le GET, et un 500
+    // dit qu'ils vont mal ce matin. Annoncer un déménagement qui n'a pas eu lieu
+    // serait pire que de laisser voir l'erreur.
+    for (const statut of [200, 301, 403, 405, 500, 503]) {
+      expect({ statut, mort: documentIntrouvable(statut) }).toEqual({ statut, mort: false });
+    }
+  });
+
+  test('l’avis tient sur une ligne, dans les deux langues', () => {
+    expect(fr.veille.documentDeplace).toBe(
+      'Le document a changé d’adresse. Voici la page de la source.'
+    );
+    expect(en.veille.documentDeplace).toBe('The document has moved. Here is the source page.');
+  });
+
+  test('l’écran affiche l’avis quand il est prévenu', () => {
+    const ecran = readFileSync('app/(tabs)/clinique.tsx', 'utf8');
+    expect(ecran).toContain("traduire('veille.documentDeplace')");
   });
 });

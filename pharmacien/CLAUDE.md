@@ -283,6 +283,19 @@ qu'on ne les redécouvre pas trois fois.
   une valeur périmée dans une liste intégrée se recopie sans réfléchir.
   Et une source sans document ouvre sa page officielle : une entrée incomplète
   mène à l'accueil de l'organisme plutôt qu'à rien.
+- Si `url_document` est vide **ou si son ouverture échoue**, on ouvre
+  `url_reference`. Dans le second cas seulement, on le dit d'une ligne : « Le
+  document a changé d'adresse. Voici la page de la source. » L'usager a demandé
+  un document et reçoit une page ; il doit savoir pourquoi plutôt que de croire
+  s'être trompé de signet. Toute adresse de PDF mourra un jour — le MSSS
+  renumérote ses publications à chaque révision —, celle de la page, non.
+  L'échec se vérifie par une requête `HEAD`, qui ne révèle rien que l'ouverture
+  du lien ne révélerait une seconde plus tard, sur la même adresse et le même
+  serveur. Seuls **404 et 410** comptent comme un document disparu : un 403 ou un
+  405 dit qu'un serveur refuse notre requête tout en servant le `GET`, un 500
+  qu'il va mal ce matin. Au moindre doute — pas de réseau, pas de réponse en deux
+  secondes et demie — on ouvre le document : un doute ne doit jamais coûter un
+  geste de plus au comptoir.
 - Le **mode démonstration** remplit une année de travail plausible, et
   plausible veut dire **cohérent** : une pharmacie qui paie 82 $ l'heure en
   janvier les paie encore en juin, et elle est toujours à la même distance. Des
