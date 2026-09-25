@@ -260,6 +260,13 @@ qu'on ne les redécouvre pas trois fois.
   trouve « stérilet au cuivre », « protégée » trouve « relation sexuelle non
   protégée ». C'est ce qui rend un mot-clé de plusieurs mots utile, puisque
   personne ne le tape en entier.
+- Un signet qui s'adresse au **patient** plutôt qu'au pharmacien porte un
+  repère sur sa ligne — « À remettre au patient » — et l'icône de partage **sur
+  la ligne elle-même** : un feuillet, on l'envoie ou on l'imprime, c'est le geste
+  fréquent et il doit coûter une tape. Pas de troisième sous-section pour
+  autant : on cherche « poux » sans savoir d'avance si la réponse est pour soi ou
+  pour lui, et la recherche doit rester une seule recherche. Le repère dit ce
+  qu'on tient au moment d'ouvrir ; il ne décide pas où chercher.
 - Une adresse de document se recopie telle que l'usager l'a relevée, jamais
   retapée de mémoire : une adresse fausse mène à une page d'erreur ou, pire, à
   un guide qui n'est pas celui qu'on cherchait. Et le même document ne paraît

@@ -598,6 +598,7 @@ export const en: Dictionnaire = {
   },
 
   clinique: {
+    aRemettre: 'To hand to the patient',
     bandeauTitre: 'You have searched this three times.',
     bandeauAction: 'Write a note?',
     bandeauPlusTard: 'Later',

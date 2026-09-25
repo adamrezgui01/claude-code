@@ -1,4 +1,4 @@
-import { Linking } from 'react-native';
+import { Linking, Share } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 
 import { adresseDouverture } from '../liens';
@@ -34,6 +34,27 @@ export async function ouvrirSource(
     }
   }
   await Linking.openURL(adresse);
+}
+
+/**
+ * Partager un feuillet à remettre au patient.
+ *
+ * On l'envoie par texto, par courriel, ou on l'imprime — la feuille du système
+ * sait faire les trois. L'application n'envoie rien elle-même et ne garde aucune
+ * trace de ce qui a été envoyé : elle passe l'adresse au système, et c'est tout.
+ */
+export async function partagerSource(source: {
+  url_document: string;
+  url_reference: string;
+  titre: string;
+}) {
+  const adresse = adresseDouverture(source);
+  if (!adresse) return;
+  try {
+    await Share.share({ message: `${source.titre} — ${adresse}`, url: adresse });
+  } catch {
+    // Feuille de partage refermée, ou refusée par le système : rien à dire.
+  }
 }
 
 /**

@@ -725,3 +725,47 @@ describe('on retrouve les poux de tête', () => {
     }
   });
 });
+
+/**
+ * Le feuillet à remettre, vu de l'écran.
+ *
+ * Une troisième sous-section obligerait à se souvenir laquelle contient quoi
+ * avant de chercher. Or on cherche « poux » sans savoir d'avance si la réponse
+ * est pour soi ou pour le patient : la recherche reste une seule recherche, et
+ * c'est au moment d'ouvrir qu'on veut le savoir.
+ */
+describe('le repère du feuillet à remettre', () => {
+  const ecran = readFileSync('app/(tabs)/clinique.tsx', 'utf8');
+
+  test('la ligne porte l’étiquette, dans les deux langues', () => {
+    expect(ecran).toContain("traduire('clinique.aRemettre')");
+    expect(fr.clinique.aRemettre).toBe('À remettre au patient');
+    expect(en.clinique.aRemettre).toBe('To hand to the patient');
+  });
+
+  test('l’étiquette ne paraît que sur un feuillet', () => {
+    // `aRemettre` vient de la colonne, pas d'une supposition sur le titre.
+    expect(ecran).toContain('const aRemettre = !!source.pour_patient;');
+    expect(ecran).toContain('{aRemettre && (');
+  });
+
+  test('l’icône de partage est sur la ligne, pas seulement dans le document', () => {
+    // Un feuillet, on l'envoie ou on l'imprime : c'est le geste fréquent, et il
+    // doit coûter une tape.
+    expect(ecran).toContain('partagerSource(source)');
+    expect(ecran).toContain('name="share-outline"');
+  });
+
+  test('elle porte son étiquette accessible', () => {
+    // Une icône seule ne dit rien du tout quand on ne voit pas l'écran.
+    const partage = ecran.slice(ecran.indexOf('partagerSource(source)'));
+    expect(partage.slice(0, 400)).toContain("accessibilityLabel={traduire('commun.partager')}");
+  });
+
+  test('aucune troisième sous-section n’est apparue', () => {
+    // Le repère est sur la ligne. Une section « Pour le patient » obligerait à
+    // choisir où chercher avant de chercher.
+    const themes = (fr.themes as Record<string, string>);
+    expect(Object.keys(themes)).not.toContain('patient');
+  });
+});

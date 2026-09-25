@@ -22,14 +22,14 @@ import {
 import { useTextes } from '../../src/i18n';
 import { aujourdhui } from '../../src/lib/dates';
 import { titreDuLien } from '../../src/lib/liens';
-import { ouvrirSource } from '../../src/lib/veille/ouvrir';
+import { ouvrirSource, partagerSource } from '../../src/lib/veille/ouvrir';
 import { filtrerSources, type SourceCherchable } from '../../src/lib/veille/recherche';
 import { parTheme, type Theme } from '../../src/lib/liens';
 import { MOTS_CLES_DOSE } from '../../src/lib/dose';
 import { cleARevoir } from '../../src/lib/veille/recherches';
 import { nomDuSujet } from '../../src/lib/veille/sujets';
 import { etatVeille } from '../../src/lib/veille/tableau';
-import { Doux, Ecran, Fondu, SousTitre, Vide } from '../../src/ui/composants';
+import { Doux, Ecran, Etiquette, Fondu, SousTitre, Vide } from '../../src/ui/composants';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 
 type SourceListee = Source & SourceCherchable;
@@ -332,6 +332,7 @@ function LigneSource({
 }) {
   const accent = useAccent();
   const router = useRouter();
+  const aRemettre = !!source.pour_patient;
   return (
     <Pressable
       onPress={() => {
@@ -341,7 +342,11 @@ function LigneSource({
       onLongPress={() => router.push(`/lien/${source.id}`)}
       delayLongPress={400}
       style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-      <Ionicons name="document-text-outline" size={18} color={accent} />
+      <Ionicons
+        name={aRemettre ? 'person-outline' : 'document-text-outline'}
+        size={18}
+        color={accent}
+      />
       <View style={styles.texte}>
         <Text style={styles.titre}>{titreDuLien(source, traduire)}</Text>
         {!!source.organisation && (
@@ -350,7 +355,26 @@ function LigneSource({
             {source.version ? ` · ${source.version}` : ''}
           </Text>
         )}
+        {/* Un feuillet à remettre n'est pas une référence à consulter. Ça se
+            sait au moment d'ouvrir, pas dans une section à part : on cherche
+            « poux » sans savoir d'avance si la réponse est pour soi. */}
+        {aRemettre && (
+          <View style={styles.etiquette}>
+            <Etiquette texte={traduire('clinique.aRemettre')} ton="succes" />
+          </View>
+        )}
       </View>
+      {/* Un feuillet, on l'envoie ou on l'imprime : c'est le geste fréquent, et
+          il coûte une tape ici plutôt que trois dans le document ouvert. */}
+      {aRemettre && (
+        <Pressable
+          onPress={() => void partagerSource(source)}
+          accessibilityRole="button"
+          accessibilityLabel={traduire('commun.partager')}
+          hitSlop={12}>
+          <Ionicons name="share-outline" size={18} color={accent} />
+        </Pressable>
+      )}
       <Pressable
         onPress={() => router.push(`/lien/${source.id}`)}
         accessibilityRole="button"
@@ -433,6 +457,9 @@ const styles = StyleSheet.create({
   texte: { flex: 1, gap: 2 },
   titre: { flex: 1, fontSize: 15, fontFamily: police.demi, color: couleurs.texte },
   detail: { fontSize: 13, fontFamily: police.normal, color: couleurs.doux },
+  etiquette: {
+    marginTop: espace.xs,
+  },
   entete: {
     flexDirection: 'row',
     alignItems: 'center',

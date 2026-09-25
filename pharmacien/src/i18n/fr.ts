@@ -601,6 +601,7 @@ export const fr = {
   },
 
   clinique: {
+    aRemettre: 'À remettre au patient',
     bandeauTitre: 'Tu as cherché ça trois fois.',
     bandeauAction: 'Écrire une note ?',
     bandeauPlusTard: 'Plus tard',
