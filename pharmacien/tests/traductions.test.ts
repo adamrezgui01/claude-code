@@ -122,3 +122,40 @@ describe('le menu', () => {
     expect(manquantes).toEqual([]);
   });
 });
+
+/**
+ * « Mes dispos » n'est qu'à un endroit.
+ *
+ * L'entrée existait à la fois dans l'en-tête de l'Horaire et dans le Menu. Un
+ * doublon oblige à choisir un chemin, et on finit par ne plus savoir lequel est
+ * le vrai. Celle de l'en-tête reste : les disponibilités se déclarent en
+ * regardant son calendrier, pas en fouillant dans un menu.
+ */
+describe('un seul chemin vers « Mes dispos »', () => {
+  const menu = readFileSync(join('app', '(tabs)', 'menu.tsx'), 'utf8');
+  const horaire = readFileSync(join('app', '(tabs)', 'index.tsx'), 'utf8');
+
+  test('le Menu n’y mène plus', () => {
+    const bloc = menu.slice(menu.indexOf('const ENTREES'), menu.indexOf('] as const'));
+    expect(bloc).not.toContain('/disponibilites');
+    expect(bloc).not.toContain("cle: 'dispos'");
+  });
+
+  test('l’en-tête de l’Horaire y mène toujours', () => {
+    expect(horaire).toContain("router.push('/disponibilites')");
+  });
+
+  test('le Menu garde Profil et Paramètres', () => {
+    const bloc = menu.slice(menu.indexOf('const ENTREES'), menu.indexOf('] as const'));
+    const cles = [...bloc.matchAll(/cle: '(\w+)'/g)].map((t) => t[1]);
+    expect(cles).toEqual(['profil', 'parametres']);
+  });
+
+  test('les textes de l’entrée retirée partent avec elle', () => {
+    // Une clé que plus personne n'appelle finit par être recopiée ailleurs.
+    for (const cle of ['menu.dispos', 'menu.disposDetail', 'menu.disposMots']) {
+      expect({ cle, fr: FR.has(cle) }).toEqual({ cle, fr: false });
+      expect({ cle, en: EN.has(cle) }).toEqual({ cle, en: false });
+    }
+  });
+});

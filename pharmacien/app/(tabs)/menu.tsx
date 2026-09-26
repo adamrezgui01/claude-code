@@ -14,8 +14,14 @@ import { useTextes } from '../../src/i18n';
  * pas des réglages. Il réunit ce que la 1.3 avait éparpillé entre un onglet et
  * un menu à trois barres.
  */
+/*
+ * « Mes dispos » n'est pas ici, et c'est délibéré : l'entrée vit dans l'en-tête
+ * de l'Horaire. Les disponibilités se déclarent en regardant son calendrier,
+ * pas en fouillant dans un menu — la proximité avec l'horaire est tout
+ * l'intérêt de la fonction. Deux chemins vers le même écran obligeaient à
+ * choisir, et on finissait par ne plus savoir lequel était le vrai.
+ */
 const ENTREES = [
-  { chemin: '/disponibilites', icone: 'calendar-clear-outline' as const, cle: 'dispos' },
   { chemin: '/profil', icone: 'person-outline' as const, cle: 'profil' },
   { chemin: '/parametres', icone: 'options-outline' as const, cle: 'parametres' },
 ] as const;
