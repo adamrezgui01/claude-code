@@ -196,6 +196,9 @@ export function Champ({
           !nu && actif && { borderColor: accent },
         ]}
         ref={champRef}
+        // L'étiquette est un Text à côté, pas dans le champ : sans ça,
+        // VoiceOver annonce « champ de texte » et rien d'autre.
+        accessibilityLabel={label}
         value={valeur}
         onChangeText={onChange}
         onSubmitEditing={onTermine}

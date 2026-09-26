@@ -62,34 +62,18 @@ describe('une section de liste', () => {
 });
 
 describe('le contrôle, tel que l’écran le pose', () => {
+  // Le contrôle monté — trois éléments, le nombre réel, le déploiement, le
+  // repli, la cible de 44 points — est vérifié dans
+  // tests/ecrans/liste-repliable.test.tsx.
+  //
+  // Une seule assertion reste ici : le retour du défilement sur l'en-tête ne
+  // se voit pas dans un rendu de test, puisqu'il n'y a pas de vue défilante.
   const source = readFileSync(join('src', 'ui', 'ListeRepliable.tsx'), 'utf8');
 
   test('le repli ramène le défilement sur l’en-tête', () => {
     // Sans ça, on se retrouve au milieu de l'écran sans savoir où : tout ce
     // qu'on regardait vient de remonter de dix lignes.
     expect(source).toContain("if (controle === 'replier') defilement?.vers(hauteurDuHaut.current)");
-  });
-
-  test('l’en-tête vit dans la section, puisque c’est lui qu’on ramène', () => {
-    expect(source).toContain('enTete');
-  });
-
-  test('icône et mot, jamais le chevron seul', () => {
-    // Un chevron seul ne dit pas combien d'éléments sont cachés.
-    expect(source).toContain("t('commun.reduire')");
-    expect(source).toContain("t('commun.voirLes', { count: total })");
-    expect(source).toContain("'chevron-up'");
-    expect(source).toContain("'chevron-down'");
-  });
-
-  test('le contrôle est à la même place dans les deux états', () => {
-    // Un seul bloc, une seule position : un contrôle qui saute d'un endroit à
-    // l'autre se rate une fois sur deux.
-    expect(source.match(/controle !== null/g)).toHaveLength(1);
-  });
-
-  test('la cible tactile fait au moins 44 points', () => {
-    expect(source).toContain('minHeight: 44');
   });
 });
 

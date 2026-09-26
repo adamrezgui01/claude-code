@@ -113,36 +113,20 @@ describe('l’écran, tel qu’il branche la chaîne', () => {
 });
 
 describe('le bouton « Terminer »', () => {
+  // Le bouton lui-même — hauteur, coins, couleurs, appui — est vérifié dans
+  // tests/ecrans/champ.test.tsx, où il est monté pour de vrai.
+  //
+  // Les assertions qui vivaient ici lisaient src/ui/composants.tsx et y
+  // cherchaient des mots. Elles se sont fait prendre deux fois : elles sont
+  // restées vertes alors que le bouton était tombé à 28 points, parce que
+  // « minHeight: 44 » restait écrit dans la feuille de style sans être
+  // appliqué ; et elles sont devenues rouges sur un simple reformatage du
+  // JSX, qui ne changeait rien pour personne.
+  //
+  // Une seule assertion reste ici, parce qu'elle ne porte pas sur le rendu.
   const composants = readFileSync(join('src', 'ui', 'composants.tsx'), 'utf8');
 
-  /** Un seul style, sans ce qui le suit : un `toContain` sur tout le fichier passe toujours. */
-  function style(nom: string): string {
-    const debut = composants.indexOf(`${nom}: {`);
-    expect({ nom, trouve: debut !== -1 }).toEqual({ nom, trouve: true });
-    return composants.slice(debut, composants.indexOf('\n  },', debut));
-  }
-
-  test('il mesure au moins 44 points de haut', () => {
-    expect(style('barreBouton')).toContain('minHeight: 44');
-  });
-
-  test('c’est un vrai bouton, pas du texte mauve', () => {
-    // Fond mauve, texte blanc, coins arrondis : dans une barre grise, un mot
-    // coloré ne se lit pas comme une commande.
-    expect(composants).toContain('styles.barreBouton,\n                { backgroundColor: accent },');
-    expect(style('barreTexte')).toContain("color: '#FFFFFF'");
-    expect(style('barreBouton')).toContain('borderRadius: rayon');
-  });
-
-  test('il est aligné à droite dans la barre', () => {
-    expect(style('barreClavier')).toContain("justifyContent: 'flex-end'");
-  });
-
-  test('c’est un bouton pour VoiceOver aussi', () => {
-    expect(composants).toContain('accessibilityRole="button"');
-  });
-
-  test('sans enchaînement à proposer, il ferme le clavier', () => {
+  test('sans enchaînement à proposer, il ferme le clavier', async () => {
     // C'est le seul bouton d'un pavé numérique sur iOS : il ne peut pas ne
     // rien faire sur les écrans qui n'ont pas de suite.
     expect(composants).toContain('onPress={onTermine ?? Keyboard.dismiss}');

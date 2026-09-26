@@ -59,14 +59,49 @@ erreur : une régression casse la suite.
 
 ## Où vivent les tests
 
-Dans `tests/`, un fichier par domaine. Ils portent sur la logique — les
-fonctions pures de `src/lib/` — jamais sur l'interface ni sur le stockage.
-SQLite, `expo-secure-store` et les notifications ne tournent pas dans Jest, et
-n'ont rien à apprendre sur un calcul de toute façon. Les données se construisent
-dans le test lui-même, avec les fabriques de `tests/fabriques.ts`.
+Dans `tests/`, un fichier par domaine, en trois sortes.
 
-Un calcul mêlé au code d'un écran est un calcul qu'on ne peut pas vérifier :
-il s'extrait dans une fonction pure, que l'écran appelle ensuite.
+**La logique**, à la racine de `tests/`. Les fonctions pures de `src/lib/`,
+avec les données construites dans le test lui-même par les fabriques de
+`tests/fabriques.ts`. C'est le gros de la suite. Un calcul mêlé au code d'un
+écran est un calcul qu'on ne peut pas vérifier : il s'extrait dans une
+fonction pure, que l'écran appelle ensuite.
+
+**La base**, dans `tests/base-reelle.test.ts`. Un vrai SQLite, monté en
+mémoire par `node:sqlite` et présenté à l'application sous l'interface
+d'`expo-sqlite` (`tests/base.ts`). Le schéma monte pour de vrai, les
+migrations repassent pour de vrai, chaque écriture de `src/db/` s'exécute au
+moins une fois.
+
+Cette partie existe parce que son absence a coûté deux plantages en
+production : `5 values for 6 columns` et
+`NOT NULL constraint failed: liens.url`. Les deux fois, la suite était verte,
+parce qu'un faux carnet en mémoire ne compte pas les colonnes et n'a pas de
+contrainte. Toute nouvelle table, colonne ou écriture passe donc par un test
+qui l'exécute. Ça ne prouve pas que le SQLite d'iOS se comporte à l'identique
+— ce n'est pas le même build — mais ça attrape tout ce qui est du SQL.
+
+**Les écrans**, dans `tests/ecrans/`, en `.tsx`. Le composant est monté avec
+`tests/ecrans/socle.tsx`, on appuie dessus, et on lit ce qui s'affiche.
+`render` est asynchrone depuis React 19 : chaque appel s'attend.
+
+Ne jamais vérifier un écran en lisant son fichier source. Chercher des mots
+dans du code revient à relire une recette pour s'assurer que le mot « four »
+y est sans jamais allumer le four, et ça se trompe dans les deux sens :
+
+- Le bouton « Terminer » est tombé à 28 points, et le test est resté vert :
+  `minHeight: 44` restait écrit dans la feuille de style, simplement plus
+  appliqué au bouton. Les styles se composent ; un fichier ne se compose pas.
+- Un reformatage du même JSX, qui ne changeait rien pour personne, a fait
+  rougir le même test.
+
+La lecture du source garde exactement deux emplois : ce qui n'a pas de rendu
+(le retour du défilement, une valeur par défaut d'appel), et les règles
+transversales (aucun texte français en dur, aucune icône sans étiquette). Pour
+tout le reste, le composant se monte.
+
+`expo-sqlite` et `expo-router` se remplacent par `jest.mock` en tête de
+fichier ; `expo-secure-store` et les notifications ne tournent pas dans Jest.
 
 ## Les règles que ces tests tiennent
 
@@ -194,9 +229,20 @@ qu'on ne les redécouvre pas trois fois.
   le voit pas. Un test lit les écrans et refuse une commande muette. Un seul
   jeu d'icônes dans toute l'application — Ionicons —, et une cible tactile d'au
   moins 44 points même quand l'icône en occupe 24.
-- Un texte affiché vit dans `src/i18n`, jamais en dur dans un écran. La
-  facture fait exception dans l'autre sens : elle est toujours en français,
-  quelle que soit la langue choisie.
+- Un texte affiché vit dans `src/i18n`, jamais en dur dans un écran. Deux
+  exceptions, et deux seulement. La facture est toujours en français, quelle
+  que soit la langue choisie. L'écran de plantage a ses textes en dur parce
+  qu'il est le seul qui doive fonctionner quand tout le reste est cassé, y
+  compris les traductions — qui se chargent au démarrage, juste à côté de la
+  base : un écran de plantage qui plante en cherchant sa traduction ne sert à
+  rien.
+- Une erreur de rendu n'emporte jamais l'application. `src/ui/Filet.tsx` est
+  exporté comme `ErrorBoundary` par `app/_layout.tsx`, et expo-router le monte
+  au-dessus de tout : l'ouverture de la base et le chargement des traductions
+  compris. Il dit ce qui s'est passé, que les données sont intactes — c'est
+  vrai, une erreur de rendu n'efface rien —, puis propose deux gestes :
+  réessayer, et copier le détail. Rapporter un bogue ne doit pas obliger à le
+  recopier d'une photo d'écran.
 - **Une seule notification automatique par jour**, le soir, à la même heure :
   le rendez-vous. Six rappels vivaient chacun de leur côté — un quart, un mémo
   de fin de quart, un document qui expire, une facture impayée, des notes à

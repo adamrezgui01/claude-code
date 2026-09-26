@@ -1,0 +1,51 @@
+# Les tests de l'application « pharmacien remplaçant », à chaque poussée.
+#
+# Jusqu'ici, les 1102 tests ne tournaient que quand quelqu'un pensait à les
+# lancer. Ils tournent maintenant tout seuls, et une vérification oubliée n'est
+# plus une vérification sautée.
+#
+# Node 22 n'est pas un détail : les tests ouvrent une vraie base SQLite par
+# `node:sqlite`, qui n'existe pas avant.
+
+name: pharmacien
+
+on:
+  push:
+    paths:
+      - 'pharmacien/**'
+      - '.github/workflows/pharmacien.yml'
+  pull_request:
+    paths:
+      - 'pharmacien/**'
+      - '.github/workflows/pharmacien.yml'
+
+defaults:
+  run:
+    working-directory: pharmacien
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: pharmacien/package-lock.json
+
+      - run: npm ci
+
+      # Les trois mêmes commandes qu'en local, dans le même ordre.
+      - name: Types
+        run: npx tsc --noEmit
+
+      - name: Lint et tests
+        run: npm test
+
+      # L'export attrape ce que les tests ne voient pas : un import cassé, un
+      # module introuvable, un écran qui ne se compile pas. Deux des pannes du
+      # mois dernier se seraient arrêtées ici.
+      - name: Export iOS
+        run: npx expo export --platform ios

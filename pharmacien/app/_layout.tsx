@@ -23,8 +23,18 @@ import { langueActive } from '../src/lib/langue';
 import { preparerNotifications } from '../src/lib/notifications';
 import { replanifierRendezVous } from '../src/lib/reprogrammer';
 import { Bienvenue } from '../src/ui/Bienvenue';
+import { EcranDePlantage } from '../src/ui/Filet';
 import { ACCENT_DEFAUT, couleurs, FournisseurTheme, police } from '../src/ui/theme';
 import { useTextes } from '../src/i18n';
+
+/**
+ * Le filet, posé à la racine : il attrape ce qu'aucun écran n'a attrapé.
+ *
+ * expo-router monte chaque route dans un `Try` et cherche cet export. À la
+ * racine, il couvre donc toute l'application, y compris l'ouverture de la
+ * base et le chargement des traductions faits ci-dessous.
+ */
+export { EcranDePlantage as ErrorBoundary };
 
 export default function Racine() {
   const { t } = useTextes();
