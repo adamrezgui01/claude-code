@@ -338,6 +338,7 @@ export const en: Dictionnaire = {
 
   statistiques: {
     periode: 'Period',
+    periodeDouzeMois: '12 months',
     ceMois: 'This month',
     moisDernier: 'Last month',
     troisMois: '3 months',

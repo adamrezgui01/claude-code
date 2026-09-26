@@ -1,4 +1,7 @@
-import { quartDansPeriode, quartsDeLaPeriode } from '../src/lib/periodes';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+import { bornes, PRESET_DEFAUT, quartDansPeriode, quartsDeLaPeriode } from '../src/lib/periodes';
 import { calculerStatistiques } from '../src/lib/stats';
 import { serieMensuelle, valeurDe } from '../src/lib/mensuel';
 import { unQuart } from './fabriques';
@@ -58,5 +61,54 @@ describe('un quart de nuit appartient au jour où il commence', () => {
     expect(quartDansPeriode(quart, '2026-10-01', '2026-10-31')).toBe(true);
     expect(quartDansPeriode(unQuart({ date: '2026-10-31' }), '2026-10-01', '2026-10-31')).toBe(true);
     expect(quartDansPeriode(unQuart({ date: '2026-09-30' }), '2026-10-01', '2026-10-31')).toBe(false);
+  });
+});
+
+/**
+ * La période de douze mois.
+ *
+ * Un remplaçant regarde son année, pas sa semaine. Et le graphique en dessous
+ * couvre déjà douze mois : avant, le total au-dessus disait septembre pendant
+ * que la courbe partait d'octobre dernier, et les deux chiffres n'avaient
+ * aucun rapport.
+ *
+ * Date de référence : samedi 26 septembre 2026.
+ */
+describe('les périodes offertes', () => {
+  /*
+   * L'horloge est figée, et par les faux minuteurs plutôt qu'en espionnant
+   * `Date.now` : `aujourdhui()` appelle `new Date()`, que `Date.now` ne touche
+   * pas. Un test qui ne passerait que le jour où il a été écrit ne prouve rien.
+   */
+  beforeAll(() => {
+    jest.useFakeTimers({ doNotFake: ['nextTick'] });
+    jest.setSystemTime(new Date(2026, 8, 26, 12, 0, 0));
+  });
+  afterAll(() => jest.useRealTimers());
+
+  test('douze mois est la période par défaut', () => {
+    expect(PRESET_DEFAUT).toBe('douzeMois');
+  });
+
+  test('elle couvre onze mois en arrière, plus le mois courant', () => {
+    // Exactement la fenêtre du graphique, qui compte ses douze mois de la
+    // même façon : d'octobre 2025 à septembre 2026 inclusivement.
+    expect(bornes('douzeMois', '', '')).toEqual(['2025-10-01', '2026-09-30']);
+  });
+
+  test('les quatre autres périodes n’ont pas bougé', () => {
+    expect(bornes('mois', '', '')).toEqual(['2026-09-01', '2026-09-30']);
+    expect(bornes('moisDernier', '', '')).toEqual(['2026-08-01', '2026-08-31']);
+    expect(bornes('trimestre', '', '')).toEqual(['2026-07-01', '2026-09-30']);
+    expect(bornes('personnalisee', '2026-03-04', '2026-05-06')).toEqual([
+      '2026-03-04',
+      '2026-05-06',
+    ]);
+  });
+
+  test('l’écran ouvre sur la période par défaut', () => {
+    const source = readFileSync(join('app', '(tabs)', 'statistiques.tsx'), 'utf8');
+    expect(source).toContain('useState<Preset>(PRESET_DEFAUT)');
+    expect(source).toContain("valeur: 'douzeMois' as const");
   });
 });

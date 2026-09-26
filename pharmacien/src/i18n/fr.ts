@@ -340,6 +340,7 @@ export const fr = {
 
   statistiques: {
     periode: 'Période',
+    periodeDouzeMois: '12 mois',
     ceMois: 'Ce mois',
     moisDernier: 'Mois dernier',
     troisMois: '3 mois',

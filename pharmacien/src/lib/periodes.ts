@@ -1,6 +1,16 @@
 import { ajouterMois, aujourdhui, debutMois, finMois } from './dates';
 
-export type Preset = 'mois' | 'moisDernier' | 'trimestre' | 'personnalisee';
+export type Preset = 'douzeMois' | 'mois' | 'moisDernier' | 'trimestre' | 'personnalisee';
+
+/**
+ * La période à l'ouverture : douze mois.
+ *
+ * Un remplaçant regarde son année, pas sa semaine. Et le graphique en dessous
+ * couvre déjà douze mois : les deux disent enfin la même chose, au lieu de
+ * montrer un total de septembre au-dessus d'une courbe qui part d'octobre
+ * dernier.
+ */
+export const PRESET_DEFAUT: Preset = 'douzeMois';
 
 /** Bornes de la période choisie, au format `AAAA-MM-JJ`. */
 export function bornes(preset: Preset, debut: string, fin: string): [string, string] {
@@ -14,6 +24,10 @@ export function bornes(preset: Preset, debut: string, fin: string): [string, str
     }
     case 'trimestre':
       return [debutMois(ajouterMois(ceJour, -2)), finMois(ceJour)];
+    // Onze mois en arrière plus le mois courant : exactement la fenêtre du
+    // graphique, qui compte ses douze mois de la même façon.
+    case 'douzeMois':
+      return [debutMois(ajouterMois(ceJour, -11)), finMois(ceJour)];
     default:
       return [debut, fin];
   }

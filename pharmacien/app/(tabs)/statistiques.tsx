@@ -1,13 +1,13 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { listerFraisPeriode } from '../../src/db/frais';
 import { listerPharmacies, listerPharmaciesRecentes } from '../../src/db/pharmacies';
 import { listerQuartsPeriode } from '../../src/db/quarts';
 import type { Pharmacie } from '../../src/db/types';
 import { aujourdhui, debutMois, formatDateCourte } from '../../src/lib/dates';
-import { bornes, type Preset } from '../../src/lib/periodes';
+import { bornes, PRESET_DEFAUT, type Preset } from '../../src/lib/periodes';
 import { argent, heures, nombre } from '../../src/lib/format';
 import { MESURES, moisEnValeur, serieMensuelle, type Mesure } from '../../src/lib/mensuel';
 import { calculerStatistiques } from '../../src/lib/stats';
@@ -39,7 +39,7 @@ export default function Statistiques() {
   const router = useRouter();
   const [pharmacies, setPharmacies] = useState<Pharmacie[]>([]);
   const [recentes, setRecentes] = useState<Pharmacie[]>([]);
-  const [preset, setPreset] = useState<Preset>('mois');
+  const [preset, setPreset] = useState<Preset>(PRESET_DEFAUT);
   const [debutPerso, setDebutPerso] = useState(() => debutMois(aujourdhui()));
   const [finPerso, setFinPerso] = useState(() => aujourdhui());
   const [selection, setSelection] = useState<number[]>([]);
@@ -100,18 +100,24 @@ export default function Statistiques() {
   return (
     <Ecran>
       {/* Libellés courts : un trait qui glisse ne peut pas suivre sur deux
-          rangées, donc la rangée doit tenir sur une seule ligne. */}
-      <Onglets
-        libelle={t('statistiques.periode')}
-        options={[
-          { valeur: 'mois' as const, texte: t('statistiques.ceMois') },
-          { valeur: 'moisDernier' as const, texte: t('statistiques.moisDernier') },
-          { valeur: 'trimestre' as const, texte: t('statistiques.troisMois') },
-          { valeur: 'personnalisee' as const, texte: t('commun.autre') },
-        ]}
-        valeur={preset}
-        onChange={setPreset}
-      />
+          rangées, donc la rangée doit tenir sur une seule ligne. Cinq choix ne
+          tiennent pas sur la largeur d'un petit téléphone : la rangée défile à
+          l'horizontale, et « 12 mois » vient en premier parce que c'est celui
+          qui est actif à l'ouverture. */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <Onglets
+          libelle={t('statistiques.periode')}
+          options={[
+            { valeur: 'douzeMois' as const, texte: t('statistiques.periodeDouzeMois') },
+            { valeur: 'mois' as const, texte: t('statistiques.ceMois') },
+            { valeur: 'moisDernier' as const, texte: t('statistiques.moisDernier') },
+            { valeur: 'trimestre' as const, texte: t('statistiques.troisMois') },
+            { valeur: 'personnalisee' as const, texte: t('commun.autre') },
+          ]}
+          valeur={preset}
+          onChange={setPreset}
+        />
+      </ScrollView>
       {preset === 'personnalisee' ? (
         <>
           <SelecteurDate label={t('commun.du')} valeur={debutPerso} onChange={setDebutPerso} />
