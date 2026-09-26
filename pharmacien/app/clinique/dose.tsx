@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useRef, useState, type RefObject } from 'react';
+import { Alert, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import {
   creerRaccourci,
@@ -15,7 +15,9 @@ import {
   calculerDose,
   enKilogrammes,
   enLivres,
+  prochainChamp,
   valeurExacte,
+  type ChampDose,
   type UniteDose,
 } from '../../src/lib/dose';
 import { analyserNombre } from '../../src/lib/format';
@@ -51,6 +53,33 @@ export default function CalculateurDose() {
   const [maxParJour, setMaxParJour] = useState('');
   const [raccourcis, setRaccourcis] = useState(listerRaccourcis);
   const [nomRaccourci, setNomRaccourci] = useState('');
+
+  /** Un renvoi par champ de la chaîne, pour ouvrir le suivant depuis le précédent. */
+  const poidsRef = useRef<TextInput | null>(null);
+  const doseRef = useRef<TextInput | null>(null);
+  const concentrationMgRef = useRef<TextInput | null>(null);
+  const concentrationMlRef = useRef<TextInput | null>(null);
+  const champs: Record<ChampDose, RefObject<TextInput | null>> = {
+    poids: poidsRef,
+    dose: doseRef,
+    concentrationMg: concentrationMgRef,
+    concentrationMl: concentrationMlRef,
+  };
+
+  /**
+   * Passer au prochain champ obligatoire encore vide.
+   *
+   * Sur le dernier, le clavier se ferme : le résultat est déjà calculé, et il
+   * reste caché derrière le clavier tant qu'on ne le referme pas.
+   */
+  function enchainer(courant: ChampDose) {
+    const suivant = prochainChamp(courant, { poids, dose, concentrationMg, concentrationMl });
+    if (!suivant) {
+      Keyboard.dismiss();
+      return;
+    }
+    champs[suivant].current?.focus();
+  }
 
   const poidsSaisi = analyserNombre(poids);
   const poidsKg = enKilogrammes(poidsSaisi, unitePoids);
@@ -152,6 +181,8 @@ export default function CalculateurDose() {
         onChange={setPoids}
         clavier="decimal-pad"
         placeholder={t('dose.poidsPlaceholder')}
+        champRef={champs.poids}
+        onTermine={() => enchainer('poids')}
       />
       <View style={styles.bascule}>
         {(['kg', 'lb'] as const).map((u) => (
@@ -181,6 +212,8 @@ export default function CalculateurDose() {
         onChange={setDose}
         clavier="decimal-pad"
         aide={t('dose.doseAide')}
+        champRef={champs.dose}
+        onTermine={() => enchainer('dose')}
       />
       <View style={styles.bascule}>
         {(['parJour', 'parPrise'] as const).map((u) => (
@@ -206,12 +239,16 @@ export default function CalculateurDose() {
           valeur={concentrationMg}
           onChange={setConcentrationMg}
           clavier="decimal-pad"
+          champRef={champs.concentrationMg}
+          onTermine={() => enchainer('concentrationMg')}
         />
         <Champ
           label={t('dose.ml')}
           valeur={concentrationMl}
           onChange={setConcentrationMl}
           clavier="decimal-pad"
+          champRef={champs.concentrationMl}
+          onTermine={() => enchainer('concentrationMl')}
         />
       </View>
 

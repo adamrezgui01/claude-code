@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   type ComponentProps,
+  type RefObject,
 } from 'react';
 import {
   Animated,
@@ -150,6 +151,8 @@ export function Champ({
   avertissement,
   auto,
   nu,
+  champRef,
+  onTermine,
 }: {
   label: string;
   valeur: string;
@@ -163,6 +166,13 @@ export function Champ({
   auto?: 'characters' | 'none' | 'sentences' | 'words';
   /** Posé dans une section : le cadre est déjà là, le champ n'en remet pas un. */
   nu?: boolean;
+  /** Pour qu'un écran puisse ouvrir ce champ depuis le précédent. */
+  champRef?: RefObject<TextInput | null>;
+  /**
+   * Ce que « Terminé » fait, quand l'écran a une suite à proposer. Par défaut,
+   * il ferme le clavier : c'est le seul bouton d'un pavé numérique sur iOS.
+   */
+  onTermine?: () => void;
 }) {
   const { t } = useTextes();
   const accent = useAccent();
@@ -185,8 +195,10 @@ export function Champ({
           multiligne && styles.saisieMultiligne,
           !nu && actif && { borderColor: accent },
         ]}
+        ref={champRef}
         value={valeur}
         onChangeText={onChange}
+        onSubmitEditing={onTermine}
         onFocus={() => setActif(true)}
         onBlur={() => setActif(false)}
         placeholder={placeholder}
@@ -202,9 +214,25 @@ export function Champ({
       />
       {barre && (
         <InputAccessoryView nativeID={identifiant}>
+          {/*
+            Un vrai bouton, pas du texte mauve : dans une barre grise au-dessus
+            du clavier, un mot coloré ne se lit pas comme une commande.
+
+            Rien ne peut s'afficher sous le clavier sur iOS — il occupe le bas
+            de l'écran et la barre d'accessoires est toujours au-dessus. Ce
+            n'est pas un choix de mise en page, c'est la plateforme.
+          */}
           <View style={styles.barreClavier}>
-            <Pressable onPress={Keyboard.dismiss} hitSlop={10}>
-              <Text style={[styles.barreTexte, { color: accent }]}>{t('commun.termine')}</Text>
+            <Pressable
+              onPress={onTermine ?? Keyboard.dismiss}
+              hitSlop={10}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.barreBouton,
+                { backgroundColor: accent },
+                pressed && { opacity: 0.8 },
+              ]}>
+              <Text style={styles.barreTexte}>{t('commun.termine')}</Text>
             </Pressable>
           </View>
         </InputAccessoryView>
@@ -850,9 +878,17 @@ const styles = StyleSheet.create({
     paddingVertical: espace.s,
     paddingHorizontal: espace.l,
   },
+  barreBouton: {
+    /* La même cible que partout ailleurs : quarante-quatre points. */
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: espace.xl,
+    borderRadius: rayon,
+  },
   barreTexte: {
     fontSize: 16,
     fontFamily: police.demi,
+    color: '#FFFFFF',
   },
   titre: {
     fontSize: 24,

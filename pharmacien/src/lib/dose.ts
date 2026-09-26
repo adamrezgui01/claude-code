@@ -152,3 +152,42 @@ export function valeurExacte(valeur: number, decimales = 1): number | null {
 export const MOTS_CLES_DOSE =
   'dose, pédiatrique, mg/kg, suspension, antibiotique, mL, conversion, kg, lb, livres, ' +
   'pediatric dose, weight-based dosing, dosing, millilitres';
+
+/**
+ * L'enchaînement des champs.
+ *
+ * Valider un champ fermait le clavier et laissait l'usager toucher le suivant.
+ * Au comptoir, c'est plusieurs gestes de trop : « Terminé » ouvre maintenant le
+ * prochain champ obligatoire vide, et ferme le clavier sur le dernier.
+ *
+ * C'est le même geste que l'écran des heures des dispos, où valider l'heure de
+ * début ouvre celle de fin. Une seule logique pour les deux écrans.
+ */
+export type ChampDose = 'poids' | 'dose' | 'concentrationMg' | 'concentrationMl';
+
+/**
+ * L'ordre de la chaîne. La fréquence et l'unité de dose n'y sont pas : ce sont
+ * des sélecteurs, pas des champs de saisie, et il n'y a pas de clavier à leur
+ * ouvrir.
+ *
+ * Les champs facultatifs — durée, format de bouteille, dose maximale — n'y
+ * sont pas non plus. Les enchaîner forcerait à les traverser à chaque calcul,
+ * alors qu'on les remplit une fois sur dix.
+ */
+export const CHAINE: ChampDose[] = ['poids', 'dose', 'concentrationMg', 'concentrationMl'];
+
+/**
+ * Le prochain champ à ouvrir après celui-ci, ou `null` quand il n'y en a plus :
+ * le clavier se ferme alors, et le calcul s'affiche.
+ *
+ * Un champ déjà rempli est sauté. Revenir corriger le poids ne doit pas
+ * obliger à repasser par une dose et deux concentrations déjà entrées.
+ */
+export function prochainChamp(
+  courant: ChampDose,
+  valeurs: Record<ChampDose, string>
+): ChampDose | null {
+  const depart = CHAINE.indexOf(courant);
+  if (depart === -1) return null;
+  return CHAINE.slice(depart + 1).find((champ) => !valeurs[champ].trim()) ?? null;
+}

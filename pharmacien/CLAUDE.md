@@ -243,6 +243,22 @@ qu'on ne les redécouvre pas trois fois.
   et symbole compris. C'est un format d'**affichage** et rien d'autre : partout
   ailleurs — totaux, fiches, factures — le montant garde ses cents, et la règle
   du montant calculé et arrondi une seule fois n'est pas touchée.
+- Un formulaire dont les champs se remplissent dans un ordre fixe **enchaîne
+  lui-même** : valider un champ ouvre le prochain champ obligatoire encore
+  vide, et le dernier ferme le clavier. Un champ déjà rempli est sauté —
+  revenir corriger le poids ne doit pas obliger à retraverser une dose et deux
+  concentrations déjà entrées. Les sélecteurs n'y sont pas : ils n'ont pas de
+  clavier à ouvrir. Les champs facultatifs non plus : les enchaîner forcerait à
+  les traverser à chaque calcul. Les heures des dispos et le calculateur de
+  dose partagent cette logique ; un troisième écran du même genre la reprend
+  plutôt que d'en inventer une.
+- Sur iOS, un pavé numérique n'a pas de touche de retour : la barre au-dessus
+  du clavier porte un **vrai bouton** — fond accentué, texte blanc, coins
+  arrondis, 44 points de haut, aligné à droite —, pas du texte coloré. Dans une
+  barre grise, un mot mauve ne se lit pas comme une commande. Rien ne peut
+  s'afficher sous le clavier du système : il occupe le bas de l'écran et la
+  barre d'accessoires est toujours au-dessus. Ce n'est pas un choix de mise en
+  page, c'est la plateforme.
 - L'écran de révision ne montre jamais un nombre de bonnes réponses, un
   pourcentage, ni une série de jours consécutifs. Il compte ce qu'il reste à
   faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;
