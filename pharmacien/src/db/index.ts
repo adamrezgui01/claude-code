@@ -476,6 +476,35 @@ export function initialiserBase() {
     db.execSync('UPDATE pharmacies SET distance_km = -1 WHERE distance_km = 0');
     marquerFait('distance_inconnue_negative');
   }
+  /*
+    Le numéro de facture est unique, et la base le dit maintenant elle-même.
+
+    Toute la facturation cherche par numéro, pas par identifiant :
+    `quartsDeFacture(numero)` liste les quarts d'une facture, et
+    `supprimerFacture` libère les quarts en effaçant `numero_facture = ?`.
+    Deux factures qui portent le même numéro se mélangent donc en silence —
+    les quarts de l'une paraissent sur le PDF de l'autre, et supprimer l'une
+    libère les quarts des deux. Sur un document envoyé à une pharmacie, c'est
+    de l'argent.
+
+    L'écran de facturation bloque déjà son bouton pendant la génération, donc
+    rien ne produit un doublon aujourd'hui. L'index est là pour que ça reste
+    vrai après le prochain changement.
+
+    Index et non contrainte de table : SQLite ne sait pas ajouter une
+    contrainte à une table existante sans la reconstruire, et une
+    reconstruction n'a pas sa place dans une base qui porte de l'argent.
+
+    Le `try` couvre le cas d'une base qui contiendrait déjà des doublons :
+    l'index ne se crée pas, l'application démarre quand même. Mieux vaut une
+    ancienne base sans garde-fou qu'une application qui refuse de s'ouvrir.
+  */
+  try {
+    db.execSync('CREATE UNIQUE INDEX IF NOT EXISTS factures_numero ON factures (numero)');
+  } catch {
+    // Doublons déjà en place : on laisse la base telle quelle.
+  }
+
   db.execSync(`PRAGMA user_version = ${VERSION}`);
 }
 
