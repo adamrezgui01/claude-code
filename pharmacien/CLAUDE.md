@@ -233,6 +233,16 @@ qu'on ne les redécouvre pas trois fois.
   déploie douze lignes ou quarante. Une liste qu'on peut ouvrir sans pouvoir la
   refermer est un piège, et le repli ramène la vue sur l'en-tête de la section :
   sinon on se retrouve au milieu de l'écran sans savoir où.
+- Sur un **graphique**, un montant s'écrit sans cents et sans symbole —
+  « 8 563 » —, et un total d'heures sans ses minutes — « 169 h ». Les cents
+  d'un total mensuel sont du bruit : personne ne lit la différence entre
+  8 563,40 et 8 563,90 sur une barre, et le symbole est redondant puisque
+  l'onglet Argent est sélectionné. Six caractères est la largeur qui entre dans
+  une colonne sur douze ; au-delà on abrège — « 124 k », « 1,5 M ». La
+  précision n'est pas perdue : toucher une colonne l'affiche en entier, cents
+  et symbole compris. C'est un format d'**affichage** et rien d'autre : partout
+  ailleurs — totaux, fiches, factures — le montant garde ses cents, et la règle
+  du montant calculé et arrondi une seule fois n'est pas touchée.
 - L'écran de révision ne montre jamais un nombre de bonnes réponses, un
   pourcentage, ni une série de jours consécutifs. Il compte ce qu'il reste à
   faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;

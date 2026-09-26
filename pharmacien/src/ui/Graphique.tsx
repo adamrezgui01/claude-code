@@ -10,10 +10,12 @@ import {
   View,
 } from 'react-native';
 
-import { argent, heures, nombre } from '../lib/format';
+import type { Langue } from '../lib/langue';
 import {
+  etiquetteDuGraphique,
   maximum,
   mesureVoisine,
+  valeurComplete,
   valeurDe,
   type Forme,
   type Mesure,
@@ -45,13 +47,8 @@ const CASCADE = 22;
 const DEFORMATION = 260;
 const POINT = 7;
 const EPAISSEUR = 2.5;
-
-function formater(valeur: number, mesure: Mesure): string {
-  if (valeur === 0) return '';
-  if (mesure === 'argent') return argent(valeur).replace(',00', '');
-  if (mesure === 'heures') return heures(valeur);
-  return `${nombre(valeur, 0)}`;
-}
+/** Assez large pour « 8 563,40 $ », assez étroite pour tenir dans le cadre. */
+const LARGEUR_BULLE = 96;
 
 function Barre({
   entree,
@@ -236,6 +233,7 @@ function Page({
   rejouer,
   largeur,
   hauteurZone,
+  langue,
   onMesurerZone,
 }: {
   serie: MoisChiffre[];
@@ -245,9 +243,19 @@ function Page({
   rejouer: number;
   largeur: number;
   hauteurZone: number;
+  langue: Langue;
   onMesurerZone: (hauteur: number) => void;
 }) {
+  const accent = useAccent();
   const maxi = maximum(serie, mesure);
+  /**
+   * Le mois touché. La bulle rend la précision que l'étiquette a laissée
+   * tomber : elle n'encombre rien tant que personne ne la demande.
+   */
+  const [touche, setTouche] = useState<string | null>(null);
+  const choisi = serie.find((e) => e.mois === touche) ?? null;
+  const rang = choisi ? serie.indexOf(choisi) : 0;
+  const pas = largeur / Math.max(1, serie.length);
 
   return (
     <View>
@@ -257,7 +265,7 @@ function Page({
             key={entree.mois}
             style={[styles.valeur, !enValeur.has(entree.mois) && { color: couleurs.doux }]}
             numberOfLines={1}>
-            {formater(valeurDe(entree, mesure), mesure)}
+            {etiquetteDuGraphique(valeurDe(entree, mesure), mesure, langue)}
           </Text>
         ))}
       </View>
@@ -299,6 +307,47 @@ function Page({
               />
             )
           ))}
+
+        {/*
+          Une colonne invisible par mois, par-dessus le tracé. C'est la même
+          cible pour les barres et pour la ligne, et elle est assez large pour
+          un pouce — un point de sept pixels ne l'est pas.
+
+          Rien n'est touché au balayage : ces zones sont des `Pressable`
+          ordinaires dans la page, et c'est la liste paginée qui arbitre, comme
+          pour n'importe quel bouton posé dans un défilement.
+        */}
+        <View style={styles.colonnesTactiles}>
+          {serie.map((entree) => (
+            <Pressable
+              key={`touche-${entree.mois}`}
+              style={styles.colonneTactile}
+              accessibilityRole="button"
+              accessibilityLabel={`${entree.libelle} ${valeurComplete(
+                valeurDe(entree, mesure),
+                mesure,
+                langue
+              )}`}
+              onPress={() => setTouche(touche === entree.mois ? null : entree.mois)}
+            />
+          ))}
+        </View>
+
+        {/* La bulle se cale sur sa colonne, sans jamais sortir du cadre. */}
+        {choisi !== null && largeur > 0 && (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.bulle,
+              { borderColor: accent },
+              { left: Math.min(Math.max(0, pas * rang + pas / 2 - LARGEUR_BULLE / 2), largeur - LARGEUR_BULLE) },
+            ]}>
+            <Text style={styles.bulleMois}>{choisi.libelle}</Text>
+            <Text style={[styles.bulleValeur, { color: accent }]} numberOfLines={1}>
+              {valeurComplete(valeurDe(choisi, mesure), mesure, langue)}
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.axe} />
@@ -332,7 +381,7 @@ export function Graphique({
   /** Changer cette valeur rejoue l'animation d'apparition. */
   rejouer: number;
 }) {
-  const { t } = useTextes();
+  const { t, langue } = useTextes();
   const accent = useAccent();
   const [forme, setForme] = useState<Forme>('barres');
   const [largeur, setLargeur] = useState(0);
@@ -371,6 +420,7 @@ export function Graphique({
             rejouer={rejouer + rejeuForme}
             largeur={largeur}
             hauteurZone={hauteurZone}
+            langue={langue}
             onMesurerZone={mesurerZone}
           />
         )}
@@ -427,6 +477,38 @@ const styles = StyleSheet.create({
   },
   zone: {
     height: HAUTEUR_VISEE,
+  },
+  colonnesTactiles: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+  },
+  colonneTactile: {
+    flex: 1,
+  },
+  bulle: {
+    position: 'absolute',
+    top: 0,
+    width: LARGEUR_BULLE,
+    backgroundColor: couleurs.carte,
+    borderWidth: 1,
+    borderRadius: rayon,
+    paddingVertical: espace.xs,
+    paddingHorizontal: espace.s,
+    alignItems: 'center',
+  },
+  bulleMois: {
+    fontSize: 10,
+    fontFamily: police.normal,
+    color: couleurs.doux,
+    textTransform: 'capitalize',
+  },
+  bulleValeur: {
+    fontSize: 13,
+    fontFamily: police.demi,
   },
   barres: {
     flexDirection: 'row',
