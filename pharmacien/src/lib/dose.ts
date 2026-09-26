@@ -154,6 +154,44 @@ export const MOTS_CLES_DOSE =
   'pediatric dose, weight-based dosing, dosing, millilitres';
 
 /**
+ * Ce qu'un raccourci écrit dans les champs quand on l'applique.
+ *
+ * Il porte la posologie et la concentration, jamais le poids : celui-là change
+ * d'un patient à l'autre. Les valeurs arrivent **en clair** dans les champs —
+ * jamais de posologie cachée derrière un nom, sinon on sert une dose qu'on n'a
+ * pas lue.
+ *
+ * La fonction vit ici plutôt que dans l'écran pour une raison précise : le
+ * prompt V2.4 demandait un test — « un raccourci appliqué donne le même
+ * résultat que la saisie manuelle équivalente » — et il n'avait jamais été
+ * écrit, parce que la logique était enfermée dans un composant que la suite ne
+ * peut pas monter.
+ */
+export type ChampsDuRaccourci = {
+  dose: string;
+  unite: UniteDose;
+  prises: number;
+  concentrationMg: string;
+  concentrationMl: string;
+};
+
+export function champsDuRaccourci(raccourci: {
+  dose: number;
+  unite: UniteDose;
+  prises: number;
+  concentration_mg: number;
+  concentration_ml: number;
+}): ChampsDuRaccourci {
+  return {
+    dose: `${raccourci.dose}`,
+    unite: raccourci.unite,
+    prises: raccourci.prises,
+    concentrationMg: `${raccourci.concentration_mg}`,
+    concentrationMl: `${raccourci.concentration_ml}`,
+  };
+}
+
+/**
  * L'enchaînement des champs.
  *
  * Valider un champ fermait le clavier et laissait l'usager toucher le suivant.

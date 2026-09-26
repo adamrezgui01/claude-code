@@ -1,7 +1,12 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+import { analyserNombre } from '../src/lib/format';
 import { filtrerSources } from '../src/lib/veille/recherche';
 import {
   arrondirAffichage,
   calculerDose,
+  champsDuRaccourci,
   enKilogrammes,
   enLivres,
   valeurExacte,
@@ -23,6 +28,12 @@ import {
  * d'une.
  *
  * Les valeurs attendues viennent du prompt, calculées à la main.
+ *
+ * Deux exceptions, vérifiées après coup et notées à leur place : la dose
+ * quotidienne du poids hors bornes, et le volume du cas « volume élevé ». Le
+ * prompt V2.4 donnait la règle sans donner le chiffre. Les deux chaînes sont
+ * écrites au-dessus de l'attendu, pour qu'on n'ait plus à se demander d'où il
+ * sort.
  */
 
 function cas(champs: Partial<EntreeDose>): EntreeDose {
@@ -215,6 +226,8 @@ describe('groupe 5 — ce qu’il faut servir', () => {
 
 describe('groupe 6 — ce qui se signale', () => {
   test('un poids hors bornes s’annonce, sans bloquer', () => {
+    // Le prompt V2.4 donnait la règle — « poids hors de 2 à 100 kg » — sans le
+    // chiffre. Refait à la main : 150 kg × 90 mg/kg/jour = 13 500 mg/jour.
     const r = calcul({ poidsKg: 150 });
     expect(r.alertes.some((a) => a.genre === 'poids')).toBe(true);
     expect(r.doseQuotidienne).toBe(13500);
@@ -226,9 +239,11 @@ describe('groupe 6 — ce qui se signale', () => {
   });
 
   test('un volume élevé par prise s’annonce', () => {
-    // 90 mg/kg/dose chez 18 kg : 1620 mg par prise, 32,4 mL.
+    // Le prompt V2.4 donnait le seuil — 20 mL — sans le cas. Refait à la
+    // main : 18 kg × 90 mg/kg/dose = 1620 mg par prise ; 250 mg / 5 mL
+    // = 50 mg/mL ; 1620 ÷ 50 = 32,4 mL, soit plus du triple du seuil.
     const r = calcul({ unite: 'parPrise' });
-    expect(r.alertes.some((a) => a.genre === 'volume')).toBe(true);
+    expect(r.alertes).toContainEqual({ genre: 'volume', volume: 32.4 });
   });
 
   test('la dose maximale dépassée donne l’écart', () => {
@@ -251,10 +266,71 @@ describe('groupe 6 — ce qui se signale', () => {
 });
 
 // ===========================================================================
-// Groupe 7 — le calculateur se cherche
+// Groupe 7 — les raccourcis
 // ===========================================================================
 
-describe('groupe 7 — dans la recherche', () => {
+describe('groupe 7 — un raccourci appliqué', () => {
+  // Le onzième test du prompt V2.4. Il manquait : la logique vivait dans
+  // l'écran, où la suite ne va pas. Elle en est sortie pour qu'il existe.
+  const AMOXICILLINE = {
+    dose: 90,
+    unite: 'parJour' as const,
+    prises: 3,
+    concentration_mg: 250,
+    concentration_ml: 5,
+  };
+
+  test('il remplit les champs avec ses valeurs, en clair', () => {
+    // Jamais de posologie cachée derrière un nom : ce qui va être servi doit
+    // être lisible avant de l'être.
+    expect(champsDuRaccourci(AMOXICILLINE)).toEqual({
+      dose: '90',
+      unite: 'parJour',
+      prises: 3,
+      concentrationMg: '250',
+      concentrationMl: '5',
+    });
+  });
+
+  test('il ne porte jamais de poids', () => {
+    // Le poids change d'un patient à l'autre. Un raccourci qui en garde un
+    // servirait la dose de l'enfant d'hier.
+    expect(Object.keys(champsDuRaccourci(AMOXICILLINE))).not.toContain('poids');
+  });
+
+  test('le calcul donne le même résultat que la saisie manuelle équivalente', () => {
+    const champs = champsDuRaccourci(AMOXICILLINE);
+    const parRaccourci = calcul({
+      poidsKg: 18,
+      dose: analyserNombre(champs.dose),
+      unite: champs.unite,
+      prises: champs.prises,
+      concentrationMg: analyserNombre(champs.concentrationMg),
+      concentrationMl: analyserNombre(champs.concentrationMl),
+      jours: 7,
+      formatMl: 150,
+    });
+
+    // Le cas 1 du prompt V2.4, tapé à la main : 1620 · 540 · 10,8 · 226,8 · 2.
+    const aLaMain = calcul({ jours: 7, formatMl: 150 });
+    expect(parRaccourci).toEqual(aLaMain);
+    expect(parRaccourci.doseQuotidienne).toBe(1620);
+    expect(parRaccourci.doseParPrise).toBe(540);
+    expect(parRaccourci.bouteilles).toBe(2);
+  });
+
+  test('l’écran passe par cette fonction, il ne recopie pas les champs', () => {
+    const ecran = readFileSync(join('app', 'clinique', 'dose.tsx'), 'utf8');
+    expect(ecran).toContain('champsDuRaccourci(raccourci)');
+    expect(ecran).not.toContain('setDose(`${raccourci.dose}`)');
+  });
+});
+
+// ===========================================================================
+// Groupe 8 — le calculateur se cherche
+// ===========================================================================
+
+describe('groupe 8 — dans la recherche', () => {
   const OUTIL = {
     id: -1,
     titre: 'Calculateur de dose',

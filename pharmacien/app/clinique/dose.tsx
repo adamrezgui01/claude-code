@@ -13,6 +13,7 @@ import { useTextes } from '../../src/i18n';
 import {
   arrondirAffichage,
   calculerDose,
+  champsDuRaccourci,
   enKilogrammes,
   enLivres,
   prochainChamp,
@@ -115,12 +116,13 @@ export default function CalculateurDose() {
 
   function appliquer(raccourci: RaccourciDose) {
     // Les valeurs s'affichent en clair : jamais de posologie cachée derrière
-    // un nom.
-    setDose(`${raccourci.dose}`);
-    setUnite(raccourci.unite);
-    setPrises(raccourci.prises);
-    setConcentrationMg(`${raccourci.concentration_mg}`);
-    setConcentrationMl(`${raccourci.concentration_ml}`);
+    // un nom. Le poids n'y est pas : il change d'un patient à l'autre.
+    const champs = champsDuRaccourci(raccourci);
+    setDose(champs.dose);
+    setUnite(champs.unite);
+    setPrises(champs.prises);
+    setConcentrationMg(champs.concentrationMg);
+    setConcentrationMl(champs.concentrationMl);
   }
 
   function enregistrerRaccourci() {
