@@ -12,6 +12,7 @@ import { argent, heures, nombre } from '../../src/lib/format';
 import { MESURES, moisEnValeur, serieMensuelle, type Mesure } from '../../src/lib/mensuel';
 import { calculerStatistiques } from '../../src/lib/stats';
 import { Graphique } from '../../src/ui/Graphique';
+import { ListeRepliable } from '../../src/ui/ListeRepliable';
 import {
   Bouton,
   Carte,
@@ -27,7 +28,7 @@ import {
 } from '../../src/ui/composants';
 import { SelecteurDate } from '../../src/ui/Selecteurs';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
-import { couleurs, espace, police } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 /** Une minute : de quoi distinguer un vrai départ d'un aller-retour immédiat. */
@@ -200,19 +201,32 @@ export default function Statistiques() {
             <Rangee label={t('statistiques.fraisExtra')} valeur={argent(stats.montantFraisExtra)} />
           </Carte>
 
-          <SousTitre>{t('statistiques.parPharmacie')}</SousTitre>
-          <Carte>
-            {stats.parPharmacie.map((p, i) => (
-              <View key={p.pharmacie_id}>
+          {/* Trois pharmacies, puis le compte. Un remplaçant en fréquente des
+              dizaines, et la liste entière poussait le bouton « Générer une
+              facture » à deux écrans du haut. */}
+          <ListeRepliable
+            elements={stats.parPharmacie}
+            cleDe={(p) => `${p.pharmacie_id}`}
+            enTete={<SousTitre>{t('statistiques.parPharmacie')}</SousTitre>}
+            styleListe={styles.parPharmacie}
+            rendre={(p, i) => (
+              <>
                 {i > 0 && <Separateur />}
-                <Rangee label={p.nom} valeur={argent(p.revenu)} accent />
+                <Rangee label={p.nom} valeur={argent(p.revenu, langue)} accent />
                 <Doux>
-                  {p.quarts} quart{p.quarts > 1 ? 's' : ''} · {heures(p.heures)}
-                  {p.fraisExtra > 0 ? ` · frais ${argent(p.fraisExtra)}` : ''}
+                  {[
+                    t('compteur.quart', { count: p.quarts }),
+                    heures(p.heures, langue),
+                    p.fraisExtra > 0
+                      ? t('statistiques.fraisDe', { montant: argent(p.fraisExtra, langue) })
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </Doux>
-              </View>
-            ))}
-          </Carte>
+              </>
+            )}
+          />
         </Fondu>
       )}
 
@@ -241,6 +255,15 @@ const styles = StyleSheet.create({
   puces: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+  },
+  /* La carte enveloppe la liste entière, contrôle compris : replier ne doit
+     pas laisser un bouton flotter hors du cadre. */
+  parPharmacie: {
+    backgroundColor: couleurs.carte,
+    borderWidth: 1,
+    borderColor: couleurs.bordure,
+    borderRadius: rayon,
+    padding: espace.l,
   },
   section: {
     marginTop: espace.l,

@@ -7,11 +7,10 @@ import { ligneVille } from '../lib/adresses';
 import { filtrerPharmacies } from '../lib/repertoire';
 import { normaliser } from '../lib/texte';
 import { Puce } from './composants';
+import { ListeRepliable } from './ListeRepliable';
 import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
 import { useTextes } from '../i18n';
 
-/** Au-delà, la liste devient un mur : le reste se déroule à la demande. */
-const VISIBLES = 5;
 
 /**
  * Choix d'une ou plusieurs pharmacies. Un remplaçant en fréquente des dizaines :
@@ -33,7 +32,6 @@ export function SelecteurPharmacie({
   const { t } = useTextes();
   const accent = useAccent();
   const [recherche, setRecherche] = useState('');
-  const [toutAfficher, setToutAfficher] = useState(false);
 
   const filtrees = useMemo(() => {
     // Les favorites en tête, le reste dans son ordre d'origine.
@@ -43,8 +41,6 @@ export function SelecteurPharmacie({
   }, [pharmacies, recherche]);
 
   const cherche = recherche.trim().length > 0;
-  const visibles = cherche || toutAfficher ? filtrees : filtrees.slice(0, VISIBLES);
-  const restantes = filtrees.length - visibles.length;
 
   return (
     <View>
@@ -72,76 +68,71 @@ export function SelecteurPharmacie({
       </View>
 
       {!cherche && recentes.length > 0 && (
-        <>
-          <Text style={styles.section}>{t('repertoire.triRecentes')}</Text>
-          <View style={styles.puces}>
-            {recentes.map((p) => (
-              <Puce
-                key={p.id}
-                texte={p.nom}
-                actif={selection.includes(p.id)}
-                onPress={() => onSelectionner(p.id)}
-              />
-            ))}
-          </View>
-        </>
-      )}
-
-      <Text style={styles.section}>{t(cherche ? 'pharmacie.resultats' : 'repertoire.toutes')}</Text>
-      {visibles.length === 0 ? (
-        <Text style={styles.aucune}>{t('repertoire.aucunResultat')}</Text>
-      ) : (
-        visibles.map((p) => {
-          const choisie = selection.includes(p.id);
-          return (
-            <Pressable
-              key={p.id}
+        <ListeRepliable
+          elements={recentes}
+          cleDe={(p) => `${p.id}`}
+          enTete={<Text style={styles.section}>{t('repertoire.triRecentes')}</Text>}
+          styleListe={styles.puces}
+          rendre={(p) => (
+            <Puce
+              texte={p.nom}
+              actif={selection.includes(p.id)}
               onPress={() => onSelectionner(p.id)}
-              style={({ pressed }) => [
-                styles.ligne,
-                choisie && { borderColor: accent, backgroundColor: accentPale(accent) },
-                pressed && { opacity: 0.6 },
-              ]}>
-              {!!p.favori && <Ionicons name="star" size={15} color={couleurs.favori} />}
-              <View style={styles.texte}>
-                <Text
-                  style={[styles.nom, choisie && { fontFamily: police.demi, color: accent }]}
-                  numberOfLines={1}>
-                  {p.nom}
-                </Text>
-                {!!ligneVille(p) && (
-                  <Text style={styles.adresse} numberOfLines={1}>
-                    {ligneVille(p)}
-                  </Text>
-                )}
-              </View>
-              {choisie && <Ionicons name="checkmark" size={18} color={accent} />}
-            </Pressable>
-          );
-        })
+            />
+          )}
+        />
       )}
 
-      {/* Une flèche, pas une phrase : on la déroule ou on l'ignore. */}
-      {restantes > 0 && (
-        <Pressable
-          onPress={() => setToutAfficher(true)}
-          accessibilityRole="button"
-          accessibilityLabel={t('commun.toutAfficher')}
-          hitSlop={10}
-          style={({ pressed }) => [styles.derouler, pressed && { opacity: 0.6 }]}>
-          <Ionicons name="chevron-down" size={20} color={accent} />
-        </Pressable>
+      {filtrees.length === 0 ? (
+        <>
+          <Text style={styles.section}>
+            {t(cherche ? 'pharmacie.resultats' : 'repertoire.toutes')}
+          </Text>
+          <Text style={styles.aucune}>{t('repertoire.aucunResultat')}</Text>
+        </>
+      ) : (
+        <ListeRepliable
+          elements={filtrees}
+          cleDe={(p) => `${p.id}`}
+          enTete={
+            <Text style={styles.section}>
+              {t(cherche ? 'pharmacie.resultats' : 'repertoire.toutes')}
+            </Text>
+          }
+          rendre={(p) => {
+            const choisie = selection.includes(p.id);
+            return (
+              <Pressable
+                onPress={() => onSelectionner(p.id)}
+                style={({ pressed }) => [
+                  styles.ligne,
+                  choisie && { borderColor: accent, backgroundColor: accentPale(accent) },
+                  pressed && { opacity: 0.6 },
+                ]}>
+                {!!p.favori && <Ionicons name="star" size={15} color={couleurs.favori} />}
+                <View style={styles.texte}>
+                  <Text
+                    style={[styles.nom, choisie && { fontFamily: police.demi, color: accent }]}
+                    numberOfLines={1}>
+                    {p.nom}
+                  </Text>
+                  {!!ligneVille(p) && (
+                    <Text style={styles.adresse} numberOfLines={1}>
+                      {ligneVille(p)}
+                    </Text>
+                  )}
+                </View>
+                {choisie && <Ionicons name="checkmark" size={18} color={accent} />}
+              </Pressable>
+            );
+          }}
+        />
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  derouler: {
-    alignSelf: 'center',
-    paddingVertical: espace.s,
-    paddingHorizontal: espace.xl,
-  },
   enTete: {
     flexDirection: 'row',
     flexWrap: 'wrap',

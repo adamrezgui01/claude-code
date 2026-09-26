@@ -222,6 +222,17 @@ qu'on ne les redécouvre pas trois fois.
   bande qu'on pourrait éteindre définitivement finirait par cacher une facture
   de mille dollars. Elle ne vit que dans l'horaire ; répétée sur quatre
   onglets, elle devient du décor.
+- Toute liste qui est une **section à l'intérieur d'un écran** — et non le
+  contenu principal de l'écran — montre **trois éléments, puis un contrôle**.
+  Une section qui déroule tout pousse le reste de l'écran hors de vue, et on
+  défile longtemps pour retrouver ce qu'on était venu chercher. Le Répertoire
+  garde sa liste entière : là, la liste **est** le contenu.
+  Un seul contrôle, à la même place dans les deux états, pour qu'il ne saute pas
+  sous le doigt : « Voir les 12 » avec un chevron vers le bas, « Réduire » avec
+  un chevron vers le haut. Le nombre est réel — « Voir plus » ne dit pas si on
+  déploie douze lignes ou quarante. Une liste qu'on peut ouvrir sans pouvoir la
+  refermer est un piège, et le repli ramène la vue sur l'en-tête de la section :
+  sinon on se retrouve au milieu de l'écran sans savoir où.
 - L'écran de révision ne montre jamais un nombre de bonnes réponses, un
   pourcentage, ni une série de jours consécutifs. Il compte ce qu'il reste à
   faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;

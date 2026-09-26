@@ -1,5 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { ReactNode, useEffect, useId, useRef, useState, type ComponentProps } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+} from 'react';
 import {
   Animated,
   Easing,
@@ -24,6 +34,19 @@ import { accentPale, couleurs, espace, ombre, police, rayon, useAccent } from '.
 import { useTextes } from '../i18n';
 
 /**
+ * Le défilement de l'écran, pour ce qui a besoin d'y ramener l'usager.
+ *
+ * Une section qu'on replie doit rendre la vue à son en-tête : sinon on se
+ * retrouve au milieu de l'écran sans savoir où, parce que tout ce qu'on
+ * regardait vient de remonter de dix lignes.
+ */
+const Defilement = createContext<{ vers: (y: number) => void } | null>(null);
+
+export function useDefilement() {
+  return useContext(Defilement);
+}
+
+/**
  * Enveloppe de tout écran qui contient des champs. Trois comportements que
  * l'usager attend de n'importe quelle application : le contenu remonte quand le
  * clavier s'ouvre, pour qu'un champ du bas reste visible ; le clavier se ferme
@@ -39,18 +62,24 @@ export function Ecran({
   /** Écran hors navigation : il porte alors lui-même le fond de l'application. */
   fond?: boolean;
 }) {
+  const liste = useRef<ScrollView>(null);
+  const defilement = useMemo(
+    () => ({ vers: (y: number) => liste.current?.scrollTo({ y, animated: true }) }),
+    []
+  );
   return (
     <KeyboardAvoidingView
       style={[styles.ecran, fond && { backgroundColor: couleurs.fond }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
+        ref={liste}
         style={styles.ecran}
         contentContainerStyle={[styles.ecranContenu, style]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         automaticallyAdjustKeyboardInsets>
         <Pressable onPress={Keyboard.dismiss} accessible={false}>
-          {children}
+          <Defilement.Provider value={defilement}>{children}</Defilement.Provider>
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
