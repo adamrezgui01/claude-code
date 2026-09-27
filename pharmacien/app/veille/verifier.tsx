@@ -21,7 +21,7 @@ import { titreDuLien } from '../../src/lib/liens';
 import { etatContenu, etatSource } from '../../src/lib/veille/peremption';
 import { ouvrirPageOfficielle, ouvrirSource } from '../../src/lib/veille/ouvrir';
 import { Bouton, Carte, Champ, Doux, Ecran, Fondu, SousTitre, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, useAccent } from '../../src/ui/theme';
+import { couleurs, espace, police, texte, useAccent } from '../../src/ui/theme';
 
 /**
  * À revérifier.
@@ -233,12 +233,12 @@ export default function Verifier() {
 
 const styles = StyleSheet.create({
   carte: { gap: espace.s, marginBottom: espace.m },
-  titre: { fontSize: 15, fontFamily: police.demi, color: couleurs.texte, lineHeight: 21 },
+  titre: { fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte, lineHeight: 21 },
   lien: { flexDirection: 'row', alignItems: 'center', gap: espace.s, paddingVertical: espace.xs },
-  lienTexte: { fontSize: 14, fontFamily: police.demi },
-  lienDiscret: { fontSize: 13, fontFamily: police.normal, color: couleurs.doux },
+  lienTexte: { fontSize: texte.lecture, fontFamily: police.demi },
+  lienDiscret: { fontSize: texte.courant, fontFamily: police.normal, color: couleurs.doux },
   actions: { flexDirection: 'row', gap: espace.m, marginTop: espace.s },
   action: { flex: 1 },
   supprimer: { alignItems: 'center', paddingTop: espace.s },
-  supprimerTexte: { fontSize: 13, fontFamily: police.demi, color: couleurs.alerte },
+  supprimerTexte: { fontSize: texte.courant, fontFamily: police.demi, color: couleurs.alerte },
 });

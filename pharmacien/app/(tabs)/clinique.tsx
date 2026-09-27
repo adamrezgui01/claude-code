@@ -30,7 +30,7 @@ import { cleARevoir } from '../../src/lib/veille/recherches';
 import { nomDuSujet } from '../../src/lib/veille/sujets';
 import { etatVeille } from '../../src/lib/veille/tableau';
 import { Doux, Ecran, Etiquette, Fondu, SousTitre, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../../src/ui/theme';
 
 type SourceListee = Source & SourceCherchable;
 
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.l,
   },
   action: { borderRadius: rayon, paddingVertical: espace.s, paddingHorizontal: espace.m },
-  actionTexte: { fontSize: 13, fontFamily: police.demi, color: '#FFFFFF' },
+  actionTexte: { fontSize: texte.courant, fontFamily: police.demi, color: '#FFFFFF' },
   revisions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: espace.l,
     marginBottom: espace.l,
   },
-  revisionsTexte: { flex: 1, fontSize: 15, fontFamily: police.demi },
+  revisionsTexte: { flex: 1, fontSize: texte.corps, fontFamily: police.demi },
   recherche: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -443,10 +443,10 @@ const styles = StyleSheet.create({
     borderColor: couleurs.bordure,
     borderRadius: rayon,
     paddingHorizontal: espace.m,
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
     marginBottom: espace.l,
   },
-  saisie: { flex: 1, fontSize: 15, fontFamily: police.normal, color: couleurs.texte },
+  saisie: { flex: 1, fontSize: texte.corps, fontFamily: police.normal, color: couleurs.texte },
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -458,9 +458,9 @@ const styles = StyleSheet.create({
     padding: espace.l,
     marginBottom: espace.s,
   },
-  texte: { flex: 1, gap: 2 },
-  titre: { flex: 1, fontSize: 15, fontFamily: police.demi, color: couleurs.texte },
-  detail: { fontSize: 13, fontFamily: police.normal, color: couleurs.doux },
+  texte: { flex: 1, gap: espace.xs },
+  titre: { flex: 1, fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
+  detail: { fontSize: texte.courant, fontFamily: police.normal, color: couleurs.doux },
   etiquette: {
     marginTop: espace.xs,
   },

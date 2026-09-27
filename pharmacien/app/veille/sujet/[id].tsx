@@ -21,7 +21,7 @@ import { formatDateCourte } from '../../../src/lib/dates';
 import { titreDuLien } from '../../../src/lib/liens';
 import { nomDuSujet } from '../../../src/lib/veille/sujets';
 import { Bouton, Doux, Ecran, SousTitre, Vide } from '../../../src/ui/composants';
-import { couleurs, espace, police, rayon, useAccent } from '../../../src/ui/theme';
+import { couleurs, espace, police, rayon, texte, useAccent } from '../../../src/ui/theme';
 
 /**
  * Un sujet suivi.
@@ -160,12 +160,12 @@ const styles = StyleSheet.create({
     padding: espace.l,
     marginBottom: espace.s,
   },
-  titre: { flex: 1, fontSize: 15, fontFamily: police.demi, color: couleurs.texte },
+  titre: { flex: 1, fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
   evenement: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: espace.s,
   },
-  detail: { fontSize: 13, fontFamily: police.normal, color: couleurs.doux },
+  detail: { fontSize: texte.courant, fontFamily: police.normal, color: couleurs.doux },
   espace: { height: espace.l },
 });

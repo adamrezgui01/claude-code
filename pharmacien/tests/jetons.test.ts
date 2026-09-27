@@ -148,6 +148,17 @@ const PASSES: Record<string, string[]> = {
     'src/ui/SaisieAdresse.tsx',
     'src/ui/VueCarte.tsx',
   ],
+  Clinique: [
+    'app/(tabs)/clinique.tsx',
+    'app/clinique/dose.tsx',
+    'app/lien/[id].tsx',
+    'app/veille/index.tsx',
+    'app/veille/revision.tsx',
+    'app/veille/suivre.tsx',
+    'app/veille/verifier.tsx',
+    'app/veille/note/[id].tsx',
+    'app/veille/sujet/[id].tsx',
+  ],
 };
 
 /** La partie « feuille de styles » d'un fichier. Le JSX ne nous regarde pas ici. */

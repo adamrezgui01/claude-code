@@ -7,7 +7,7 @@ import { creerSujet, listerSujets, suivreSujet } from '../../src/db/veille';
 import { useTextes } from '../../src/i18n';
 import { chercherSujets, MOTIFS, nomDuSujet, sujetExistant } from '../../src/lib/veille/sujets';
 import { Bouton, Doux, Ecran, Fondu, Puce, SousTitre } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { couleurs, dimensions, espace, police, rayon, texte, useAccent } from '../../src/ui/theme';
 
 /**
  * Suivre un sujet.
@@ -105,10 +105,10 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: rayon,
     paddingHorizontal: espace.m,
-    minHeight: 48,
+    minHeight: dimensions.champ.hauteur,
     marginBottom: espace.m,
   },
-  saisie: { flex: 1, fontSize: 16, fontFamily: police.normal, color: couleurs.texte },
+  saisie: { flex: 1, fontSize: texte.saisie, fontFamily: police.normal, color: couleurs.texte },
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     padding: espace.l,
     marginBottom: espace.s,
   },
-  titre: { flex: 1, fontSize: 15, fontFamily: police.demi, color: couleurs.texte },
+  titre: { flex: 1, fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
   puces: { flexDirection: 'row', flexWrap: 'wrap' },
   espace: { height: espace.l },
 });

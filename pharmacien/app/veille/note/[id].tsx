@@ -20,7 +20,7 @@ import { ESPACEMENT_SIMPLE } from '../../../src/lib/veille/espacement';
 import { nomDuSujet } from '../../../src/lib/veille/sujets';
 import { titreDuLien } from '../../../src/lib/liens';
 import { Bouton, Champ, Doux, Ecran, Puce, SousTitre } from '../../../src/ui/composants';
-import { couleurs, espace, police } from '../../../src/ui/theme';
+import { couleurs, espace, police, texte } from '../../../src/ui/theme';
 
 /**
  * Écrire une note.
@@ -184,5 +184,5 @@ const styles = StyleSheet.create({
     gap: espace.s,
     paddingVertical: espace.l,
   },
-  supprimerTexte: { fontSize: 14, fontFamily: police.demi, color: couleurs.alerte },
+  supprimerTexte: { fontSize: texte.lecture, fontFamily: police.demi, color: couleurs.alerte },
 });

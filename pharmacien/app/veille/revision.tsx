@@ -23,7 +23,7 @@ import { etatContenu } from '../../src/lib/veille/peremption';
 import { questionPosee } from '../../src/lib/veille/revision';
 import { nomDuSujet } from '../../src/lib/veille/sujets';
 import { Bouton, Carte, Doux, Ecran, Fondu, SousTitre } from '../../src/ui/composants';
-import { couleurs, espace, police, useAccent } from '../../src/ui/theme';
+import { couleurs, espace, police, texte, useAccent } from '../../src/ui/theme';
 
 /**
  * La séance de révision.
@@ -153,10 +153,10 @@ export default function Revision() {
 
 const styles = StyleSheet.create({
   question: { minHeight: 120, justifyContent: 'center' },
-  texteQuestion: { fontSize: 18, fontFamily: police.demi, color: couleurs.texte, lineHeight: 26 },
-  reponse: { fontSize: 16, fontFamily: police.normal, color: couleurs.texte, lineHeight: 24 },
+  texteQuestion: { fontSize: texte.titre, fontFamily: police.demi, color: couleurs.texte, lineHeight: 26 },
+  reponse: { fontSize: texte.saisie, fontFamily: police.normal, color: couleurs.texte, lineHeight: 24 },
   separation: { height: 1, backgroundColor: couleurs.bordure, marginVertical: espace.m },
   lien: { flexDirection: 'row', alignItems: 'center', gap: espace.s },
-  lienTexte: { flex: 1, fontSize: 14, fontFamily: police.demi },
-  fini: { fontSize: 18, fontFamily: police.demi, color: couleurs.texte, textAlign: 'center' },
+  lienTexte: { flex: 1, fontSize: texte.lecture, fontFamily: police.demi },
+  fini: { fontSize: texte.titre, fontFamily: police.demi, color: couleurs.texte, textAlign: 'center' },
 });

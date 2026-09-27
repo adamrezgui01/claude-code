@@ -24,7 +24,7 @@ import { etatContenu } from '../../src/lib/veille/peremption';
 import { nomDuSujet } from '../../src/lib/veille/sujets';
 import { etatVeille } from '../../src/lib/veille/tableau';
 import { Bouton, Carte, Doux, Ecran, Fondu, SousTitre, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../../src/ui/theme';
 
 /**
  * Ma veille clinique.
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   // fait défiler. Un peu d'air en haut, et elle est entière à l'ouverture.
   contenu: { paddingTop: espace.xl },
   tete: { gap: espace.m },
-  compte: { fontSize: 22, fontFamily: police.gras },
+  compte: { fontSize: texte.grandTitre, fontFamily: police.gras },
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -264,10 +264,10 @@ const styles = StyleSheet.create({
     padding: espace.l,
     marginBottom: espace.s,
   },
-  texte: { flex: 1, gap: 2 },
-  titre: { fontSize: 15, fontFamily: police.demi, color: couleurs.texte },
-  detail: { fontSize: 13, fontFamily: police.normal, color: couleurs.doux },
-  pause: { fontSize: 12, fontFamily: police.demi },
+  texte: { flex: 1, gap: espace.xs },
+  titre: { fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
+  detail: { fontSize: texte.courant, fontFamily: police.normal, color: couleurs.doux },
+  pause: { fontSize: texte.secondaire, fontFamily: police.demi },
   espace: { height: espace.l },
   recherche: {
     flexDirection: 'row',
@@ -278,8 +278,8 @@ const styles = StyleSheet.create({
     borderColor: couleurs.bordure,
     borderRadius: rayon,
     paddingHorizontal: espace.m,
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
     marginBottom: espace.m,
   },
-  saisie: { flex: 1, fontSize: 15, fontFamily: police.normal, color: couleurs.texte },
+  saisie: { flex: 1, fontSize: texte.corps, fontFamily: police.normal, color: couleurs.texte },
 });

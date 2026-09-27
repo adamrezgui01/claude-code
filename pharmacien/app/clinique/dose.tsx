@@ -23,7 +23,7 @@ import {
 } from '../../src/lib/dose';
 import { analyserNombre, nombreFixe } from '../../src/lib/format';
 import { Bouton, Carte, Champ, Doux, Ecran, Fondu, Puce, Separateur, SousTitre } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../../src/ui/theme';
 
 /**
  * Le calculateur de dose.
@@ -458,7 +458,7 @@ function Etape({
 const styles = StyleSheet.create({
   bascule: { flexDirection: 'row', flexWrap: 'wrap', gap: espace.s, marginTop: espace.s },
   conversion: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginTop: espace.xs,
@@ -473,18 +473,18 @@ const styles = StyleSheet.create({
     gap: espace.s,
   },
   comparaisonNom: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.demi,
     color: couleurs.doux,
   },
   comparaisonValeur: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   moitie: { flex: 1 },
   barreOblique: {
-    fontSize: 18,
+    fontSize: texte.titre,
     fontFamily: police.normal,
     color: couleurs.doux,
   },
@@ -494,15 +494,15 @@ const styles = StyleSheet.create({
     borderRadius: rayon,
     paddingVertical: espace.s,
     paddingHorizontal: espace.m,
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
     justifyContent: 'center',
   },
-  raccourciTexte: { fontSize: 14, fontFamily: police.demi },
+  raccourciTexte: { fontSize: texte.lecture, fontFamily: police.demi },
   etape: { paddingVertical: espace.xs },
   etapeLigne: { flexDirection: 'row', justifyContent: 'space-between', gap: espace.m },
-  etapeGauche: { fontSize: 14, fontFamily: police.normal, color: couleurs.doux, flex: 1 },
-  etapeDroite: { fontSize: 15, fontFamily: police.demi, color: couleurs.texte },
-  etapeSous: { fontSize: 12, fontFamily: police.normal, color: couleurs.doux, textAlign: 'right' },
+  etapeGauche: { fontSize: texte.lecture, fontFamily: police.normal, color: couleurs.doux, flex: 1 },
+  etapeDroite: { fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
+  etapeSous: { fontSize: texte.secondaire, fontFamily: police.normal, color: couleurs.doux, textAlign: 'right' },
   /** La ligne la plus lue de l'écran : c'est elle qui décide de ce qu'on prépare. */
   servir: {
     borderWidth: 1.5,
@@ -512,10 +512,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: espace.xs,
   },
-  servirTitre: { fontSize: 13, fontFamily: police.demi, color: couleurs.doux },
-  servirValeur: { fontSize: 24, fontFamily: police.gras },
+  servirTitre: { fontSize: texte.courant, fontFamily: police.demi, color: couleurs.doux },
+  servirValeur: { fontSize: texte.enTete, fontFamily: police.gras },
   alerte: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     color: couleurs.alerte,
     marginTop: espace.s,
