@@ -85,12 +85,20 @@ describe('les étiquettes à l’écran', () => {
     expect(screen.queryByText(/8 563$/)).toBeNull();
   });
 
-  test('à onze points, cinq chiffres pleins ne s’affichent plus du tout', async () => {
-    // C'est la règle, assumée : plutôt rien qu'une valeur coupée. Sur douze
-    // colonnes et un écran de téléphone, « 9 695 » ne rentre pas à onze
-    // points. L'axe porte l'échelle, la bulle donne la valeur exacte.
+  test('sur un écran de téléphone, les étiquettes s’affichent', async () => {
+    // C'est le gain de l'abréviation dès le millier. Avec le seuil à dix
+    // mille, « 1 232 » faisait cinq caractères, ne rentrait pas, et le
+    // graphique n'affichait plus aucune étiquette sous ses barres.
     await poser(PETITS, 393);
+    expect(screen.getAllByText('1,2k').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('9,7k').length).toBeGreaterThan(0);
     expect(screen.queryByText('1 232')).toBeNull();
+  });
+
+  test('une valeur sous mille garde ses chiffres nus', async () => {
+    await poser([890, 450, 120, 700, 300, 250, 600, 480, 820, 150, 390, 540], 393);
+    expect(screen.getAllByText('890').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('120').length).toBeGreaterThan(0);
   });
 
   test('sur un écran très étroit, rien non plus', async () => {
@@ -106,9 +114,9 @@ describe('les étiquettes à l’écran', () => {
 
 describe('l’axe vertical', () => {
   test('il porte ses trois repères, même quand les étiquettes disparaissent', async () => {
+    // Sur 140 points, même « 9,7k » ne rentre pas dans une colonne sur douze.
     await poser(PETITS, 140);
-    // Maximum 9 695 : sous dix mille, donc chiffres pleins sur l'axe.
-    expect(screen.getAllByText(/9\s695/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('9,7k').length).toBeGreaterThan(0);
     expect(screen.getAllByText('0').length).toBeGreaterThan(0);
   });
 

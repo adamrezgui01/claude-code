@@ -42,10 +42,17 @@ export function mesureVoisine(mesures: Mesure[], mesure: Mesure, decalage: -1 | 
 export type FormatGraphique = 'pleins' | 'milliers';
 
 /**
- * Cinq caractères entrent dans une colonne sur douze, six n'entrent pas.
- * Sous dix mille, un nombre plein en fait cinq au plus : `9 695`.
+ * On abrège dès le millier.
+ *
+ * Le seuil était à dix mille, et c'était l'erreur : `1 232` fait cinq
+ * caractères et vingt-huit points de large, quand la colonne en offre
+ * vingt-six. Un graphique en milliers — la plupart des mois, en dollars comme
+ * en kilomètres — n'affichait donc aucune étiquette.
+ *
+ * `1,2k` en fait quatre et vingt-deux points. Les étiquettes reviennent, et
+ * c'est le plus gros gain de lisibilité de cette série de correctifs.
  */
-export const SEUIL_ABREGE = 10000;
+export const SEUIL_ABREGE = 1000;
 
 export function formatDuGraphique(maximum: number): FormatGraphique {
   return maximum >= SEUIL_ABREGE ? 'milliers' : 'pleins';
@@ -90,13 +97,31 @@ export function etiquetteDuGraphique(
  * qui fait déborder.
  */
 function enMilliers(valeur: number, langue: Langue): string {
+  /*
+    Sous le millier, les chiffres restent nus.
+
+    C'est le seul endroit où une colonne ne suit pas le format du graphique,
+    et la raison est simple : un nombre sous mille n'a pas de millier à
+    abréger, et « 0,1k » se lit comme zéro. Trois chiffres nus font au plus
+    dix-neuf points, soit moins qu'une étiquette abrégée : la largeur n'y perd
+    rien, et personne ne confond « 120 » avec « 9,7k » sur deux barres dont
+    l'une est au sol.
+  */
+  if (valeur < 1000) return nombre(Math.round(valeur), 0, langue);
+
   const milliers = valeur / 1000;
   // Le passage aux millions se juge sur la valeur arrondie : 999 999 fait
   // mille milliers, et « 1 000k » ferait six caractères — un de trop, et
   // c'est celui qui coupe.
   if (Math.round(milliers) >= 1000) return `${nombre(valeur / 1_000_000, 1, langue)}M`;
-  // La décimale, elle, se juge sur la valeur réelle : 9 700 fait neuf
-  // milliers sept, pas dix.
+  /*
+    La décimale ne survit qu'à un seul chiffre de partie entière.
+
+    « 12,4k » fait cinq caractères et vingt-huit points — plus large que
+    « 9 695 », que la règle refuse déjà. « 12k » en fait trois et dix-neuf.
+    La décimale d'un nombre à deux chiffres n'apporte rien et coûte
+    précisément le caractère qui fait déborder.
+  */
   if (milliers >= 10) return `${nombre(Math.round(milliers), 0, langue)}k`;
   return `${nombre(milliers, 1, langue)}k`;
 }

@@ -145,31 +145,55 @@ describe('ce que le format ne touche pas', () => {
 // ===========================================================================
 
 describe('un format pour les douze colonnes', () => {
-  test('sous dix mille, tout en chiffres pleins', () => {
-    expect(formatDuGraphique(9695)).toBe('pleins');
-    expect(lisible(etiquetteDuGraphique(9695, 'argent', 'pleins'))).toBe('9 695');
-    expect(lisible(etiquetteDuGraphique(1232, 'argent', 'pleins'))).toBe('1 232');
+  test('sous mille, tout en chiffres pleins', () => {
+    expect(formatDuGraphique(890)).toBe('pleins');
+    expect(etiquetteDuGraphique(890, 'argent', 'pleins')).toBe('890');
+    expect(etiquetteDuGraphique(450, 'argent', 'pleins')).toBe('450');
   });
 
-  test('à dix mille et plus, tout en milliers abrégés', () => {
+  test('dès le millier, tout s’abrège', () => {
+    // Le seuil était à dix mille, et c'était l'erreur : « 1 232 » fait cinq
+    // caractères et n'entre pas dans une colonne sur douze. « 1,2k » entre.
+    expect(formatDuGraphique(1232)).toBe('milliers');
+    expect(etiquetteDuGraphique(1232, 'argent', 'milliers')).toBe('1,2k');
+    expect(etiquetteDuGraphique(9695, 'argent', 'milliers')).toBe('9,7k');
     expect(formatDuGraphique(10842)).toBe('milliers');
+  });
+
+  test('sous mille, les chiffres restent nus même dans un graphique abrégé', () => {
+    // « 0,1k » se lit comme zéro, et trois chiffres nus sont plus étroits
+    // qu'une étiquette abrégée : la largeur n'y perd rien.
+    expect(etiquetteDuGraphique(890, 'argent', 'milliers')).toBe('890');
+    expect(etiquetteDuGraphique(120, 'argent', 'milliers')).toBe('120');
+  });
+
+  test('la décimale ne survit qu’à un seul chiffre de partie entière', () => {
+    // « 12,4k » fait vingt-huit points, plus large que « 9 695 » que la règle
+    // refuse déjà. « 12k » en fait dix-neuf.
+    expect(etiquetteDuGraphique(9700, 'argent', 'milliers')).toBe('9,7k');
+    expect(etiquetteDuGraphique(12400, 'argent', 'milliers')).toBe('12k');
   });
 
   test('les douze colonnes suivent le maximum, pas leur propre valeur', () => {
     // C'est tout l'intérêt : mélanger « 8 564 » et « 10k » dans un même
     // graphique se lit mal. L'œil compare des barres, pas des unités.
+    // Les valeurs sous mille gardent leurs chiffres nus : c'est la seule
+    // colonne qui ne suit pas le format, et « 0,4k » se lirait comme zéro.
     const serie = [8563.4, 10842, 450, 9695, 12045.75, 0, 3200, 7100, 11000, 250, 6400, 8900];
     const format = formatDuGraphique(Math.max(...serie));
     const etiquettes = serie.map((v) => etiquetteDuGraphique(v, 'argent', format));
-    expect(etiquettes.filter(Boolean).every((e) => e.endsWith('k'))).toBe(true);
+    const millesEtPlus = serie
+      .map((v, i) => [v, etiquettes[i]] as const)
+      .filter(([v]) => v >= 1000);
+    expect(millesEtPlus.every(([, e]) => e.endsWith('k'))).toBe(true);
+    expect(etiquettes[2]).toBe('450');
   });
 
-  test('8 563,40 s’écrit « 8,6k » quand le graphique dépasse dix mille', () => {
+  test('8 563,40 s’écrit « 8,6k »', () => {
     expect(etiquetteDuGraphique(8563.4, 'argent', 'milliers')).toBe('8,6k');
   });
 
-  test('une décimale sous dix mille, aucune au-delà', () => {
-    expect(etiquetteDuGraphique(9700, 'argent', 'milliers')).toBe('9,7k');
+  test('à dix mille et plus, plus de décimale', () => {
     expect(etiquetteDuGraphique(10842, 'argent', 'milliers')).toBe('11k');
   });
 });
@@ -180,6 +204,14 @@ describe('l’axe vertical', () => {
     expect(reperes.map((r) => r.valeur)).toEqual([12000, 6000, 0]);
     // Six mille pile n'a pas de décimale à montrer : « 6k », pas « 6,0k ».
     expect(reperes.map((r) => r.etiquette)).toEqual(['12k', '6k', '0']);
+  });
+
+  test('un axe sous le millier garde ses chiffres pleins', () => {
+    expect(reperesDeLAxe(890, 'argent', 'pleins').map((r) => r.etiquette)).toEqual([
+      '890',
+      '445',
+      '0',
+    ]);
   });
 
   test('le zéro de l’axe s’écrit, contrairement à celui d’une barre', () => {
@@ -203,9 +235,31 @@ describe('plutôt rien qu’une étiquette coupée', () => {
   });
 
   test('cinq chiffres pleins n’y entrent pas, à onze points', () => {
-    // C'est la conséquence assumée de la règle : plutôt rien qu'une valeur
-    // coupée. L'axe porte l'échelle, et la bulle donne la valeur exacte.
+    // C'est pour ça qu'on abrège dès le millier : la forme pleine ne rentre
+    // tout simplement pas, et la règle refuse de la couper.
     expect(etiquettesLisibles(COLONNE, '9 695')).toBe(false);
+  });
+
+  test('et « 12,4k » non plus : il est plus large encore', () => {
+    // La virgule coûte moins qu'un chiffre, mais on en ajoute un.
+    expect(etiquettesLisibles(COLONNE, '12,4k')).toBe(false);
+  });
+
+  test('toutes les formes que le format produit vraiment entrent', () => {
+    // C'est ce qui fait revenir les étiquettes : dans la plage réelle d'un
+    // remplaçant — quelques centaines à une quinzaine de milliers —, aucune
+    // étiquette ne dépasse la colonne.
+    const valeurs = [0, 120, 450, 890, 1232, 8563.4, 9695, 10842, 12045.75];
+    const format = formatDuGraphique(Math.max(...valeurs));
+    for (const mesure of MESURES) {
+      const etiquettes = valeurs.map((v) => etiquetteDuGraphique(v, mesure, format));
+      const plusLarge = etiquettes.reduce((a, b) => (b.length > a.length ? b : a), '');
+      expect({ mesure, plusLarge, entre: etiquettesLisibles(COLONNE, plusLarge) }).toEqual({
+        mesure,
+        plusLarge,
+        entre: true,
+      });
+    }
   });
 
   test('sur une colonne large, les chiffres pleins reviennent', () => {

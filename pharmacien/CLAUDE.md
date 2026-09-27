@@ -304,9 +304,17 @@ qu'on ne les redécouvre pas trois fois.
   on ne le sait pas : une valeur coupée est pire qu'une valeur absente.
   Le format se choisit **par graphique**, sur sa plus grande valeur, et
   s'applique aux douze colonnes — mélanger « 8 564 » et « 10k » dans le même
-  graphique se lit mal, l'œil compare des barres et non des unités. Sous dix
-  mille : chiffres pleins, `1 232`. À dix mille et plus : milliers abrégés
-  sans espace, `8,6k`, `11k`, une décimale sous dix milliers et aucune au-delà.
+  graphique se lit mal, l'œil compare des barres et non des unités.
+  **On abrège dès le millier**, pas dès dix mille : `1 232` fait cinq
+  caractères et vingt-huit points, quand la colonne d'un téléphone en offre
+  vingt-six. `1,2k` en fait quatre et vingt-deux. Le seuil à dix mille privait
+  d'étiquettes tous les graphiques en milliers — c'est-à-dire presque tous.
+  La décimale ne survit qu'à **un seul chiffre** de partie entière : `1,2k`,
+  `9,7k`, puis `12k`, `124k`. « 12,4k » serait plus large que « 9 695 », que la
+  règle refuse déjà. Sous le millier, les chiffres restent nus — `890`, `120` :
+  un nombre sous mille n'a pas de millier à abréger, et « 0,1k » se lit comme
+  zéro. C'est la seule colonne qui ne suit pas le format du graphique, et elle
+  n'est jamais plus large qu'une étiquette abrégée.
   Un montant y perd ses cents et son symbole, un total d'heures ses minutes :
   les cents d'un total mensuel sont du bruit, et l'unité est déjà dite par
   l'onglet sélectionné. Le « h » lui-même cède quand il ferait déborder.
@@ -317,11 +325,6 @@ qu'on ne les redécouvre pas trois fois.
   zéro, milieu, maximum — et la valeur exacte sous le doigt, cents et symbole
   compris. Sans axe, les étiquettes étaient la seule échelle du graphique,
   d'où la pression pour toutes les afficher, d'où la troncature.
-  Conséquence assumée de la règle : à onze points, cinq chiffres pleins
-  n'entrent pas dans une colonne sur douze d'un écran de téléphone. Un
-  graphique en milliers de dollars n'affiche donc plus d'étiquette sous ses
-  barres — il affiche son axe. Le jour où on voudra les retrouver, le levier
-  est la taille du texte ou le nombre de colonnes, jamais la troncature.
 - L'écran de révision ne montre jamais un nombre de bonnes réponses, un
   pourcentage, ni une série de jours consécutifs. Il compte ce qu'il reste à
   faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;
