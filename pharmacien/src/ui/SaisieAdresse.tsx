@@ -13,7 +13,7 @@ import {
 } from '../lib/adressesRecherche';
 import { creerRechercheDifferee, MINIMUM_CARACTERES } from '../lib/frappe';
 import { Champ, Puce } from './composants';
-import { couleurs, espace, police, rayon, useAccent } from './theme';
+import { couleurs, dimensions, espace, police, rayon, texte, useAccent } from './theme';
 import { useTextes } from '../i18n';
 
 /**
@@ -248,17 +248,17 @@ function majuscule(motif: MotifEchec): string {
 
 const styles = StyleSheet.create({
   suggestionNom: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   suggestionAdresse: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.normal,
     color: couleurs.doux,
   },
   erreur: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.normal,
     color: couleurs.alerte,
     marginTop: espace.xs,
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.s,
   },
   label: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginBottom: espace.xs,
@@ -281,11 +281,11 @@ const styles = StyleSheet.create({
     borderColor: couleurs.bordure,
     borderRadius: rayon,
     paddingHorizontal: espace.l,
-    minHeight: 50,
+    minHeight: dimensions.champ.hauteur,
   },
   saisie: {
     flex: 1,
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.normal,
     color: couleurs.texte,
     paddingVertical: espace.m,
@@ -323,11 +323,11 @@ const styles = StyleSheet.create({
     borderColor: couleurs.bordure,
     borderRadius: rayon,
     paddingHorizontal: espace.l,
-    minHeight: 50,
+    minHeight: dimensions.champ.hauteur,
     marginBottom: espace.m,
   },
   boiteTexte: {
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.normal,
     color: couleurs.texte,
   },

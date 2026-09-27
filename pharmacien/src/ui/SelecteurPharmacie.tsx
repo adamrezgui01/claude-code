@@ -8,7 +8,7 @@ import { filtrerPharmacies } from '../lib/repertoire';
 import { normaliser } from '../lib/texte';
 import { Puce } from './composants';
 import { ListeRepliable } from './ListeRepliable';
-import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
+import { accentPale, couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from './theme';
 import { useTextes } from '../i18n';
 
 
@@ -147,17 +147,17 @@ const styles = StyleSheet.create({
     borderColor: couleurs.bordure,
     borderRadius: rayon,
     paddingHorizontal: espace.m,
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
   },
   saisie: {
     flex: 1,
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
     color: couleurs.texte,
     paddingVertical: espace.s,
   },
   section: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginTop: espace.m,
@@ -186,24 +186,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   nom: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
     color: couleurs.texte,
   },
   adresse: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.normal,
     color: couleurs.doux,
   },
   aucune: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.normal,
     color: couleurs.doux,
     paddingVertical: espace.s,
   },
   lien: {
     color: couleurs.texte,
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     paddingVertical: espace.s,
   },

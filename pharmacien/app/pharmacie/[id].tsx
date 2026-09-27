@@ -69,7 +69,7 @@ import {
 import { deposerPharmacieCreee } from '../../src/lib/retourPharmacie';
 import { SaisieAdresse } from '../../src/ui/SaisieAdresse';
 import { SelecteurDuree } from '../../src/ui/Selecteurs';
-import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon, texte, useAccent } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 /** Durées de pause courantes. « Autre » ouvre la roulette. */
@@ -959,15 +959,15 @@ const styles = StyleSheet.create({
   },
   signalTexte: {
     flex: 1,
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     color: couleurs.alerte,
   },
   annule: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.normal,
     color: couleurs.doux,
-    paddingVertical: 2,
+    paddingVertical: espace.xs,
   },
   reperes: {
     flexDirection: 'row',
@@ -991,13 +991,13 @@ const styles = StyleSheet.create({
     gap: espace.m,
   },
   nip: {
-    fontSize: 34,
+    fontSize: texte.chiffre,
     fontFamily: police.gras,
     letterSpacing: 2,
     paddingVertical: espace.s,
   },
   repereTexte: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.normal,
     color: couleurs.texte,
   },
@@ -1010,7 +1010,7 @@ const styles = StyleSheet.create({
     paddingVertical: espace.m,
   },
   label: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginBottom: espace.xs,
@@ -1021,7 +1021,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.s,
   },
   lien: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
   },
   lienBloc: {
@@ -1029,7 +1029,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.xl,
   },
   retirer: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.demi,
     color: couleurs.alerte,
     alignSelf: 'flex-start',

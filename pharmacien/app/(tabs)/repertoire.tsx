@@ -15,7 +15,7 @@ import { ligneVille } from '../../src/lib/adresses';
 import { aujourdhui } from '../../src/lib/dates';
 import { filtrerPharmacies, pharmacieQuiAnnule } from '../../src/lib/repertoire';
 import { Bouton, Ecran, Fondu, Onglets, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon, texte, CIBLE_MIN } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 type Tri = 'alphabetique' | 'recentes';
@@ -196,18 +196,18 @@ const styles = StyleSheet.create({
     borderColor: couleurs.bordure,
     borderRadius: rayon,
     paddingHorizontal: espace.m,
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
     marginBottom: espace.s,
   },
   saisie: {
     flex: 1,
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
     color: couleurs.texte,
     paddingVertical: espace.s,
   },
   section: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginTop: espace.s,
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   },
   nom: {
     flexShrink: 1,
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
@@ -250,12 +250,12 @@ const styles = StyleSheet.create({
     color: couleurs.doux,
   },
   detail: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
   },
   compte: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
   },

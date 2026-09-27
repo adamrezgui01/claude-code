@@ -141,6 +141,13 @@ const PASSES: Record<string, string[]> = {
     'src/ui/GrilleMois.tsx',
     'src/ui/GrilleDispos.tsx',
   ],
+  Répertoire: [
+    'app/(tabs)/repertoire.tsx',
+    'app/pharmacie/[id].tsx',
+    'src/ui/SelecteurPharmacie.tsx',
+    'src/ui/SaisieAdresse.tsx',
+    'src/ui/VueCarte.tsx',
+  ],
 };
 
 /** La partie « feuille de styles » d'un fichier. Le JSX ne nous regarde pas ici. */
@@ -158,6 +165,18 @@ describe('les écrans passés aux jetons', () => {
         for (const f of fichiers) {
           for (const m of feuille(f).matchAll(/fontSize: (\d+)/g)) {
             dures.push(`${f.split('/').pop()} fontSize ${m[1]}`);
+          }
+        }
+        expect(dures).toEqual([]);
+      });
+
+      test('la hauteur d’un champ vient du jeton', () => {
+        // Un champ de recherche écrit sa hauteur en dur, et deux écrans
+        // finissent par ne plus avoir la même barre de recherche.
+        const dures: string[] = [];
+        for (const f of fichiers) {
+          for (const m of feuille(f).matchAll(/minHeight: (50|52|48)\b/g)) {
+            dures.push(`${f.split('/').pop()} minHeight ${m[1]}`);
           }
         }
         expect(dures).toEqual([]);

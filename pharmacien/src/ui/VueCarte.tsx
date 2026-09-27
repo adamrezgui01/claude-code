@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import Supercluster from 'supercluster';
 
-import { couleurs, espace, police, rayon } from './theme';
+import { couleurs, espace, police, rayon, texte } from './theme';
 import { useTextes } from '../i18n';
 
 export type PointCarte = {
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   },
   grappeTexte: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.gras,
   },
   historique: {
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     backgroundColor: couleurs.fond,
   },
   choixTexte: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.normal,
     color: couleurs.doux,
   },
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   legendeTexte: {
-    fontSize: 11,
+    fontSize: texte.fin,
     fontFamily: police.normal,
     color: couleurs.doux,
   },
