@@ -54,6 +54,8 @@ export default function CalculateurDose() {
   const [maxParJour, setMaxParJour] = useState('');
   const [raccourcis, setRaccourcis] = useState(listerRaccourcis);
   const [nomRaccourci, setNomRaccourci] = useState('');
+  /** Le « + » ouvre le champ du nom, ici même, plutôt qu'ailleurs. */
+  const [nommer, setNommer] = useState(false);
 
   /** Un renvoi par champ de la chaîne, pour ouvrir le suivant depuis le précédent. */
   const poidsRef = useRef<TextInput | null>(null);
@@ -136,6 +138,7 @@ export default function CalculateurDose() {
       concentration_ml: analyserNombre(concentrationMl),
     });
     setNomRaccourci('');
+    setNommer(false);
     setRaccourcis(listerRaccourcis());
   }
 
@@ -158,22 +161,68 @@ export default function CalculateurDose() {
       <Stack.Screen options={{ title: t('dose.titre') }} />
       <Doux>{t('dose.avis')}</Doux>
 
-      {raccourcis.length > 0 && (
-        <View style={styles.raccourcis}>
-          {raccourcis.map((raccourci) => (
-            <Pressable
-              key={raccourci.id}
-              onPress={() => appliquer(raccourci)}
-              onLongPress={() => retirer(raccourci)}
-              style={({ pressed }) => [
-                styles.raccourci,
-                { borderColor: accent },
-                pressed && { opacity: 0.6 },
-              ]}>
-              <Text style={[styles.raccourciTexte, { color: accent }]}>{raccourci.nom}</Text>
-            </Pressable>
-          ))}
-        </View>
+      {/*
+        Une section comme les autres, avec son en-tête aligné sur PATIENT et
+        POSOLOGIE. Avant, la capsule flottait entre l'avertissement et
+        « PATIENT » sans rien qui dise ce qu'elle était : on la lisait comme
+        un titre de section mal aligné.
+
+        Elle n'apparaît que s'il y a quelque chose à appliquer ou quelque
+        chose à enregistrer. Sans l'un ni l'autre, un en-tête vide.
+      */}
+      {(raccourcis.length > 0 || resultat !== null) && (
+        <>
+          <SousTitre>{t('dose.raccourci')}</SousTitre>
+          <View style={styles.raccourcis}>
+            {raccourcis.map((raccourci) => (
+              <Pressable
+                key={raccourci.id}
+                onPress={() => appliquer(raccourci)}
+                onLongPress={() => retirer(raccourci)}
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.raccourci,
+                  { borderColor: accent },
+                  pressed && { opacity: 0.6 },
+                ]}>
+                <Text style={[styles.raccourciTexte, { color: accent }]}>{raccourci.nom}</Text>
+              </Pressable>
+            ))}
+            {resultat !== null && (
+              <Pressable
+                onPress={() => setNommer(!nommer)}
+                accessibilityRole="button"
+                accessibilityLabel={t('dose.raccourci')}
+                style={({ pressed }) => [
+                  styles.raccourci,
+                  { borderColor: accent },
+                  pressed && { opacity: 0.6 },
+                ]}>
+                <Ionicons name={nommer ? 'close' : 'add'} size={18} color={accent} />
+              </Pressable>
+            )}
+          </View>
+
+          {nommer && (
+            <>
+              <Doux>{t('dose.raccourciAide')}</Doux>
+              <Champ
+                label={t('dose.nomRaccourci')}
+                valeur={nomRaccourci}
+                onChange={setNomRaccourci}
+                placeholder={t('dose.nomRaccourciPlaceholder')}
+                onTermine={enregistrerRaccourci}
+              />
+              <Bouton
+                titre={t('commun.enregistrer')}
+                variante="secondaire"
+                icone={<Ionicons name="bookmark-outline" size={18} color={accent} />}
+                onPress={enregistrerRaccourci}
+              />
+            </>
+          )}
+          <Separateur />
+        </>
       )}
 
       <SousTitre>{t('dose.patient')}</SousTitre>
@@ -235,23 +284,36 @@ export default function CalculateurDose() {
 
       <Separateur />
       <SousTitre>{t('dose.concentration')}</SousTitre>
-      <View style={styles.deux}>
-        <Champ
-          label={t('dose.mg')}
-          valeur={concentrationMg}
-          onChange={setConcentrationMg}
-          clavier="decimal-pad"
-          champRef={champs.concentrationMg}
-          onTermine={() => enchainer('concentrationMg')}
-        />
-        <Champ
-          label={t('dose.ml')}
-          valeur={concentrationMl}
-          onChange={setConcentrationMl}
-          clavier="decimal-pad"
-          champRef={champs.concentrationMl}
-          onTermine={() => enchainer('concentrationMl')}
-        />
+      {/*
+        Une rangée, deux champs de largeur égale, la même hauteur et le même
+        cadre que le champ Poids. Les deux capsules blanches d'avant, au
+        milieu d'un écran dont tout le reste fait la pleine largeur, n'avaient
+        pas l'air du même écran.
+      */}
+      <View style={styles.concentration}>
+        <View style={styles.moitie}>
+          <Champ
+            label={t('dose.mg')}
+            suffixe={t('dose.mg')}
+            valeur={concentrationMg}
+            onChange={setConcentrationMg}
+            clavier="decimal-pad"
+            champRef={champs.concentrationMg}
+            onTermine={() => enchainer('concentrationMg')}
+          />
+        </View>
+        <Text style={styles.barreOblique}>/</Text>
+        <View style={styles.moitie}>
+          <Champ
+            label={t('dose.ml')}
+            suffixe={t('dose.ml')}
+            valeur={concentrationMl}
+            onChange={setConcentrationMl}
+            clavier="decimal-pad"
+            champRef={champs.concentrationMl}
+            onTermine={() => enchainer('concentrationMl')}
+          />
+        </View>
       </View>
 
       <Separateur />
@@ -333,21 +395,6 @@ export default function CalculateurDose() {
             </Text>
           ))}
 
-          <Separateur />
-          <SousTitre>{t('dose.raccourci')}</SousTitre>
-          <Doux>{t('dose.raccourciAide')}</Doux>
-          <Champ
-            label={t('dose.nomRaccourci')}
-            valeur={nomRaccourci}
-            onChange={setNomRaccourci}
-            placeholder={t('dose.nomRaccourciPlaceholder')}
-          />
-          <Bouton
-            titre={t('commun.enregistrer')}
-            variante="secondaire"
-            icone={<Ionicons name="bookmark-outline" size={18} color={accent} />}
-            onPress={enregistrerRaccourci}
-          />
         </Fondu>
       )}
     </Ecran>
@@ -383,7 +430,13 @@ const styles = StyleSheet.create({
     color: couleurs.doux,
     marginTop: espace.xs,
   },
-  deux: { flexDirection: 'row', gap: espace.m },
+  concentration: { flexDirection: 'row', alignItems: 'center', gap: espace.s },
+  moitie: { flex: 1 },
+  barreOblique: {
+    fontSize: 18,
+    fontFamily: police.normal,
+    color: couleurs.doux,
+  },
   raccourcis: { flexDirection: 'row', flexWrap: 'wrap', gap: espace.s, marginTop: espace.s },
   raccourci: {
     borderWidth: 1,

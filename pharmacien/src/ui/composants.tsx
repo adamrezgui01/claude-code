@@ -151,6 +151,7 @@ export function Champ({
   avertissement,
   auto,
   nu,
+  suffixe,
   champRef,
   onTermine,
 }: {
@@ -166,6 +167,15 @@ export function Champ({
   auto?: 'characters' | 'none' | 'sentences' | 'words';
   /** Posé dans une section : le cadre est déjà là, le champ n'en remet pas un. */
   nu?: boolean;
+  /**
+   * L'unité, à droite du champ et sur la même ligne : « 250 | mg ».
+   *
+   * Elle remplace l'étiquette au-dessus, qui devenait une redite — l'en-tête
+   * de section dit déjà de quoi il s'agit, et une étiquette minuscule qui
+   * flotte au-dessus d'une capsule ne ressemble à aucun autre champ de
+   * l'application. `label` reste, mais ne sert plus qu'à VoiceOver.
+   */
+  suffixe?: string;
   /** Pour qu'un écran puisse ouvrir ce champ depuis le précédent. */
   champRef?: RefObject<TextInput | null>;
   /**
@@ -185,15 +195,13 @@ export function Champ({
     clavier === 'phone-pad';
   const barre = Platform.OS === 'ios' && (numerique || multiligne);
 
-  return (
-    <View style={[styles.champ, nu && styles.champNu]}>
-      <Text style={styles.label}>{label}</Text>
+  const saisie = (
       <TextInput
         style={[
-          nu ? styles.saisieNue : styles.saisieBoite,
+          suffixe ? styles.saisieDansBoite : nu ? styles.saisieNue : styles.saisieBoite,
           styles.saisieTexte,
           multiligne && styles.saisieMultiligne,
-          !nu && actif && { borderColor: accent },
+          !nu && !suffixe && actif && { borderColor: accent },
         ]}
         ref={champRef}
         // L'étiquette est un Text à côté, pas dans le champ : sans ça,
@@ -215,6 +223,19 @@ export function Champ({
         blurOnSubmit={!multiligne}
         inputAccessoryViewID={barre ? identifiant : undefined}
       />
+  );
+
+  return (
+    <View style={[styles.champ, nu && styles.champNu]}>
+      {!suffixe && <Text style={styles.label}>{label}</Text>}
+      {suffixe ? (
+        <View style={[styles.saisieBoite, styles.avecSuffixe, actif && { borderColor: accent }]}>
+          {saisie}
+          <Text style={styles.suffixe}>{suffixe}</Text>
+        </View>
+      ) : (
+        saisie
+      )}
       {barre && (
         <InputAccessoryView nativeID={identifiant}>
           {/*
@@ -952,6 +973,21 @@ const styles = StyleSheet.create({
     minHeight: 28,
     justifyContent: 'center',
   },
+  /** Le champ posé dans une boîte qui porte déjà le cadre et l'unité. */
+  saisieDansBoite: {
+    flex: 1,
+    padding: 0,
+  },
+  avecSuffixe: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace.s,
+  },
+  suffixe: {
+    fontSize: 15,
+    fontFamily: police.normal,
+    color: couleurs.doux,
+  },
   saisieBoite: {
     backgroundColor: couleurs.carte,
     borderWidth: 1,
@@ -1016,7 +1052,9 @@ const styles = StyleSheet.create({
     borderColor: couleurs.bordure,
     backgroundColor: couleurs.carte,
     borderRadius: 999,
-    paddingVertical: espace.s,
+    /* La même hauteur pour toutes les capsules, et la cible de 44 points. */
+    minHeight: 44,
+    justifyContent: 'center',
     paddingHorizontal: espace.l,
     marginRight: espace.s,
     marginBottom: espace.s,

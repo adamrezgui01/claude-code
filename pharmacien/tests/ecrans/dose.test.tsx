@@ -152,3 +152,89 @@ describe('la conversion du poids, affichée', () => {
     expect(screen.getByText('soit 39,7 lb')).toBeTruthy();
   });
 });
+
+describe('la mise en forme', () => {
+  type Boite = { minHeight?: number; borderRadius?: number };
+
+  function composer(element: ReturnType<typeof screen.getByLabelText>): Boite {
+    const styles = [element.props.style].flat(3).filter(Boolean) as Record<string, unknown>[];
+    return Object.assign({}, ...styles) as Boite;
+  }
+
+  /**
+   * Le cadre effectif d'un champ.
+   *
+   * Un champ avec unité vit dans une boîte qui porte le cadre pour lui ; un
+   * champ sans unité le porte lui-même. On remonte donc d'un cran quand le
+   * champ n'a pas de hauteur à lui.
+   */
+  function boite(champ: ReturnType<typeof screen.getByLabelText>): Boite {
+    const sien = composer(champ);
+    return sien.minHeight === undefined ? composer(champ.parent!) : sien;
+  }
+
+  test('les deux champs de concentration ont la hauteur du champ Poids', async () => {
+    await rendre(<CalculateurDose />);
+    const poids = boite(screen.getByLabelText(CHAMPS.poids));
+    expect(boite(screen.getByLabelText(CHAMPS.mg)).minHeight).toBe(poids.minHeight);
+    expect(boite(screen.getByLabelText(CHAMPS.ml)).minHeight).toBe(poids.minHeight);
+  });
+
+  test('et le même rayon de coin', async () => {
+    await rendre(<CalculateurDose />);
+    const poids = boite(screen.getByLabelText(CHAMPS.poids));
+    expect(boite(screen.getByLabelText(CHAMPS.mg)).borderRadius).toBe(poids.borderRadius);
+  });
+
+  test('les unités mg et mL sont à droite de leur champ', async () => {
+    // Et non en étiquette minuscule au-dessus : l'en-tête de section dit
+    // déjà « Concentration ».
+    await rendre(<CalculateurDose />);
+    const mg = screen.getByLabelText(CHAMPS.mg);
+    const unites = mg.parent!.children.filter((e) => typeof e !== 'string');
+    expect(unites).toHaveLength(2);
+  });
+
+  test('tous les champs de saisie partagent la même hauteur', async () => {
+    await rendre(<CalculateurDose />);
+    const hauteurs = new Set(
+      Object.values(CHAMPS).map((label) => boite(screen.getByLabelText(label)).minHeight)
+    );
+    expect(hauteurs.size).toBe(1);
+  });
+
+  test('sans raccourci enregistré ni calcul, la section est absente', async () => {
+    await rendre(<CalculateurDose />);
+    expect(screen.queryByText('Raccourci')).toBeNull();
+  });
+
+  test('dès qu’un calcul existe, la section et son « + » paraissent', async () => {
+    // Sans « + » quelque part, le premier raccourci ne pourrait jamais être
+    // créé. La section n'apparaît que s'il y a à appliquer ou à enregistrer.
+    await rendre(<CalculateurDose />);
+    await remplirLeCasCourant();
+    expect(screen.getByText('Raccourci')).toBeTruthy();
+    expect(screen.getByLabelText('Raccourci')).toBeTruthy();
+  });
+
+  test('le « + » ouvre le champ du nom, là où il est', async () => {
+    await rendre(<CalculateurDose />);
+    await remplirLeCasCourant();
+    expect(screen.queryByLabelText('Nom du raccourci')).toBeNull();
+
+    await fireEvent.press(screen.getByLabelText('Raccourci'));
+    expect(screen.getByLabelText('Nom du raccourci')).toBeTruthy();
+  });
+
+  test('les capsules de sélection ont toutes la même hauteur', async () => {
+    await rendre(<CalculateurDose />);
+    const hauteurs = new Set(
+      ['kg', 'lb', 'mg/kg/jour', 'mg/kg/dose', 'DIE', 'BID', 'TID', 'QID'].map((texte) => {
+        const capsule = screen.getByText(texte).parent!;
+        const styles = [capsule.props.style].flat(3).filter(Boolean) as Record<string, unknown>[];
+        return (Object.assign({}, ...styles) as { minHeight?: number }).minHeight;
+      })
+    );
+    expect(hauteurs).toEqual(new Set([44]));
+  });
+});
