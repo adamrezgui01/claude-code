@@ -13,6 +13,9 @@ import {
 import type { Langue } from '../lib/langue';
 import {
   etiquetteDuGraphique,
+  etiquettesLisibles,
+  formatDuGraphique,
+  reperesDeLAxe,
   maximum,
   mesureVoisine,
   valeurComplete,
@@ -49,6 +52,13 @@ const POINT = 7;
 const EPAISSEUR = 2.5;
 /** Assez large pour « 8 563,40 $ », assez étroite pour tenir dans le cadre. */
 const LARGEUR_BULLE = 96;
+
+/**
+ * La largeur réservée à l'axe vertical. Les trois repères partagent le format
+ * du graphique, donc la même largeur : « 12 450 » au plus large en chiffres
+ * pleins, « 12,4k » en milliers abrégés.
+ */
+const LARGEUR_AXE = 34;
 
 function Barre({
   entree,
@@ -248,27 +258,71 @@ function Page({
 }) {
   const accent = useAccent();
   const maxi = maximum(serie, mesure);
+
+  /**
+   * Le format est choisi sur la plus grande valeur, puis appliqué aux douze
+   * colonnes. Mélanger « 8 564 » et « 10k » dans un même graphique se lit
+   * mal : l'œil compare des barres, pas des unités.
+   */
+  const format = formatDuGraphique(maxi);
+  const etiquettes = serie.map((entree) =>
+    etiquetteDuGraphique(valeurDe(entree, mesure), mesure, format, langue)
+  );
+  const reperes = reperesDeLAxe(maxi, mesure, format, langue);
+
+  /** La largeur qui reste au tracé, une fois l'axe posé à gauche. */
+  const largeurTrace = Math.max(0, largeur - LARGEUR_AXE);
+
+  /**
+   * Soit toutes les étiquettes entrent, soit aucune ne s'affiche. Une valeur
+   * coupée est pire qu'une valeur absente : « 10 8… » peut être 10 800 ou
+   * 10 899. L'axe et la bulle sous le doigt rendent la précision autrement.
+   */
+  const plusLarge = etiquettes.reduce((a, b) => (b.length > a.length ? b : a), '');
+  const lisibles =
+    largeurTrace === 0 || etiquettesLisibles(largeurTrace / Math.max(1, serie.length), plusLarge);
+
   /**
    * Le mois touché. La bulle rend la précision que l'étiquette a laissée
    * tomber : elle n'encombre rien tant que personne ne la demande.
    */
   const [touche, setTouche] = useState<string | null>(null);
+  const [hautEtiquettes, setHautEtiquettes] = useState(0);
   const choisi = serie.find((e) => e.mois === touche) ?? null;
   const rang = choisi ? serie.indexOf(choisi) : 0;
-  const pas = largeur / Math.max(1, serie.length);
+  const pas = largeurTrace / Math.max(1, serie.length);
 
   return (
-    <View>
-      <View style={styles.rangee}>
-        {serie.map((entree) => (
-          <Text
-            key={entree.mois}
-            style={[styles.valeur, !enValeur.has(entree.mois) && { color: couleurs.doux }]}
-            numberOfLines={1}>
-            {etiquetteDuGraphique(valeurDe(entree, mesure), mesure, langue)}
-          </Text>
-        ))}
+    <View style={styles.page}>
+      {/*
+        L'axe vertical. C'est ce qui manquait le plus : sans lui, les
+        étiquettes étaient la seule échelle du graphique, d'où la pression
+        pour toutes les afficher — et donc pour les tronquer.
+      */}
+      <View style={styles.colonneAxe}>
+        <View style={{ height: lisibles ? hautEtiquettes : 0 }} />
+        <View style={[styles.reperes, { height: hauteurZone }]}>
+          {reperes.map((repere, i) => (
+            <Text key={i} style={styles.repereTexte} numberOfLines={1}>
+              {repere.etiquette}
+            </Text>
+          ))}
+        </View>
       </View>
+
+      <View style={styles.trace}>
+      {lisibles && (
+        <View style={styles.rangee} onLayout={(e) => setHautEtiquettes(e.nativeEvent.layout.height)}>
+          {serie.map((entree, i) => (
+            <Text
+              key={entree.mois}
+              style={[styles.valeur, !enValeur.has(entree.mois) && { color: couleurs.doux }]}
+              numberOfLines={1}>
+              {etiquettes[i]}
+            </Text>
+          ))}
+        </View>
+      )}
 
       {/*
         La zone de tracé donne son échelle aux deux formes. Elle se mesure une
@@ -276,8 +330,16 @@ function Page({
         que de figer l'échelle sur une valeur fausse.
       */}
       <View
+        testID="zone-trace"
         style={styles.zone}
         onLayout={(e: LayoutChangeEvent) => onMesurerZone(e.nativeEvent.layout.height)}>
+        {/* Les trois lignes de l'axe, sous le tracé et sourdes au doigt. */}
+        <View pointerEvents="none" style={styles.lignesRepere}>
+          {reperes.map((_, i) => (
+            <View key={i} style={styles.ligneRepere} />
+          ))}
+        </View>
+
         {hauteurZone > 0 &&
           (forme === 'barres' ? (
             <View style={styles.barres}>
@@ -295,12 +357,12 @@ function Page({
               ))}
             </View>
           ) : (
-            largeur > 0 && (
+            largeurTrace > 0 && (
               <Ligne
                 serie={serie}
                 mesure={mesure}
                 maxi={maxi}
-                largeur={largeur}
+                largeur={largeurTrace}
                 hauteurZone={hauteurZone}
                 enValeur={enValeur}
                 rejouer={rejouer}
@@ -334,13 +396,18 @@ function Page({
         </View>
 
         {/* La bulle se cale sur sa colonne, sans jamais sortir du cadre. */}
-        {choisi !== null && largeur > 0 && (
+        {choisi !== null && largeurTrace > 0 && (
           <View
             pointerEvents="none"
             style={[
               styles.bulle,
               { borderColor: accent },
-              { left: Math.min(Math.max(0, pas * rang + pas / 2 - LARGEUR_BULLE / 2), largeur - LARGEUR_BULLE) },
+              {
+                left: Math.min(
+                  Math.max(0, pas * rang + pas / 2 - LARGEUR_BULLE / 2),
+                  Math.max(0, largeurTrace - LARGEUR_BULLE)
+                ),
+              },
             ]}>
             <Text style={styles.bulleMois}>{choisi.libelle}</Text>
             <Text style={[styles.bulleValeur, { color: accent }]} numberOfLines={1}>
@@ -350,7 +417,7 @@ function Page({
         )}
       </View>
 
-      <View style={styles.axe} />
+      <View style={styles.regleBasse} />
 
       <View style={styles.rangee}>
         {serie.map((entree) => (
@@ -358,6 +425,7 @@ function Page({
             {entree.libelle}
           </Text>
         ))}
+      </View>
       </View>
     </View>
   );
@@ -399,6 +467,7 @@ export function Graphique({
 
   return (
     <View
+      testID="cadre-graphique"
       style={styles.cadre}
       onLayout={(e: LayoutChangeEvent) => setLargeur(e.nativeEvent.layout.width - espace.s * 2)}>
       {/*
@@ -472,6 +541,41 @@ const styles = StyleSheet.create({
    * barres et les libellés. C'est ce qui garantit que la barre de septembre, sa
    * valeur et son nom tombent exactement sur la même verticale.
    */
+  page: {
+    flexDirection: 'row',
+  },
+  /** L'axe vertical, à gauche du tracé. Largeur fixe : les trois repères
+      partagent le même format, donc la même largeur. */
+  colonneAxe: {
+    width: LARGEUR_AXE,
+    paddingRight: espace.xs,
+  },
+  reperes: {
+    justifyContent: 'space-between',
+  },
+  repereTexte: {
+    fontSize: 10,
+    fontFamily: police.normal,
+    color: couleurs.doux,
+    textAlign: 'right',
+    /* Le repère se cale sur sa ligne, pas au-dessus. */
+    marginTop: -6,
+  },
+  lignesRepere: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'space-between',
+  },
+  ligneRepere: {
+    height: 1,
+    backgroundColor: couleurs.bordurePale,
+  },
+  trace: {
+    flex: 1,
+  },
   rangee: {
     flexDirection: 'row',
   },
@@ -522,14 +626,17 @@ const styles = StyleSheet.create({
   },
   valeur: {
     flex: 1,
-    fontSize: 9,
+    /* Onze points : c'est ce qui se lit sans loupe sur une rangée de douze. */
+    fontSize: 11,
     fontFamily: police.demi,
     color: couleurs.texte,
     marginBottom: 2,
     textAlign: 'center',
   },
   barre: {
-    width: '62%',
+    /* Au plus soixante pour cent de la colonne : le reste est l'air qui
+       sépare deux étiquettes voisines. */
+    width: '60%',
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
     minHeight: 2,
@@ -556,7 +663,8 @@ const styles = StyleSheet.create({
     borderRadius: POINT / 2,
     borderWidth: 2,
   },
-  axe: {
+  /** La règle qui ferme le bas du tracé. L'axe, lui, est vertical. */
+  regleBasse: {
     height: 1,
     backgroundColor: couleurs.bordure,
   },

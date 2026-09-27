@@ -88,7 +88,10 @@ export function Pageur({
   }
 
   return (
-    <View style={[styles.cadre, style]} onLayout={(e: LayoutChangeEvent) => setLargeur(e.nativeEvent.layout.width)}>
+    <View
+      testID="pageur"
+      style={[styles.cadre, style]}
+      onLayout={(e: LayoutChangeEvent) => setLargeur(e.nativeEvent.layout.width)}>
       <ScrollView
         ref={liste}
         horizontal

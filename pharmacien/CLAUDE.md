@@ -299,32 +299,29 @@ qu'on ne les redécouvre pas trois fois.
   déploie douze lignes ou quarante. Une liste qu'on peut ouvrir sans pouvoir la
   refermer est un piège, et le repli ramène la vue sur l'en-tête de la section :
   sinon on se retrouve au milieu de l'écran sans savoir où.
-- Sur un **graphique**, un montant s'écrit sans cents et sans symbole —
-  « 8 563 » —, et un total d'heures sans ses minutes — « 169 h ». Les cents
-  d'un total mensuel sont du bruit : personne ne lit la différence entre
-  8 563,40 et 8 563,90 sur une barre, et le symbole est redondant puisque
-  l'onglet Argent est sélectionné. Six caractères est la largeur qui entre dans
-  une colonne sur douze ; au-delà on abrège — « 124 k », « 1,5 M ». La
-  précision n'est pas perdue : toucher une colonne l'affiche en entier, cents
-  et symbole compris. C'est un format d'**affichage** et rien d'autre : partout
-  ailleurs — totaux, fiches, factures — le montant garde ses cents, et la règle
-  du montant calculé et arrondi une seule fois n'est pas touchée.
-- Un formulaire dont les champs se remplissent dans un ordre fixe **enchaîne
-  lui-même** : valider un champ ouvre le prochain champ obligatoire encore
-  vide, et le dernier ferme le clavier. Un champ déjà rempli est sauté —
-  revenir corriger le poids ne doit pas obliger à retraverser une dose et deux
-  concentrations déjà entrées. Les sélecteurs n'y sont pas : ils n'ont pas de
-  clavier à ouvrir. Les champs facultatifs non plus : les enchaîner forcerait à
-  les traverser à chaque calcul. Les heures des dispos et le calculateur de
-  dose partagent cette logique ; un troisième écran du même genre la reprend
-  plutôt que d'en inventer une.
-- Sur iOS, un pavé numérique n'a pas de touche de retour : la barre au-dessus
-  du clavier porte un **vrai bouton** — fond accentué, texte blanc, coins
-  arrondis, 44 points de haut, aligné à droite —, pas du texte coloré. Dans une
-  barre grise, un mot mauve ne se lit pas comme une commande. Rien ne peut
-  s'afficher sous le clavier du système : il occupe le bas de l'écran et la
-  barre d'accessoires est toujours au-dessus. Ce n'est pas un choix de mise en
-  page, c'est la plateforme.
+- **Une étiquette de graphique ne se tronque jamais.** Soit elle entre en
+  entier, soit elle ne s'affiche pas. « 10 8… » peut être 10 800 ou 10 899, et
+  on ne le sait pas : une valeur coupée est pire qu'une valeur absente.
+  Le format se choisit **par graphique**, sur sa plus grande valeur, et
+  s'applique aux douze colonnes — mélanger « 8 564 » et « 10k » dans le même
+  graphique se lit mal, l'œil compare des barres et non des unités. Sous dix
+  mille : chiffres pleins, `1 232`. À dix mille et plus : milliers abrégés
+  sans espace, `8,6k`, `11k`, une décimale sous dix milliers et aucune au-delà.
+  Un montant y perd ses cents et son symbole, un total d'heures ses minutes :
+  les cents d'un total mensuel sont du bruit, et l'unité est déjà dite par
+  l'onglet sélectionné. Le « h » lui-même cède quand il ferait déborder.
+  C'est un format d'**affichage** : partout ailleurs — totaux, fiches,
+  factures — le montant garde ses cents, et la règle du montant calculé et
+  arrondi une seule fois n'est pas touchée.
+- Ce qui remplace la précision perdue : un **axe vertical à trois repères** —
+  zéro, milieu, maximum — et la valeur exacte sous le doigt, cents et symbole
+  compris. Sans axe, les étiquettes étaient la seule échelle du graphique,
+  d'où la pression pour toutes les afficher, d'où la troncature.
+  Conséquence assumée de la règle : à onze points, cinq chiffres pleins
+  n'entrent pas dans une colonne sur douze d'un écran de téléphone. Un
+  graphique en milliers de dollars n'affiche donc plus d'étiquette sous ses
+  barres — il affiche son axe. Le jour où on voudra les retrouver, le levier
+  est la taille du texte ou le nombre de colonnes, jamais la troncature.
 - L'écran de révision ne montre jamais un nombre de bonnes réponses, un
   pourcentage, ni une série de jours consécutifs. Il compte ce qu'il reste à
   faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;

@@ -29,16 +29,35 @@ export function mesureVoisine(mesures: Mesure[], mesure: Mesure, decalage: -1 | 
 }
 
 /**
- * L'étiquette d'une valeur, sur le graphique.
+ * Le format des étiquettes, choisi **par graphique** et non par valeur.
  *
- * En kilomètres, les valeurs entraient : `1 232`, cinq caractères pour douze
- * colonnes. En argent, elles étaient coupées — `8 56…` — parce qu'on écrivait
- * `8 563,40 $`, dix caractères pour la même largeur.
+ * Une étiquette de graphique ne se tronque jamais : soit elle entre en
+ * entier, soit elle ne s'affiche pas. « 10 8… » peut être 10 800 ou 10 899,
+ * et on ne le sait pas — une valeur coupée est pire qu'une valeur absente.
  *
- * Le problème n'est pas le graphique, c'est le format. Les cents d'un total
- * mensuel sont du bruit : personne ne lit la différence entre 8 563,40 et
- * 8 563,90 sur une barre. Et le symbole est redondant, puisque l'onglet Argent
- * est sélectionné. Même raisonnement pour les minutes d'un total d'heures.
+ * On regarde donc la plus grande valeur du graphique, et on applique le même
+ * format aux douze colonnes. Mélanger « 8 564 » et « 10k » dans un même
+ * graphique se lit mal : l'œil compare des barres, pas des unités.
+ */
+export type FormatGraphique = 'pleins' | 'milliers';
+
+/**
+ * Cinq caractères entrent dans une colonne sur douze, six n'entrent pas.
+ * Sous dix mille, un nombre plein en fait cinq au plus : `9 695`.
+ */
+export const SEUIL_ABREGE = 10000;
+
+export function formatDuGraphique(maximum: number): FormatGraphique {
+  return maximum >= SEUIL_ABREGE ? 'milliers' : 'pleins';
+}
+
+/**
+ * L'étiquette d'une valeur, dans le format du graphique.
+ *
+ * Les cents d'un total mensuel sont du bruit — personne ne lit la différence
+ * entre 8 563,40 et 8 563,90 sur une barre — et le symbole est redondant,
+ * puisque l'onglet Argent est sélectionné. Même raisonnement pour les minutes
+ * d'un total d'heures.
  *
  * C'est un format d'**affichage**, et rien d'autre : le montant reste calculé
  * et arrondi une seule fois, sur le quart. Partout ailleurs — totaux, fiches,
@@ -47,45 +66,99 @@ export function mesureVoisine(mesures: Mesure[], mesure: Mesure, decalage: -1 | 
 export function etiquetteDuGraphique(
   valeur: number,
   mesure: Mesure,
+  format: FormatGraphique = 'pleins',
   langue: Langue = LANGUE_DEFAUT
 ): string {
   // La barre est déjà au sol : un « 0 » posé dessus n'ajoute rien.
   if (valeur === 0) return '';
-  if (mesure === 'heures') return heuresGraphique(valeur, langue);
-  return nombreCourt(valeur, langue);
+  if (format === 'milliers') return enMilliers(valeur, langue);
+
+  const entier = Math.round(valeur);
+  const texte = nombre(entier, 0, langue);
+  // Le « h » est une courtoisie, et il cède devant la règle des cinq
+  // caractères : « 1 232 h » en fait sept. L'unité est de toute façon dite
+  // par l'onglet sélectionné, comme l'est le symbole du dollar.
+  if (mesure === 'heures' && entier < 1000) return `${texte} h`;
+  return texte;
 }
 
 /**
- * Six caractères est la largeur qui fonctionne — c'est celle des kilomètres,
- * qui entraient déjà. Au-delà, la colonne coupe et les points de suspension
- * reviennent. Deux paliers suffisent à tenir cette largeur jusqu'aux millions.
- */
-const SEUIL_MILLIERS = 100000;
-const SEUIL_MILLIONS = 1000000;
-
-function nombreCourt(valeur: number, langue: Langue): string {
-  // On arrondit avant de comparer : 999 999 donne mille milliers, et
-  // « 1 000 k » ferait sept caractères — un de trop, et c'est celui qui coupe.
-  const milliers = Math.round(valeur / 1000);
-  if (milliers >= 1000) return `${nombre(valeur / SEUIL_MILLIONS, 1, langue)} M`;
-  if (valeur >= SEUIL_MILLIERS) return `${nombre(milliers, 0, langue)} k`;
-  return nombre(Math.round(valeur), 0, langue);
-}
-
-/**
- * Un total d'heures à l'heure près : « 168 h », jamais « 168 h 30 ». Une
- * demi-heure sur un mois ne se lit pas sur une barre, et « 168 h 30 » fait
- * huit caractères — il se coupe exactement comme le montant se coupait.
+ * Le millier abrégé, sans espace : `8,6k`, `10k`. Quatre caractères au plus.
  *
- * Au-delà de quatre chiffres, le « h » ne tient plus : l'unité est déjà dite
- * par l'onglet sélectionné, comme le symbole du dollar.
+ * Une décimale sous dix milliers, aucune au-delà : `9,7k` puis `11k`. La
+ * décimale d'un nombre à deux chiffres n'apporte rien et coûte le caractère
+ * qui fait déborder.
  */
-const SEUIL_HEURES_NUES = 10000;
+function enMilliers(valeur: number, langue: Langue): string {
+  const milliers = valeur / 1000;
+  // Le passage aux millions se juge sur la valeur arrondie : 999 999 fait
+  // mille milliers, et « 1 000k » ferait six caractères — un de trop, et
+  // c'est celui qui coupe.
+  if (Math.round(milliers) >= 1000) return `${nombre(valeur / 1_000_000, 1, langue)}M`;
+  // La décimale, elle, se juge sur la valeur réelle : 9 700 fait neuf
+  // milliers sept, pas dix.
+  if (milliers >= 10) return `${nombre(Math.round(milliers), 0, langue)}k`;
+  return `${nombre(milliers, 1, langue)}k`;
+}
 
-function heuresGraphique(total: number, langue: Langue): string {
-  const arrondi = Math.round(total);
-  if (arrondi >= SEUIL_HEURES_NUES) return nombreCourt(arrondi, langue);
-  return langue === 'en' ? `${arrondi}h` : `${arrondi} h`;
+/**
+ * Trois repères sur l'axe vertical : zéro, le milieu, le maximum.
+ *
+ * C'est ce qui manquait le plus. Sans axe, les étiquettes étaient la seule
+ * échelle du graphique, d'où la pression pour toutes les afficher — et donc
+ * pour les tronquer quand elles ne rentraient pas.
+ */
+export type RepereAxe = { valeur: number; etiquette: string };
+
+export function reperesDeLAxe(
+  maximum: number,
+  mesure: Mesure,
+  format: FormatGraphique,
+  langue: Langue = LANGUE_DEFAUT
+): RepereAxe[] {
+  return [maximum, maximum / 2, 0].map((valeur) => ({
+    valeur,
+    // Le zéro s'écrit, ici : c'est le bas de l'échelle, pas une barre vide.
+    etiquette:
+      valeur === 0 ? nombre(0, 0, langue) : etiquetteDuGraphique(valeur, mesure, format, langue),
+  }));
+}
+
+/**
+ * Largeur approximative d'un caractère d'étiquette, à onze points, en Nunito
+ * demi-gras.
+ *
+ * Par classe de caractère, et non une moyenne : une virgule fait la moitié
+ * d'un chiffre, et un séparateur de milliers moins encore. Une moyenne plate
+ * surestimait « 8,6k » de trente pour cent, et cachait donc des étiquettes
+ * qui entrent — ce qui revient à perdre l'information pour rien.
+ *
+ * C'est une estimation, pas une mesure : mesurer douze textes à chaque rendu
+ * coûterait plus cher que la marge qu'on garde ici.
+ */
+function largeurEstimee(texte: string): number {
+  let total = 0;
+  for (const c of texte) {
+    if (c === ',' || c === '.') total += 3.1;
+    else if (c === ' ' || c === ' ' || c === ' ') total += 2.9;
+    else total += 6.2;
+  }
+  return total;
+}
+
+/** L'air minimal entre deux étiquettes voisines. */
+export const ECART_ETIQUETTES = 4;
+
+/**
+ * Les étiquettes entrent-elles ?
+ *
+ * Si la plus large ne tient pas dans sa colonne, **aucune** ne s'affiche :
+ * l'axe et la bulle sous le doigt suffisent. Jamais de troncature, et jamais
+ * une rangée où certaines passent et d'autres non.
+ */
+export function etiquettesLisibles(largeurColonne: number, plusLarge: string): boolean {
+  if (!plusLarge) return true;
+  return largeurEstimee(plusLarge) + ECART_ETIQUETTES <= largeurColonne;
 }
 
 /**
