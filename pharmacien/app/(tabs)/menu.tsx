@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { normaliser } from '../../src/lib/texte';
 import { Ecran, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 /**
@@ -111,12 +111,12 @@ const styles = StyleSheet.create({
     borderColor: couleurs.bordure,
     borderRadius: rayon,
     paddingHorizontal: espace.m,
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
     marginBottom: espace.l,
   },
   saisie: {
     flex: 1,
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
     color: couleurs.texte,
     paddingVertical: espace.s,
@@ -136,12 +136,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   titre: {
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   detail: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
   },

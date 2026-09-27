@@ -159,6 +159,26 @@ const PASSES: Record<string, string[]> = {
     'app/veille/note/[id].tsx',
     'app/veille/sujet/[id].tsx',
   ],
+  Menu: [
+    'app/(tabs)/menu.tsx',
+    'app/profil.tsx',
+    'app/parametres.tsx',
+    'app/apparence.tsx',
+    'app/document/[id].tsx',
+  ],
+  /** Le reste : les écrans hors onglet, et le système de composants. */
+  Charpente: [
+    'app/quart/[id].tsx',
+    'app/quart/annuler.tsx',
+    'app/frais/[id].tsx',
+    'src/ui/composants.tsx',
+    'src/ui/Selecteurs.tsx',
+    'src/ui/Dictee.tsx',
+    'src/ui/FeuilleSurgissante.tsx',
+    'src/ui/Bienvenue.tsx',
+    'src/ui/BandeauCapture.tsx',
+    'src/ui/Filet.tsx',
+  ],
   Statistiques: [
     'app/(tabs)/statistiques.tsx',
     'src/ui/Graphique.tsx',
@@ -239,7 +259,9 @@ describe('les écrans passés aux jetons', () => {
           for (const prop of ['marginTop', 'marginBottom', 'paddingTop', 'paddingBottom', 'paddingVertical', 'gap']) {
             for (const m of s.matchAll(new RegExp(`\\b${prop}: (-?\\d+(?:\\.\\d+)?)`, 'g'))) {
               const v = Number(m[1]);
-              if (v < 0) continue;
+              // Zéro est l'absence d'espacement, pas une valeur hors échelle :
+              // une dernière ligne sans marge, un champ séparé par son trait.
+              if (v <= 0) continue;
               if (!ECHELLE.includes(v)) hors.push(`${f.split('/').pop()} ${prop} ${m[1]}`);
             }
           }

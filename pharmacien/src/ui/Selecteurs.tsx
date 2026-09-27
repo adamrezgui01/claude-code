@@ -21,7 +21,7 @@ import {
   JOURS_COURTS,
 } from '../lib/dates';
 import { Pageur } from './Pageur';
-import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
+import { accentPale, couleurs, dimensions, espace, police, rayon, texte, useAccent } from './theme';
 import { useTextes } from '../i18n';
 
 /**
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginBottom: espace.xs,
@@ -437,10 +437,10 @@ const styles = StyleSheet.create({
     borderRadius: rayon,
     paddingHorizontal: espace.l,
     paddingVertical: espace.m,
-    minHeight: 50,
+    minHeight: dimensions.champ.hauteur,
   },
   boiteTexte: {
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.normal,
     color: couleurs.texte,
   },
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.m,
   },
   feuilleTitre: {
-    fontSize: 18,
+    fontSize: texte.titre,
     fontFamily: police.gras,
     color: couleurs.texte,
     textAlign: 'center',
@@ -487,16 +487,16 @@ const styles = StyleSheet.create({
     gap: espace.s,
   },
   unite: {
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.doux,
-    marginBottom: 2,
+    marginBottom: espace.xs,
   },
   deuxPoints: {
-    fontSize: 28,
+    fontSize: texte.chiffre,
     fontFamily: police.gras,
     color: couleurs.texte,
-    marginBottom: 2,
+    marginBottom: espace.xs,
   },
   rouleau: {
     height: HAUTEUR_ROULEAU,
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ligneTexte: {
-    fontSize: 20,
+    fontSize: texte.grandTitre,
     fontFamily: police.normal,
     color: couleurs.texte,
   },
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
   titreMois: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 17,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.texte,
     textTransform: 'capitalize',
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
   jourSemaine: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: texte.fin,
     fontFamily: police.demi,
     color: couleurs.doux,
     marginBottom: espace.xs,
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   case: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 3,
+    paddingVertical: espace.xs,
   },
   pastille: {
     width: 38,
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chiffre: {
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.normal,
     color: couleurs.texte,
   },
@@ -572,11 +572,11 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    marginTop: 2,
+    marginTop: espace.xs,
   },
   aujourdhui: {
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     marginTop: espace.m,
   },

@@ -31,17 +31,7 @@ import {
 } from 'react-native';
 
 import { formaterTelephone, formaterTelephoneSaisie } from '../lib/telephone';
-import {
-  accentPale,
-  couleurs,
-  dimensions,
-  espace,
-  ombre,
-  police,
-  rayon,
-  useAccent,
-  CIBLE_MIN,
-} from './theme';
+import { accentPale, couleurs, dimensions, espace, ombre, police, rayon, texte, useAccent, CIBLE_MIN } from './theme';
 import { useTextes } from '../i18n';
 
 /**
@@ -796,12 +786,12 @@ const styles = StyleSheet.create({
   },
   caseCoche: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.gras,
     lineHeight: 18,
   },
   caseLabel: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
     color: couleurs.texte,
   },
@@ -818,7 +808,7 @@ const styles = StyleSheet.create({
     gap: espace.m,
   },
   ficheTitre: {
-    fontSize: 18,
+    fontSize: texte.titre,
     fontFamily: police.gras,
     color: couleurs.texte,
   },
@@ -836,7 +826,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.m,
   },
   bandeauAideTexte: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.texte,
     lineHeight: 18,
@@ -846,7 +836,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.xxl,
   },
   sectionTitre: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.demi,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
@@ -866,7 +856,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.m,
   },
   ongletsLibelle: {
-    fontSize: 11,
+    fontSize: texte.fin,
     fontFamily: police.normal,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
@@ -885,10 +875,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: espace.m,
     paddingVertical: espace.xs,
     /* La cible reste confortable même quand le mot est court. */
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
   },
   ongletTexte: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
   },
   trait: {
@@ -927,7 +917,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   titre: {
-    fontSize: 24,
+    fontSize: texte.enTete,
     fontFamily: police.gras,
     color: couleurs.texte,
   },
@@ -940,7 +930,7 @@ const styles = StyleSheet.create({
     marginBottom: dimensions.enTete.margeBasse,
   },
   doux: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
     lineHeight: 18,
@@ -960,7 +950,7 @@ const styles = StyleSheet.create({
   },
   vide: {
     color: couleurs.doux,
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.normal,
     paddingVertical: espace.l,
     textAlign: 'center',
@@ -975,6 +965,9 @@ const styles = StyleSheet.create({
     marginBottom: dimensions.etiquette.margeBasse,
   },
   champNu: {
+    /* Zéro délibéré : le champ nu est séparé du suivant par son trait, pas par
+       une marge. Ce n'est pas une valeur hors échelle, c'est l'absence de
+       valeur. */
     marginBottom: 0,
     paddingVertical: espace.m,
     borderBottomWidth: 1,
@@ -996,7 +989,7 @@ const styles = StyleSheet.create({
     gap: espace.s,
   },
   suffixe: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
     color: couleurs.doux,
   },
@@ -1020,13 +1013,13 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   aide: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginTop: espace.xs,
   },
   avertissement: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.normal,
     color: couleurs.alerte,
     marginTop: espace.xs,
@@ -1077,7 +1070,7 @@ const styles = StyleSheet.create({
   },
   etiquette: {
     borderRadius: 999,
-    paddingVertical: 3,
+    paddingVertical: espace.xs,
     paddingHorizontal: espace.m,
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -1085,7 +1078,7 @@ const styles = StyleSheet.create({
     gap: espace.xs,
   },
   etiquetteTexte: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.demi,
   },
   interrupteur: {
@@ -1099,7 +1092,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   interrupteurLabel: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
@@ -1111,13 +1104,13 @@ const styles = StyleSheet.create({
     gap: espace.m,
   },
   rangeeLabel: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
     color: couleurs.doux,
     flexShrink: 1,
   },
   rangeeValeur: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
     flexShrink: 1,

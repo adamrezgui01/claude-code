@@ -73,7 +73,7 @@ import { SelecteurDate, SelecteurDuree, SelecteurHeure } from '../../src/ui/Sele
 import { Recompense } from '../../src/ui/Recompense';
 import { CalendrierMultiple } from '../../src/ui/CalendrierMultiple';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
-import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon, texte, useAccent } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 /** Durées de pause courantes. « Autre » ouvre la roulette. */
@@ -1021,7 +1021,7 @@ const styles = StyleSheet.create({
     gap: espace.m,
   },
   label: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginBottom: espace.xs,
@@ -1031,7 +1031,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   duree: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     color: couleurs.texte,
     marginVertical: espace.m,
@@ -1053,18 +1053,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   detailsLabel: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   detailsResume: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
-    marginTop: 2,
+    marginTop: espace.xs,
   },
   lien: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     marginTop: espace.s,
   },
@@ -1088,17 +1088,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   fraisDescription: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
     color: couleurs.texte,
   },
   fraisMontant: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   total: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     marginBottom: espace.m,
   },
@@ -1116,12 +1116,12 @@ const styles = StyleSheet.create({
     gap: espace.s,
   },
   verrouTitre: {
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   notesFigees: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
     color: couleurs.texte,
     lineHeight: 21,

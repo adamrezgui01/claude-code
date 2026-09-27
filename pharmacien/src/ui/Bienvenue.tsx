@@ -12,7 +12,7 @@ import {
 import { localiserAdresse } from '../lib/adressesRecherche';
 import { Bouton, Champ, Doux, Ecran } from './composants';
 import { SaisieAdresse } from './SaisieAdresse';
-import { couleurs, espace, police } from './theme';
+import { couleurs, espace, police, texte } from './theme';
 import { useTextes } from '../i18n';
 
 /**
@@ -104,12 +104,12 @@ const styles = StyleSheet.create({
     marginBottom: espace.xl,
   },
   titre: {
-    fontSize: 30,
+    fontSize: texte.chiffre,
     fontFamily: police.gras,
     color: couleurs.texte,
   },
   sousTitre: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginTop: espace.s,

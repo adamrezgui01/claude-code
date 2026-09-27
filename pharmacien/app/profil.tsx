@@ -33,7 +33,7 @@ import {
 } from '../src/ui/composants';
 import { SelecteurDate } from '../src/ui/Selecteurs';
 import { SaisieAdresse } from '../src/ui/SaisieAdresse';
-import { couleurs, espace, police, useAccent } from '../src/ui/theme';
+import { couleurs, espace, police, texte, useAccent } from '../src/ui/theme';
 import { useTextes } from '../src/i18n';
 
 export default function Profil() {
@@ -243,17 +243,17 @@ export default function Profil() {
 
 const styles = StyleSheet.create({
   compteur: {
-    fontSize: 17,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   lien: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     paddingVertical: espace.s,
   },
   label: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginBottom: espace.xs,
@@ -278,12 +278,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   documentNom: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   restants: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
   },

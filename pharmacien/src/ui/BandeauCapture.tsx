@@ -16,7 +16,7 @@ import { useTextes } from '../i18n';
 import { doitProposerBandeau, offresBandeau } from '../lib/veille/capture';
 
 import { nomDuSujet } from '../lib/veille/sujets';
-import { couleurs, espace, police, rayon, useAccent } from './theme';
+import { couleurs, espace, police, rayon, texte, useAccent } from './theme';
 
 /**
  * Le bandeau de capture.
@@ -137,10 +137,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: espace.l,
   },
   texte: { flex: 1 },
-  question: { fontSize: 14, fontFamily: police.demi, color: couleurs.texte },
-  source: { fontSize: 12, fontFamily: police.normal, color: couleurs.doux },
+  question: { fontSize: texte.lecture, fontFamily: police.demi, color: couleurs.texte },
+  source: { fontSize: texte.secondaire, fontFamily: police.normal, color: couleurs.doux },
   action: { borderRadius: rayon, paddingVertical: espace.s, paddingHorizontal: espace.m },
-  actionTexte: { fontSize: 13, fontFamily: police.demi, color: '#FFFFFF' },
+  actionTexte: { fontSize: texte.courant, fontFamily: police.demi, color: '#FFFFFF' },
   secondaire: { padding: espace.xs },
   attenue: { opacity: 0.7 },
 });

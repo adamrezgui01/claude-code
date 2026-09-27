@@ -13,7 +13,7 @@ import { argent } from '../../src/lib/format';
 import { montantsDuQuart } from '../../src/lib/montants';
 import { annulerRappels } from '../../src/lib/notifications';
 import { Bouton, Carte, Doux, Ecran, Fondu, SousTitre, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../../src/ui/theme';
 
 /**
  * Annuler un quart, après l'avoir dit à voix haute.
@@ -164,16 +164,16 @@ const styles = StyleSheet.create({
     borderBottomColor: couleurs.bordure,
   },
   texte: { flex: 1 },
-  nom: { fontSize: 16, fontFamily: police.demi, color: couleurs.texte },
-  detail: { fontSize: 14, fontFamily: police.normal, color: couleurs.doux },
-  montant: { fontSize: 20, fontFamily: police.gras, color: couleurs.texte, marginTop: espace.s },
+  nom: { fontSize: texte.saisie, fontFamily: police.demi, color: couleurs.texte },
+  detail: { fontSize: texte.lecture, fontFamily: police.normal, color: couleurs.doux },
+  montant: { fontSize: texte.grandTitre, fontFamily: police.gras, color: couleurs.texte, marginTop: espace.s },
   dispo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: espace.s,
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
     paddingHorizontal: espace.s,
     borderRadius: rayon,
   },
-  disposTexte: { fontSize: 15, fontFamily: police.demi },
+  disposTexte: { fontSize: texte.corps, fontFamily: police.demi },
 });

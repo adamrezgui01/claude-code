@@ -16,7 +16,7 @@ import {
 import { formatDateCourte } from '../lib/dates';
 import type { Langue } from '../lib/langue';
 import { Bouton } from './composants';
-import { couleurs, espace, police, rayon, useAccent } from './theme';
+import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from './theme';
 
 /**
  * La dictée.
@@ -346,19 +346,19 @@ const styles = StyleSheet.create({
     padding: espace.xl,
     gap: espace.m,
   },
-  titre: { fontSize: 18, fontFamily: police.gras, color: couleurs.texte },
+  titre: { fontSize: texte.titre, fontFamily: police.gras, color: couleurs.texte },
   champ: {
     borderWidth: 1.5,
     borderRadius: rayon,
     padding: espace.m,
     minHeight: 92,
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.normal,
     color: couleurs.texte,
     textAlignVertical: 'top',
   },
   indice: { flexDirection: 'row', alignItems: 'center', gap: espace.s },
-  indiceTexte: { fontSize: 13, fontFamily: police.normal, color: couleurs.doux, flex: 1 },
+  indiceTexte: { fontSize: texte.courant, fontFamily: police.normal, color: couleurs.doux, flex: 1 },
   resultat: { gap: espace.m },
   carte: {
     flexDirection: 'row',
@@ -369,12 +369,12 @@ const styles = StyleSheet.create({
     borderRadius: rayon,
     paddingVertical: espace.s,
     paddingHorizontal: espace.m,
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
   },
-  carteTexte: { flex: 1, fontSize: 14, fontFamily: police.normal, color: couleurs.texte },
-  resume: { fontSize: 15, fontFamily: police.demi, color: couleurs.texte },
+  carteTexte: { flex: 1, fontSize: texte.lecture, fontFamily: police.normal, color: couleurs.texte },
+  resume: { fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
   question: { gap: espace.s },
-  questionTexte: { fontSize: 14, fontFamily: police.normal, color: couleurs.doux },
+  questionTexte: { fontSize: texte.lecture, fontFamily: police.normal, color: couleurs.doux },
   choix: { flexDirection: 'row', flexWrap: 'wrap', gap: espace.s },
   puce: {
     borderWidth: 1,
@@ -383,12 +383,12 @@ const styles = StyleSheet.create({
     paddingVertical: espace.s,
     paddingHorizontal: espace.m,
   },
-  puceTexte: { fontSize: 14, fontFamily: police.demi, color: couleurs.texte },
+  puceTexte: { fontSize: texte.lecture, fontFamily: police.demi, color: couleurs.texte },
   puceTexteRetenu: { color: '#FFFFFF' },
-  echec: { fontSize: 14, fontFamily: police.normal, color: couleurs.doux, lineHeight: 20 },
+  echec: { fontSize: texte.lecture, fontFamily: police.normal, color: couleurs.doux, lineHeight: 20 },
   annuler: {
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     color: couleurs.doux,
     paddingVertical: espace.s,

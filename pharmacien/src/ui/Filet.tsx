@@ -4,7 +4,7 @@ import type { ErrorBoundaryProps } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT_DEFAUT, couleurs, dimensions, espace, police } from './theme';
+import { couleurs, dimensions, espace, police, texte, ACCENT_DEFAUT } from './theme';
 
 /**
  * Le filet : ce qui s'affiche quand un écran plante.
@@ -88,18 +88,21 @@ const styles = StyleSheet.create({
     // Pas de zone sûre ici : le filet peut s'afficher au-dessus du fournisseur
     // qui la calcule. Une marge généreuse vaut mieux qu'une dépendance de plus
     // sur un écran dont la seule qualité exigée est de s'afficher.
-    paddingTop: 96,
+    //
+    // Trois crans de l'échelle, et non un nombre à part : quatre-vingt-seize
+    // points passent l'encoche de tous les modèles.
+    paddingTop: espace.xxl * 3,
     paddingHorizontal: espace.xl,
     paddingBottom: espace.xxl,
     gap: espace.m,
   },
   titre: {
-    fontSize: 24,
+    fontSize: texte.enTete,
     fontFamily: police.gras,
     color: couleurs.texte,
   },
   rassurance: {
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginBottom: espace.s,
@@ -139,14 +142,14 @@ const styles = StyleSheet.create({
   },
   etiquette: {
     marginTop: espace.l,
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.demi,
     color: couleurs.doux,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   detail: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.normal,
     color: couleurs.doux,
     backgroundColor: couleurs.carte,

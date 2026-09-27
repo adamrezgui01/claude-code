@@ -39,7 +39,7 @@ import {
   Section,
   SousTitre,
 } from '../src/ui/composants';
-import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
+import { couleurs, espace, police, rayon, texte, useAccent } from '../src/ui/theme';
 import { SelecteurHeure } from '../src/ui/Selecteurs';
 import { Compteur } from '../src/ui/Compteur';
 
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
     height: espace.m,
   },
   label: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginBottom: espace.xs,
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   compte: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
     marginTop: espace.s,
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   apparenceTitre: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
   },

@@ -16,7 +16,7 @@ import {
   Fondu,
   SousTitre,
 } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon, texte } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 export default function FormulaireFrais() {
@@ -197,12 +197,12 @@ const styles = StyleSheet.create({
     gap: espace.s,
   },
   lien: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   retirer: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     color: couleurs.alerte,
   },

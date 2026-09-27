@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Carte, Doux, Fondu, SousTitre } from '../src/ui/composants';
-import { accentPale, couleurs, espace, MAUVES, police, rayon, useTheme } from '../src/ui/theme';
+import { accentPale, couleurs, espace, police, rayon, texte, useTheme, MAUVES } from '../src/ui/theme';
 import { useTextes } from '../src/i18n';
 
 /**
@@ -94,12 +94,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   nom: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   apercuTitre: {
-    fontSize: 18,
+    fontSize: texte.titre,
     fontFamily: police.gras,
     color: couleurs.texte,
   },
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   },
   boutonTexte: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
   },
   puceApercu: {
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     marginTop: espace.m,
   },
   puceTexte: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
   },
 });
