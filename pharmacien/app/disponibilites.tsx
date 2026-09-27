@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Sharing from 'expo-sharing';
 import { Stack, useRouter } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 
 import {
@@ -18,16 +18,15 @@ import {
   ajusterAutourDuQuart,
   bornerPlage,
   chevauchement,
-  disponibilites,
   disponibilitesEntre,
   finProposee,
   joursOfferts,
   plageValide,
+  moisAffiche,
   moisCouverts,
+  moisNavigable,
   resumerPlages,
   MOIS_MAX,
-  SEMAINES,
-  SEMAINES_DEFAUT,
   type Geste,
 } from '../src/lib/disponibilites';
 import {
@@ -37,12 +36,14 @@ import {
   finMois,
   formatDateLongue,
   formatHeure,
+  formatMoisAnnee,
   formatPlageDates,
   joursCourts,
 } from '../src/lib/dates';
 import { Bouton, Doux, Onglets, SousTitre } from '../src/ui/composants';
 import { FeuilleSurgissante, type PointEcran } from '../src/ui/FeuilleSurgissante';
 import { GrilleDispos } from '../src/ui/GrilleDispos';
+import { GrilleMois } from '../src/ui/GrilleMois';
 import { SelecteurDate, SelecteurHeure } from '../src/ui/Selecteurs';
 import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
 
@@ -68,17 +69,17 @@ export default function Disponibilites() {
   const accent = useAccent();
   const router = useRouter();
   const capture = useRef<React.ComponentRef<typeof ViewShot>>(null);
-  const [choix, setChoix] = useState<string>(`${SEMAINES_DEFAUT}`);
+  const [choix, setChoix] = useState<string>('1');
   const [plages, setPlages] = useState(listerDisponibilites);
   const [quarts] = useState(listerQuarts);
   const [reglages] = useState(obtenirReglages);
   const cejour = aujourdhui();
   /** La limite dure : on n'offre rien au-delà d'un an. */
   const dernierJour = decalerMois(cejour, MOIS_MAX);
-  /* Par défaut, le mois prochain en entier : c'est la demande qu'on reçoit. */
-  const moisProchain = decalerMois(cejour, 1);
-  const [debutPlage, setDebutPlage] = useState(debutMois(moisProchain));
-  const [finPlage, setFinPlage] = useState(finMois(moisProchain));
+  /** Le mois montré. L'écran ouvre sur le mois courant, pas sur le suivant. */
+  const [moisVu, setMoisVu] = useState(() => debutMois(cejour));
+  const [debutPlage, setDebutPlage] = useState(debutMois(cejour));
+  const [finPlage, setFinPlage] = useState(finMois(cejour));
 
   /**
    * Deux périodes, et c'est voulu.
@@ -98,14 +99,20 @@ export default function Disponibilites() {
     () => bornerPlage(debutPlage, finPlage, cejour),
     [debutPlage, finPlage, cejour]
   );
-  const periode = useMemo(
-    () =>
-      choix === PERSONNALISE
-        ? disponibilitesEntre(plages, bornee.debut, bornee.fin, quarts)
-        : disponibilites(plages, cejour, Number(choix), quarts),
-    [plages, quarts, choix, bornee, cejour]
-  );
-  const blocsEdition = useMemo(() => moisCouverts(edition), [edition]);
+  /**
+   * Ce qu'on partage : le mois affiché, ou deux ou trois à partir de lui, ou
+   * une plage choisie à la main. Par défaut le mois affiché — c'est celui
+   * qu'on regarde quand on décide d'envoyer.
+   */
+  const periode = useMemo(() => {
+    if (choix === PERSONNALISE) {
+      return disponibilitesEntre(plages, bornee.debut, bornee.fin, quarts);
+    }
+    const debut = moisVu < debutMois(cejour) ? debutMois(cejour) : moisVu;
+    return disponibilitesEntre(plages, debut, finMois(decalerMois(moisVu, Number(choix) - 1)), quarts);
+  }, [plages, quarts, choix, bornee, moisVu, cejour]);
+
+  const grille = useMemo(() => moisAffiche(edition, moisVu, cejour), [edition, moisVu, cejour]);
   const blocs = useMemo(() => moisCouverts(periode), [periode]);
   const initiales = joursCourts(langue);
   const [heures, setHeures] = useState<{ date: string; point: PointEcran } | null>(null);
@@ -250,28 +257,60 @@ export default function Disponibilites() {
     <View style={styles.cadre}>
       <Stack.Screen options={{ title: t('disponibilites.titre') }} />
       <ScrollView contentContainerStyle={styles.contenu}>
-        <Doux>{t('disponibilites.consigne')}</Doux>
-        <View style={styles.editeur}>
-          <GrilleDispos
-            blocs={blocsEdition}
-            initiales={initiales}
-            langue={langue}
+        {/*
+          Un mois à la fois, et deux flèches. Pas de balayage horizontal pour
+          en changer : le doigt qui traverse l'écran peint des journées, et
+          deux gestes horizontaux sur le même écran s'annulent l'un l'autre.
+        */}
+        <View style={styles.enteteMois}>
+          <Fleche
+            sens={-1}
             accent={accent}
-            montrerQuarts
+            actif={moisNavigable(moisVu, -1, cejour)}
+            etiquette={t('disponibilites.moisPrecedent')}
+            onPress={() => setMoisVu(decalerMois(moisVu, -1))}
+          />
+          <Text accessibilityRole="header" style={styles.nomDuMois}>
+            {formatMoisAnnee(moisVu, langue)}
+          </Text>
+          <Fleche
+            sens={1}
+            accent={accent}
+            actif={moisNavigable(moisVu, 1, cejour)}
+            etiquette={t('disponibilites.moisSuivant')}
+            onPress={() => setMoisVu(decalerMois(moisVu, 1))}
+          />
+        </View>
+
+        {/* Trois tentatives ont échoué sans que rien à l'écran n'indique quoi
+            faire. Même réparé, un geste invisible n'est pas utilisé. */}
+        <Doux>{t('disponibilites.consigne')}</Doux>
+
+        <View style={styles.editeur}>
+          <GrilleMois
+            mois={grille}
+            initiales={initiales}
+            accent={accent}
             onGeste={appliquer}
             onHeures={ouvrirHeures}
           />
         </View>
 
-        {/* La rangée défile à l'horizontale : quatre choix ne tiennent pas
-            tous sur la largeur d'un petit téléphone. */}
+        <View style={styles.legendeGrille}>
+          <Entree couleur={accent} texte={t('disponibilites.offert')} />
+          <Entree couleur={accent} point texte={t('disponibilites.heuresPrecises')} />
+          <Entree couleur={accent} rond texte={t('disponibilites.quartPrevu')} />
+          <Entree couleur={couleurs.bordurePale} texte={t('disponibilites.libre')} />
+        </View>
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <Onglets
-            libelle={t('disponibilites.periode')}
+            libelle={t('disponibilites.plagePartagee')}
             options={[
-              ...SEMAINES.map((n) => ({
+              { valeur: '1', texte: t('disponibilites.ceMois') },
+              ...[2, 3].map((n) => ({
                 valeur: `${n}`,
-                texte: t('disponibilites.semainesCourt', { n }),
+                texte: t('disponibilites.moisCourt', { n }),
               })),
               {
                 valeur: PERSONNALISE,
@@ -403,6 +442,66 @@ export default function Disponibilites() {
   }
 }
 
+/**
+ * Une flèche de l'en-tête. Éteinte quand le mois visé sort des bornes :
+ * jamais vers le passé, douze mois vers l'avant au plus.
+ */
+function Fleche({
+  sens,
+  accent,
+  actif,
+  etiquette,
+  onPress,
+}: {
+  sens: -1 | 1;
+  accent: string;
+  actif: boolean;
+  etiquette: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={actif ? onPress : undefined}
+      disabled={!actif}
+      accessibilityRole="button"
+      accessibilityLabel={etiquette}
+      accessibilityState={{ disabled: !actif }}
+      hitSlop={8}
+      style={({ pressed }) => [styles.fleche, pressed && actif && { opacity: 0.6 }]}>
+      <Ionicons
+        name={sens === -1 ? 'chevron-back' : 'chevron-forward'}
+        size={22}
+        color={actif ? accent : couleurs.bordure}
+      />
+    </Pressable>
+  );
+}
+
+/** Une entrée de la légende. Quatre états, quatre échantillons. */
+function Entree({
+  couleur,
+  texte,
+  point,
+  rond,
+}: {
+  couleur: string;
+  texte: string;
+  /** Une journée offerte sur des heures précises : le carré porte ses heures. */
+  point?: boolean;
+  /** Un quart prévu : le carré porte son point blanc. */
+  rond?: boolean;
+}) {
+  return (
+    <View style={styles.legendeEntree}>
+      <View style={[styles.puce, { backgroundColor: couleur }]}>
+        {point && <Text style={styles.puceHeures}>9–17</Text>}
+        {rond && <View style={styles.pucePoint} />}
+      </View>
+      <Text style={styles.legendeTexte}>{texte}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   cadre: {
     flex: 1,
@@ -500,9 +599,11 @@ const styles = StyleSheet.create({
     gap: espace.s,
   },
   puce: {
-    width: 14,
-    height: 14,
-    borderRadius: 4,
+    width: 18,
+    height: 18,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   legendeTexte: {
     fontSize: 13,
@@ -532,5 +633,44 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: police.demi,
     color: couleurs.alerte,
+  },
+  enteteMois: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: espace.s,
+  },
+  fleche: {
+    /* La même cible que partout ailleurs, même si le chevron fait 22 points. */
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nomDuMois: {
+    fontSize: 18,
+    fontFamily: police.gras,
+    color: couleurs.texte,
+    textTransform: 'capitalize',
+  },
+  legendeGrille: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: espace.m,
+    marginBottom: espace.l,
+  },
+  puceHeures: {
+    fontSize: 7,
+    fontFamily: police.demi,
+    color: '#FFFFFF',
+  },
+  pucePoint: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FFFFFF',
   },
 });

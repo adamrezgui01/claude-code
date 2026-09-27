@@ -341,7 +341,12 @@ describe('groupe 4 — l’image', () => {
       const nu = ligne.trim();
       if (nu.startsWith('//') || nu.startsWith('*') || nu.startsWith('/*')) continue;
       for (const interdit of ['pharmacie', 'montant', 'argent', 'taux', 'facture']) {
-        if (nu.toLowerCase().includes(interdit)) fautes.push(`${interdit} → ${nu.slice(0, 60)}`);
+        // Mot entier, pas sous-chaîne : « horizontaux » contient « taux », et
+        // un test qui refuse les mots français ordinaires se fait désarmer.
+        // « taux horaire », « le taux », « taux: » restent attrapés.
+        if (new RegExp(`\\b${interdit}`, 'i').test(nu)) {
+          fautes.push(`${interdit} → ${nu.slice(0, 60)}`);
+        }
       }
     }
     expect(fautes).toEqual([]);

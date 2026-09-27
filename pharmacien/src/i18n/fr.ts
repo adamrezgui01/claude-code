@@ -978,7 +978,7 @@ export const fr = {
       'L’image ne montre aucun nom de pharmacie, aucune heure et aucun montant.',
     partager: 'Partager mes disponibilités',
     consigne:
-      'Touchez une journée pour l’offrir, glissez pour en prendre plusieurs, maintenez pour choisir des heures.',
+      'Touchez une journée pour l’offrir. Glissez pour en offrir plusieurs.',
     dejaUnQuart: 'Vous avez déjà un quart',
     dejaUnQuartDetail: 'Le {{jour}}, de {{debut}} à {{fin}}.',
     garderQuandMeme: 'Garder quand même',
@@ -995,6 +995,14 @@ export const fr = {
     borneFin: 'Fin de journée',
     bornesAide:
       'Ce que « matin » et « soir » veulent dire quand vous les dictez. Le matin part du début, le soir finit à la fin.',
+    heuresPrecises: 'Heures précises',
+    quartPrevu: 'Quart prévu',
+    libre: 'Libre',
+    moisPrecedent: 'Mois précédent',
+    moisSuivant: 'Mois suivant',
+    ceMois: 'Ce mois-ci',
+    moisCourt: '{{n}} mois',
+    plagePartagee: 'Plage à partager',
   },
 
   liensContenu: {

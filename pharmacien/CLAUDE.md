@@ -81,6 +81,12 @@ contrainte. Toute nouvelle table, colonne ou écriture passe donc par un test
 qui l'exécute. Ça ne prouve pas que le SQLite d'iOS se comporte à l'identique
 — ce n'est pas le même build — mais ça attrape tout ce qui est du SQL.
 
+**Les gestes** se pilotent, ils ne se lisent plus dans le source.
+`tests/ecrans/gestes.ts` fabrique l'événement tactile complet qu'un
+`PanResponder` attend — `touchHistory.touchBank`, et des horodatages qui
+avancent, sans quoi il calcule une distance nulle et prend un glissement pour
+une tape. Les tests parlent alors en `taper`, `glisser` et `maintenir`.
+
 **Les écrans**, dans `tests/ecrans/`, en `.tsx`. Le composant est monté avec
 `tests/ecrans/socle.tsx`, on appuie dessus, et on lit ce qui s'affiche.
 `render` est asynchrone depuis React 19 : chaque appel s'attend.
@@ -268,6 +274,20 @@ qu'on ne les redécouvre pas trois fois.
   bande qu'on pourrait éteindre définitivement finirait par cacher une facture
   de mille dollars. Elle ne vit que dans l'horaire ; répétée sur quatre
   onglets, elle devient du décor.
+- **Un seul geste horizontal par écran.** « Mes dispos » a échoué trois fois
+  parce que le doigt qui traverse l'écran servait à deux choses : peindre des
+  journées et changer de mois. Le système arbitre alors dans un sens ou dans
+  l'autre, jamais celui qu'on voulait. Le calendrier des dispos montre **un
+  mois à la fois**, et deux flèches en changent — le glissement ne sert qu'à
+  peindre. La grille déroulante qui montrait l'année entière est supprimée : on
+  ne savait plus où on était, et un mois qu'on ne voit pas entier ne se lit pas.
+- Un geste qu'aucun texte n'annonce n'est pas utilisé, même réparé. Tout écran
+  dont le contenu se modifie au doigt porte sa consigne en une ligne, et une
+  légende quand les états se distinguent par la couleur. Sur « Mes dispos » :
+  « Touchez une journée pour l'offrir. Glissez pour en offrir plusieurs. »
+- Un repère visuel posé sur une pastille colorée change de couleur avec elle.
+  Le point du quart est blanc sur une journée offerte et accentué sinon :
+  accentué sur accentué, il disparaîtrait exactement là où on veut le voir.
 - Toute liste qui est une **section à l'intérieur d'un écran** — et non le
   contenu principal de l'écran — montre **trois éléments, puis un contrôle**.
   Une section qui déroule tout pousse le reste de l'écran hors de vue, et on

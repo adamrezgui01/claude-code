@@ -967,8 +967,7 @@ export const en: Dictionnaire = {
     resume_other: '{{count}} days offered in this period.',
     rienDePrive: 'The image shows no pharmacy name, no hours and no amounts.',
     partager: 'Share my availability',
-    consigne:
-      'Tap a day to offer it, drag to take several, hold to pick hours.',
+    consigne: 'Tap a day to offer it. Drag to offer several.',
     dejaUnQuart: 'You already have a shift',
     dejaUnQuartDetail: 'On {{jour}}, from {{debut}} to {{fin}}.',
     garderQuandMeme: 'Keep it anyway',
@@ -985,6 +984,14 @@ export const en: Dictionnaire = {
     borneFin: 'Day ends at',
     bornesAide:
       'What “morning” and “evening” mean when you dictate them. Morning starts at the first, evening ends at the second.',
+    heuresPrecises: 'Set hours',
+    quartPrevu: 'Shift booked',
+    libre: 'Free',
+    moisPrecedent: 'Previous month',
+    moisSuivant: 'Next month',
+    ceMois: 'This month',
+    moisCourt: '{{n}} months',
+    plagePartagee: 'Range to share',
   },
 
   liensContenu: {

@@ -291,6 +291,81 @@ export function apresLeGlisser(depart: EtatJour): Geste {
   return apresLaTape(depart);
 }
 
+/**
+ * Le mois affiché, case par case.
+ *
+ * L'écran montre **un** mois à la fois, entier, sans défilement vertical. La
+ * version précédente déroulait l'année d'un coup : on ne savait plus où on
+ * était, et un glissement qui voulait peindre trois journées déplaçait la
+ * page à la place.
+ *
+ * Une case vide — `null` — est un jour d'un autre mois. La grille commence le
+ * lundi, comme le reste de l'application.
+ */
+export type CaseMois = {
+  jour: JourDisponible;
+  /** Le numéro à écrire. Sorti ici pour que la grille n'analyse aucune date. */
+  numero: number;
+  /** Une journée passée ne se déclare pas : elle est estompée et sourde. */
+  passee: boolean;
+  /** Au moins un quart non annulé ce jour-là. */
+  quart: boolean;
+};
+
+export type MoisAffiche = {
+  /** Le premier du mois, `AAAA-MM-JJ`. */
+  mois: string;
+  semaines: (CaseMois | null)[][];
+};
+
+/**
+ * Le mois entier, prêt à dessiner.
+ *
+ * Les disponibilités arrivent déjà calculées, pour que la grille ne relise
+ * jamais la base : elle reçoit des cases, elle en dessine.
+ */
+export function moisAffiche(
+  disponibilites: Disponibilites,
+  mois: string,
+  ceJour: string
+): MoisAffiche {
+  const parDate = new Map(disponibilites.jours.map((j) => [j.date, j]));
+  const premier = debutMois(mois);
+
+  return {
+    mois: premier,
+    semaines: grilleMois(premier).map((semaine) =>
+      semaine.map((date) => {
+        if (!date) return null;
+        const jour = parDate.get(date) ?? {
+          date,
+          etat: 'neutre' as const,
+          plages: [],
+          quarts: [],
+        };
+        return {
+          jour,
+          numero: Number(date.slice(8, 10)),
+          passee: date < ceJour,
+          quart: jour.quarts.length > 0,
+        };
+      })
+    ),
+  };
+}
+
+/**
+ * De combien de mois on peut s'éloigner, dans un sens et dans l'autre.
+ *
+ * Vers l'arrière : jamais. Une disponibilité passée ne veut rien dire, et un
+ * mois vide qu'on ne peut pas remplir ne mérite pas d'être atteignable.
+ * Vers l'avant : douze mois, la même limite que partout.
+ */
+export function moisNavigable(mois: string, decalage: number, ceJour: string): boolean {
+  const vise = decalerMois(mois, decalage);
+  return vise >= debutMois(ceJour) && vise <= debutMois(decalerMois(ceJour, MOIS_MAX));
+}
+
 /** Les journées entre deux cases, bornes comprises, dans l'ordre du calendrier. */
 export function joursTraverses(depart: string, arrivee: string): string[] {
   const [premier, dernier] = depart <= arrivee ? [depart, arrivee] : [arrivee, depart];
