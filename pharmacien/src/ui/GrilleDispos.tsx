@@ -22,7 +22,7 @@ import { MAINTIEN_LONG, TOLERANCE_IMMOBILE } from '../lib/gestes';
 import { formatMoisAnnee } from '../lib/dates';
 import type { Langue } from '../lib/langue';
 import type { PointEcran } from './FeuilleSurgissante';
-import { police } from './theme';
+import { espace, police, texte } from './theme';
 
 /**
  * La grille des journées offertes, et les trois gestes qui la modifient.
@@ -266,22 +266,22 @@ function Case({
 }
 
 const styles = StyleSheet.create({
-  bloc: { marginBottom: 12 },
+  bloc: { marginBottom: espace.m },
   mois: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: '#1E1B22',
     textTransform: 'capitalize',
-    marginBottom: 4,
+    marginBottom: espace.xs,
   },
   ligne: { flexDirection: 'row' },
   initiale: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: texte.fin,
     fontFamily: police.demi,
     color: '#6E6875',
-    marginBottom: 2,
+    marginBottom: espace.xs,
   },
   case: {
     flex: 1,
@@ -301,10 +301,10 @@ const styles = StyleSheet.create({
   /** Une bordure pâle dit « pas toute la journée » sans changer la couleur. */
   pastillePartielle: { borderWidth: 2, borderColor: '#FFFFFF' },
   /** Assez gros pour rester lisible quand l'image s'affiche en vignette. */
-  chiffre: { fontSize: 15, fontFamily: police.demi, color: '#6E6875' },
+  chiffre: { fontSize: texte.corps, fontFamily: police.demi, color: '#6E6875' },
   chiffreOffert: { color: '#FFFFFF', fontFamily: police.gras },
-  heures: { fontSize: 8, fontFamily: police.demi, color: '#FFFFFF' },
-  quartHeures: { fontSize: 8, fontFamily: police.demi, color: '#8A8592' },
+  heures: { fontSize: texte.microscopique, fontFamily: police.demi, color: '#FFFFFF' },
+  quartHeures: { fontSize: texte.microscopique, fontFamily: police.demi, color: '#8A8592' },
   pointQuart: {
     position: 'absolute',
     top: 3,

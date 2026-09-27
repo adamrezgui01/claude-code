@@ -7,7 +7,7 @@ import { aimanter, minutesDebut, minutesEnHeure, minutesFin } from '../lib/agend
 import { MAINTIEN_COURT, MAINTIEN_LONG, TOLERANCE_IMMOBILE } from '../lib/gestes';
 import { analyserDate, aujourdhui } from '../lib/dates';
 import { etatFige, marqueDuQuart, type EtatFacturation } from '../lib/facturation';
-import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
+import { accentPale, couleurs, espace, police, rayon, texte, useAccent } from './theme';
 import { useTextes } from '../i18n';
 
 /**
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     paddingVertical: espace.s,
   },
   consigneTexte: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.demi,
   },
   entetes: {
@@ -510,12 +510,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   enteteJour: {
-    fontSize: 11,
+    fontSize: texte.fin,
     fontFamily: police.normal,
     color: couleurs.doux,
   },
   enteteDate: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     width: LARGEUR_AXE,
-    fontSize: 10,
+    fontSize: texte.minuscule,
     lineHeight: HAUTEUR_LIBELLE,
     fontFamily: police.normal,
     color: couleurs.doux,
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderRadius: rayon / 2,
     paddingHorizontal: espace.s,
-    paddingVertical: 3,
+    paddingVertical: espace.xs,
     overflow: 'hidden',
   },
   pastilleFacture: {
@@ -575,12 +575,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   blocNom: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   blocHeure: {
-    fontSize: 10,
+    fontSize: texte.minuscule,
     fontFamily: police.normal,
     color: couleurs.doux,
   },
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: rayon / 2,
     paddingHorizontal: espace.s,
-    paddingVertical: 3,
+    paddingVertical: espace.xs,
     overflow: 'hidden',
   },
 });

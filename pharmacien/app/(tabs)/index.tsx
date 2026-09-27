@@ -55,7 +55,7 @@ import {
 import { BandeAttente } from '../../src/ui/BandeAttente';
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { Pageur } from '../../src/ui/Pageur';
-import { accentPale, couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
+import { accentPale, couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../../src/ui/theme';
 import { VueCarte, type PointCarte } from '../../src/ui/VueCarte';
 import { VueColonnes } from '../../src/ui/VueColonnes';
 import { useTextes } from '../../src/i18n';
@@ -797,11 +797,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: espace.xs,
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
     paddingHorizontal: espace.xs,
   },
   disposTexte: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
   },
   ligneAjout: {
@@ -840,7 +840,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.xs,
   },
   titreBandeau: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
@@ -850,11 +850,11 @@ const styles = StyleSheet.create({
     marginTop: espace.m,
   },
   lienBandeau: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
   },
   lienBandeauDoux: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.normal,
     color: couleurs.doux,
   },
@@ -865,13 +865,13 @@ const styles = StyleSheet.create({
     marginBottom: espace.s,
   },
   periode: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
     textTransform: 'capitalize',
   },
   jour: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
     marginBottom: espace.s,

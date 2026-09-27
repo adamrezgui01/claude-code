@@ -21,7 +21,7 @@ import {
 } from '../lib/disponibilites';
 import { MAINTIEN_LONG, TOLERANCE_IMMOBILE } from '../lib/gestes';
 import type { PointEcran } from './FeuilleSurgissante';
-import { couleurs, espace, police, rayon } from './theme';
+import { couleurs, espace, police, rayon, texte } from './theme';
 
 /**
  * Un mois de disponibilités, et les trois gestes qui le modifient.
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   },
   initiale: {
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.demi,
     color: couleurs.doux,
     marginBottom: espace.xs,
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   chiffre: {
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     fontFamily: police.normal,
   },
   heures: {
-    fontSize: 10,
+    fontSize: texte.minuscule,
     fontFamily: police.demi,
     color: '#FFFFFF',
   },

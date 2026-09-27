@@ -118,3 +118,88 @@ describe('l’écran de plantage suit la même règle', () => {
     expect(filet.match(/minHeight: dimensions\.bouton\.hauteur/g)).toHaveLength(2);
   });
 });
+
+
+// ===========================================================================
+// Les écrans, un onglet à la fois
+// ===========================================================================
+
+/**
+ * Les fichiers déjà passés aux jetons. La liste s'allonge d'un onglet par
+ * commit : une refonte visuelle globale qui casse une mise en page devient
+ * introuvable dans un diff de cinquante fichiers.
+ */
+const PASSES: Record<string, string[]> = {
+  Horaire: [
+    'app/(tabs)/index.tsx',
+    'app/disponibilites.tsx',
+    'src/ui/LigneQuart.tsx',
+    'src/ui/VueColonnes.tsx',
+    'src/ui/Calendrier.tsx',
+    'src/ui/CalendrierMultiple.tsx',
+    'src/ui/BandeAttente.tsx',
+    'src/ui/GrilleMois.tsx',
+    'src/ui/GrilleDispos.tsx',
+  ],
+};
+
+/** La partie « feuille de styles » d'un fichier. Le JSX ne nous regarde pas ici. */
+function feuille(fichier: string): string {
+  const s = readFileSync(fichier, 'utf8');
+  const i = s.indexOf('StyleSheet.create(');
+  return i === -1 ? '' : s.slice(i);
+}
+
+describe('les écrans passés aux jetons', () => {
+  for (const [onglet, fichiers] of Object.entries(PASSES)) {
+    describe(onglet, () => {
+      test('aucune taille de texte en dur', () => {
+        const dures: string[] = [];
+        for (const f of fichiers) {
+          for (const m of feuille(f).matchAll(/fontSize: (\d+)/g)) {
+            dures.push(`${f.split('/').pop()} fontSize ${m[1]}`);
+          }
+        }
+        expect(dures).toEqual([]);
+      });
+
+      test('la cible de 44 points passe par son jeton', () => {
+        // Écrite en dur, elle se recopie et finit par devenir 40 quelque part.
+        const dures: string[] = [];
+        for (const f of fichiers) {
+          for (const m of feuille(f).matchAll(/(minHeight|minWidth): 44\b/g)) {
+            dures.push(`${f.split('/').pop()} ${m[1]}`);
+          }
+        }
+        expect(dures).toEqual([]);
+      });
+
+      test('aucune cible tactile sous 44 points', () => {
+        const petites: string[] = [];
+        for (const f of fichiers) {
+          const s = feuille(f);
+          for (const m of s.matchAll(/\n  ([A-Za-z0-9_]+): \{\n([\s\S]*?)\n  \},/g)) {
+            const [, nom, corps] = m;
+            if (!/bouton|controle|fleche|lien|onglet|commande/i.test(nom)) continue;
+            const h = corps.match(/\b(minHeight|height): (\d+)/);
+            if (h && Number(h[2]) < 44) petites.push(`${f.split('/').pop()} ${nom} ${h[2]}`);
+          }
+        }
+        expect(petites).toEqual([]);
+      });
+
+      test('tout espacement vertical appartient à l’échelle', () => {
+        const hors: string[] = [];
+        for (const f of fichiers) {
+          const s = feuille(f);
+          for (const prop of ['marginTop', 'marginBottom', 'paddingTop', 'paddingBottom', 'paddingVertical', 'gap']) {
+            for (const m of s.matchAll(new RegExp(`\\b${prop}: (-?\\d+(?:\\.\\d+)?)`, 'g'))) {
+              if (!ECHELLE.includes(Number(m[1]))) hors.push(`${f.split('/').pop()} ${prop} ${m[1]}`);
+            }
+          }
+        }
+        expect(hors).toEqual([]);
+      });
+    });
+  }
+});

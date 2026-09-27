@@ -12,7 +12,7 @@ import {
 } from '../lib/dates';
 import { Pageur } from './Pageur';
 import { useTextes } from '../i18n';
-import { couleurs, espace, police, rayon, useAccent } from './theme';
+import { couleurs, espace, police, rayon, texte, useAccent } from './theme';
 
 /**
  * Calendrier de sélection multiple. On pointe les jours un à un plutôt que de
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   mois: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.texte,
     textTransform: 'capitalize',
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   enteteJour: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: texte.fin,
     fontFamily: police.demi,
     color: couleurs.doux,
     marginBottom: espace.xs,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   case: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 3,
+    paddingVertical: espace.xs,
   },
   pastille: {
     width: 36,
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chiffre: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
     color: couleurs.texte,
   },

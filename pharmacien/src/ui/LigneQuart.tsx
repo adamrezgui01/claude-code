@@ -6,7 +6,7 @@ import type { EtatFacturation } from '../lib/facturation';
 import { argent, heures } from '../lib/format';
 import { heuresTravaillees } from '../lib/stats';
 import { Etiquette } from './composants';
-import { couleurs, espace, police, rayon, useAccent } from './theme';
+import { couleurs, espace, police, rayon, texte, useAccent } from './theme';
 import { useTextes } from '../i18n';
 
 export function LigneQuart({
@@ -145,12 +145,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   maintenant: {
-    fontSize: 11,
+    fontSize: texte.fin,
     fontFamily: police.gras,
     color: couleurs.urgent,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
-    marginBottom: 2,
+    marginBottom: espace.xs,
   },
   presse: {
     opacity: 0.6,
@@ -162,14 +162,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   date: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.normal,
     color: couleurs.doux,
-    marginBottom: 2,
+    marginBottom: espace.xs,
     textTransform: 'capitalize',
   },
   pharmacie: {
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
@@ -178,33 +178,33 @@ const styles = StyleSheet.create({
     color: couleurs.doux,
   },
   horaire: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
-    marginTop: 2,
+    marginTop: espace.xs,
   },
   notes: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
-    marginTop: 2,
+    marginTop: espace.xs,
     fontStyle: 'italic',
   },
   etiquette: {
     marginTop: espace.s,
   },
   montant: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   taux: {
-    fontSize: 12,
+    fontSize: texte.secondaire,
     fontFamily: police.normal,
     color: couleurs.doux,
   },
   alerte: {
-    fontSize: 11,
+    fontSize: texte.fin,
     fontFamily: police.demi,
     color: couleurs.alerte,
     marginTop: espace.xs,

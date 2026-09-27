@@ -45,7 +45,7 @@ import { FeuilleSurgissante, type PointEcran } from '../src/ui/FeuilleSurgissant
 import { GrilleDispos } from '../src/ui/GrilleDispos';
 import { GrilleMois } from '../src/ui/GrilleMois';
 import { SelecteurDate, SelecteurHeure } from '../src/ui/Selecteurs';
-import { couleurs, espace, police, rayon, useAccent } from '../src/ui/theme';
+import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../src/ui/theme';
 
 /**
  * La valeur de l'onglet qui ouvre les deux sélecteurs de date. Les trois
@@ -523,21 +523,21 @@ const styles = StyleSheet.create({
   titre: {
     /* Assez gros pour être le titre, assez petit pour que la plage tienne
        sur deux lignes au pire. */
-    fontSize: 19,
+    fontSize: texte.titre,
     fontFamily: police.gras,
     color: '#1E1B22',
   },
   nom: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: '#1E1B22',
-    marginTop: 2,
+    marginTop: espace.xs,
   },
   bloc: {
     marginBottom: espace.m,
   },
   mois: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: '#1E1B22',
     textTransform: 'capitalize',
@@ -549,10 +549,10 @@ const styles = StyleSheet.create({
   initiale: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: texte.fin,
     fontFamily: police.demi,
     color: '#6E6875',
-    marginBottom: 2,
+    marginBottom: espace.xs,
   },
   case: {
     flex: 1,
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
   },
   /** Assez gros pour rester lisible quand l'image s'affiche en vignette. */
   chiffre: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: '#6E6875',
   },
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   heures: {
-    fontSize: 8,
+    fontSize: texte.microscopique,
     fontFamily: police.demi,
     color: '#FFFFFF',
   },
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   legendeTexte: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: '#1E1B22',
   },
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.m,
   },
   phrase: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.normal,
     color: couleurs.texte,
   },
@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.l,
   },
   refus: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     color: couleurs.alerte,
   },
@@ -642,13 +642,13 @@ const styles = StyleSheet.create({
   },
   fleche: {
     /* La même cible que partout ailleurs, même si le chevron fait 22 points. */
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: CIBLE_MIN,
+    minHeight: CIBLE_MIN,
     alignItems: 'center',
     justifyContent: 'center',
   },
   nomDuMois: {
-    fontSize: 18,
+    fontSize: texte.titre,
     fontFamily: police.gras,
     color: couleurs.texte,
     textTransform: 'capitalize',
@@ -660,7 +660,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.l,
   },
   puceHeures: {
-    fontSize: 7,
+    fontSize: texte.microscopique,
     fontFamily: police.demi,
     color: '#FFFFFF',
   },

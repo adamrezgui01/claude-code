@@ -4,7 +4,7 @@ import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react
 
 import { useTextes } from '../i18n';
 import { bandeAttente, type ComptesAttente, type GenreAttente } from '../lib/attente';
-import { couleurs, espace, police, rayon, useAccent } from './theme';
+import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from './theme';
 
 /**
  * Ce qui traîne, en haut de l'horaire.
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     borderRadius: rayon,
     padding: espace.s,
     marginBottom: espace.m,
-    gap: 2,
+    gap: espace.xs,
   },
   ligne: {
     flexDirection: 'row',
@@ -115,24 +115,24 @@ const styles = StyleSheet.create({
     gap: espace.s,
     paddingVertical: espace.s,
     paddingHorizontal: espace.xs,
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
   },
   texte: {
     flex: 1,
   },
   principal: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   dessous: {
-    fontSize: 11,
+    fontSize: texte.fin,
     fontFamily: police.normal,
     color: couleurs.doux,
-    marginTop: 1,
+    marginTop: espace.xs,
   },
   voirTout: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.demi,
     textAlign: 'center',
     paddingVertical: espace.s,

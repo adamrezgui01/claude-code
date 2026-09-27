@@ -6,7 +6,7 @@ import { ajouterMois, aujourdhui, formatMoisAnnee, grilleMois, JOURS_COURTS } fr
 import { marqueDuQuart, type EtatFacturation } from '../lib/facturation';
 import { useTextes } from '../i18n';
 import { Pageur } from './Pageur';
-import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
+import { accentPale, couleurs, espace, police, rayon, texte, useAccent } from './theme';
 
 export function Calendrier({
   mois,
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     padding: espace.xs,
   },
   mois: {
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.texte,
     textTransform: 'capitalize',
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   enteteJour: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: texte.fin,
     fontFamily: police.normal,
     color: couleurs.doux,
     paddingVertical: espace.xs,
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     margin: 1,
   },
   numero: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.normal,
     color: couleurs.texte,
   },
@@ -178,8 +178,8 @@ const styles = StyleSheet.create({
   points: {
     flexDirection: 'row',
     height: 6,
-    marginTop: 3,
-    gap: 2,
+    marginTop: espace.xs,
+    gap: espace.xs,
   },
   point: {
     /* Sept pixels : assez pour qu'un point creux se lise comme un anneau. */

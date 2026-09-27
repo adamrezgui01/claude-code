@@ -67,6 +67,49 @@ export const police = {
 };
 
 /**
+ * L'échelle des tailles de texte.
+ *
+ * Vingt-trois tailles différentes vivaient dans l'application, de 7 à 34
+ * points, dont neuf n'apparaissaient qu'une fois. Les onze retenues ici sont
+ * celles **déjà les plus utilisées** — le relevé de la phase 1 les donne dans
+ * cet ordre : 13, 15, 14, 16, 12, 11, 18, 24, 20, 10, 30.
+ *
+ * Les noms disent le rôle et non la taille : une taille dans un nom se
+ * contredit le jour où on la change.
+ */
+export const texte = {
+  /**
+   * Un texte posé **dans** un échantillon de légende ou dans la case d'un
+   * calendrier qu'on partage en image. Le seul cran qui ne vient pas de
+   * l'usage dominant : il vient d'une contrainte de boîte. Monter ces
+   * caractères à dix points les ferait déborder.
+   */
+  microscopique: 8,
+  /** En-tête de colonne d'un calendrier, étiquette d'un graphique. */
+  minuscule: 10,
+  /** Sous-texte d'une ligne dense : le jour de la semaine, un compte. */
+  fin: 11,
+  /** Détail secondaire : une adresse sous un nom. */
+  secondaire: 12,
+  /** La taille la plus répandue : étiquette de champ, détail, en-tête de section. */
+  courant: 13,
+  /** Une ligne qu'on lit vraiment : un élément de liste, une capsule. */
+  lecture: 14,
+  /** Le corps d'un contenu, et le nom dans une liste. */
+  corps: 15,
+  /** Ce qu'on tape, et le texte d'un bouton. */
+  saisie: 16,
+  /** Titre d'un bloc à l'intérieur d'un écran. */
+  titre: 18,
+  /** Titre d'un écran, ou un nom mis en avant. */
+  grandTitre: 20,
+  /** Le titre de l'écran lui-même. */
+  enTete: 24,
+  /** Un chiffre qu'on lit d'un coup d'œil : un revenu, un total de facture. */
+  chiffre: 30,
+} as const;
+
+/**
  * Toute cible tactile fait au moins ça, dans les deux sens. Règle du V2.3,
  * et la seule valeur de ce fichier qui vienne d'une règle plutôt que d'un
  * relevé.
@@ -97,7 +140,7 @@ export const dimensions = {
     rayon,
     remplissageH: espace.l,
     remplissageV: espace.m,
-    texte: 16,
+    texte: texte.saisie,
   },
   /**
    * Le champ posé dans une section qui porte déjà le cadre : il n'en remet
@@ -113,7 +156,7 @@ export const dimensions = {
     /** Complètement ronde : c'est ce qui la distingue d'un bouton. */
     rayon: 999,
     remplissageH: espace.l,
-    texte: 14,
+    texte: texte.lecture,
   },
   /** Le bouton, plein ou creux. Les deux partagent tout sauf leur fond. */
   bouton: {
@@ -121,12 +164,12 @@ export const dimensions = {
     rayon,
     remplissageH: espace.l,
     remplissageV: espace.m,
-    texte: 16,
+    texte: texte.saisie,
   },
   /** L'en-tête d'une section de formulaire : petites capitales espacées. */
-  enTete: { texte: 13, interLettre: 0.8, margeBasse: espace.s },
+  enTete: { texte: texte.courant, interLettre: 0.8, margeBasse: espace.s },
   /** L'étiquette au-dessus d'un champ. */
-  etiquette: { texte: 13, margeBasse: espace.xs },
+  etiquette: { texte: texte.courant, margeBasse: espace.xs },
   /** Une carte : le conteneur encadré qui groupe un bloc. */
   carte: { rayon, remplissage: espace.l, margeBasse: espace.m },
 } as const;
