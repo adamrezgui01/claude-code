@@ -820,7 +820,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
   {
     cle: 'mdcalc_chads_vasc',
     titre: 'CHA₂DS₂-VASc',
-    url_document: '',
+    url_document:
+      'https://www.mdcalc.com/calc/801/cha2ds2-vasc-score-atrial-fibrillation-stroke-risk',
     url_reference: 'https://www.mdcalc.com',
     organisation: 'MDCalc',
     type: 'outil',
@@ -833,7 +834,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
   {
     cle: 'mdcalc_has_bled',
     titre: 'HAS-BLED',
-    url_document: '',
+    url_document:
+      'https://www.mdcalc.com/calc/807/has-bled-score-major-bleeding-risk',
     url_reference: 'https://www.mdcalc.com',
     organisation: 'MDCalc',
     type: 'outil',
@@ -872,7 +874,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
   {
     cle: 'mdcalc_mdrd',
     titre: 'MDRD (débit de filtration glomérulaire)',
-    url_document: '',
+    url_document:
+      'https://www.mdcalc.com/calc/76/mdrd-gfr-equation',
     url_reference: 'https://www.mdcalc.com',
     organisation: 'MDCalc',
     type: 'outil',
@@ -885,7 +888,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
   {
     cle: 'mdcalc_child_pugh',
     titre: 'Child-Pugh',
-    url_document: '',
+    url_document:
+      'https://www.mdcalc.com/calc/340/child-pugh-score-cirrhosis-mortality',
     url_reference: 'https://www.mdcalc.com',
     organisation: 'MDCalc',
     type: 'outil',
@@ -898,7 +902,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
   {
     cle: 'mdcalc_curb_65',
     titre: 'CURB-65',
-    url_document: '',
+    url_document:
+      'https://www.mdcalc.com/calc/324/curb-65-score-pneumonia-severity',
     url_reference: 'https://www.mdcalc.com',
     organisation: 'MDCalc',
     type: 'outil',
@@ -911,7 +916,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
   {
     cle: 'mdcalc_wells_tvp',
     titre: 'Score de Wells — thrombose veineuse profonde',
-    url_document: '',
+    url_document:
+      'https://www.mdcalc.com/calc/362/wells-criteria-dvt',
     url_reference: 'https://www.mdcalc.com',
     organisation: 'MDCalc',
     type: 'outil',
@@ -924,7 +930,8 @@ export const SOURCES_DEPART: SourceDepart[] = [
   {
     cle: 'mdcalc_wells_ep',
     titre: 'Score de Wells — embolie pulmonaire',
-    url_document: '',
+    url_document:
+      'https://www.mdcalc.com/calc/115/wells-criteria-pulmonary-embolism',
     url_reference: 'https://www.mdcalc.com',
     organisation: 'MDCalc',
     type: 'outil',

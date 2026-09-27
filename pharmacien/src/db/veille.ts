@@ -59,7 +59,10 @@ export function rattacherSujetSource(sujetId: number, sourceId: number) {
  */
 export function amorcerVeille() {
   remplacerRepertoireV22();
-  completerRepertoireV25();
+  completerRepertoire('repertoire_v2_5');
+  // Les sept calculateurs MDCalc qui ouvraient la page d'accueil, et les
+  // guides INESSS qui ouvraient l'index.
+  completerRepertoire('repertoire_v2_5_3');
   if (dejaFait('veille_amorcee')) return;
 
   const parCle = new Map<string, number>();
@@ -102,19 +105,22 @@ export function amorcerVeille() {
  * l'usager a ajoutés lui-même n'en ont pas et ne sont jamais touchés.
  */
 /**
- * Les seize guides de la 2.5, et les thèmes.
+ * Remettre le répertoire fourni au niveau de `SOURCES_DEPART`.
  *
- * Contrairement à la reprise de la 2.2, celle-ci ne supprime rien. Elle met à
- * jour ce qui existe déjà — l'adresse d'un document, ses mots-clés, son thème —
- * et insère ce qui manque. Supprimer puis réinsérer donnerait des identifiants
- * neufs, et les notes que l'usager a rattachées à un guide pointeraient dans le
- * vide.
+ * Elle ne supprime rien. Elle met à jour ce qui existe déjà — l'adresse d'un
+ * document, ses mots-clés, son thème — et insère ce qui manque. Supprimer
+ * puis réinsérer donnerait des identifiants neufs, et les notes que l'usager
+ * a rattachées à un guide pointeraient dans le vide.
  *
  * Le titre, lui, n'est jamais écrasé : un usager qui a renommé « Cystite » en
  * « UTI » garde son nom, comme il garde ses sujets.
+ *
+ * Elle prend son repère en paramètre : chaque lot de données a le sien, et
+ * une base déjà passée par le lot précédent doit pouvoir recevoir le suivant.
+ * Réutiliser un repère déjà marqué ferait sauter le lot en silence.
  */
-function completerRepertoireV25() {
-  if (dejaFait('repertoire_v2_5')) return;
+function completerRepertoire(repere: string) {
+  if (dejaFait(repere)) return;
 
   for (const source of SOURCES_DEPART) {
     const lien = db.getFirstSync<{ id: number }>('SELECT id FROM liens WHERE cle = ?', source.cle);
@@ -148,7 +154,7 @@ function completerRepertoireV25() {
   // Les sujets des signets neufs ne sont pas encore rattachés : la semaison
   // repasse, et elle est sans effet sur ce qui l'est déjà.
   db.runSync('DELETE FROM reprises WHERE repere = ?', 'veille_amorcee');
-  marquerFait('repertoire_v2_5');
+  marquerFait(repere);
 }
 
 function remplacerRepertoireV22() {

@@ -2,8 +2,8 @@ jest.mock('expo-sqlite', () => require('./base').fauxExpoSqlite);
 
 import { factureParNumero, enregistrerFacture, prochainNumeroFacture } from '../src/db/factures';
 import { creerFrais, listerFrais, totalFrais } from '../src/db/frais';
-import { initialiserBase } from '../src/db/index';
-import { amorcerLiens, listerLiens } from '../src/db/liens';
+import { db, initialiserBase } from '../src/db/index';
+import { amorcerLiens, listerLiens, modifierLien } from '../src/db/liens';
 import { creerPharmacie, obtenirPharmacie } from '../src/db/pharmacies';
 import {
   creerQuart,
@@ -365,5 +365,77 @@ describe('le mode démonstration, écrit et effacé pour de vrai', () => {
 
     expect(listerPharmacies().map((p) => p.nom)).toEqual(['Ma vraie pharmacie']);
     expect(listerQuarts()).toHaveLength(1);
+  });
+});
+
+describe('une base déjà amorcée reçoit les adresses corrigées', () => {
+  test('la reprise réécrit une entrée dont le document était vide', () => {
+    // Le cas réel : la base de l'usager porte déjà les signets, semés avant
+    // que les sept calculateurs MDCalc aient leur adresse. Sans reprise, ils
+    // ouvriraient la page d'accueil pour toujours.
+    initialiserBase();
+    amorcerLiens();
+
+    // On remet une entrée dans l'état qu'elle avait avant le correctif.
+    const avant = listerLiens().find((l) => l.cle === 'mdcalc_curb_65');
+    expect(avant?.url_document).toContain('/calc/324/');
+
+    modifierLien(avant!.id, {
+      cle: avant!.cle,
+      titre: avant!.titre,
+      url_document: '',
+      url_reference: avant!.url_reference,
+      categorie: avant!.categorie,
+      motsCles: avant!.motsCles,
+      sous_section: avant!.sous_section,
+      theme: avant!.theme,
+      pour_patient: avant!.pour_patient,
+    });
+    expect(listerLiens().find((l) => l.cle === 'mdcalc_curb_65')?.url_document).toBe('');
+
+    // La reprise n'a pas encore tourné pour ce lot : elle doit la corriger.
+    db.runSync('DELETE FROM reprises WHERE repere = ?', 'repertoire_v2_5_3');
+    amorcerVeille();
+
+    expect(listerLiens().find((l) => l.cle === 'mdcalc_curb_65')?.url_document).toContain(
+      '/calc/324/'
+    );
+  });
+
+  test('elle ne touche pas au titre que l’usager a changé', () => {
+    // Un usager qui a renommé un signet garde son nom, comme il garde ses
+    // sujets rattachés.
+    initialiserBase();
+    amorcerLiens();
+    const lien = listerLiens().find((l) => l.cle === 'mdcalc_curb_65')!;
+    modifierLien(lien.id, {
+      cle: lien.cle,
+      titre: 'Mon score de pneumonie',
+      url_document: '',
+      url_reference: lien.url_reference,
+      categorie: lien.categorie,
+      motsCles: lien.motsCles,
+      sous_section: lien.sous_section,
+      theme: lien.theme,
+      pour_patient: lien.pour_patient,
+    });
+
+    db.runSync('DELETE FROM reprises WHERE repere = ?', 'repertoire_v2_5_3');
+    amorcerVeille();
+
+    const apres = listerLiens().find((l) => l.cle === 'mdcalc_curb_65');
+    expect(apres?.titre).toBe('Mon score de pneumonie');
+    expect(apres?.url_document).toContain('/calc/324/');
+  });
+
+  test('elle ne double aucune entrée', () => {
+    initialiserBase();
+    amorcerLiens();
+    const avant = listerLiens().length;
+
+    db.runSync('DELETE FROM reprises WHERE repere = ?', 'repertoire_v2_5_3');
+    amorcerVeille();
+
+    expect(listerLiens()).toHaveLength(avant);
   });
 });
