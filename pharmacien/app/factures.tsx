@@ -10,7 +10,7 @@ import { formatDateCourte } from '../src/lib/dates';
 import { argent, heures } from '../src/lib/format';
 import { ancienneteFacture, relanceDue } from '../src/lib/relanceFactures';
 import { Bouton, Doux, Etiquette, Fondu, Vide } from '../src/ui/composants';
-import { couleurs, espace, ombre, police, rayon, useAccent } from '../src/ui/theme';
+import { couleurs, espace, ombre, police, rayon, texte, useAccent } from '../src/ui/theme';
 import { useTextes } from '../src/i18n';
 
 /**
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     paddingBottom: espace.xxl,
   },
   resume: {
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.texte,
     marginBottom: espace.m,
@@ -160,12 +160,12 @@ const styles = StyleSheet.create({
   },
   pharmacie: {
     flex: 1,
-    fontSize: 16,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.texte,
   },
   detail: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     color: couleurs.doux,
   },
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     marginTop: espace.xs,
   },
   montant: {
-    fontSize: 15,
+    fontSize: texte.corps,
     fontFamily: police.demi,
     color: couleurs.texte,
   },

@@ -5,7 +5,7 @@ import { LayoutChangeEvent, Pressable, StyleSheet, Text, View, type ViewStyle } 
 import { useTextes } from '../i18n';
 import { apercu } from '../lib/listes';
 import { useDefilement } from './composants';
-import { espace, police, useAccent } from './theme';
+import { espace, police, texte, useAccent, CIBLE_MIN } from './theme';
 
 /**
  * Une section de liste : trois éléments, puis un contrôle.
@@ -93,11 +93,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: espace.xs,
     /* Une cible confortable même quand le mot est court. */
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
     paddingHorizontal: espace.m,
   },
   texte: {
-    fontSize: 14,
+    fontSize: texte.lecture,
     fontFamily: police.demi,
   },
 });

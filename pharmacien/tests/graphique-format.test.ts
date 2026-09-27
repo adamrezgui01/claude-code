@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { argent, heures } from '../src/lib/format';
+import { texte } from '../src/ui/theme';
 import {
   etiquetteDuGraphique,
   etiquettesLisibles,
@@ -280,11 +281,13 @@ describe('l’écran, tel qu’il pose tout ça', () => {
   // subsistait dans la ligne d'import.
   const graphique = readFileSync(join('src', 'ui', 'Graphique.tsx'), 'utf8');
 
-  test('les étiquettes sont à onze points', () => {
+  test('les étiquettes prennent leur taille du jeton', () => {
     // Une dimension, pas un comportement : elle ne se lit pas dans l'arbre
-    // rendu autrement qu'en recomposant la feuille de styles.
+    // rendu autrement qu'en recomposant la feuille de styles. Depuis la phase
+    // 3 de H, elle vient de l'échelle plutôt que d'un nombre écrit ici.
     const bloc = graphique.slice(graphique.indexOf('  valeur: {'));
-    expect(bloc.slice(0, bloc.indexOf('\n  },'))).toContain('fontSize: 11');
+    expect(bloc.slice(0, bloc.indexOf('\n  },'))).toContain('fontSize: texte.fin');
+    expect(texte.fin).toBe(11);
   });
 
   test('la barre laisse de l’air à sa voisine', () => {

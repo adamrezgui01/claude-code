@@ -42,7 +42,7 @@ import {
 } from '../src/ui/composants';
 import { SelecteurDate } from '../src/ui/Selecteurs';
 import { SelecteurPharmacie } from '../src/ui/SelecteurPharmacie';
-import { couleurs, espace, police } from '../src/ui/theme';
+import { couleurs, espace, police, texte } from '../src/ui/theme';
 import { useTextes } from '../src/i18n';
 
 type Groupe = { pharmacie: Pharmacie; quarts: QuartDetaille[]; frais: FraisExtra[] };
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
   },
   avertissement: {
     color: couleurs.alerte,
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.normal,
     marginBottom: espace.m,
   },

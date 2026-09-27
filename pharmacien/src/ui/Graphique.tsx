@@ -26,7 +26,7 @@ import {
 } from '../lib/mensuel';
 import { Pageur } from './Pageur';
 import { useTextes } from '../i18n';
-import { accentPale, couleurs, espace, police, rayon, useAccent } from './theme';
+import { accentPale, couleurs, espace, police, rayon, texte, useAccent } from './theme';
 
 /**
  * Douze mois, deux lectures. Les barres disent le mois, la ligne dit la
@@ -59,6 +59,9 @@ const LARGEUR_BULLE = 96;
  * pleins, « 12,4k » en milliers abrégés.
  */
 const LARGEUR_AXE = 34;
+
+/** La moitié de la hauteur d'un repère d'axe, pour l'asseoir sur sa ligne. */
+const CALAGE_REPERE = 6;
 
 function Barre({
   entree,
@@ -554,12 +557,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   repereTexte: {
-    fontSize: 10,
+    fontSize: texte.minuscule,
     fontFamily: police.normal,
     color: couleurs.doux,
     textAlign: 'right',
-    /* Le repère se cale sur sa ligne, pas au-dessus. */
-    marginTop: -6,
+    /*
+      Un calage optique, pas un espacement : le repère doit s'asseoir sur sa
+      ligne, et la demi-hauteur du texte le remonte. L'échelle d'espacement ne
+      s'applique pas à un décalage négatif — elle règle l'air entre deux blocs,
+      pas la position d'un caractère sur un trait.
+    */
+    marginTop: -CALAGE_REPERE,
   },
   lignesRepere: {
     position: 'absolute',
@@ -605,13 +613,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bulleMois: {
-    fontSize: 10,
+    fontSize: texte.minuscule,
     fontFamily: police.normal,
     color: couleurs.doux,
     textTransform: 'capitalize',
   },
   bulleValeur: {
-    fontSize: 13,
+    fontSize: texte.courant,
     fontFamily: police.demi,
   },
   barres: {
@@ -627,10 +635,10 @@ const styles = StyleSheet.create({
   valeur: {
     flex: 1,
     /* Onze points : c'est ce qui se lit sans loupe sur une rangée de douze. */
-    fontSize: 11,
+    fontSize: texte.fin,
     fontFamily: police.demi,
     color: couleurs.texte,
-    marginBottom: 2,
+    marginBottom: espace.xs,
     textAlign: 'center',
   },
   barre: {
@@ -643,7 +651,7 @@ const styles = StyleSheet.create({
   },
   mois: {
     flex: 1,
-    fontSize: 9,
+    fontSize: texte.minuscule,
     fontFamily: police.normal,
     color: couleurs.doux,
     marginTop: espace.xs,

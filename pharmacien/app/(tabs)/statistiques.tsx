@@ -28,7 +28,7 @@ import {
 } from '../../src/ui/composants';
 import { SelecteurDate } from '../../src/ui/Selecteurs';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
-import { couleurs, espace, police, rayon } from '../../src/ui/theme';
+import { couleurs, espace, police, rayon, texte } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 /** Une minute : de quoi distinguer un vrai départ d'un aller-retour immédiat. */
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     marginBottom: espace.m,
   },
   revenu: {
-    fontSize: 32,
+    fontSize: texte.chiffre,
     fontFamily: police.gras,
     color: couleurs.texte,
   },

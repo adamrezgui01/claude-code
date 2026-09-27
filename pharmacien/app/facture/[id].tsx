@@ -23,7 +23,7 @@ import {
 } from '../../src/ui/composants';
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { Recompense } from '../../src/ui/Recompense';
-import { couleurs, espace, police } from '../../src/ui/theme';
+import { couleurs, espace, police, texte } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 /**
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   },
   pharmacie: {
     flex: 1,
-    fontSize: 20,
+    fontSize: texte.grandTitre,
     fontFamily: police.gras,
     color: couleurs.texte,
   },
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     marginTop: espace.l,
   },
   total: {
-    fontSize: 30,
+    fontSize: texte.chiffre,
     fontFamily: police.gras,
     color: couleurs.texte,
   },

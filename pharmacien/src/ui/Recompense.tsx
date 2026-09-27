@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text } from 'react-native';
 
-import { couleurs, police } from './theme';
+import { couleurs, espace, police, texte } from './theme';
 
 /**
  * Le seul moment où l'application se permet d'être visible : quand l'usager
@@ -64,11 +64,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F6F4F2F2',
-    gap: 12,
+    gap: espace.m,
     zIndex: 10,
   },
   texte: {
-    fontSize: 17,
+    fontSize: texte.saisie,
     fontFamily: police.demi,
     color: couleurs.texte,
   },

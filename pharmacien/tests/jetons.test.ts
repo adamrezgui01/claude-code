@@ -159,6 +159,16 @@ const PASSES: Record<string, string[]> = {
     'app/veille/note/[id].tsx',
     'app/veille/sujet/[id].tsx',
   ],
+  Statistiques: [
+    'app/(tabs)/statistiques.tsx',
+    'src/ui/Graphique.tsx',
+    'src/ui/ListeRepliable.tsx',
+    'src/ui/Compteur.tsx',
+    'src/ui/Recompense.tsx',
+    'app/facture.tsx',
+    'app/factures.tsx',
+    'app/facture/[id].tsx',
+  ],
 };
 
 /** La partie « feuille de styles » d'un fichier. Le JSX ne nous regarde pas ici. */
@@ -219,12 +229,18 @@ describe('les écrans passés aux jetons', () => {
       });
 
       test('tout espacement vertical appartient à l’échelle', () => {
+        // Un décalage **négatif** n'est pas un espacement : c'est un calage
+        // optique, la position d'un caractère sur un trait. Le repère de l'axe
+        // du graphique en a un, et le ramener dans l'échelle le déplaçait de
+        // dix points hors de sa ligne.
         const hors: string[] = [];
         for (const f of fichiers) {
           const s = feuille(f);
           for (const prop of ['marginTop', 'marginBottom', 'paddingTop', 'paddingBottom', 'paddingVertical', 'gap']) {
             for (const m of s.matchAll(new RegExp(`\\b${prop}: (-?\\d+(?:\\.\\d+)?)`, 'g'))) {
-              if (!ECHELLE.includes(Number(m[1]))) hors.push(`${f.split('/').pop()} ${prop} ${m[1]}`);
+              const v = Number(m[1]);
+              if (v < 0) continue;
+              if (!ECHELLE.includes(v)) hors.push(`${f.split('/').pop()} ${prop} ${m[1]}`);
             }
           }
         }

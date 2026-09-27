@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useTextes } from '../i18n';
 import { ajusterCompteur } from '../lib/compteur';
-import { couleurs, espace, police, rayon, useAccent } from './theme';
+import { couleurs, espace, police, rayon, texte, useAccent } from './theme';
 
 /**
  * Un nombre qui se règle à deux boutons.
@@ -105,7 +105,7 @@ function Bouton({
 
 const styles = StyleSheet.create({
   bloc: { paddingVertical: espace.m },
-  label: { fontSize: 15, fontFamily: police.demi, color: couleurs.texte },
+  label: { fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -124,9 +124,9 @@ const styles = StyleSheet.create({
   nombre: {
     minWidth: 64,
     textAlign: 'center',
-    fontSize: 24,
+    fontSize: texte.enTete,
     fontFamily: police.gras,
   },
   attenue: { opacity: 0.4 },
-  aide: { fontSize: 13, fontFamily: police.normal, color: couleurs.doux, lineHeight: 18 },
+  aide: { fontSize: texte.courant, fontFamily: police.normal, color: couleurs.doux, lineHeight: 18 },
 });
