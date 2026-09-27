@@ -21,7 +21,7 @@ import {
   type ChampDose,
   type UniteDose,
 } from '../../src/lib/dose';
-import { analyserNombre } from '../../src/lib/format';
+import { analyserNombre, nombreFixe } from '../../src/lib/format';
 import { Bouton, Carte, Champ, Doux, Ecran, Fondu, Puce, Separateur, SousTitre } from '../../src/ui/composants';
 import { couleurs, espace, police, rayon, useAccent } from '../../src/ui/theme';
 
@@ -350,6 +350,7 @@ export default function CalculateurDose() {
                 dose: nombre(analyserNombre(dose), 2),
               })}
               droite={t('dose.mgParJour', { valeur: nombre(resultat.doseQuotidienne, 2) })}
+              alerte={resultat.depassement !== null}
             />
             <Etape
               gauche={t('dose.etapePrise', { prises })}
@@ -366,6 +367,7 @@ export default function CalculateurDose() {
               gauche={t('dose.etapeVolume')}
               droite={t('dose.mlParPrise', { valeur: nombre(resultat.volumeParPrise) })}
               sous={exact(resultat.volumeParPrise)}
+              alerte={resultat.depassement !== null}
             />
 
             {resultat.quantiteTotale !== null && (
@@ -385,15 +387,43 @@ export default function CalculateurDose() {
             )}
           </Carte>
 
-          {resultat.alertes.map((alerte, rang) => (
-            <Text key={rang} style={styles.alerte}>
-              {alerte.genre === 'poids' && t('dose.alertePoids')}
-              {alerte.genre === 'volume' &&
-                t('dose.alerteVolume', { valeur: nombre(alerte.volume) })}
-              {alerte.genre === 'maximum' &&
-                t('dose.alerteMaximum', { valeur: nombre(alerte.ecart, 2) })}
-            </Text>
-          ))}
+          {/*
+            Le dépassement ne bloque rien : le résultat calculé reste affiché
+            en entier, au-dessus. Une dose au-dessus du maximum d'un guide
+            arrive et peut être justifiée — c'est au pharmacien de trancher.
+
+            « Votre maximum », jamais « Donnez » : l'application rapporte
+            l'arithmétique de la valeur qu'il a saisie lui-même.
+          */}
+          {resultat.depassement !== null && (
+            <View style={styles.depassement}>
+              <Text style={styles.alerte}>
+                {t('dose.depasse', { valeur: nombre(resultat.depassement.ecart, 2) })}
+              </Text>
+              <View style={styles.comparaison}>
+                <Text style={styles.comparaisonNom}>{t('dose.votreMaximum')}</Text>
+                <Text style={styles.comparaisonValeur}>
+                  {t('dose.resumeDose', {
+                    jour: nombre(analyserNombre(maxParJour), 2),
+                    prise: nombre(resultat.depassement.doseParPrise, 2),
+                    // Décimale fixe : « 10,0 » en face de « 10,8 ». Deux
+                    // valeurs qu'on compare montrent la même précision.
+                    volume: nombreFixe(resultat.depassement.volumeParPrise),
+                  })}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {resultat.alertes
+            .filter((alerte) => alerte.genre !== 'maximum')
+            .map((alerte, rang) => (
+              <Text key={rang} style={styles.alerte}>
+                {alerte.genre === 'poids' && t('dose.alertePoids')}
+                {alerte.genre === 'volume' &&
+                  t('dose.alerteVolume', { valeur: nombre(alerte.volume) })}
+              </Text>
+            ))}
 
         </Fondu>
       )}
@@ -406,16 +436,19 @@ function Etape({
   gauche,
   droite,
   sous,
+  alerte,
 }: {
   gauche: string;
   droite: string;
   sous?: string | null;
+  /** Le résultat passe au rouge : la dose calculée dépasse le maximum saisi. */
+  alerte?: boolean;
 }) {
   return (
     <View style={styles.etape}>
       <View style={styles.etapeLigne}>
         <Text style={styles.etapeGauche}>{gauche}</Text>
-        <Text style={styles.etapeDroite}>{droite}</Text>
+        <Text style={[styles.etapeDroite, alerte && styles.etapeAlerte]}>{droite}</Text>
       </View>
       {!!sous && <Text style={styles.etapeSous}>{sous}</Text>}
     </View>
@@ -431,6 +464,24 @@ const styles = StyleSheet.create({
     marginTop: espace.xs,
   },
   concentration: { flexDirection: 'row', alignItems: 'center', gap: espace.s },
+  etapeAlerte: { color: couleurs.alerte },
+  depassement: { marginTop: espace.s, gap: espace.xs },
+  comparaison: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    flexWrap: 'wrap',
+    gap: espace.s,
+  },
+  comparaisonNom: {
+    fontSize: 13,
+    fontFamily: police.demi,
+    color: couleurs.doux,
+  },
+  comparaisonValeur: {
+    fontSize: 14,
+    fontFamily: police.demi,
+    color: couleurs.texte,
+  },
   moitie: { flex: 1 },
   barreOblique: {
     fontSize: 18,

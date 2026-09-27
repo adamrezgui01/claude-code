@@ -238,3 +238,70 @@ describe('la mise en forme', () => {
     expect(hauteurs).toEqual(new Set([44]));
   });
 });
+
+describe('le dépassement, à l’écran', () => {
+  const MAX = 'Dose maximale quotidienne (mg)';
+
+  /** Le cas de la spécification : 18 kg, 90 mg/kg/jour, TID, 250 mg/5 mL. */
+  async function depasser(maximum: string) {
+    await rendre(<CalculateurDose />);
+    await remplirLeCasCourant();
+    await fireEvent.changeText(screen.getByLabelText(MAX), maximum);
+  }
+
+  test('l’écart s’écrit en toutes lettres', async () => {
+    await depasser('1500');
+    expect(screen.getByText('Dépasse la dose maximale de 120 mg par jour.')).toBeTruthy();
+  });
+
+  test('la ligne du maximum donne sa chaîne complète', async () => {
+    await depasser('1500');
+    expect(screen.getByText('Votre maximum')).toBeTruthy();
+    expect(screen.getByText(/500 mg\/prise/)).toBeTruthy();
+    expect(screen.getByText(/10,0 mL\/prise/)).toBeTruthy();
+  });
+
+  test('elle dit « Votre maximum », jamais « Donnez »', async () => {
+    // L'application rapporte l'arithmétique d'une valeur saisie par le
+    // pharmacien. Elle ne recommande aucune dose.
+    await depasser('1500');
+    expect(screen.queryByText(/[Dd]onnez/)).toBeNull();
+    expect(screen.queryByText(/[Aa]dministrez/)).toBeNull();
+  });
+
+  test('le résultat calculé reste affiché en entier', async () => {
+    await depasser('1500');
+    expect(screen.getByText('1 620 mg par jour')).toBeTruthy();
+    expect(screen.getByText('540 mg par prise')).toBeTruthy();
+    expect(screen.getByText('10,8 mL par prise')).toBeTruthy();
+  });
+
+  test('les deux lignes concernées passent au rouge', async () => {
+    await depasser('1500');
+    for (const texte of ['1 620 mg par jour', '10,8 mL par prise']) {
+      const styles = [screen.getByText(texte).props.style].flat(3).filter(Boolean);
+      const fusion = Object.assign({}, ...(styles as Record<string, unknown>[])) as {
+        color?: string;
+      };
+      expect({ texte, couleur: fusion.color }).toEqual({ texte, couleur: '#B4431F' });
+    }
+  });
+
+  test('sans dose maximale, rien de tout ça', async () => {
+    await rendre(<CalculateurDose />);
+    await remplirLeCasCourant();
+    expect(screen.queryByText(/Dépasse la dose maximale/)).toBeNull();
+    expect(screen.queryByText('Votre maximum')).toBeNull();
+
+    const styles = [screen.getByText('1 620 mg par jour').props.style].flat(3).filter(Boolean);
+    const fusion = Object.assign({}, ...(styles as Record<string, unknown>[])) as {
+      color?: string;
+    };
+    expect(fusion.color).not.toBe('#B4431F');
+  });
+
+  test('avec un maximum de 2000, rien non plus', async () => {
+    await depasser('2000');
+    expect(screen.queryByText(/Dépasse la dose maximale/)).toBeNull();
+  });
+});

@@ -42,6 +42,24 @@ export function nombre(valeur: number, decimales = 1, langue: Langue = LANGUE_DE
   }).format(valeur);
 }
 
+/**
+ * Un nombre à décimales fixes : « 10,0 » et non « 10 ».
+ *
+ * Deux valeurs qu'on met côte à côte pour les comparer doivent afficher la
+ * même précision. « 10,8 mL » en face de « 10 mL » se lit comme deux
+ * précisions différentes, alors que c'est le même calcul à une décimale.
+ */
+export function nombreFixe(
+  valeur: number,
+  decimales = 1,
+  langue: Langue = LANGUE_DEFAUT
+): string {
+  return new Intl.NumberFormat(localeDe(langue), {
+    minimumFractionDigits: decimales,
+    maximumFractionDigits: decimales,
+  }).format(valeur);
+}
+
 /** Lit un montant saisi au clavier, en acceptant la virgule décimale. */
 export function analyserNombre(texte: string): number {
   const valeur = parseFloat(texte.replace(/[\s\u202f\u00a0]/g, '').replace(',', '.'));

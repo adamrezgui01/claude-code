@@ -520,7 +520,10 @@ export const fr = {
     bouteilles_other: '{{count}} bouteilles',
     alertePoids: 'Vérifiez le poids.',
     alerteVolume: 'Volume élevé pour une prise ({{valeur}} mL). Vérifiez la concentration.',
-    alerteMaximum: 'Dose quotidienne au-dessus du maximum saisi, de {{valeur}} mg.',
+    depasse: 'Dépasse la dose maximale de {{valeur}} mg par jour.',
+    calcule: 'Calculé',
+    votreMaximum: 'Votre maximum',
+    resumeDose: '{{jour}} mg/jour · {{prise}} mg/prise · {{volume}} mL/prise',
     raccourci: 'Raccourci',
     raccourciAide:
       'Garde la dose, l’unité, la fréquence et la concentration sous un nom. Jamais le poids.',

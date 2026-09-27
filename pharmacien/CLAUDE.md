@@ -396,6 +396,20 @@ qu'on ne les redécouvre pas trois fois.
   qu'il va mal ce matin. Au moindre doute — pas de réseau, pas de réponse en deux
   secondes et demie — on ouvre le document : un doute ne doit jamais coûter un
   geste de plus au comptoir.
+- Quand la dose calculée dépasse la **dose maximale saisie**, l'application
+  dit de combien et donne la chaîne du maximum — « Votre maximum : 1500
+  mg/jour · 500 mg/prise · 10,0 mL/prise ». « Votre maximum », jamais
+  « Donnez » : elle rapporte l'arithmétique d'une valeur que le pharmacien a
+  saisie lui-même, elle ne recommande aucune dose. Le dépassement **ne bloque
+  rien** — le résultat calculé reste affiché en entier, parce qu'une dose
+  au-dessus du maximum d'un guide arrive et peut être justifiée. La
+  comparaison porte sur la dose **quotidienne** dans les deux unités : en
+  mg/kg/dose, la comparer à la dose par prise laisserait passer le triple. Et
+  la chaîne du maximum se calcule en pleine précision, comme tout le reste.
+- Deux valeurs qu'on met côte à côte pour les comparer affichent la **même
+  précision**. « 10,8 mL » en face de « 10 mL » se lit comme deux précisions
+  différentes, alors que c'est le même calcul à une décimale : `nombreFixe`
+  existe pour ça.
 - Le **mode démonstration** remplit une année de travail plausible, et
   plausible veut dire **cohérent** : une pharmacie qui paie 82 $ l'heure en
   janvier les paie encore en juin, et elle est toujours à la même distance. Des

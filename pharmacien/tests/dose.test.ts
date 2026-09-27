@@ -266,10 +266,76 @@ describe('groupe 6 — ce qui se signale', () => {
 });
 
 // ===========================================================================
-// Groupe 7 — les raccourcis
+// Groupe 7 — le dépassement de la dose maximale
 // ===========================================================================
 
-describe('groupe 7 — un raccourci appliqué', () => {
+describe('groupe 7 — quand la dose calculée dépasse le maximum saisi', () => {
+  /**
+   * Le cas de la spécification, refait à la main avant d'écrire le code :
+   *
+   *   18 kg × 90 mg/kg/jour  = 1620 mg par jour
+   *   1620 ÷ 3 prises        = 540 mg par prise
+   *   250 mg / 5 mL          = 50 mg/mL
+   *   540 ÷ 50               = 10,8 mL par prise
+   *
+   *   maximum saisi          = 1500 mg par jour
+   *   1620 − 1500            = 120 mg d'écart
+   *   1500 ÷ 3 prises        = 500 mg par prise
+   *   500 ÷ 50               = 10,0 mL par prise
+   */
+  test('l’écart et la chaîne du maximum', () => {
+    const r = calcul({ maxParJour: 1500 });
+    expect(r.depassement).toEqual({ ecart: 120, doseParPrise: 500, volumeParPrise: 10 });
+  });
+
+  test('sans dose maximale saisie, aucun dépassement', () => {
+    expect(calcul({}).depassement).toBeNull();
+  });
+
+  test('avec un maximum de 2000, aucun dépassement non plus', () => {
+    expect(calcul({ maxParJour: 2000 }).depassement).toBeNull();
+  });
+
+  test('en mg/kg/dose, la comparaison porte sur la dose quotidienne', () => {
+    // 18 kg × 90 mg/kg/dose = 1620 mg par prise, et 4860 mg par jour en TID.
+    // Comparer le maximum à la dose par prise laisserait passer le triple.
+    const r = calcul({ unite: 'parPrise', maxParJour: 2000 });
+    expect(r.doseParPrise).toBe(1620);
+    expect(r.doseQuotidienne).toBe(4860);
+    expect(r.depassement?.ecart).toBe(2860);
+  });
+
+  test('un dépassement n’empêche jamais l’affichage du résultat calculé', () => {
+    // Le dépassement signale, il ne bloque pas. Une dose au-dessus du maximum
+    // d'un guide arrive et peut être justifiée.
+    const r = calcul({ maxParJour: 100 });
+    expect(r.doseQuotidienne).toBe(1620);
+    expect(r.doseParPrise).toBe(540);
+    expect(r.volumeParPrise).toBeCloseTo(10.8, 6);
+  });
+
+  test('la chaîne du maximum garde sa pleine précision', () => {
+    // 1000 ÷ 3 = 333,333… mg par prise, et non 333. Arrondir ici puis
+    // diviser donnerait 6,66 mL au lieu de 6,667.
+    //   1000 ÷ 3 prises = 333,3333… mg par prise
+    //   250 / 5         = 50 mg/mL
+    //   333,3333… ÷ 50  = 6,66666… mL par prise
+    const r = calcul({ dose: 200, maxParJour: 1000 });
+    expect(r.depassement?.doseParPrise).toBeCloseTo(333.3333, 4);
+    expect(r.depassement?.volumeParPrise).toBeCloseTo(6.66667, 5);
+    expect(arrondirAffichage(r.depassement!.volumeParPrise, 1)).toBe(6.7);
+  });
+
+  test('l’alerte reste, pour qui la lit ailleurs', () => {
+    expect(calcul({ maxParJour: 1500 }).alertes).toContainEqual({ genre: 'maximum', ecart: 120 });
+  });
+});
+
+// ===========================================================================
+// Groupe 8 — les raccourcis
+// ===========================================================================
+
+describe('groupe 8 — un raccourci appliqué', () => {
   // Le onzième test du prompt V2.4. Il manquait : la logique vivait dans
   // l'écran, où la suite ne va pas. Elle en est sortie pour qu'il existe.
   const AMOXICILLINE = {
@@ -327,10 +393,10 @@ describe('groupe 7 — un raccourci appliqué', () => {
 });
 
 // ===========================================================================
-// Groupe 8 — le calculateur se cherche
+// Groupe 9 — le calculateur se cherche
 // ===========================================================================
 
-describe('groupe 8 — dans la recherche', () => {
+describe('groupe 9 — dans la recherche', () => {
   const OUTIL = {
     id: -1,
     titre: 'Calculateur de dose',

@@ -517,7 +517,10 @@ export const en: Dictionnaire = {
     bouteilles_other: '{{count}} bottles',
     alertePoids: 'Check the weight.',
     alerteVolume: 'High volume for one dose ({{valeur}} mL). Check the concentration.',
-    alerteMaximum: 'Daily dose above the maximum entered, by {{valeur}} mg.',
+    depasse: 'Over the maximum dose by {{valeur}} mg per day.',
+    calcule: 'Calculated',
+    votreMaximum: 'Your maximum',
+    resumeDose: '{{jour}} mg/day · {{prise}} mg/dose · {{volume}} mL/dose',
     raccourci: 'Shortcut',
     raccourciAide:
       'Keeps the dose, unit, frequency and concentration under a name. Never the weight.',

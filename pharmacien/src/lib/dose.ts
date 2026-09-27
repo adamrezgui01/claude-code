@@ -54,6 +54,26 @@ export type Alerte =
   | { genre: 'volume'; volume: number }
   | { genre: 'maximum'; ecart: number };
 
+/**
+ * Ce que la dose maximale saisie donnerait, quand le calcul la dépasse.
+ *
+ * L'application **rapporte l'arithmétique** d'une valeur que le pharmacien a
+ * saisie lui-même. Elle ne recommande aucune dose : c'est la même ligne de
+ * conduite que partout ailleurs dans cet écran — l'outil fait l'arithmétique,
+ * pas le jugement clinique. D'où « Votre maximum », et jamais « Donnez ».
+ *
+ * Le dépassement ne bloque rien. Une dose au-dessus du maximum d'un guide
+ * arrive et peut être justifiée ; c'est au pharmacien de trancher.
+ */
+export type Depassement = {
+  /** De combien la dose quotidienne dépasse, en mg. */
+  ecart: number;
+  /** Ce que le maximum saisi vaut par prise. */
+  doseParPrise: number;
+  /** Et le volume correspondant. En pleine précision, comme tout le reste. */
+  volumeParPrise: number;
+};
+
 export type CalculDose = {
   doseParPrise: number;
   doseQuotidienne: number;
@@ -64,6 +84,8 @@ export type CalculDose = {
   quantiteTotale: number | null;
   /** `null` sans format de bouteille. */
   bouteilles: number | null;
+  /** `null` sans dose maximale saisie, ou tant qu'elle n'est pas dépassée. */
+  depassement: Depassement | null;
   alertes: Alerte[];
 };
 
@@ -112,9 +134,22 @@ export function calculerDose(entree: EntreeDose): CalculDose | null {
   const alertes: Alerte[] = [];
   if (poidsKg < POIDS_MIN || poidsKg > POIDS_MAX) alertes.push({ genre: 'poids' });
   if (volumeParPrise > VOLUME_ELEVE) alertes.push({ genre: 'volume', volume: volumeParPrise });
+
+  /*
+    La comparaison porte sur la dose **quotidienne**, dans les deux unités.
+    Une dose maximale s'exprime par jour ; en mg/kg/dose, la comparer à la
+    dose par prise laisserait passer le triple sans rien dire.
+  */
   const max = entree.maxParJour ?? null;
+  let depassement: Depassement | null = null;
   if (max && max > 0 && doseQuotidienne > max) {
-    alertes.push({ genre: 'maximum', ecart: doseQuotidienne - max });
+    const maxParPrise = max / prises;
+    depassement = {
+      ecart: doseQuotidienne - max,
+      doseParPrise: maxParPrise,
+      volumeParPrise: maxParPrise / concentration,
+    };
+    alertes.push({ genre: 'maximum', ecart: depassement.ecart });
   }
 
   return {
@@ -124,6 +159,7 @@ export function calculerDose(entree: EntreeDose): CalculDose | null {
     volumeParPrise,
     quantiteTotale,
     bouteilles,
+    depassement,
     alertes,
   };
 }
