@@ -48,21 +48,17 @@ describe('les sujets de départ', () => {
     );
   });
 
-  test('les sept autres restent sans adresse, et personne ne l’invente', () => {
-    // Une adresse fausse mène à un calculateur qui n'est pas celui qu'on
-    // cherchait : ceux-là ouvrent l'accueil de MDCalc, ce qui est honnête.
-    const vides = SOURCES_DEPART.filter(
-      (s) => s.sousSection === 'outils' && !s.url_document
-    );
-    expect(vides.map((s) => s.cle).sort()).toEqual([
-      'mdcalc_chads_vasc',
-      'mdcalc_child_pugh',
-      'mdcalc_curb_65',
-      'mdcalc_has_bled',
-      'mdcalc_mdrd',
-      'mdcalc_wells_ep',
-      'mdcalc_wells_tvp',
-    ]);
+  test('plus aucun outil n’ouvre une page d’accueil', () => {
+    // Ce test disait l'inverse jusqu'à la 2.5.3 : sept calculateurs restaient
+    // sans adresse, parce que personne ne devait inventer leur numéro. Les
+    // sept adresses ont été relevées et fournies, la raison de s'abstenir
+    // tombe donc, et la règle qui reste est la bonne — aucune entrée
+    // d'« outils » n'envoie l'usager chercher lui-même.
+    //
+    // Les adresses elles-mêmes sont vérifiées une à une dans
+    // tests/liens-mdcalc.test.ts.
+    const vides = SOURCES_DEPART.filter((s) => s.sousSection === 'outils' && !s.url_document);
+    expect(vides.map((s) => s.cle)).toEqual([]);
   });
 
   test('vingt-quatre : seize, six de la 2.5, la contraception et les poux', () => {
