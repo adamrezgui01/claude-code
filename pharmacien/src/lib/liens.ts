@@ -168,6 +168,8 @@ export type Theme =
   | 'metabolique'
   | 'douleur'
   | 'ainees'
+  | 'oeil'
+  | 'general'
   | 'autres';
 
 /** L'ordre d'affichage. C'est lui que l'écran suit, pas l'ordre de la base. */
@@ -180,6 +182,11 @@ export const THEMES: Theme[] = [
   'metabolique',
   'douleur',
   'ainees',
+  'oeil',
+  /* Les guides fournis qui n'entrent dans aucune case clinique. Distinct de
+     « Mes signets » : un guide de l'INESSS n'est pas un lien que l'usager a
+     ajouté lui-même, et les mélanger ferait disparaître l'un dans l'autre. */
+  'general',
   'autres',
 ];
 

@@ -48,6 +48,8 @@ const ICONES_THEME: Record<Theme, ComponentProps<typeof Ionicons>['name']> = {
   metabolique: 'pulse-outline',
   douleur: 'medkit-outline',
   ainees: 'accessibility-outline',
+  oeil: 'eye-outline',
+  general: 'library-outline',
   autres: 'bookmark-outline',
 };
 

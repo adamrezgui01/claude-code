@@ -571,6 +571,7 @@ export const fr = {
   },
   sujets: {
     poux: 'Poux de tête',
+    dependance: 'Dépendances',
     contraception: 'Contraception',
     itss: 'ITSS',
     infectionsPeau: 'Peau et plaies',
@@ -605,6 +606,8 @@ export const fr = {
     metabolique: 'Hormones et métabolisme',
     douleur: 'Douleur et neuro',
     ainees: 'Personnes âgées',
+    oeil: 'Yeux et paupières',
+    general: 'Autres guides',
     autres: 'Mes signets',
   },
 

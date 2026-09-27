@@ -568,6 +568,7 @@ export const en: Dictionnaire = {
   },
   sujets: {
     poux: 'Head lice',
+    dependance: 'Addictions',
     contraception: 'Contraception',
     itss: 'STBBIs',
     infectionsPeau: 'Skin and wounds',
@@ -602,6 +603,8 @@ export const en: Dictionnaire = {
     metabolique: 'Hormones and metabolism',
     douleur: 'Pain and neurology',
     ainees: 'Older adults',
+    oeil: 'Eyes and eyelids',
+    general: 'Other guides',
     autres: 'My bookmarks',
   },
 

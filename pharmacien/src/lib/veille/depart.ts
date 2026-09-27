@@ -20,6 +20,12 @@ export type SujetDepart = {
 
 export const SUJETS_DEPART: SujetDepart[] = [
   {
+    cle: 'dependance',
+    nom: 'Dépendances',
+    synonymes:
+      'alcool, sevrage, sevrage d’alcool, alcoolisme, trouble lié à l’usage d’alcool, rechute, naltrexone, acamprosate, disulfirame, alcohol withdrawal, alcohol use disorder, relapse prevention',
+  },
+  {
     cle: 'contraception',
     nom: 'Contraception',
     synonymes:
@@ -191,7 +197,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     cle: 'inesss_uti',
     titre: 'Infection urinaire (14 ans et +)',
     url_document:
-      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide_InfectionUrinaire.pdf',
+      'https://www.inesss.qc.ca/fileadmin/doc/CDM/UsageOptimal/Guides-serieI/Guide_InfectionUrinaire.pdf',
     url_reference:
       'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
     organisation: 'INESSS',
@@ -206,7 +212,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     cle: 'inesss_pharyngite',
     titre: 'Pharyngite – amygdalite',
     url_document:
-      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide-PharyngiteAmygdalite.pdf',
+      'https://www.inesss.qc.ca/fileadmin/doc/CDM/UsageOptimal/Guides-serieI/Guide-PharyngiteAmygdalite.pdf',
     url_reference:
       'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
     organisation: 'INESSS',
@@ -221,7 +227,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     cle: 'inesss_rhino_adulte',
     titre: 'Rhinosinusite aiguë, adulte',
     url_document:
-      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide-Rhinosinusite-Adulte.pdf',
+      'https://www.inesss.qc.ca/fileadmin/doc/CDM/UsageOptimal/Guides-serieI/Guide-Rhinosinusite-Adulte.pdf',
     url_reference:
       'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
     organisation: 'INESSS',
@@ -236,7 +242,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     cle: 'inesss_rhino_enfant',
     titre: 'Rhinosinusite aiguë, enfant',
     url_document:
-      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide-Rhinosinusite-Enfant.pdf',
+      'https://www.inesss.qc.ca/fileadmin/doc/CDM/UsageOptimal/Guides-serieI/Guide-Rhinosinusite-Enfant.pdf',
     url_reference:
       'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
     organisation: 'INESSS',
@@ -251,7 +257,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     cle: 'inesss_pneumo_adulte',
     titre: 'Pneumonie acquise en communauté, adulte',
     url_document:
-      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide_Pneumo_Web.pdf',
+      'https://www.inesss.qc.ca/fileadmin/doc/CDM/UsageOptimal/Guides-serieI/Guide_Pneumo_Web.pdf',
     url_reference:
       'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
     organisation: 'INESSS',
@@ -266,7 +272,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     cle: 'inesss_pneumo_enfant',
     titre: 'Pneumonie acquise en communauté, enfant',
     url_document:
-      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide-Pneumonie-Enfant.pdf',
+      'https://www.inesss.qc.ca/fileadmin/doc/CDM/UsageOptimal/Guides-serieI/Guide-Pneumonie-Enfant.pdf',
     url_reference:
       'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
     organisation: 'INESSS',
@@ -281,7 +287,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     cle: 'inesss_bronchite',
     titre: 'Bronchite aiguë',
     url_document:
-      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/CDM/UsageOptimal/Guides-serieI/Guide_BronchiteAigue.pdf',
+      'https://www.inesss.qc.ca/fileadmin/doc/CDM/UsageOptimal/Guides-serieI/Guide_BronchiteAigue.pdf',
     url_reference:
       'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
     organisation: 'INESSS',
@@ -294,7 +300,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
   },
   {
     cle: 'inesss_mpoc',
-    titre: 'Exacerbation aiguë de la MPOC',
+    titre: 'MPOC — usage optimal',
     url_document:
       'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Usage_optimal/INESSS_MPOC_GUO_FR.pdf',
     url_reference:
@@ -940,5 +946,277 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'calculateurs',
     sujets: [],
     motsCles: 'wells, EP, embolie pulmonaire, poumon, essoufflement, douleur thoracique, PE, pulmonary embolism, clot, wells score, d-dimeres, angioscan, tachycardie, apixaban, rivaroxaban, tinzaparine, eliquis, xarelto, score de probabilite, il est essouffle, suspicion d’embolie',
+  },
+  {
+    cle: 'inesss_eampoc',
+    titre: 'Exacerbation aiguë de la MPOC',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/CDM/UsageOptimal/Guides-serieI/INESSS_GUO_EAMPOC.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'respiratoire',
+    sujets: ['mpoc', 'antibiotherapie'],
+    motsCles:
+      'exacerbation de la mpoc, eampoc, exacerbation aigue, decompensation, mpoc qui se decompense, bronchite chronique, emphyseme, AECOPD, COPD exacerbation, acute exacerbation, prednisone, amoxicilline, doxycycline, azithromycine, clarithromycine, tmp-smx, salbutamol, ventolin, spiriva, symbicort, plan d’action, corticostherapie orale, il tousse plus qu’avant, ses secretions ont change de couleur, essoufflement qui empire',
+  },
+  {
+    cle: 'inesss_influenza',
+    titre: 'Influenza chez l’enfant et l’adulte',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Usage_optimal/Guide_Influenza_enfant_adulte_web_FR_01.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'respiratoire',
+    sujets: ['covid', 'vaccination', 'pediatrie'],
+    motsCles:
+      'influenza, grippe, grippe saisonniere, syndrome grippal, flu, seasonal influenza, oseltamivir, zanamivir, tamiflu, relenza, baloxavir, antiviral, test rapide influenza, tdm, vaccin antigrippal, il fait de la fievre depuis hier, courbatures et fievre, ma fille a la grippe, prophylaxie post-exposition grippe, chsld grippe',
+  },
+  {
+    cle: 'inesss_aod_interactions',
+    titre: 'Interactions médicamenteuses des AOD',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/Warfarine/Outil_interaction_medicamenteuse_AOD.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'cardioSang',
+    sujets: ['anticoagulation'],
+    motsCles:
+      'interaction, interactions medicamenteuses, aod, anticoagulant oral direct, acod, noac, doac, direct oral anticoagulant, drug interaction, apixaban, rivaroxaban, edoxaban, dabigatran, eliquis, xarelto, lixiana, pradaxa, amiodarone, diltiazem, verapamil, ketoconazole, clarithromycine, rifampine, phenytoine, carbamazepine, millepertuis, inducteur, inhibiteur, p-gp, cyp3a4, est-ce que je peux donner ca avec son eliquis, il part avec une antibio et un aod',
+  },
+  {
+    cle: 'inesss_warfarine_coupdoeil',
+    titre: 'Coup d’œil : usage des anticoagulants',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/Warfarine/Coupdoeil_warfarine.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'cardioSang',
+    sujets: ['anticoagulation'],
+    motsCles:
+      'coup d’oeil, anticoagulant, anticoagulotherapie, warfarine, coumadin, aod, acod, anticoagulation overview, warfarin, apixaban, rivaroxaban, dabigatran, edoxaban, eliquis, xarelto, pradaxa, lixiana, inr, rni, ajustement de dose, relais, chevauchement, heparine, lequel choisir, passer de la warfarine a un aod, quelle dose pour un ains',
+  },
+  {
+    cle: 'inesss_cellulite_enfant',
+    titre: 'Cellulite infectieuse chez l’enfant',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/GUO/Cellulite/INESSS-GUO_Cellulite_Enfant.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'antibio',
+    sujets: ['infectionsPeau', 'antibiotherapie', 'pediatrie'],
+    motsCles:
+      'cellulite, cellulite infectieuse, erysipele, infection de la peau, peau rouge et chaude, dermohypodermite, abces, cellulitis, skin infection, erysipelas, cephalexine, cefadroxil, clindamycine, tmp-smx, amoxicilline-clavulanate, keflex, clavulin, staphylocoque, streptocoque, sarm, mrsa, son genou est rouge et enfle, la rougeur s’etend, mon gars s’est ecorche et c’est infecte',
+  },
+  {
+    cle: 'inesss_intra_abdo',
+    titre: 'Infection intra-abdominale chez l’adulte',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Usage_optimal/GUO_IIA.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'antibio',
+    sujets: ['antibiotherapie', 'digestif'],
+    motsCles:
+      'infection intra-abdominale, iia, peritonite, diverticulite, appendicite, abces abdominal, cholecystite, cholangite, intra-abdominal infection, peritonitis, diverticulitis, ciprofloxacine, metronidazole, amoxicilline-clavulanate, ceftriaxone, piperacilline, flagyl, clavulin, cipro, mal de ventre avec fievre, douleur au bas-ventre a gauche, crise de diverticulite',
+  },
+  {
+    cle: 'inesss_endocardite',
+    titre: 'Antibioprophylaxie de l’endocardite',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/Guides_antibio_II/endocardite_web_FR.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'antibio',
+    sujets: ['antibiotherapie'],
+    motsCles:
+      'endocardite, antibioprophylaxie, prophylaxie, prophylaxie dentaire, soins dentaires, valve cardiaque, prothese valvulaire, endocarditis prophylaxis, dental prophylaxis, amoxicilline, cephalexine, clindamycine, azithromycine, clarithromycine, il se fait arracher une dent, mon dentiste demande une antibio avant, prothese de valve',
+  },
+  {
+    cle: 'inesss_itss_algorithme',
+    titre: 'Algorithme décisionnel — chlamydia et gonorrhoeae',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/Guides_ITSS/INESSS-Algorithme-traitement-ITSS.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-sujets/itss.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'itss',
+    sujets: ['itss'],
+    motsCles:
+      'algorithme, algorithme decisionnel, arbre de decision, chlamydia, gonorrhee, gonorrhoeae, traitement itss, decision tree, treatment algorithm, doxycycline, azithromycine, ceftriaxone, cefixime, quel traitement pour quel resultat, resultat positif chlamydia, partenaire a traiter',
+  },
+  {
+    cle: 'inesss_lyme_adulte',
+    titre: 'Maladie de Lyme chez l’adulte',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Biologie_medicale/Lyme_Diag-traitement/Guide_Lyme-adulte_web_FR.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'antibio',
+    sujets: ['antibiotherapie', 'infectionsPeau'],
+    motsCles:
+      'maladie de lyme, lyme, borreliose, borrelia burgdorferi, erytheme migrant, piqure de tique, tique, morsure de tique, lyme disease, tick bite, erythema migrans, doxycycline, amoxicilline, cefuroxime, ceftriaxone, serologie, elisa, western blot, il s’est fait piquer par une tique, une plaque ronde qui s’etend, retour de camping',
+  },
+  {
+    cle: 'inesss_lyme_enfant',
+    titre: 'Maladie de Lyme chez l’enfant',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Biologie_medicale/Lyme_Diag-traitement/Guide_Lyme-enfant_web_FR.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'antibio',
+    sujets: ['antibiotherapie', 'pediatrie'],
+    motsCles:
+      'maladie de lyme enfant, lyme pediatrique, lyme, borreliose, erytheme migrant, piqure de tique, tique, lyme disease children, pediatric lyme, tick bite, doxycycline, amoxicilline, cefuroxime, mon gars a une tique sur la jambe, plaque ronde chez l’enfant, tique apres une randonnee',
+  },
+  {
+    cle: 'inesss_tique_ppe',
+    titre: 'Prophylaxie après une piqûre de tique',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Biologie_medicale/Lyme_PPE/Outil_aide_decision_PPE.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'antibio',
+    sujets: ['antibiotherapie'],
+    motsCles:
+      'prophylaxie post-exposition, ppe, piqure de tique, morsure de tique, tique, prophylaxie lyme, post-exposure prophylaxis, tick bite prophylaxis, doxycycline, dose unique, 200 mg, aide a la decision, outil de decision, duree d’attachement, tique attachee 36 heures, faut-il traiter apres une piqure, il a enleve une tique hier',
+  },
+  {
+    cle: 'inesss_blepharite',
+    titre: 'Blépharites',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/GUO/Blepharites/Guide_Blepharite_web_FR_VF.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'oeil',
+    sujets: ['conjonctivite'],
+    motsCles:
+      'blepharite, blepharites, paupiere, paupieres, bord des paupieres, orgelet, chalazion, meibomite, dysfonction meibomienne, blepharitis, stye, eyelid, hygiene des paupieres, compresses tiedes, erythromycine onguent, tobramycine, doxycycline, ses paupieres sont croutees le matin, oeil qui colle au reveil, paupiere enflee',
+  },
+  {
+    cle: 'inesss_zona_ophtalmique',
+    titre: 'Zona ophtalmique',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/GUO/Zona/Guide_ZonaOphtalmique_web_FR_VF.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'oeil',
+    sujets: ['conjonctivite', 'personnesAgees'],
+    motsCles:
+      'zona ophtalmique, zona, herpes zoster, zoster ophtalmique, vzv, varicelle-zona, signe de hutchinson, nez et oeil, herpes zoster ophthalmicus, shingles eye, valacyclovir, acyclovir, famciclovir, valtrex, zovirax, des cloques sur le front et l’oeil, zona pres de l’oeil, douleur au front d’un seul cote',
+  },
+  {
+    cle: 'inesss_herpes_oculaire',
+    titre: 'Herpès simplex oculaire',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Outils/GUO/Herpes/Guide_HerpesSimplex_web_FR_VF.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'oeil',
+    sujets: ['conjonctivite'],
+    motsCles:
+      'herpes oculaire, herpes simplex oculaire, keratite herpetique, hsv oculaire, hsv-1, keratite dendritique, herpes simplex keratitis, ocular herpes, acyclovir, valacyclovir, ganciclovir gel, trifluridine, oeil rouge et douloureux, vision embrouillee avec un oeil rouge, recidive a l’oeil',
+  },
+  {
+    cle: 'inesss_alzheimer',
+    titre: 'Maladie d’Alzheimer et démence mixte',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Geriatrie/INESSS_GUO_Alzheimer.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'ainees',
+    sujets: ['personnesAgees'],
+    motsCles:
+      'alzheimer, maladie d’alzheimer, demence, demence mixte, trouble neurocognitif majeur, tncm, dementia, mixed dementia, major neurocognitive disorder, donepezil, rivastigmine, galantamine, memantine, aricept, exelon, reminyl, ebixa, sa memoire baisse, il oublie ses medicaments, elle se perd dans le quartier, arret de traitement, deprescription',
+  },
+  {
+    cle: 'inesss_sevrage_alcool',
+    titre: 'Sevrage d’alcool et prévention des rechutes',
+    url_document:
+      'https://www.inesss.qc.ca/fileadmin/doc/INESSS/Rapports/Usage_optimal/INESSS_GUO_Sevrage_rechute_FR.pdf',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'general',
+    sujets: ['dependance'],
+    motsCles:
+      'sevrage d’alcool, sevrage alcoolique, alcool, alcoolisme, trouble lie a l’usage d’alcool, delirium tremens, rechute, prevention des rechutes, alcohol withdrawal, relapse prevention, alcohol use disorder, diazepam, lorazepam, thiamine, naltrexone, acamprosate, disulfirame, revia, campral, il veut arreter de boire, tremblements le matin, il a arrete de boire d’un coup',
+  },
+  {
+    cle: 'inesss_index',
+    titre: 'Tous les guides d’usage optimal — INESSS',
+    url_document:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    url_reference:
+      'https://www.inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+    organisation: 'INESSS',
+    type: 'ligneDirectrice',
+    officielle: true,
+    sousSection: 'liens_utiles',
+    theme: 'general',
+    sujets: [],
+    motsCles:
+      'inesss, guides d’usage optimal, guide d’usage optimal, guo, index, liste des guides, tous les guides, outils cliniques, institut national d’excellence en sante, optimal use guides, clinical tools, guidelines list, je cherche un guide, il doit y avoir un guide la-dessus, quel guide inesss',
   },
 ];

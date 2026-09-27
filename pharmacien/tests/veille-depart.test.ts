@@ -61,12 +61,13 @@ describe('les sujets de départ', () => {
     expect(vides.map((s) => s.cle)).toEqual([]);
   });
 
-  test('vingt-quatre : seize, six de la 2.5, la contraception et les poux', () => {
+  test('vingt-cinq : les vingt-quatre, plus les dépendances', () => {
     // ITSS, peau et plaies, digestif, migraine, ménopause, COVID-19, puis la
     // contraception et les poux. Chacun vient d'un guide qui parle d'autre chose
     // que ce que les seize couvraient. Les poux ont leur sujet plutôt que de
     // tomber sous « peau et plaies » : un ectoparasite n'est pas une plaie.
-    expect(SUJETS_DEPART).toHaveLength(24);
+    // Les dépendances arrivent avec le guide de sevrage d'alcool de la 2.5.3.
+    expect(SUJETS_DEPART).toHaveLength(25);
   });
 
   test('chaque clé est unique', () => {
@@ -100,10 +101,11 @@ describe('les sujets de départ', () => {
 });
 
 describe('le répertoire vérifié', () => {
-  test('trente-six documents, et onze calculateurs', () => {
+  test('cinquante-trois documents, et onze calculateurs', () => {
+    // Seize guides INESSS de plus en 2.5.3, et l'index comme entrée à part.
     const documents = SOURCES_DEPART.filter((s) => s.sousSection === 'liens_utiles');
-    expect(documents).toHaveLength(36);
-    expect(SOURCES_DEPART).toHaveLength(47);
+    expect(documents).toHaveLength(53);
+    expect(SOURCES_DEPART).toHaveLength(64);
   });
 
   test('chacun porte une page officielle', () => {
@@ -188,10 +190,14 @@ describe('le répertoire vérifié', () => {
     // Le répertoire vérifié n'a plus de référence générale sans sujet : les
     // les documents portent tous sur quelque chose de précis. Les outils,
     // eux, n'en ont pas : leur sous-section les classe déjà.
+    //
+    // Une exception nommée, et une seule : l'index des guides. Ce n'est pas un
+    // document sur quelque chose, c'est un répertoire de documents — lui
+    // donner un sujet reviendrait à prétendre qu'il porte sur celui-là.
     const sans = SOURCES_DEPART.filter(
       (s) => s.sousSection === 'liens_utiles' && s.sujets.length === 0
     );
-    expect(sans.map((s) => s.cle)).toEqual([]);
+    expect(sans.map((s) => s.cle)).toEqual(['inesss_index']);
   });
 
   test('chacun porte des synonymes dans les deux langues', () => {
@@ -465,15 +471,18 @@ describe('les guides ajoutés en 2.5', () => {
     expect(new Set(documents).size).toBe(documents.length);
   });
 
-  test('sept guides ITSS, et la contraception d’urgence avec eux', () => {
+  test('huit guides ITSS, et la contraception d’urgence avec eux', () => {
     // C'est un domaine où l'on vérifie une posologie précise, souvent sous les
     // yeux du patient, et où la conduite change d'une année à l'autre. La
     // contraception d'urgence se cherche au même endroit — d'où le nom du
     // thème, « ITSS et santé sexuelle ».
+    //
+    // Huit depuis la 2.5.3 : l'algorithme décisionnel du traitement rejoint
+    // les sept guides.
     const theme = SOURCES_DEPART.filter((s) => s.theme === 'itss');
-    expect(theme).toHaveLength(8);
+    expect(theme).toHaveLength(9);
     const itss = theme.filter((s) => s.cle.startsWith('inesss_itss_'));
-    expect(itss).toHaveLength(7);
+    expect(itss).toHaveLength(8);
     for (const source of itss) expect(source.sujets).toContain('itss');
   });
 });
@@ -962,7 +971,7 @@ describe('le plancher de l’audit', () => {
     // domaine — et il s'allonge quand une entrée arrive. Il n'essaie pas de
     // reconnaître l'anglais : il attrape l'entrée écrite entièrement en
     // français, qui est le vrai défaut.
-    const ANGLAIS = /\b(risk|score|infection|disease|failure|therapy|pain|lice|sex|iud|pill|clearance|function|rate|ulcer|acid|guidelines|wound|care|weight|height|colitis|gastritis|warts|herpes|outbreak|discharge|resistance|cough|pneumonia|bronchitis|sinusitis|throat|media|otitis|index|area|surface|thinner|antiplatelet|statin|lipids|hypertension|pressure|monitoring|older|adults|deprescribing|inappropriate|elderly|clot|embolism|thrombosis|anticoagulant|fibrillation|flashes|menopause|hormone|vasomotor|headache|migraine|prophylaxis|treatment|coronary|cardiovascular|kidney|renal|glomerular|filtration|hepatic|cirrhosis|liver|severity|probability|antiviral|coronavirus|covid|abscess|erysipelas|cellulitis|neuropathy|diabetic|foot|bladder|urinary|dysuria|pyelonephritis|tonsillitis|pharyngitis|strep|nasal|congestion|nose|cold|copd|obstructive|exacerbation|ejection|fraction|bleeding|stroke|syphilis|chlamydia|gonorrhea|trichomoniasis|pediculosis|scalp|nit|comb|louse|allergy|rash|anaphylaxis|reactivity|warfarin|adjustment|clinic)\b/;
+    const ANGLAIS = /\b(risk|score|infection|disease|failure|therapy|pain|lice|sex|iud|pill|clearance|function|rate|ulcer|acid|guidelines|wound|care|weight|height|colitis|gastritis|warts|herpes|outbreak|discharge|resistance|cough|pneumonia|bronchitis|sinusitis|throat|media|otitis|index|area|surface|thinner|antiplatelet|statin|lipids|hypertension|pressure|monitoring|older|adults|deprescribing|inappropriate|elderly|clot|embolism|thrombosis|anticoagulant|fibrillation|flashes|menopause|hormone|vasomotor|headache|migraine|prophylaxis|treatment|coronary|cardiovascular|kidney|renal|glomerular|filtration|hepatic|cirrhosis|liver|severity|probability|antiviral|coronavirus|covid|abscess|erysipelas|cellulitis|neuropathy|diabetic|foot|bladder|urinary|dysuria|pyelonephritis|tonsillitis|pharyngitis|strep|nasal|congestion|nose|cold|copd|obstructive|exacerbation|ejection|fraction|bleeding|stroke|syphilis|chlamydia|gonorrhea|trichomoniasis|pediculosis|scalp|nit|comb|louse|allergy|rash|anaphylaxis|reactivity|warfarin|adjustment|clinic|dementia|neurocognitive|blepharitis|stye|eyelid|zoster|shingles|keratitis|ocular|tick|lyme|influenza|flu|withdrawal|alcohol|relapse|interaction|peritonitis|diverticulitis|algorithm|tools|endocarditis|dental|abdominal|exacerbation)\b/;
     const sansAnglais = SOURCES_DEPART.filter((s) => !ANGLAIS.test(s.motsCles.toLowerCase()));
     expect(sansAnglais.map((s) => s.cle)).toEqual([]);
   });
