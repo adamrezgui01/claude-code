@@ -31,7 +31,17 @@ import {
 } from 'react-native';
 
 import { formaterTelephone, formaterTelephoneSaisie } from '../lib/telephone';
-import { accentPale, couleurs, espace, ombre, police, rayon, useAccent } from './theme';
+import {
+  accentPale,
+  couleurs,
+  dimensions,
+  espace,
+  ombre,
+  police,
+  rayon,
+  useAccent,
+  CIBLE_MIN,
+} from './theme';
 import { useTextes } from '../i18n';
 
 /**
@@ -771,6 +781,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: espace.m,
     paddingVertical: espace.s,
+    /* Le carré fait 22 points : sans hauteur minimale ici, la rangée tombait
+       à environ 43 avec son hitSlop. Un point sous la règle. */
+    minHeight: CIBLE_MIN,
   },
   caseCarre: {
     width: 22,
@@ -903,14 +916,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: espace.l,
   },
   barreBouton: {
-    /* La même cible que partout ailleurs : quarante-quatre points. */
-    minHeight: 44,
+    minHeight: CIBLE_MIN,
     justifyContent: 'center',
     paddingHorizontal: espace.xl,
-    borderRadius: rayon,
+    borderRadius: dimensions.bouton.rayon,
   },
   barreTexte: {
-    fontSize: 16,
+    fontSize: dimensions.bouton.texte,
     fontFamily: police.demi,
     color: '#FFFFFF',
   },
@@ -920,12 +932,12 @@ const styles = StyleSheet.create({
     color: couleurs.texte,
   },
   sousTitre: {
-    fontSize: 13,
+    fontSize: dimensions.enTete.texte,
     fontFamily: police.demi,
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: dimensions.enTete.interLettre,
     color: couleurs.doux,
-    marginBottom: espace.s,
+    marginBottom: dimensions.enTete.margeBasse,
   },
   doux: {
     fontSize: 13,
@@ -935,11 +947,11 @@ const styles = StyleSheet.create({
   },
   carte: {
     backgroundColor: couleurs.carte,
-    borderRadius: rayon,
+    borderRadius: dimensions.carte.rayon,
     borderWidth: 1,
     borderColor: couleurs.bordure,
-    padding: espace.l,
-    marginBottom: espace.m,
+    padding: dimensions.carte.remplissage,
+    marginBottom: dimensions.carte.margeBasse,
   },
   separateur: {
     height: 1,
@@ -957,10 +969,10 @@ const styles = StyleSheet.create({
     marginBottom: espace.m,
   },
   label: {
-    fontSize: 13,
+    fontSize: dimensions.etiquette.texte,
     fontFamily: police.normal,
     color: couleurs.doux,
-    marginBottom: espace.xs,
+    marginBottom: dimensions.etiquette.margeBasse,
   },
   champNu: {
     marginBottom: 0,
@@ -969,8 +981,8 @@ const styles = StyleSheet.create({
     borderBottomColor: couleurs.bordurePale,
   },
   saisieNue: {
-    paddingVertical: espace.xs,
-    minHeight: 28,
+    paddingVertical: dimensions.champNu.remplissageV,
+    minHeight: dimensions.champNu.hauteur,
     justifyContent: 'center',
   },
   /** Le champ posé dans une boîte qui porte déjà le cadre et l'unité. */
@@ -992,19 +1004,19 @@ const styles = StyleSheet.create({
     backgroundColor: couleurs.carte,
     borderWidth: 1,
     borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingHorizontal: espace.l,
-    paddingVertical: espace.m,
+    borderRadius: dimensions.champ.rayon,
+    paddingHorizontal: dimensions.champ.remplissageH,
+    paddingVertical: dimensions.champ.remplissageV,
     justifyContent: 'center',
-    minHeight: 50,
+    minHeight: dimensions.champ.hauteur,
   },
   saisieTexte: {
-    fontSize: 16,
+    fontSize: dimensions.champ.texte,
     fontFamily: police.normal,
     color: couleurs.texte,
   },
   saisieMultiligne: {
-    minHeight: 92,
+    minHeight: dimensions.champMultiligne.hauteur,
     textAlignVertical: 'top',
   },
   aide: {
@@ -1020,14 +1032,14 @@ const styles = StyleSheet.create({
     marginTop: espace.xs,
   },
   bouton: {
-    borderRadius: rayon,
-    paddingVertical: espace.m,
-    paddingHorizontal: espace.l,
+    borderRadius: dimensions.bouton.rayon,
+    paddingVertical: dimensions.bouton.remplissageV,
+    paddingHorizontal: dimensions.bouton.remplissageH,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: espace.s,
-    minHeight: 52,
+    minHeight: dimensions.bouton.hauteur,
   },
   boutonSecondaire: {
     borderWidth: 1,
@@ -1038,7 +1050,7 @@ const styles = StyleSheet.create({
   },
   boutonTexte: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: dimensions.bouton.texte,
     fontFamily: police.demi,
   },
   boutonTexteSecondaire: {
@@ -1051,16 +1063,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: couleurs.bordure,
     backgroundColor: couleurs.carte,
-    borderRadius: 999,
-    /* La même hauteur pour toutes les capsules, et la cible de 44 points. */
-    minHeight: 44,
+    borderRadius: dimensions.capsule.rayon,
+    minHeight: dimensions.capsule.hauteur,
     justifyContent: 'center',
-    paddingHorizontal: espace.l,
+    paddingHorizontal: dimensions.capsule.remplissageH,
     marginRight: espace.s,
     marginBottom: espace.s,
   },
   puceTexte: {
-    fontSize: 14,
+    fontSize: dimensions.capsule.texte,
     fontFamily: police.normal,
     color: couleurs.texte,
   },

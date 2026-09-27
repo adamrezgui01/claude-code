@@ -66,6 +66,71 @@ export const police = {
   gras: 'Nunito_700Bold',
 };
 
+/**
+ * Toute cible tactile fait au moins ça, dans les deux sens. Règle du V2.3,
+ * et la seule valeur de ce fichier qui vienne d'une règle plutôt que d'un
+ * relevé.
+ */
+export const CIBLE_MIN = 44;
+
+/**
+ * Les dimensions, par rôle.
+ *
+ * Chaque écran avait les siennes : ses hauteurs, ses rayons, ses marges. Ça se
+ * voyait — deux champs côte à côte de hauteurs différentes, trois boutons
+ * empilés qui ne s'alignaient pas — et ça allait se voir de plus en plus à
+ * mesure que des écrans s'ajouteraient.
+ *
+ * Les valeurs ne sont pas nouvelles : ce sont celles **déjà les plus
+ * répandues** dans l'application, relevées avant d'y toucher. On normalise
+ * vers ce qui existe, on ne redessine pas. Deux exceptions, où la règle
+ * l'emporte sur l'usage : la cible de 44 points, et l'échelle d'espacement,
+ * qui reste celle d'`espace`.
+ *
+ * Aucun écran ne définit les siennes. Une correction future est alors une
+ * seule ligne à changer ici.
+ */
+export const dimensions = {
+  /** Un champ de saisie encadré. C'est la forme ordinaire. */
+  champ: {
+    hauteur: 50,
+    rayon,
+    remplissageH: espace.l,
+    remplissageV: espace.m,
+    texte: 16,
+  },
+  /**
+   * Le champ posé dans une section qui porte déjà le cadre : il n'en remet
+   * pas un, donc il n'a pas la même hauteur. Ce n'est pas une dispersion,
+   * c'est un second rôle.
+   */
+  champNu: { hauteur: 28, remplissageV: espace.xs },
+  /** Le champ multiligne. Trois lignes de texte visibles. */
+  champMultiligne: { hauteur: 92 },
+  /** Une capsule de sélection : kg/lb, DIE-BID-TID-QID, les onglets de période. */
+  capsule: {
+    hauteur: CIBLE_MIN,
+    /** Complètement ronde : c'est ce qui la distingue d'un bouton. */
+    rayon: 999,
+    remplissageH: espace.l,
+    texte: 14,
+  },
+  /** Le bouton, plein ou creux. Les deux partagent tout sauf leur fond. */
+  bouton: {
+    hauteur: 52,
+    rayon,
+    remplissageH: espace.l,
+    remplissageV: espace.m,
+    texte: 16,
+  },
+  /** L'en-tête d'une section de formulaire : petites capitales espacées. */
+  enTete: { texte: 13, interLettre: 0.8, margeBasse: espace.s },
+  /** L'étiquette au-dessus d'un champ. */
+  etiquette: { texte: 13, margeBasse: espace.xs },
+  /** Une carte : le conteneur encadré qui groupe un bloc. */
+  carte: { rayon, remplissage: espace.l, margeBasse: espace.m },
+} as const;
+
 type Theme = {
   accent: string;
   definirAccent: (valeur: string) => void;

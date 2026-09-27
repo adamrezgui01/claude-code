@@ -325,6 +325,23 @@ qu'on ne les redécouvre pas trois fois.
   zéro, milieu, maximum — et la valeur exacte sous le doigt, cents et symbole
   compris. Sans axe, les étiquettes étaient la seule échelle du graphique,
   d'où la pression pour toutes les afficher, d'où la troncature.
+- Les **dimensions visuelles** — hauteurs, rayons, marges, tailles de texte,
+  espacements — viennent de `dimensions`, dans `src/ui/theme.tsx`. Aucun écran
+  ne définit les siennes. Chaque écran avait les siennes jusqu'ici, et ça se
+  voyait : deux champs côte à côte de hauteurs différentes, trois boutons
+  empilés qui ne s'alignaient pas.
+  Les valeurs des jetons ne sont pas nouvelles : ce sont celles **déjà les plus
+  répandues**, relevées avant d'y toucher. On normalise vers ce qui existe, on
+  ne redessine pas. Deux exceptions où la règle l'emporte sur l'usage : toute
+  cible tactile fait au moins 44 points dans les deux sens, et tout espacement
+  vertical se prend dans l'échelle 4 / 8 / 12 / 16 / 24 / 32.
+  Un second rôle n'est pas une dispersion : le champ nu fait 28 points parce
+  qu'il est posé dans une section qui porte déjà le cadre, et le champ
+  multiligne 92 parce qu'il montre trois lignes. Ce sont trois rôles, pas trois
+  avis sur le même.
+  Cette partie touche aux dimensions, jamais au style. Les couleurs, l'accent
+  mauve, les icônes, le fond clair et la structure des écrans ne changent pas :
+  aucun écran ne doit avoir l'air différent, il doit avoir l'air fini.
 - L'écran de révision ne montre jamais un nombre de bonnes réponses, un
   pourcentage, ni une série de jours consécutifs. Il compte ce qu'il reste à
   faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;

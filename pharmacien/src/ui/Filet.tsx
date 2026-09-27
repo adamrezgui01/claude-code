@@ -4,7 +4,7 @@ import type { ErrorBoundaryProps } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT_DEFAUT, couleurs, espace, police, rayon } from './theme';
+import { ACCENT_DEFAUT, couleurs, dimensions, espace, police } from './theme';
 
 /**
  * Le filet : ce qui s'affiche quand un écran plante.
@@ -105,32 +105,32 @@ const styles = StyleSheet.create({
     marginBottom: espace.s,
   },
   bouton: {
-    minHeight: 48,
+    minHeight: dimensions.bouton.hauteur,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: ACCENT_DEFAUT,
-    borderRadius: rayon,
+    borderRadius: dimensions.bouton.rayon,
     paddingHorizontal: espace.xl,
   },
   boutonTexte: {
-    fontSize: 16,
+    fontSize: dimensions.bouton.texte,
     fontFamily: police.demi,
     color: '#FFFFFF',
   },
   boutonDoux: {
-    minHeight: 48,
+    minHeight: dimensions.bouton.hauteur,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: espace.s,
-    borderRadius: rayon,
+    borderRadius: dimensions.bouton.rayon,
     borderWidth: 1,
     borderColor: couleurs.bordure,
     backgroundColor: couleurs.carte,
     paddingHorizontal: espace.xl,
   },
   boutonDouxTexte: {
-    fontSize: 16,
+    fontSize: dimensions.bouton.texte,
     fontFamily: police.demi,
     color: ACCENT_DEFAUT,
   },
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     fontFamily: police.normal,
     color: couleurs.doux,
     backgroundColor: couleurs.carte,
-    borderRadius: rayon,
+    borderRadius: dimensions.bouton.rayon,
     borderWidth: 1,
     borderColor: couleurs.bordure,
     padding: espace.m,
