@@ -1,5 +1,8 @@
 jest.mock('expo-sqlite', () => require('./base').fauxExpoSqlite);
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { factureParNumero, enregistrerFacture, prochainNumeroFacture } from '../src/db/factures';
 import { creerFrais, listerFrais, totalFrais } from '../src/db/frais';
 import { db, initialiserBase } from '../src/db/index';
@@ -437,5 +440,129 @@ describe('une base déjà amorcée reçoit les adresses corrigées', () => {
     amorcerVeille();
 
     expect(listerLiens()).toHaveLength(avant);
+  });
+});
+
+
+// ===========================================================================
+// Monter sur une base d'une version antérieure
+// ===========================================================================
+
+/**
+ * Le trou que ces tests avaient, et ce qu'il a coûté.
+ *
+ * `initialiserBase` était vérifié sur une base vide, et vérifié deux fois de
+ * suite. Jamais sur une base **d'une version antérieure**. C'est exactement là
+ * que ça a cassé, sur le téléphone de l'usager, au démarrage :
+ *
+ *   SQLiteErrorException: no such column: cle
+ *
+ * Une base vide reçoit son schéma complet d'un coup, colonne `cle` comprise :
+ * n'importe quelle reprise qui la lit fonctionne. Une base ancienne, elle, a
+ * déjà sa table `liens` — `CREATE TABLE IF NOT EXISTS` ne fait donc rien — et
+ * ses colonnes neuves arrivent une par une, dans l'ordre où les
+ * `ajouterColonne` sont écrits. Une reprise placée au-dessus de la colonne
+ * qu'elle lit s'exécute sur une table qui ne l'a pas encore.
+ *
+ * Monter deux fois de suite n'attrape pas ça : la deuxième fois, la base est
+ * déjà complète.
+ *
+ * Le schéma de référence n'est pas inventé pour le test. Il est relevé dans
+ * l'historique, à la version 1.4.3 — la dernière où `liens` n'a pas sa colonne
+ * `cle`, donc la forme qu'une base installée depuis longtemps porte encore.
+ */
+const SCHEMA_143 = readFileSync(join(__dirname, 'schemas/v1.4.3.sql'), 'utf8');
+
+/**
+ * Une base 1.4.3 avec du travail dedans. Les données comptent autant que les
+ * colonnes : une reprise qui s'exécute sur zéro ligne ne prouve rien.
+ */
+function poserBase143() {
+  neuveBase();
+  db.execSync(SCHEMA_143);
+  db.execSync(`
+    INSERT INTO pharmacies (id, nom, taux_horaire, distance_km, taux_par_km, aller_retour)
+    VALUES (1, 'Pharmacie du Coin', 82, 31.4, 0.55, 1);
+
+    INSERT INTO quarts (id, pharmacie_id, date, heure_debut, heure_fin,
+                        taux_horaire, kilometrage, taux_par_km, aller_retour)
+    VALUES (1, 1, '2025-03-11', '09:00', '17:00', 82, 31.4, 0.55, 1);
+
+    INSERT INTO liens (titre, url)
+    VALUES ('Cystite', 'https://exemple.test/cystite-non-compliquee');
+  `);
+}
+
+/** Les tables et leurs colonnes, pour comparer deux bases entre elles. */
+function formeDeLaBase(): Record<string, string[]> {
+  const forme: Record<string, string[]> = {};
+  for (const table of tables()) forme[table] = [...colonnes(table)].sort();
+  return forme;
+}
+
+describe('une base de la version 1.4.3 se met à niveau', () => {
+  test('le schéma monte sans lever', () => {
+    poserBase143();
+    expect(() => initialiserBase()).not.toThrow();
+  });
+
+  test('elle finit avec exactement la forme d’une base neuve', () => {
+    // L'assertion qui se tient à jour toute seule : toute colonne ajoutée au
+    // schéma sans son `ajouterColonne` fait tomber ce test, quelle que soit la
+    // table, sans que personne ait à penser à l'écrire ici.
+    neuveBase();
+    initialiserBase();
+    const neuve = formeDeLaBase();
+
+    poserBase143();
+    initialiserBase();
+    expect(formeDeLaBase()).toEqual(neuve);
+  });
+
+  test('le travail déjà en base est intact', () => {
+    poserBase143();
+    initialiserBase();
+    const p = db.getFirstSync<{ nom: string; taux_horaire: number }>(
+      'SELECT nom, taux_horaire FROM pharmacies WHERE id = 1'
+    );
+    expect(p).toEqual({ nom: 'Pharmacie du Coin', taux_horaire: 82 });
+
+    const q = db.getFirstSync<{ date: string; heure_debut: string; taux_horaire: number }>(
+      'SELECT date, heure_debut, taux_horaire FROM quarts WHERE id = 1'
+    );
+    expect(q).toEqual({ date: '2025-03-11', heure_debut: '09:00', taux_horaire: 82 });
+  });
+
+  test('les distances ne sont pas redivisées', () => {
+    // 1.4.3 avait déjà passé la reprise qui ramène les distances à l'aller
+    // simple, et sa table `reprises` le dit. Les rejouer couperait de moitié
+    // les kilomètres de chaque quart — donc l'argent des prochaines factures.
+    poserBase143();
+    initialiserBase();
+    expect(
+      db.getFirstSync<{ distance_km: number }>('SELECT distance_km FROM pharmacies WHERE id = 1')
+    ).toEqual({ distance_km: 31.4 });
+    expect(
+      db.getFirstSync<{ kilometrage: number }>('SELECT kilometrage FROM quarts WHERE id = 1')
+    ).toEqual({ kilometrage: 31.4 });
+  });
+
+  test('le signet de l’usager retrouve sa clé sur son adresse', () => {
+    // La reprise réapparie les anciens signets sur leur adresse, qui n'a pas
+    // changé. C'est celle qui plantait.
+    poserBase143();
+    initialiserBase();
+    expect(
+      db.getFirstSync<{ titre: string; cle: string }>(
+        'SELECT titre, cle FROM liens WHERE titre = ?',
+        'Cystite'
+      )
+    ).toEqual({ titre: 'Cystite', cle: 'cystite' });
+  });
+
+  test('et remonter une seconde fois ne lève rien non plus', () => {
+    poserBase143();
+    initialiserBase();
+    expect(() => initialiserBase()).not.toThrow();
   });
 });

@@ -366,10 +366,6 @@ export function initialiserBase() {
      soi-même. Une colonne et pas une troisième sous-section : on cherche
      « poux » sans savoir d'avance si la réponse est pour soi ou pour lui. */
   ajouterColonne('liens', 'pour_patient', 'INTEGER NOT NULL DEFAULT 0');
-  if (!dejaFait('liens_sous_section')) {
-    db.execSync("UPDATE liens SET sous_section = 'outils' WHERE cle LIKE 'mdcalc_%'");
-    marquerFait('liens_sous_section');
-  }
 
   // Le volet clinique. Un signet devient une source : mêmes lignes, quelques
   // colonnes de plus, pour que les deux listes ne divergent jamais.
@@ -437,6 +433,22 @@ export function initialiserBase() {
     ]) {
       db.runSync('UPDATE liens SET cle = ? WHERE url LIKE ?', cle, `%${fragment}%`);
     }
+  }
+  /*
+   * Les calculateurs passent dans « Outils ». La reprise se lit `cle`, et elle
+   * est donc écrite ici, **après** la colonne `cle` — pas plus haut, à côté de
+   * `sous_section` qu'elle écrit.
+   *
+   * C'est l'ordre du fichier qui compte, pas l'ordre des versions : une base
+   * d'une version antérieure a déjà sa table `liens`, `CREATE TABLE IF NOT
+   * EXISTS` ne fait rien, et chaque `ajouterColonne` ajoute sa colonne dans
+   * l'ordre où il est écrit. Une reprise placée avant la colonne qu'elle lit
+   * s'exécute sur une table qui ne l'a pas encore, et la mise à jour de
+   * l'application plante au démarrage — `no such column: cle`, exactement.
+   */
+  if (!dejaFait('liens_sous_section')) {
+    db.execSync("UPDATE liens SET sous_section = 'outils' WHERE cle LIKE 'mdcalc_%'");
+    marquerFait('liens_sous_section');
   }
   ajouterColonne('quarts', 'numero_facture', "TEXT NOT NULL DEFAULT ''");
   ajouterColonne('pharmacies', 'hebergement_montant', 'REAL NOT NULL DEFAULT 0');

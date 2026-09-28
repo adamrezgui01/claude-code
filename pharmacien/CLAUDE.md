@@ -81,6 +81,17 @@ contrainte. Toute nouvelle table, colonne ou écriture passe donc par un test
 qui l'exécute. Ça ne prouve pas que le SQLite d'iOS se comporte à l'identique
 — ce n'est pas le même build — mais ça attrape tout ce qui est du SQL.
 
+Une base **vide** ne suffit pas, et la monter deux fois de suite non plus : les
+deux fois, le schéma arrive complet. Ce qui casse en vrai, c'est une base
+installée depuis longtemps, où les colonnes s'ajoutent une par une. Le schéma
+de la version 1.4.3 est donc relevé tel quel dans l'historique, sous
+`tests/schemas/`, et `initialiserBase` monte dessus. Ce fichier ne se retouche
+pas : le jour où on le corrige pour faire passer quelque chose, il cesse de
+dire ce qu'il dit. Le test qui compte le plus est celui qui compare la forme
+obtenue à celle d'une base neuve, table par table et colonne par colonne — il
+se tient à jour tout seul, et toute colonne ajoutée au schéma sans son
+`ajouterColonne` le fait tomber.
+
 **Les gestes** se pilotent, ils ne se lisent plus dans le source.
 `tests/ecrans/gestes.ts` fabrique l'événement tactile complet qu'un
 `PanResponder` attend — `touchHistory.touchBank`, et des horodatages qui
@@ -157,6 +168,18 @@ qu'on ne les redécouvre pas trois fois.
   par `ajouterColonne`, une réécriture de données par la table `reprises`.
   Incrémenter le numéro de schéma ne détruit plus rien, et ne doit plus jamais
   le pouvoir.
+- **Une reprise se place après la colonne qu'elle lit.** C'est l'ordre du
+  fichier qui compte, pas l'ordre des versions : sur une base d'une version
+  antérieure, la table existe déjà, `CREATE TABLE IF NOT EXISTS` ne fait rien,
+  et chaque `ajouterColonne` ajoute sa colonne au moment où il est écrit. Une
+  reprise placée au-dessus de la colonne qu'elle lit tourne donc sur une table
+  qui ne l'a pas encore, et la mise à jour plante au démarrage — sur une base
+  neuve, où le schéma entier arrive d'un coup, elle passe très bien. C'est
+  arrivé : `no such column: cle`, la reprise des calculateurs écrite
+  cinquante-huit lignes au-dessus de la colonne `cle`.
+  Et une reprise déjà passée dans une version antérieure ne se rejoue pas : son
+  marqueur est dans `reprises`, et le rejouer diviserait une seconde fois les
+  kilomètres de chaque quart.
 - Un quart appartient à la date de son début, quart de nuit compris.
 - Un dépôt aimante à la demi-heure la plus proche ; la demie exacte monte.
 - **Le lecteur ne détruit rien**, au même titre qu'il ne crée rien. Une phrase
