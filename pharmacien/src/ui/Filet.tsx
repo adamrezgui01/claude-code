@@ -3,8 +3,17 @@ import * as Clipboard from 'expo-clipboard';
 import type { ErrorBoundaryProps } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { initialWindowMetrics } from 'react-native-safe-area-context';
 
-import { couleurs, dimensions, espace, police, texte, ACCENT_DEFAUT } from './theme';
+import { couleurs, dimensions, espace, graisse, icone, typo, ACCENT_DEFAUT } from './theme';
+
+/**
+ * La zone sûre, lue sans fournisseur. Le filet peut s'afficher au-dessus de
+ * celui qui la calcule d'ordinaire ; `initialWindowMetrics` la donne au
+ * démarrage, sans rien demander à personne. À défaut, zéro, et la marge de
+ * l'échelle fait le reste.
+ */
+const HAUT_SUR = initialWindowMetrics?.insets.top ?? 0;
 
 /**
  * Le filet : ce qui s'affiche quand un écran plante.
@@ -42,8 +51,6 @@ export function EcranDePlantage({ error, retry }: ErrorBoundaryProps) {
   return (
     <View style={styles.ecran}>
       <ScrollView contentContainerStyle={styles.contenu}>
-        <Ionicons name="alert-circle-outline" size={44} color={couleurs.alerte} />
-
         <Text style={styles.titre}>Quelque chose a planté.</Text>
         <Text style={styles.rassurance}>
           Tes données sont intactes. Rien n’a été effacé ni modifié.
@@ -62,8 +69,8 @@ export function EcranDePlantage({ error, retry }: ErrorBoundaryProps) {
           style={({ pressed }) => [styles.boutonDoux, pressed && styles.enfonce]}>
           <Ionicons
             name={copie ? 'checkmark' : 'copy-outline'}
-            size={18}
-            color={ACCENT_DEFAUT}
+            size={icone.courante}
+            color={couleurs.textePrincipal}
           />
           <Text style={styles.boutonDouxTexte}>
             {copie ? 'Détail copié' : 'Copier le détail'}
@@ -82,30 +89,23 @@ export function EcranDePlantage({ error, retry }: ErrorBoundaryProps) {
 const styles = StyleSheet.create({
   ecran: {
     flex: 1,
-    backgroundColor: couleurs.fond,
+    backgroundColor: couleurs.fondEcran,
   },
   contenu: {
-    // Pas de zone sûre ici : le filet peut s'afficher au-dessus du fournisseur
-    // qui la calcule. Une marge généreuse vaut mieux qu'une dépendance de plus
-    // sur un écran dont la seule qualité exigée est de s'afficher.
-    //
-    // Trois crans de l'échelle, et non un nombre à part : quatre-vingt-seize
-    // points passent l'encoche de tous les modèles.
-    paddingTop: espace.xxl * 3,
-    paddingHorizontal: espace.xl,
-    paddingBottom: espace.xxl,
-    gap: espace.m,
+    paddingTop: HAUT_SUR + espace[10],
+    paddingHorizontal: dimensions.ecran.margeH,
+    paddingBottom: espace[8],
+    gap: espace[3],
   },
   titre: {
-    fontSize: texte.enTete,
-    fontFamily: police.gras,
-    color: couleurs.texte,
+    ...typo.title1,
+    fontWeight: graisse.grasse,
+    color: couleurs.textePrincipal,
   },
   rassurance: {
-    fontSize: texte.saisie,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginBottom: espace.s,
+    ...typo.body,
+    color: couleurs.texteSecondaire,
+    marginBottom: espace[2],
   },
   bouton: {
     minHeight: dimensions.bouton.hauteur,
@@ -113,49 +113,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: ACCENT_DEFAUT,
     borderRadius: dimensions.bouton.rayon,
-    paddingHorizontal: espace.xl,
+    paddingHorizontal: espace[6],
   },
   boutonTexte: {
-    fontSize: dimensions.bouton.texte,
-    fontFamily: police.demi,
-    color: '#FFFFFF',
+    ...typo.headline,
+    color: couleurs.surAccent,
   },
   boutonDoux: {
     minHeight: dimensions.bouton.hauteur,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: espace.s,
+    gap: espace[2],
     borderRadius: dimensions.bouton.rayon,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    backgroundColor: couleurs.carte,
-    paddingHorizontal: espace.xl,
+    backgroundColor: couleurs.fondEleve,
+    paddingHorizontal: espace[6],
   },
   boutonDouxTexte: {
-    fontSize: dimensions.bouton.texte,
-    fontFamily: police.demi,
-    color: ACCENT_DEFAUT,
+    ...typo.headline,
+    color: couleurs.textePrincipal,
   },
   enfonce: {
     opacity: 0.8,
   },
   etiquette: {
-    marginTop: espace.l,
-    fontSize: texte.secondaire,
-    fontFamily: police.demi,
-    color: couleurs.doux,
+    marginTop: espace[4],
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   detail: {
-    fontSize: texte.secondaire,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    backgroundColor: couleurs.carte,
-    borderRadius: dimensions.bouton.rayon,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    padding: espace.m,
+    ...typo.caption1,
+    color: couleurs.texteSecondaire,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    padding: espace[3],
   },
 });

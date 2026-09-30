@@ -348,23 +348,75 @@ qu'on ne les redécouvre pas trois fois.
   zéro, milieu, maximum — et la valeur exacte sous le doigt, cents et symbole
   compris. Sans axe, les étiquettes étaient la seule échelle du graphique,
   d'où la pression pour toutes les afficher, d'où la troncature.
-- Les **dimensions visuelles** — hauteurs, rayons, marges, tailles de texte,
-  espacements — viennent de `dimensions`, dans `src/ui/theme.tsx`. Aucun écran
-  ne définit les siennes. Chaque écran avait les siennes jusqu'ici, et ça se
-  voyait : deux champs côte à côte de hauteurs différentes, trois boutons
-  empilés qui ne s'alignaient pas.
-  Les valeurs des jetons ne sont pas nouvelles : ce sont celles **déjà les plus
-  répandues**, relevées avant d'y toucher. On normalise vers ce qui existe, on
-  ne redessine pas. Deux exceptions où la règle l'emporte sur l'usage : toute
-  cible tactile fait au moins 44 points dans les deux sens, et tout espacement
-  vertical se prend dans l'échelle 4 / 8 / 12 / 16 / 24 / 32.
-  Un second rôle n'est pas une dispersion : le champ nu fait 28 points parce
-  qu'il est posé dans une section qui porte déjà le cadre, et le champ
-  multiligne 92 parce qu'il montre trois lignes. Ce sont trois rôles, pas trois
-  avis sur le même.
-  Cette partie touche aux dimensions, jamais au style. Les couleurs, l'accent
-  mauve, les icônes, le fond clair et la structure des écrans ne changent pas :
-  aucun écran ne doit avoir l'air différent, il doit avoir l'air fini.
+- **Les dimensions, les tailles de texte et les couleurs viennent du fichier
+  de jetons. Aucun écran ne définit les siennes. Les onze rôles typographiques
+  des HIG sont les seules tailles permises.** Le fichier, c'est
+  `src/ui/theme.tsx` ; la norme, ce sont les Human Interface Guidelines
+  d'Apple, taille Large. Une norme externe vaut mieux qu'une moyenne interne :
+  la partie H du V2.5.3 retenait la valeur la plus répandue dans le code, faute
+  de direction, et le V2.6 l'a remplacée.
+  - La typographie : `typo.largeTitle` à `typo.caption2`, les noms d'Apple tels
+    quels, pour qu'on puisse poser le tableau des HIG à côté et les faire
+    correspondre. Titre d'écran en `title1`, en-tête de section en `footnote`
+    majuscule gris, nom de pharmacie en `headline`, texte courant et valeur
+    d'un champ en `body`, étiquette de champ en `subhead` gris, aide en
+    `footnote` gris, étiquette de graphique en `caption1`. La barre de
+    navigation d'un écran poussé garde `headline` : c'est le titre de barre des
+    HIG, et un `title1` y écraserait le bouton de retour.
+  - La police est celle du système — SF Pro sur iOS. Aucune autre famille, et
+    aucune graisse sous Regular : Light, Thin et Ultralight se voient mal dès
+    que le texte est petit. Une graisse se prend dans `graisse`.
+  - L'espacement se prend dans une seule échelle, dans les deux sens :
+    4 · 8 · 12 · 16 · 20 · 24 · 32 · 40, `espace[1]` à `espace[10]` — la clé
+    compte les pas de quatre points. Huit entre une étiquette et son champ,
+    seize entre deux champs, trente-deux entre deux groupes, vingt de marge sur
+    les côtés de l'écran, seize dans une carte.
+  - Toute cible fait au moins 44 points dans les deux sens, **champ de saisie
+    compris**, et le déclare par `minHeight` et `minWidth` : une cible qui
+    n'atteint 44 points que par le hasard de son contenu les perd le jour où le
+    texte raccourcit. Le champ nu d'une section fait donc 44 points lui aussi ;
+    la ligne reprend sur ses marges ce que la cible lui prend.
+  - Quatre neutres, nommés par leur rôle — `textePrincipal`,
+    `texteSecondaire`, `fondEcran`, `fondEleve` —, jamais par leur teinte : le
+    jour du mode sombre, c'est une seule table à écrire. Le filet et le voile en
+    sont des dérivés, pas des neutres de plus. Les couleurs d'état — payé,
+    alerte, échéance, favori — portent une information et restent hors de
+    l'esthétique.
+- **L'interface s'efface ; le contenu occupe l'écran.** La hiérarchie est
+  portée par la taille du texte et par l'espace blanc, pas par des cadres, des
+  lignes et des boîtes. Ce qui suit est une liste de choses à **enlever**.
+  - Un en-tête de section ne survit que s'il couvre au moins deux champs et
+    qu'un autre groupe existe à côté du sien. Sinon il ne sépare rien, et
+    l'espace blanc fait le travail. Une rangée de capsules qui se choisissent
+    l'une l'autre — kg ou lb — compte pour un seul champ.
+  - Une bordure n'est permise que quand rien d'autre ne marque la limite : une
+    case à cocher vide sur une ligne blanche. Un champ, une carte, une capsule
+    se posent en blanc sur le gris de l'écran, sans contour. Entre deux lignes
+    d'une section, un filet d'un point, sur la largeur du contenu seulement —
+    posé par la section, qui sait quelle ligne est la dernière.
+  - Une seule ombre, `ombreFlottante`, douce et neutre, pour ce qui flotte
+    réellement : une feuille, une fiche posée par-dessus l'écran. Une carte
+    dans une liste ne flotte pas, un bouton non plus.
+  - Une section facultative commence repliée, derrière une ligne à chevron.
+  - Le mauve reste l'accent, et devient **rare** : il marque l'élément actif et
+    l'action principale de l'écran, rien d'autre. L'élément actif le dit à
+    VoiceOver (`selected`, `checked`, un interrupteur allumé), l'action
+    principale porte le repère `action-principale` — une par écran. Une valeur
+    qu'on vient chercher sur une ligne passe en gras, pas en mauve.
+  - La barre au-dessus du clavier garde son bouton mauve : le clavier ouvert,
+    c'est l'action principale, et la barre n'existe à l'écran que pendant ce
+    temps-là.
+  Ces règles se vérifient sur l'écran **monté**, dans
+  `tests/ecrans/allure.test.tsx`, avec le jeu de démonstration : les cibles,
+  les en-têtes, les bordures, le mauve et la forme des champs. Les règles de ce
+  qui est écrit — une taille, une couleur, une dimension en dur — se lisent
+  dans le source, dans `tests/jetons.test.ts`.
+  Chaque passe dit dans son commit combien d'éléments chaque écran montrait
+  avant et après, et ce qui a été retiré. Le compte vient de
+  `tests/ecrans/inventaire.ts`, qui marche dans l'écran monté et compte ce qui
+  a de l'encre : textes, icônes, champs, interrupteurs, bordures, ombres,
+  fonds, filets. Un écran qui sort avec autant d'éléments qu'il en avait n'a
+  été que repeint.
 - L'écran de révision ne montre jamais un nombre de bonnes réponses, un
   pourcentage, ni une série de jours consécutifs. Il compte ce qu'il reste à
   faire, jamais ce qui a été réussi. L'application gère des sujets à revoir ;

@@ -20,18 +20,47 @@ export const MAUVES = [
 
 export const ACCENT_DEFAUT: string = MAUVES[0].valeur;
 
+/**
+ * Les couleurs, nommées par leur rôle et jamais par leur teinte.
+ *
+ * L'interface tient en **quatre neutres**. Tout le reste est soit l'accent —
+ * rare, par règle —, soit une information : un état de paiement, une alerte,
+ * une échéance. Ces couleurs-là disent quelque chose, et l'esthétique n'y
+ * touche pas.
+ *
+ * `texteSecondaire`, jamais `gris60` : le jour où le mode sombre arrive, c'est
+ * cette table-ci qu'on réécrit, et rien d'autre.
+ */
+const textePrincipal = '#1E1B22';
+const texteSecondaire = '#6E6875';
+
 export const couleurs = {
-  /** Gris chaud à peine perceptible, plutôt que du blanc pur. */
-  fond: '#F6F4F2',
-  carte: '#FFFFFF',
-  texte: '#1E1B22',
-  doux: '#6E6875',
-  bordure: '#E6E2E6',
-  /** Encore plus pâle : les demi-heures suggèrent, les heures dominent. */
-  bordurePale: '#F1EEF1',
+  /** Titres, valeurs, contenu. */
+  textePrincipal,
+  /** Étiquettes, aide, unités. */
+  texteSecondaire,
+  /** Le fond général : un gris chaud à peine perceptible, plutôt que du blanc pur. */
+  fondEcran: '#F6F4F2',
+  /** Cartes et champs de saisie : ce qui se pose sur le fond. */
+  fondEleve: '#FFFFFF',
+
+  /*
+   * Trois dérivés, et pas trois neutres de plus : chacun est un des quatre
+   * ci-dessus, atténué ou posé sur l'accent.
+   */
+  /** Le filet d'un point entre deux lignes d'une liste. */
+  filet: `${texteSecondaire}33`,
+  /** Le voile sous une fiche posée par-dessus l'écran. */
+  voile: `${textePrincipal}99`,
+  /** L'encre d'un texte ou d'une icône posé sur l'accent plein. */
+  surAccent: '#FFFFFF',
+
+  /*
+   * Les couleurs qui portent une information. Elles ne décorent rien : un
+   * quart urgent, une facture payée, une dose au-dessus du maximum.
+   */
   alerte: '#B4431F',
   alertePale: '#FBEAE3',
-  /** États de paiement et de correction : jamais touchés par l'esthétique. */
   succes: '#2F7D52',
   succesPale: '#E4F1E9',
   attente: '#8A8592',
@@ -46,20 +75,64 @@ export const couleurs = {
   /** Étoile des favoris. Le repère « à éviter » reste en gris, volontairement discret. */
   favori: '#D9A21B',
   favoriPale: '#FBF3DF',
+
+  /*
+   * Les anciens noms, le temps que chaque onglet passe aux nouveaux. Ils
+   * disparaissent au dernier commit du V2.6 ; un test refuse qu'un fichier
+   * déjà passé s'en serve encore.
+   */
+  /** @deprecated `fondEcran` */
+  fond: '#F6F4F2',
+  /** @deprecated `fondEleve` */
+  carte: '#FFFFFF',
+  /** @deprecated `textePrincipal` */
+  texte: textePrincipal,
+  /** @deprecated `texteSecondaire` */
+  doux: texteSecondaire,
+  /** @deprecated une bordure qui double un fond disparaît ; un filet prend `filet` */
+  bordure: '#E6E2E6',
+  /** @deprecated `filet` */
+  bordurePale: '#F1EEF1',
 };
 
-/** Une seule valeur globale pour l'arrondi des cartes, boutons et champs. */
+/** Une seule valeur pour l'arrondi des cartes, boutons et champs. */
 export const rayon = 16;
 
-export const espace = {
-  xs: 4,
-  s: 8,
-  m: 12,
-  l: 16,
-  xl: 24,
-  xxl: 32,
-};
+/**
+ * L'échelle d'espacement. Un seul jeu de valeurs, pour tout espacement
+ * vertical comme horizontal, et aucune valeur intermédiaire : pas de 10, pas de
+ * 14, pas de 18.
+ *
+ * La clé compte les pas de quatre points : `espace[4]` vaut 16, `espace[10]`
+ * vaut 40. Un nom comme « xl » ne dit pas combien, et une échelle de huit crans
+ * finit en « xxxl ».
+ */
+export const ECHELLE = [4, 8, 12, 16, 20, 24, 32, 40] as const;
 
+export const espace = {
+  1: 4,
+  2: 8,
+  3: 12,
+  4: 16,
+  5: 20,
+  6: 24,
+  8: 32,
+  10: 40,
+  /** @deprecated `espace[1]` */
+  xs: 4,
+  /** @deprecated `espace[2]` */
+  s: 8,
+  /** @deprecated `espace[3]` */
+  m: 12,
+  /** @deprecated `espace[4]` */
+  l: 16,
+  /** @deprecated `espace[6]` */
+  xl: 24,
+  /** @deprecated `espace[8]` */
+  xxl: 32,
+} as const;
+
+/** @deprecated la police système : aucun `fontFamily`, une `graisse` */
 export const police = {
   normal: 'Nunito_400Regular',
   demi: 'Nunito_600SemiBold',
@@ -67,111 +140,160 @@ export const police = {
 };
 
 /**
- * L'échelle des tailles de texte.
+ * Les graisses permises. Ultralight, Thin et Light n'y sont pas : elles se
+ * voient mal dès que le texte est petit.
+ */
+export const graisse = {
+  reguliere: '400',
+  moyenne: '500',
+  demi: '600',
+  grasse: '700',
+} as const;
+
+/**
+ * L'échelle typographique des Human Interface Guidelines d'Apple, taille
+ * Large — celle par défaut sur iOS. Relevée sur la page Typography.
  *
- * Vingt-trois tailles différentes vivaient dans l'application, de 7 à 34
- * points, dont neuf n'apparaissaient qu'une fois. Les onze retenues ici sont
- * celles **déjà les plus utilisées** — le relevé de la phase 1 les donne dans
- * cet ordre : 13, 15, 14, 16, 12, 11, 18, 24, 20, 10, 30.
+ * **Onze rôles, et aucune autre taille dans l'application.** Une taille qui
+ * n'est pas ici est une erreur, et un test la refuse.
  *
- * Les noms disent le rôle et non la taille : une taille dans un nom se
- * contredit le jour où on la change.
+ * Les noms sont ceux d'Apple, tels quels : on doit pouvoir poser le tableau
+ * des HIG à côté de ce fichier et les faire correspondre ligne à ligne.
+ *
+ * La police est celle du système — SF Pro sur iOS —, et React Native la prend
+ * quand on ne lui en donne aucune : aucun rôle ne porte de `fontFamily`.
+ *
+ *   Titre d'écran                         title1
+ *   En-tête de section                    footnote, majuscules, texteSecondaire
+ *   Titre de carte, nom de pharmacie      headline
+ *   Texte courant, valeur d'un champ      body
+ *   Étiquette de champ                    subhead, texteSecondaire
+ *   Aide sous un champ                    footnote, texteSecondaire
+ *   Étiquette de graphique, heures        caption1
+ */
+export const typo = {
+  largeTitle: { fontSize: 34, lineHeight: 41, fontWeight: graisse.reguliere },
+  title1: { fontSize: 28, lineHeight: 34, fontWeight: graisse.reguliere },
+  title2: { fontSize: 22, lineHeight: 28, fontWeight: graisse.reguliere },
+  title3: { fontSize: 20, lineHeight: 25, fontWeight: graisse.reguliere },
+  headline: { fontSize: 17, lineHeight: 22, fontWeight: graisse.demi },
+  body: { fontSize: 17, lineHeight: 22, fontWeight: graisse.reguliere },
+  callout: { fontSize: 16, lineHeight: 21, fontWeight: graisse.reguliere },
+  subhead: { fontSize: 15, lineHeight: 20, fontWeight: graisse.reguliere },
+  footnote: { fontSize: 13, lineHeight: 18, fontWeight: graisse.reguliere },
+  caption1: { fontSize: 12, lineHeight: 16, fontWeight: graisse.reguliere },
+  caption2: { fontSize: 11, lineHeight: 13, fontWeight: graisse.reguliere },
+} as const;
+
+/** Les onze tailles, et elles seules. */
+export const TAILLES = [...new Set(Object.values(typo).map((r) => r.fontSize))];
+
+/**
+ * @deprecated les onze rôles de `typo`
+ *
+ * L'ancienne échelle, relevée sur l'usage. Elle reste le temps que chaque
+ * onglet passe à `typo`, puis disparaît.
  */
 export const texte = {
-  /**
-   * Un texte posé **dans** un échantillon de légende ou dans la case d'un
-   * calendrier qu'on partage en image. Le seul cran qui ne vient pas de
-   * l'usage dominant : il vient d'une contrainte de boîte. Monter ces
-   * caractères à dix points les ferait déborder.
-   */
   microscopique: 8,
-  /** En-tête de colonne d'un calendrier, étiquette d'un graphique. */
   minuscule: 10,
-  /** Sous-texte d'une ligne dense : le jour de la semaine, un compte. */
   fin: 11,
-  /** Détail secondaire : une adresse sous un nom. */
   secondaire: 12,
-  /** La taille la plus répandue : étiquette de champ, détail, en-tête de section. */
   courant: 13,
-  /** Une ligne qu'on lit vraiment : un élément de liste, une capsule. */
   lecture: 14,
-  /** Le corps d'un contenu, et le nom dans une liste. */
   corps: 15,
-  /** Ce qu'on tape, et le texte d'un bouton. */
   saisie: 16,
-  /** Titre d'un bloc à l'intérieur d'un écran. */
   titre: 18,
-  /** Titre d'un écran, ou un nom mis en avant. */
   grandTitre: 20,
-  /** Le titre de l'écran lui-même. */
   enTete: 24,
-  /** Un chiffre qu'on lit d'un coup d'œil : un revenu, un total de facture. */
   chiffre: 30,
 } as const;
 
 /**
- * Toute cible tactile fait au moins ça, dans les deux sens. Règle du V2.3,
- * et la seule valeur de ce fichier qui vienne d'une règle plutôt que d'un
- * relevé.
+ * La taille d'une icône. Trois, alignées sur le texte qu'elles accompagnent :
+ * une icône à côté d'une note, une icône dans une ligne ou un bouton, une
+ * icône seule dans un en-tête.
+ */
+export const icone = {
+  petite: 16,
+  courante: 20,
+  grande: 24,
+} as const;
+
+/**
+ * Toute cible tactile fait au moins ça, dans les deux sens. Une icône de 24
+ * points garde une zone touchable de 44.
  */
 export const CIBLE_MIN = 44;
 
 /**
- * Les dimensions, par rôle.
- *
- * Chaque écran avait les siennes : ses hauteurs, ses rayons, ses marges. Ça se
- * voyait — deux champs côte à côte de hauteurs différentes, trois boutons
- * empilés qui ne s'alignaient pas — et ça allait se voir de plus en plus à
- * mesure que des écrans s'ajouteraient.
- *
- * Les valeurs ne sont pas nouvelles : ce sont celles **déjà les plus
- * répandues** dans l'application, relevées avant d'y toucher. On normalise
- * vers ce qui existe, on ne redessine pas. Deux exceptions, où la règle
- * l'emporte sur l'usage : la cible de 44 points, et l'échelle d'espacement,
- * qui reste celle d'`espace`.
- *
- * Aucun écran ne définit les siennes. Une correction future est alors une
- * seule ligne à changer ici.
+ * Les dimensions, par rôle. Aucun écran ne définit les siennes : une correction
+ * est une ligne à changer ici.
  */
 export const dimensions = {
-  /** Un champ de saisie encadré. C'est la forme ordinaire. */
+  /** L'écran : vingt points de marge de chaque côté. */
+  ecran: { margeH: espace[5], margeHaut: espace[4] },
+  /** Le rythme d'un formulaire. C'est l'écart qui fait la hiérarchie. */
+  formulaire: {
+    /** Une étiquette et son champ. */
+    etiquetteChamp: espace[2],
+    /** Deux champs d'un même groupe. */
+    entreChamps: espace[4],
+    /** Deux groupes. */
+    entreGroupes: espace[8],
+  },
+  /**
+   * Un champ de saisie : un fond légèrement distinct de ce qui l'entoure, et
+   * **aucune bordure**. La différence de fond marque déjà la limite.
+   */
   champ: {
     hauteur: 50,
     rayon,
-    remplissageH: espace.l,
-    remplissageV: espace.m,
-    texte: texte.saisie,
+    remplissageH: espace[4],
+    remplissageV: espace[3],
   },
   /**
-   * Le champ posé dans une section qui porte déjà le cadre : il n'en remet
-   * pas un, donc il n'a pas la même hauteur. Ce n'est pas une dispersion,
-   * c'est un second rôle.
+   * Le champ posé dans une section qui porte déjà le fond : il n'en remet pas
+   * un. Sa zone de saisie fait quand même la cible de 44 points — c'est là
+   * qu'on touche pour écrire ; la ligne reprend sur ses marges ce que la
+   * cible lui prend.
    */
-  champNu: { hauteur: 28, remplissageV: espace.xs },
+  champNu: { hauteur: CIBLE_MIN, remplissageV: espace[1] },
   /** Le champ multiligne. Trois lignes de texte visibles. */
   champMultiligne: { hauteur: 92 },
-  /** Une capsule de sélection : kg/lb, DIE-BID-TID-QID, les onglets de période. */
+  /** Une capsule de sélection : kg/lb, DIE-BID-TID-QID, les périodes. */
   capsule: {
     hauteur: CIBLE_MIN,
     /** Complètement ronde : c'est ce qui la distingue d'un bouton. */
     rayon: 999,
-    remplissageH: espace.l,
-    texte: texte.lecture,
+    remplissageH: espace[4],
   },
   /** Le bouton, plein ou creux. Les deux partagent tout sauf leur fond. */
   bouton: {
     hauteur: 52,
     rayon,
-    remplissageH: espace.l,
-    remplissageV: espace.m,
-    texte: texte.saisie,
+    remplissageH: espace[4],
+    remplissageV: espace[3],
   },
-  /** L'en-tête d'une section de formulaire : petites capitales espacées. */
-  enTete: { texte: texte.courant, interLettre: 0.8, margeBasse: espace.s },
+  /** L'en-tête d'une section : footnote, majuscules, gris. */
+  enTete: { margeBasse: espace[2] },
   /** L'étiquette au-dessus d'un champ. */
-  etiquette: { texte: texte.courant, margeBasse: espace.xs },
-  /** Une carte : le conteneur encadré qui groupe un bloc. */
-  carte: { rayon, remplissage: espace.l, margeBasse: espace.m },
+  etiquette: { margeBasse: espace[2] },
+  /** Une carte : fond blanc sur fond gris, sans bordure et sans ombre. */
+  carte: { rayon, remplissage: espace[4], margeBasse: espace[3] },
+  /** Le filet entre deux lignes : un point, sur la largeur du contenu seulement. */
+  filet: { epaisseur: 1 },
+  /** Une pastille : le point d'un quart, un repère d'état. */
+  pastille: { cote: 8 },
+  /**
+   * Une case à cocher. Son contour est la seule chose qui la marque sur une
+   * ligne blanche : c'est l'un des rares cas où une bordure reste permise.
+   */
+  case: { cote: 22, rayon: 6, contour: 1.5 },
+  /** Une feuille ou une fiche posée par-dessus l'écran : plus ronde qu'une carte. */
+  feuille: { rayon: rayon * 1.5 },
+  /** Le trait qui souligne l'onglet actif. */
+  soulignement: { epaisseur: 2 },
 } as const;
 
 type Theme = {
@@ -204,16 +326,24 @@ export function accentMoyen(accent: string): string {
 }
 
 /**
- * Ombre portée. Cadrée serré, sinon l'ensemble vieillit mal : douce et très
- * diffuse, jamais dure, et teintée du mauve d'accent plutôt que noire — une
- * ombre noire sur un fond chaud grise tout ce qu'elle touche.
+ * La seule ombre de l'application. Très douce, neutre, et réservée à ce qui
+ * **flotte réellement** au-dessus du contenu : une feuille, un menu, une fiche
+ * posée par-dessus l'écran. Une carte dans une liste ne flotte pas ; un bouton
+ * non plus.
+ */
+export const ombreFlottante = {
+  shadowColor: textePrincipal,
+  shadowOpacity: 0.12,
+  shadowRadius: 24,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 8,
+} as const;
+
+/**
+ * @deprecated `ombreFlottante`, et seulement pour ce qui flotte
  *
- * Réservée aux boutons d'action principaux et aux cartes. Jamais sur les
- * champs de saisie, jamais sur les lignes de liste, jamais sur les sections
- * encadrées : elles tirent leur relief de leur bordure, pas d'une ombre.
- *
- * Sur Android, `shadowColor` teinte l'ombre d'élévation à partir d'Android 9 ;
- * en deçà elle reste grise, ce qui est acceptable.
+ * L'ancienne ombre teintée de mauve, sur les cartes et les boutons. Elle reste
+ * le temps que chaque onglet s'en passe.
  */
 export function ombre(accent: string, poids: 'carte' | 'bouton') {
   const bouton = poids === 'bouton';

@@ -1,6 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {
+  Children,
   createContext,
+  Fragment,
   ReactNode,
   useContext,
   useEffect,
@@ -31,7 +33,18 @@ import {
 } from 'react-native';
 
 import { formaterTelephone, formaterTelephoneSaisie } from '../lib/telephone';
-import { accentPale, couleurs, dimensions, espace, ombre, police, rayon, texte, useAccent, CIBLE_MIN } from './theme';
+import {
+  accentPale,
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  ombreFlottante,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from './theme';
 import { useTextes } from '../i18n';
 
 /**
@@ -70,7 +83,7 @@ export function Ecran({
   );
   return (
     <KeyboardAvoidingView
-      style={[styles.ecran, fond && { backgroundColor: couleurs.fond }]}
+      style={[styles.ecran, fond && { backgroundColor: couleurs.fondEcran }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         ref={liste}
@@ -118,17 +131,31 @@ export function Titre({ children }: { children: ReactNode }) {
   return <Text style={styles.titre}>{children}</Text>;
 }
 
+/**
+ * L'en-tête d'une section. Il ne se justifie que s'il sépare des groupes
+ * qu'on pourrait confondre : au moins deux champs sous lui, et un autre groupe
+ * après. Sinon l'espace blanc fait le travail, et un test le vérifie.
+ *
+ * `header` pour VoiceOver : on y saute d'un en-tête à l'autre.
+ */
 export function SousTitre({ children }: { children: ReactNode }) {
-  return <Text style={styles.sousTitre}>{children}</Text>;
+  return (
+    <Text style={styles.sousTitre} accessibilityRole="header">
+      {children}
+    </Text>
+  );
 }
 
 export function Doux({ children }: { children: ReactNode }) {
   return <Text style={styles.doux}>{children}</Text>;
 }
 
+/**
+ * Une carte : fond blanc sur fond gris. Ni bordure ni ombre — la différence de
+ * fond marque déjà la limite, et une carte dans une liste ne flotte pas.
+ */
 export function Carte({ children, style }: { children: ReactNode; style?: ViewStyle }) {
-  const accent = useAccent();
-  return <View style={[styles.carte, ombre(accent, 'carte'), style]}>{children}</View>;
+  return <View style={[styles.carte, style]}>{children}</View>;
 }
 
 export function Separateur() {
@@ -186,7 +213,6 @@ export function Champ({
 }) {
   const { t } = useTextes();
   const accent = useAccent();
-  const [actif, setActif] = useState(false);
   // Un pavé numérique n'a pas de touche de retour sur iOS : sans cette barre,
   // le clavier n'a aucun bouton pour se fermer.
   const identifiant = useId();
@@ -201,7 +227,6 @@ export function Champ({
           suffixe ? styles.saisieDansBoite : nu ? styles.saisieNue : styles.saisieBoite,
           styles.saisieTexte,
           multiligne && styles.saisieMultiligne,
-          !nu && !suffixe && actif && { borderColor: accent },
         ]}
         ref={champRef}
         // L'étiquette est un Text à côté, pas dans le champ : sans ça,
@@ -210,10 +235,12 @@ export function Champ({
         value={valeur}
         onChangeText={onChange}
         onSubmitEditing={onTermine}
-        onFocus={() => setActif(true)}
-        onBlur={() => setActif(false)}
+        // Le curseur dit déjà où l'on écrit, dans la couleur de l'application.
+        // Un cadre qui s'allume en plus serait un second repère pour la même
+        // chose.
+        selectionColor={accent}
         placeholder={placeholder}
-        placeholderTextColor={couleurs.doux}
+        placeholderTextColor={couleurs.texteSecondaire}
         multiline={multiligne}
         keyboardType={clavier}
         secureTextEntry={masque}
@@ -229,7 +256,7 @@ export function Champ({
     <View style={[styles.champ, nu && styles.champNu]}>
       {!suffixe && <Text style={styles.label}>{label}</Text>}
       {suffixe ? (
-        <View style={[styles.saisieBoite, styles.avecSuffixe, actif && { borderColor: accent }]}>
+        <View style={[styles.saisieBoite, styles.avecSuffixe]}>
           {saisie}
           <Text style={styles.suffixe}>{suffixe}</Text>
         </View>
@@ -240,7 +267,9 @@ export function Champ({
         <InputAccessoryView nativeID={identifiant}>
           {/*
             Un vrai bouton, pas du texte mauve : dans une barre grise au-dessus
-            du clavier, un mot coloré ne se lit pas comme une commande.
+            du clavier, un mot coloré ne se lit pas comme une commande. Le
+            clavier ouvert, c'est l'action principale : il porte l'accent à ce
+            titre, et la barre n'existe à l'écran que pendant ce temps-là.
 
             Rien ne peut s'afficher sous le clavier sur iOS — il occupe le bas
             de l'écran et la barre d'accessoires est toujours au-dessus. Ce
@@ -299,14 +328,16 @@ export function ChampTelephone({
 }
 
 /**
- * Groupe de champs encadré, avec son titre au-dessus.
+ * Groupe de lignes sur un fond blanc, avec son titre au-dessus.
  *
- * Le défaut que ça corrige n'est pas le manque d'espace mais le manque de
- * hiérarchie : dix champs du même poids visuel ne donnent à l'œil aucune prise.
- * L'encadré fait le travail du contenant, alors les champs qu'il porte perdent
- * le leur — sinon on empile des boîtes dans des boîtes et c'est pire qu'avant.
- * L'écart entre deux sections est bien plus grand que celui entre deux champs :
- * c'est lui qui crée le rythme.
+ * Le fond fait le travail du contenant : pas de bordure autour, et les champs
+ * qu'il porte perdent la leur — sinon on empile des boîtes dans des boîtes.
+ * Entre deux lignes, un filet d'un point, sur la largeur du contenu seulement.
+ * Les filets se posent ici, entre les enfants, et nulle part ailleurs : une
+ * ligne ne sait pas si elle est la dernière, la section le sait.
+ *
+ * L'écart entre deux sections est bien plus grand que celui entre deux
+ * lignes : c'est lui qui crée le rythme.
  */
 export function Section({
   titre,
@@ -315,10 +346,18 @@ export function Section({
   titre?: string;
   children: ReactNode;
 }) {
+  const lignes = Children.toArray(children);
   return (
     <View style={styles.sectionBloc}>
-      {!!titre && <Text style={styles.sectionTitre}>{titre}</Text>}
-      <View style={styles.sectionCadre}>{children}</View>
+      {!!titre && <SousTitre>{titre}</SousTitre>}
+      <View style={styles.sectionCadre}>
+        {lignes.map((ligne, i) => (
+          <Fragment key={i}>
+            {i > 0 && <View style={styles.filet} />}
+            {ligne}
+          </Fragment>
+        ))}
+      </View>
     </View>
   );
 }
@@ -338,30 +377,23 @@ export function LigneDepliable({
   detail,
   actif,
   onChange,
-  premiere,
   children,
 }: {
   label: string;
   detail?: string;
   actif: boolean;
   onChange: (v: boolean) => void;
-  /** La première ligne d'un encadré ne porte pas de filet au-dessus. */
-  premiere?: boolean;
   children: ReactNode;
 }) {
   const accent = useAccent();
   return (
-    <View style={[styles.depliable, !premiere && styles.depliableSuivante]}>
+    <View style={styles.depliable}>
       <View style={styles.depliableEntete}>
         <View style={styles.depliableTexte}>
           <Text style={styles.interrupteurLabel}>{label}</Text>
           {!!detail && <Doux>{detail}</Doux>}
         </View>
-        <Switch
-          value={actif}
-          onValueChange={onChange}
-          trackColor={{ true: accent, false: couleurs.bordure }}
-        />
+        <Switch value={actif} onValueChange={onChange} trackColor={{ true: accent }} />
       </View>
       {actif && <Fondu style={styles.depliableCorps}>{children}</Fondu>}
     </View>
@@ -387,6 +419,8 @@ export function Case({
   return (
     <Pressable
       onPress={() => onChange(!valeur)}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: valeur }}
       style={({ pressed }) => [styles.case, pressed && styles.attenue]}
       hitSlop={6}>
       <View
@@ -394,7 +428,7 @@ export function Case({
           styles.caseCarre,
           valeur && { backgroundColor: accent, borderColor: accent },
         ]}>
-        {valeur && <Text style={styles.caseCoche}>✓</Text>}
+        {valeur && <Ionicons name="checkmark" size={icone.petite} color={couleurs.surAccent} />}
       </View>
       <View style={styles.depliableTexte}>
         <Text style={styles.caseLabel}>{label}</Text>
@@ -429,6 +463,8 @@ export function FicheAide({
           <Text style={styles.ficheTitre}>{titre}</Text>
           {children}
           <Pressable
+            testID="action-principale"
+            accessibilityRole="button"
             style={({ pressed }) => [
               styles.ficheValider,
               { backgroundColor: accent },
@@ -448,10 +484,9 @@ export function FicheAide({
  * guidé, l'usager habitué ne voit plus rien.
  */
 export function BandeauAide({ texte }: { texte: string }) {
-  const accent = useAccent();
   return (
     <Fondu>
-      <View style={[styles.bandeauAide, { borderColor: accent, backgroundColor: accentPale(accent) }]}>
+      <View style={styles.bandeauAide}>
         <Text style={styles.bandeauAideTexte}>{texte}</Text>
       </View>
     </Fondu>
@@ -489,12 +524,10 @@ export function Bouton({
         ? couleurs.succes
         : variante === 'danger'
           ? couleurs.alertePale
-          : couleurs.carte;
+          : couleurs.fondEleve;
 
-  // L'ombre accompagne l'action principale, pas les boutons de rappel : un
-  // écran où tout est en relief n'a plus de hiérarchie du tout.
-  const porte = variante === 'principal' || variante === 'succes';
-
+  // Aucune ombre : un bouton ne flotte pas. L'action principale se distingue
+  // par son fond mauve, et c'est le seul fond mauve de l'écran.
   return (
     <Animated.View style={{ transform: [{ scale: echelle }] }}>
       <Pressable
@@ -502,13 +535,10 @@ export function Bouton({
         disabled={desactive}
         onPressIn={() => animer(0.97)}
         onPressOut={() => animer(1)}
-        style={[
-          styles.bouton,
-          { backgroundColor: fond },
-          porte && !desactive && ombre(variante === 'succes' ? couleurs.succes : accent, 'bouton'),
-          variante === 'secondaire' && styles.boutonSecondaire,
-          desactive && styles.attenue,
-        ]}>
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !!desactive }}
+        testID={variante === 'principal' ? 'action-principale' : undefined}
+        style={[styles.bouton, { backgroundColor: fond }, desactive && styles.attenue]}>
         {icone}
         <Text
           style={[
@@ -579,11 +609,11 @@ export function Onglets<T extends string>({
           const couleur = pretes
             ? position.interpolate({
                 inputRange: entrees,
-                outputRange: entrees.map((j) => (j === i ? accent : couleurs.doux)),
+                outputRange: entrees.map((j) => (j === i ? accent : couleurs.texteSecondaire)),
               })
             : i === actif
               ? accent
-              : couleurs.doux;
+              : couleurs.texteSecondaire;
           return (
             <Pressable
               key={option.valeur}
@@ -598,19 +628,21 @@ export function Onglets<T extends string>({
                 });
               }}
               style={styles.onglet}
+              accessibilityRole="button"
+              accessibilityState={{ selected: i === actif }}
               hitSlop={6}>
               {!!option.icone && (
                 <Ionicons
                   name={option.icone}
-                  size={15}
-                  color={i === actif ? accent : couleurs.doux}
+                  size={icone.petite}
+                  color={i === actif ? accent : couleurs.texteSecondaire}
                 />
               )}
               <Animated.Text
                 style={[
                   styles.ongletTexte,
                   { color: couleur },
-                  i === actif && { fontFamily: police.demi },
+                  i === actif && { fontWeight: graisse.demi },
                 ]}>
                 {option.texte}
               </Animated.Text>
@@ -655,12 +687,14 @@ export function Puce({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: actif }}
       style={({ pressed }) => [
         styles.puce,
-        actif && { backgroundColor: accentPale(accent), borderColor: accent },
+        actif && { backgroundColor: accentPale(accent) },
         pressed && styles.attenue,
       ]}>
-      <Text style={[styles.puceTexte, actif && { color: accent, fontFamily: police.demi }]}>
+      <Text style={[styles.puceTexte, actif && { color: accent, fontWeight: graisse.demi }]}>
         {texte}
       </Text>
     </Pressable>
@@ -682,12 +716,12 @@ export function Etiquette({
   icone?: ComponentProps<typeof Ionicons>['name'];
 }) {
   const fond =
-    ton === 'succes' ? couleurs.succesPale : ton === 'alerte' ? couleurs.alertePale : '#EDEBEF';
+    ton === 'succes' ? couleurs.succesPale : ton === 'alerte' ? couleurs.alertePale : couleurs.grisPale;
   const encre =
     ton === 'succes' ? couleurs.succes : ton === 'alerte' ? couleurs.alerte : couleurs.attente;
   return (
     <View style={[styles.etiquette, { backgroundColor: fond }]}>
-      {!!icone && <Ionicons name={icone} size={12} color={encre} />}
+      {!!icone && <Ionicons name={icone} size={typo.caption1.fontSize} color={encre} />}
       <Text style={[styles.etiquetteTexte, { color: encre }]}>{texte}</Text>
     </View>
   );
@@ -711,11 +745,7 @@ export function Interrupteur({
         <Text style={styles.interrupteurLabel}>{label}</Text>
         {!!detail && <Doux>{detail}</Doux>}
       </View>
-      <Switch
-        value={valeur}
-        onValueChange={onChange}
-        trackColor={{ true: accent, false: couleurs.bordure }}
-      />
+      <Switch value={valeur} onValueChange={onChange} trackColor={{ true: accent }} />
     </View>
   );
 }
@@ -724,18 +754,22 @@ export function Rangee({
   label,
   valeur,
   onPress,
-  accent: enAccent,
+  fort,
 }: {
   label: string;
   valeur: string;
   onPress?: () => void;
-  accent?: boolean;
+  /**
+   * La valeur qu'on vient chercher sur la ligne : un total, le nom d'une
+   * pharmacie. Elle passe en gras, pas en mauve — le mauve est réservé à
+   * l'élément actif et à l'action principale.
+   */
+  fort?: boolean;
 }) {
-  const accent = useAccent();
   const contenu = (
     <View style={styles.rangee}>
       <Text style={styles.rangeeLabel}>{label}</Text>
-      <Text style={[styles.rangeeValeur, enAccent && { color: accent }]}>{valeur}</Text>
+      <Text style={[styles.rangeeValeur, fort && styles.rangeeForte]}>{valeur}</Text>
     </View>
   );
   if (!onPress) return contenu;
@@ -748,281 +782,259 @@ export function Rangee({
 
 const styles = StyleSheet.create({
   depliable: {
-    paddingVertical: espace.s,
-  },
-  depliableSuivante: {
-    borderTopWidth: 1,
-    borderTopColor: couleurs.bordurePale,
+    paddingVertical: espace[2],
   },
   depliableEntete: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: espace.m,
+    gap: espace[3],
   },
   depliableTexte: {
     flex: 1,
   },
   depliableCorps: {
-    marginTop: espace.m,
+    marginTop: espace[3],
   },
   case: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.m,
-    paddingVertical: espace.s,
+    gap: espace[3],
+    paddingVertical: espace[2],
     /* Le carré fait 22 points : sans hauteur minimale ici, la rangée tombait
        à environ 43 avec son hitSlop. Un point sous la règle. */
     minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
+  /*
+   * Une case vide sur une ligne blanche : son contour est la seule chose qui
+   * la marque. C'est le cas où une bordure reste permise.
+   */
   caseCarre: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: couleurs.bordure,
+    width: dimensions.case.cote,
+    height: dimensions.case.cote,
+    borderRadius: dimensions.case.rayon,
+    borderWidth: dimensions.case.contour,
+    borderColor: couleurs.texteSecondaire,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  caseCoche: {
-    color: '#FFFFFF',
-    fontSize: texte.lecture,
-    fontFamily: police.gras,
-    lineHeight: 18,
-  },
   caseLabel: {
-    fontSize: texte.corps,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   voile: {
     flex: 1,
-    backgroundColor: '#1E1B2299',
+    backgroundColor: couleurs.voile,
     justifyContent: 'center',
-    padding: espace.l,
+    padding: dimensions.ecran.margeH,
   },
+  /** La fiche flotte au-dessus de l'écran : c'est l'un des rares porteurs d'ombre. */
   fiche: {
-    backgroundColor: couleurs.carte,
-    borderRadius: rayon * 1.5,
-    padding: espace.xl,
-    gap: espace.m,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.feuille.rayon,
+    padding: espace[6],
+    gap: espace[3],
+    ...ombreFlottante,
   },
   ficheTitre: {
-    fontSize: texte.titre,
-    fontFamily: police.gras,
-    color: couleurs.texte,
+    ...typo.title3,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   ficheValider: {
-    borderRadius: rayon,
-    paddingVertical: espace.m,
+    borderRadius: dimensions.bouton.rayon,
+    minHeight: dimensions.bouton.hauteur,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: espace.s,
+    marginTop: espace[2],
   },
   bandeauAide: {
-    borderWidth: 1,
-    borderRadius: rayon,
-    paddingVertical: espace.s,
-    paddingHorizontal: espace.m,
-    marginBottom: espace.m,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    paddingVertical: espace[3],
+    paddingHorizontal: espace[4],
+    marginBottom: espace[4],
   },
   bandeauAideTexte: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.texte,
-    lineHeight: 18,
+    ...typo.footnote,
+    color: couleurs.textePrincipal,
   },
   sectionBloc: {
-    // Entre deux sections, bien plus d'air qu'entre deux champs.
-    marginBottom: espace.xxl,
-  },
-  sectionTitre: {
-    fontSize: texte.courant,
-    fontFamily: police.demi,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    color: couleurs.doux,
-    marginBottom: espace.s,
-    marginLeft: espace.xs,
+    // Entre deux groupes, bien plus d'air qu'entre deux lignes.
+    marginBottom: dimensions.formulaire.entreGroupes,
   },
   sectionCadre: {
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingHorizontal: espace.l,
-    paddingVertical: espace.xs,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    paddingHorizontal: dimensions.carte.remplissage,
+    paddingVertical: espace[1],
+  },
+  /** Un point, sur la largeur du contenu : il s'arrête au remplissage de la section. */
+  filet: {
+    height: dimensions.filet.epaisseur,
+    backgroundColor: couleurs.filet,
   },
   ongletsBloc: {
-    marginBottom: espace.m,
+    marginBottom: espace[3],
   },
   ongletsLibelle: {
-    fontSize: texte.fin,
-    fontFamily: police.normal,
+    ...typo.footnote,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    color: couleurs.doux,
-    marginBottom: espace.xs,
+    color: couleurs.texteSecondaire,
+    marginBottom: espace[1],
   },
   onglets: {
     flexDirection: 'row',
     alignSelf: 'flex-start',
-    paddingBottom: espace.s,
+    paddingBottom: espace[2],
   },
   onglet: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.xs,
-    paddingHorizontal: espace.m,
-    paddingVertical: espace.xs,
+    gap: espace[1],
+    paddingHorizontal: espace[3],
+    paddingVertical: espace[1],
     /* La cible reste confortable même quand le mot est court. */
     minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   ongletTexte: {
-    fontSize: texte.corps,
-    fontFamily: police.normal,
+    ...typo.subhead,
   },
   trait: {
     position: 'absolute',
     bottom: 0,
-    height: 2.5,
-    borderRadius: 2,
+    height: dimensions.soulignement.epaisseur,
+    borderRadius: dimensions.soulignement.epaisseur,
   },
   ecran: {
     flex: 1,
   },
   ecranContenu: {
-    padding: espace.l,
-    // La barre d'onglets flotte au-dessus du contenu : sans cette marge, un
-    // bouton d'action en bas de page passe dessous et s'y fait couper.
-    paddingBottom: espace.xxl * 3,
+    paddingHorizontal: dimensions.ecran.margeH,
+    paddingTop: dimensions.ecran.margeHaut,
+    // Le bas de l'écran porte la barre d'onglets ou l'indicateur d'accueil :
+    // sans cette marge, un bouton d'action en fin de page s'y colle.
+    paddingBottom: espace[10],
   },
   barreClavier: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    backgroundColor: couleurs.fond,
-    borderTopWidth: 1,
-    borderTopColor: couleurs.bordure,
-    paddingVertical: espace.s,
-    paddingHorizontal: espace.l,
+    backgroundColor: couleurs.fondEcran,
+    paddingVertical: espace[2],
+    paddingHorizontal: dimensions.ecran.margeH,
   },
   barreBouton: {
     minHeight: CIBLE_MIN,
     justifyContent: 'center',
-    paddingHorizontal: espace.xl,
+    paddingHorizontal: espace[6],
     borderRadius: dimensions.bouton.rayon,
   },
   barreTexte: {
-    fontSize: dimensions.bouton.texte,
-    fontFamily: police.demi,
-    color: '#FFFFFF',
+    ...typo.headline,
+    color: couleurs.surAccent,
   },
   titre: {
-    fontSize: texte.enTete,
-    fontFamily: police.gras,
-    color: couleurs.texte,
+    ...typo.title1,
+    fontWeight: graisse.grasse,
+    color: couleurs.textePrincipal,
   },
   sousTitre: {
-    fontSize: dimensions.enTete.texte,
-    fontFamily: police.demi,
+    ...typo.footnote,
     textTransform: 'uppercase',
-    letterSpacing: dimensions.enTete.interLettre,
-    color: couleurs.doux,
+    color: couleurs.texteSecondaire,
     marginBottom: dimensions.enTete.margeBasse,
   },
   doux: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    lineHeight: 18,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
   },
   carte: {
-    backgroundColor: couleurs.carte,
+    backgroundColor: couleurs.fondEleve,
     borderRadius: dimensions.carte.rayon,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
     padding: dimensions.carte.remplissage,
     marginBottom: dimensions.carte.margeBasse,
   },
   separateur: {
-    height: 1,
-    backgroundColor: couleurs.bordure,
-    marginVertical: espace.l,
+    height: dimensions.filet.epaisseur,
+    backgroundColor: couleurs.filet,
+    marginVertical: espace[4],
   },
   vide: {
-    color: couleurs.doux,
-    fontSize: texte.lecture,
-    fontFamily: police.normal,
-    paddingVertical: espace.l,
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
+    paddingVertical: espace[4],
     textAlign: 'center',
   },
   champ: {
-    marginBottom: espace.m,
+    marginBottom: dimensions.formulaire.entreChamps,
   },
   label: {
-    fontSize: dimensions.etiquette.texte,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
     marginBottom: dimensions.etiquette.margeBasse,
   },
   champNu: {
-    /* Zéro délibéré : le champ nu est séparé du suivant par son trait, pas par
-       une marge. Ce n'est pas une valeur hors échelle, c'est l'absence de
-       valeur. */
+    /* Zéro délibéré : dans une section, les lignes sont séparées par le filet
+       que la section pose entre elles, pas par une marge. Ce n'est pas une
+       valeur hors échelle, c'est l'absence de valeur. */
     marginBottom: 0,
-    paddingVertical: espace.m,
-    borderBottomWidth: 1,
-    borderBottomColor: couleurs.bordurePale,
+    paddingVertical: dimensions.champNu.remplissageV,
   },
   saisieNue: {
     paddingVertical: dimensions.champNu.remplissageV,
     minHeight: dimensions.champNu.hauteur,
+    minWidth: CIBLE_MIN,
     justifyContent: 'center',
   },
-  /** Le champ posé dans une boîte qui porte déjà le cadre et l'unité. */
+  /**
+   * Le champ posé dans une boîte qui porte déjà le fond et l'unité. Il prend
+   * toute la hauteur de la boîte : c'est la boîte entière qu'on touche.
+   */
   saisieDansBoite: {
     flex: 1,
     padding: 0,
+    minHeight: dimensions.champ.hauteur,
+    minWidth: CIBLE_MIN,
   },
   avecSuffixe: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
+    gap: espace[2],
+    paddingVertical: 0,
   },
   suffixe: {
-    fontSize: texte.corps,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.body,
+    color: couleurs.texteSecondaire,
   },
+  /** Un fond blanc sur le gris de l'écran, et aucune bordure : le fond suffit. */
   saisieBoite: {
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
+    backgroundColor: couleurs.fondEleve,
     borderRadius: dimensions.champ.rayon,
     paddingHorizontal: dimensions.champ.remplissageH,
     paddingVertical: dimensions.champ.remplissageV,
     justifyContent: 'center',
     minHeight: dimensions.champ.hauteur,
+    minWidth: CIBLE_MIN,
   },
   saisieTexte: {
-    fontSize: dimensions.champ.texte,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   saisieMultiligne: {
     minHeight: dimensions.champMultiligne.hauteur,
     textAlignVertical: 'top',
   },
   aide: {
-    fontSize: texte.secondaire,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginTop: espace.xs,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
+    marginTop: espace[1],
   },
   avertissement: {
-    fontSize: texte.secondaire,
-    fontFamily: police.normal,
+    ...typo.footnote,
     color: couleurs.alerte,
-    marginTop: espace.xs,
+    marginTop: espace[1],
   },
   bouton: {
     borderRadius: dimensions.bouton.rayon,
@@ -1031,89 +1043,85 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    gap: espace.s,
+    gap: espace[2],
     minHeight: dimensions.bouton.hauteur,
-  },
-  boutonSecondaire: {
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
+    minWidth: CIBLE_MIN,
   },
   attenue: {
     opacity: 0.6,
   },
   boutonTexte: {
-    color: '#FFFFFF',
-    fontSize: dimensions.bouton.texte,
-    fontFamily: police.demi,
+    ...typo.headline,
+    color: couleurs.surAccent,
   },
   boutonTexteSecondaire: {
-    color: couleurs.texte,
+    color: couleurs.textePrincipal,
   },
   boutonTexteDanger: {
     color: couleurs.alerte,
   },
+  /** Une capsule blanche sur le gris de l'écran : le fond la marque, pas un contour. */
   puce: {
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    backgroundColor: couleurs.carte,
+    backgroundColor: couleurs.fondEleve,
     borderRadius: dimensions.capsule.rayon,
     minHeight: dimensions.capsule.hauteur,
+    minWidth: CIBLE_MIN,
     justifyContent: 'center',
     paddingHorizontal: dimensions.capsule.remplissageH,
-    marginRight: espace.s,
-    marginBottom: espace.s,
+    marginRight: espace[2],
+    marginBottom: espace[2],
   },
   puceTexte: {
-    fontSize: dimensions.capsule.texte,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.subhead,
+    color: couleurs.textePrincipal,
   },
   etiquette: {
-    borderRadius: 999,
-    paddingVertical: espace.xs,
-    paddingHorizontal: espace.m,
+    borderRadius: dimensions.capsule.rayon,
+    paddingVertical: espace[1],
+    paddingHorizontal: espace[3],
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.xs,
+    gap: espace[1],
   },
   etiquetteTexte: {
-    fontSize: texte.secondaire,
-    fontFamily: police.demi,
+    ...typo.caption1,
+    fontWeight: graisse.demi,
   },
   interrupteur: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: espace.m,
-    paddingVertical: espace.xs,
+    gap: espace[3],
+    paddingVertical: espace[1],
+    minHeight: CIBLE_MIN,
   },
   interrupteurTexte: {
     flex: 1,
   },
   interrupteurLabel: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   rangee: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: espace.s,
-    gap: espace.m,
+    paddingVertical: espace[2],
+    gap: espace[3],
   },
   rangeeLabel: {
-    fontSize: texte.corps,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.body,
+    color: couleurs.texteSecondaire,
     flexShrink: 1,
   },
   rangeeValeur: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
     flexShrink: 1,
     textAlign: 'right',
+  },
+  rangeeForte: {
+    fontWeight: graisse.demi,
   },
 });

@@ -218,7 +218,7 @@ export default function Statistiques() {
             rendre={(p, i) => (
               <>
                 {i > 0 && <Separateur />}
-                <Rangee label={p.nom} valeur={argent(p.revenu, langue)} accent />
+                <Rangee label={p.nom} valeur={argent(p.revenu, langue)} fort />
                 <Doux>
                   {[
                     t('compteur.quart', { count: p.quarts }),

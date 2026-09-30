@@ -154,7 +154,7 @@ describe('la conversion du poids, affichée', () => {
 });
 
 describe('la mise en forme', () => {
-  type Boite = { minHeight?: number; borderRadius?: number };
+  type Boite = { minHeight?: number; borderRadius?: number; backgroundColor?: string };
 
   function composer(element: ReturnType<typeof screen.getByLabelText>): Boite {
     const styles = [element.props.style].flat(3).filter(Boolean) as Record<string, unknown>[];
@@ -162,15 +162,15 @@ describe('la mise en forme', () => {
   }
 
   /**
-   * Le cadre effectif d'un champ.
+   * La boîte visible d'un champ : ce qui porte son fond.
    *
-   * Un champ avec unité vit dans une boîte qui porte le cadre pour lui ; un
+   * Un champ avec unité vit dans une boîte qui porte le fond pour lui ; un
    * champ sans unité le porte lui-même. On remonte donc d'un cran quand le
-   * champ n'a pas de hauteur à lui.
+   * champ n'a pas de fond à lui.
    */
   function boite(champ: ReturnType<typeof screen.getByLabelText>): Boite {
     const sien = composer(champ);
-    return sien.minHeight === undefined ? composer(champ.parent!) : sien;
+    return sien.backgroundColor === undefined ? composer(champ.parent!) : sien;
   }
 
   test('les deux champs de concentration ont la hauteur du champ Poids', async () => {

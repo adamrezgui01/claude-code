@@ -660,7 +660,6 @@ export default function FichePharmacie() {
                 place. Aucune n'est ouverte par défaut. */}
             <Section titre={t('pharmacie.fraisTypiques')}>
               <LigneDepliable
-                premiere
                 label={t('pharmacie.kilometrage')}
                 detail={
                   deplacementActif

@@ -370,7 +370,7 @@ export default function GenererFacture() {
             const totaux = calculerTotaux(options(g));
             return (
               <Carte key={g.pharmacie.id}>
-                <Rangee label={g.pharmacie.nom} valeur={argent(totaux.total)} accent />
+                <Rangee label={g.pharmacie.nom} valeur={argent(totaux.total)} fort />
                 <Doux>
                   {t('facture.resumeHonoraires', {
                     quarts: t('compteur.quart', { count: g.quarts.length }),

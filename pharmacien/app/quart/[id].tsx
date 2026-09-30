@@ -585,7 +585,7 @@ export default function FormulaireQuart() {
 
         <SousTitre>{t('quart.leQuart')}</SousTitre>
         <Carte>
-          <Rangee label={t('quart.pharmacie')} valeur={nomPharmacie} accent />
+          <Rangee label={t('quart.pharmacie')} valeur={nomPharmacie} fort />
           <Rangee label={t('quart.date')} valeur={formatDateLongue(date)} />
           <Rangee
             label={t('quart.horaire')}
@@ -635,7 +635,7 @@ export default function FormulaireQuart() {
             />
           ))}
           {totalFrais > 0 && (
-            <Rangee label={t('quart.totalFraisLabel')} valeur={argent(totalFrais)} accent />
+            <Rangee label={t('quart.totalFraisLabel')} valeur={argent(totalFrais)} fort />
           )}
         </Carte>
 
