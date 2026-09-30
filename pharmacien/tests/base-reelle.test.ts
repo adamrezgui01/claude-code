@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { factureParNumero, enregistrerFacture, prochainNumeroFacture } from '../src/db/factures';
 import { creerFrais, listerFrais, totalFrais } from '../src/db/frais';
 import { db, initialiserBase } from '../src/db/index';
-import { amorcerLiens, listerLiens, modifierLien } from '../src/db/liens';
+import { amorcerLiens, categories, listerLiens, modifierLien } from '../src/db/liens';
 import { creerPharmacie, obtenirPharmacie } from '../src/db/pharmacies';
 import {
   creerQuart,
@@ -190,6 +190,19 @@ describe('l’amorçage', () => {
     amorcerLiens();
     amorcerVeille();
     expect(listerSujets().length).toBeGreaterThan(0);
+  });
+
+  test('la liste des catégories se lit', () => {
+    // La fiche d'un lien la lit à l'ouverture. Elle comparait la catégorie à
+    // `""` — des guillemets doubles, que SQLite lit comme un **nom de
+    // colonne**. Certains builds le tolèrent et retombent sur une chaîne,
+    // d'autres plantent : `no such column: ""`. Celui-ci plante, et la fiche
+    // d'un lien avec lui.
+    initialiserBase();
+    amorcerLiens();
+    const liste = categories();
+    expect(liste).not.toContain('');
+    expect(liste).toEqual([...new Set(liste)]);
   });
 });
 

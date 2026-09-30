@@ -90,7 +90,7 @@ export function obtenirLien(id: number): Lien | null {
 export function categories(): string[] {
   return db
     .getAllSync<{ categorie: string }>(
-      'SELECT DISTINCT categorie FROM liens WHERE categorie <> "" ORDER BY categorie'
+      "SELECT DISTINCT categorie FROM liens WHERE categorie <> '' ORDER BY categorie"
     )
     .map((c) => c.categorie);
 }
