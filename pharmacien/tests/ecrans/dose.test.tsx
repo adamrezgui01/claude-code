@@ -35,6 +35,11 @@ const CHAMPS = {
   format: 'Format de la bouteille (mL)',
 };
 
+/** Les trois champs facultatifs vivent derrière la ligne « Options », repliée. */
+async function ouvrirOptions() {
+  await fireEvent.press(screen.getByText('Options'));
+}
+
 /** Le cas 1 du prompt V2.4 : 18 kg, 90 mg/kg/jour, TID, 250 mg/5 mL, 7 jours. */
 async function remplirLeCasCourant() {
   await fireEvent.changeText(screen.getByLabelText(CHAMPS.poids), '18');
@@ -79,6 +84,7 @@ describe('le cas courant, affiché à l’écran', () => {
     await remplirLeCasCourant();
     expect(screen.queryByText('À servir')).toBeNull();
 
+    await ouvrirOptions();
     await fireEvent.changeText(screen.getByLabelText(CHAMPS.duree), '7');
     expect(screen.getByText('À servir')).toBeTruthy();
     expect(screen.getByText('226,8 mL')).toBeTruthy();
@@ -87,6 +93,7 @@ describe('le cas courant, affiché à l’écran', () => {
   test('les bouteilles n’apparaissent qu’avec un format', async () => {
     await rendre(<CalculateurDose />);
     await remplirLeCasCourant();
+    await ouvrirOptions();
     await fireEvent.changeText(screen.getByLabelText(CHAMPS.duree), '7');
     expect(screen.queryByText(/\d+ bouteille/)).toBeNull();
 
@@ -197,32 +204,32 @@ describe('la mise en forme', () => {
 
   test('tous les champs de saisie partagent la même hauteur', async () => {
     await rendre(<CalculateurDose />);
+    await ouvrirOptions();
     const hauteurs = new Set(
       Object.values(CHAMPS).map((label) => boite(screen.getByLabelText(label)).minHeight)
     );
     expect(hauteurs.size).toBe(1);
   });
 
-  test('sans raccourci enregistré ni calcul, la section est absente', async () => {
+  test('sans calcul, rien à enregistrer', async () => {
     await rendre(<CalculateurDose />);
-    expect(screen.queryByText('Raccourci')).toBeNull();
+    expect(screen.queryByText('Enregistrer comme raccourci')).toBeNull();
   });
 
-  test('dès qu’un calcul existe, la section et son « + » paraissent', async () => {
-    // Sans « + » quelque part, le premier raccourci ne pourrait jamais être
-    // créé. La section n'apparaît que s'il y a à appliquer ou à enregistrer.
+  test('dès qu’un calcul existe, il s’enregistre comme raccourci, à côté du résultat', async () => {
+    // Sans cette commande quelque part, le premier raccourci ne pourrait
+    // jamais être créé. Elle vit avec le résultat : c'est lui qu'on garde.
     await rendre(<CalculateurDose />);
     await remplirLeCasCourant();
-    expect(screen.getByText('Raccourci')).toBeTruthy();
-    expect(screen.getByLabelText('Raccourci')).toBeTruthy();
+    expect(screen.getByText('Enregistrer comme raccourci')).toBeTruthy();
   });
 
-  test('le « + » ouvre le champ du nom, là où il est', async () => {
+  test('elle ouvre le champ du nom, là où elle est', async () => {
     await rendre(<CalculateurDose />);
     await remplirLeCasCourant();
     expect(screen.queryByLabelText('Nom du raccourci')).toBeNull();
 
-    await fireEvent.press(screen.getByLabelText('Raccourci'));
+    await fireEvent.press(screen.getByText('Enregistrer comme raccourci'));
     expect(screen.getByLabelText('Nom du raccourci')).toBeTruthy();
   });
 
@@ -246,6 +253,7 @@ describe('le dépassement, à l’écran', () => {
   async function depasser(maximum: string) {
     await rendre(<CalculateurDose />);
     await remplirLeCasCourant();
+    await ouvrirOptions();
     await fireEvent.changeText(screen.getByLabelText(MAX), maximum);
   }
 
@@ -303,5 +311,45 @@ describe('le dépassement, à l’écran', () => {
   test('avec un maximum de 2000, rien non plus', async () => {
     await depasser('2000');
     expect(screen.queryByText(/Dépasse la dose maximale/)).toBeNull();
+  });
+});
+
+describe('ce que le V2.6 a retiré', () => {
+  test('aucun en-tête de section : l’espace blanc fait le travail', async () => {
+    // Quatre en-têtes pour six questions. « Patient » chapeautait un seul
+    // champ ; « Posologie » et « Concentration » ne séparaient rien que
+    // l'espace ne sépare pas.
+    await rendre(<CalculateurDose />);
+    for (const titre of ['Patient', 'Posologie', 'Facultatif', 'Raccourci']) {
+      expect(screen.queryByText(titre)).toBeNull();
+    }
+    expect(screen.queryAllByRole('header')).toHaveLength(0);
+  });
+
+  test('9 — la section facultative est repliée à l’ouverture', async () => {
+    await rendre(<CalculateurDose />);
+    expect(screen.getByText('Options')).toBeTruthy();
+    for (const label of [CHAMPS.duree, CHAMPS.format, 'Dose maximale quotidienne (mg)']) {
+      expect(screen.queryByLabelText(label)).toBeNull();
+    }
+  });
+
+  test('une tape sur « Options » la déplie, une seconde la replie', async () => {
+    await rendre(<CalculateurDose />);
+    await ouvrirOptions();
+    expect(screen.getByLabelText(CHAMPS.duree)).toBeTruthy();
+    await ouvrirOptions();
+    expect(screen.queryByLabelText(CHAMPS.duree)).toBeNull();
+  });
+
+  test('une valeur saisie dans les options compte encore une fois repliées', async () => {
+    // Replier ne vide rien : la durée continue de donner la quantité à servir,
+    // et elle se voit dans le résultat.
+    await rendre(<CalculateurDose />);
+    await remplirLeCasCourant();
+    await ouvrirOptions();
+    await fireEvent.changeText(screen.getByLabelText(CHAMPS.duree), '7');
+    await ouvrirOptions();
+    expect(screen.getByText('226,8 mL')).toBeTruthy();
   });
 });

@@ -276,6 +276,7 @@ describe('les écrans passés aux jetons', () => {
  */
 const PASSES_V26: Record<string, string[]> = {
   Charpente: ['src/ui/composants.tsx', 'src/ui/Filet.tsx'],
+  Clinique: ['app/clinique/dose.tsx'],
 };
 
 const lire = (f: string) => readFileSync(f, 'utf8');

@@ -22,8 +22,8 @@ import {
   type UniteDose,
 } from '../../src/lib/dose';
 import { analyserNombre, nombreFixe } from '../../src/lib/format';
-import { Bouton, Carte, Champ, Doux, Ecran, Fondu, Puce, Separateur, SousTitre } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../../src/ui/theme';
+import { Bouton, Carte, Champ, Doux, Ecran, Fondu, Puce } from '../../src/ui/composants';
+import { couleurs, dimensions, espace, graisse, icone, typo, CIBLE_MIN } from '../../src/ui/theme';
 
 /**
  * Le calculateur de dose.
@@ -40,7 +40,6 @@ const NOMS_PRISES: Record<number, string> = { 1: 'DIE', 2: 'BID', 3: 'TID', 4: '
 
 export default function CalculateurDose() {
   const { t, langue } = useTextes();
-  const accent = useAccent();
 
   const [poids, setPoids] = useState('');
   const [unitePoids, setUnitePoids] = useState<'kg' | 'lb'>('kg');
@@ -54,8 +53,13 @@ export default function CalculateurDose() {
   const [maxParJour, setMaxParJour] = useState('');
   const [raccourcis, setRaccourcis] = useState(listerRaccourcis);
   const [nomRaccourci, setNomRaccourci] = useState('');
-  /** Le « + » ouvre le champ du nom, ici même, plutôt qu'ailleurs. */
+  /** « Enregistrer comme raccourci » ouvre le champ du nom, ici même. */
   const [nommer, setNommer] = useState(false);
+  /**
+   * Trois champs qu'on remplit rarement. Repliés à l'ouverture : ils ne
+   * prennent plus le tiers de l'écran en permanence.
+   */
+  const [options, setOptions] = useState(false);
 
   /** Un renvoi par champ de la chaîne, pour ouvrir le suivant depuis le précédent. */
   const poidsRef = useRef<TextInput | null>(null);
@@ -159,189 +163,172 @@ export default function CalculateurDose() {
   return (
     <Ecran>
       <Stack.Screen options={{ title: t('dose.titre') }} />
-      <Doux>{t('dose.avis')}</Doux>
+      <View style={styles.groupe}>
+        <Doux>{t('dose.avis')}</Doux>
+      </View>
 
       {/*
-        Une section comme les autres, avec son en-tête aligné sur PATIENT et
-        POSOLOGIE. Avant, la capsule flottait entre l'avertissement et
-        « PATIENT » sans rien qui dise ce qu'elle était : on la lisait comme
-        un titre de section mal aligné.
-
-        Elle n'apparaît que s'il y a quelque chose à appliquer ou quelque
-        chose à enregistrer. Sans l'un ni l'autre, un en-tête vide.
+        Les raccourcis enregistrés, en tête, sans en-tête : chacun porte son
+        nom, et une capsule qui s'appelle « Amox 90 » dit ce qu'elle fait.
+        Enregistrer le calcul en cours se fait plus bas, à côté du résultat —
+        c'est lui qu'on enregistre.
       */}
-      {(raccourcis.length > 0 || resultat !== null) && (
-        <>
-          <SousTitre>{t('dose.raccourci')}</SousTitre>
-          <View style={styles.raccourcis}>
-            {raccourcis.map((raccourci) => (
-              <Pressable
-                key={raccourci.id}
-                onPress={() => appliquer(raccourci)}
-                onLongPress={() => retirer(raccourci)}
-                accessibilityRole="button"
-                style={({ pressed }) => [
-                  styles.raccourci,
-                  { borderColor: accent },
-                  pressed && { opacity: 0.6 },
-                ]}>
-                <Text style={[styles.raccourciTexte, { color: accent }]}>{raccourci.nom}</Text>
-              </Pressable>
-            ))}
-            {resultat !== null && (
-              <Pressable
-                onPress={() => setNommer(!nommer)}
-                accessibilityRole="button"
-                accessibilityLabel={t('dose.raccourci')}
-                style={({ pressed }) => [
-                  styles.raccourci,
-                  { borderColor: accent },
-                  pressed && { opacity: 0.6 },
-                ]}>
-                <Ionicons name={nommer ? 'close' : 'add'} size={18} color={accent} />
-              </Pressable>
-            )}
+      {raccourcis.length > 0 && (
+        <View style={[styles.raccourcis, styles.groupe]}>
+          {raccourcis.map((raccourci) => (
+            <Pressable
+              key={raccourci.id}
+              onPress={() => appliquer(raccourci)}
+              onLongPress={() => retirer(raccourci)}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.raccourci, pressed && styles.enfonce]}>
+              <Text style={styles.raccourciTexte}>{raccourci.nom}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
+      {/*
+        Trois groupes, et aucun en-tête : « Patient » ne chapeautait qu'un
+        champ, « Posologie » et « Concentration » guère plus. L'espace entre
+        les groupes fait le travail que faisaient les titres et les filets.
+      */}
+      <View style={styles.groupe}>
+        <Champ
+          label={t('dose.poids')}
+          valeur={poids}
+          onChange={setPoids}
+          clavier="decimal-pad"
+          placeholder={t('dose.poidsPlaceholder')}
+          champRef={champs.poids}
+          onTermine={() => enchainer('poids')}
+        />
+        <View style={styles.bascule}>
+          {(['kg', 'lb'] as const).map((u) => (
+            <Puce
+              key={u}
+              texte={t(`dose.${u}`)}
+              actif={unitePoids === u}
+              onPress={() => setUnitePoids(u)}
+            />
+          ))}
+        </View>
+        {/* La conversion s'affiche en permanence : la bascule ne remplace jamais
+            la valeur en silence. */}
+        {poidsSaisi > 0 && (
+          <Text style={styles.conversion}>
+            {unitePoids === 'kg'
+              ? t('dose.enLivres', { valeur: nombre(enLivres(poidsSaisi), 1) })
+              : t('dose.enKilos', { valeur: nombre(poidsKg, 2) })}
+          </Text>
+        )}
+      </View>
+
+      <View style={styles.groupe}>
+        <Champ
+          label={t('dose.dose')}
+          valeur={dose}
+          onChange={setDose}
+          clavier="decimal-pad"
+          aide={t('dose.doseAide')}
+          champRef={champs.dose}
+          onTermine={() => enchainer('dose')}
+        />
+        <View style={styles.bascule}>
+          {(['parJour', 'parPrise'] as const).map((u) => (
+            <Puce key={u} texte={t(`dose.${u}`)} actif={unite === u} onPress={() => setUnite(u)} />
+          ))}
+        </View>
+        <View style={styles.bascule}>
+          {PRISES.map((n) => (
+            <Puce
+              key={n}
+              texte={NOMS_PRISES[n]}
+              actif={prises === n}
+              onPress={() => setPrises(n)}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/*
+        Une étiquette de champ, comme « Poids » et « Dose », et non plus un
+        en-tête de section en capitales : ce qu'elle nomme est un champ en deux
+        moitiés, pas un groupe.
+      */}
+      <View style={styles.groupe}>
+        <Text style={styles.etiquette}>{t('dose.concentration')}</Text>
+        <View style={styles.concentration}>
+          <View style={styles.moitie}>
+            <Champ
+              label={t('dose.mg')}
+              suffixe={t('dose.mg')}
+              valeur={concentrationMg}
+              onChange={setConcentrationMg}
+              clavier="decimal-pad"
+              champRef={champs.concentrationMg}
+              onTermine={() => enchainer('concentrationMg')}
+            />
           </View>
-
-          {nommer && (
-            <>
-              <Doux>{t('dose.raccourciAide')}</Doux>
-              <Champ
-                label={t('dose.nomRaccourci')}
-                valeur={nomRaccourci}
-                onChange={setNomRaccourci}
-                placeholder={t('dose.nomRaccourciPlaceholder')}
-                onTermine={enregistrerRaccourci}
-              />
-              <Bouton
-                titre={t('commun.enregistrer')}
-                variante="secondaire"
-                icone={<Ionicons name="bookmark-outline" size={18} color={accent} />}
-                onPress={enregistrerRaccourci}
-              />
-            </>
-          )}
-          <Separateur />
-        </>
-      )}
-
-      <SousTitre>{t('dose.patient')}</SousTitre>
-      <Champ
-        label={t('dose.poids')}
-        valeur={poids}
-        onChange={setPoids}
-        clavier="decimal-pad"
-        placeholder={t('dose.poidsPlaceholder')}
-        champRef={champs.poids}
-        onTermine={() => enchainer('poids')}
-      />
-      <View style={styles.bascule}>
-        {(['kg', 'lb'] as const).map((u) => (
-          <Puce
-            key={u}
-            texte={t(`dose.${u}`)}
-            actif={unitePoids === u}
-            onPress={() => setUnitePoids(u)}
-          />
-        ))}
-      </View>
-      {/* La conversion s'affiche en permanence : la bascule ne remplace jamais
-          la valeur en silence. */}
-      {poidsSaisi > 0 && (
-        <Text style={styles.conversion}>
-          {unitePoids === 'kg'
-            ? t('dose.enLivres', { valeur: nombre(enLivres(poidsSaisi), 1) })
-            : t('dose.enKilos', { valeur: nombre(poidsKg, 2) })}
-        </Text>
-      )}
-
-      <Separateur />
-      <SousTitre>{t('dose.posologie')}</SousTitre>
-      <Champ
-        label={t('dose.dose')}
-        valeur={dose}
-        onChange={setDose}
-        clavier="decimal-pad"
-        aide={t('dose.doseAide')}
-        champRef={champs.dose}
-        onTermine={() => enchainer('dose')}
-      />
-      <View style={styles.bascule}>
-        {(['parJour', 'parPrise'] as const).map((u) => (
-          <Puce key={u} texte={t(`dose.${u}`)} actif={unite === u} onPress={() => setUnite(u)} />
-        ))}
-      </View>
-      <View style={styles.bascule}>
-        {PRISES.map((n) => (
-          <Puce
-            key={n}
-            texte={NOMS_PRISES[n]}
-            actif={prises === n}
-            onPress={() => setPrises(n)}
-          />
-        ))}
+          <Text style={styles.barreOblique}>/</Text>
+          <View style={styles.moitie}>
+            <Champ
+              label={t('dose.ml')}
+              suffixe={t('dose.ml')}
+              valeur={concentrationMl}
+              onChange={setConcentrationMl}
+              clavier="decimal-pad"
+              champRef={champs.concentrationMl}
+              onTermine={() => enchainer('concentrationMl')}
+            />
+          </View>
+        </View>
       </View>
 
-      <Separateur />
-      <SousTitre>{t('dose.concentration')}</SousTitre>
       {/*
-        Une rangée, deux champs de largeur égale, la même hauteur et le même
-        cadre que le champ Poids. Les deux capsules blanches d'avant, au
-        milieu d'un écran dont tout le reste fait la pleine largeur, n'avaient
-        pas l'air du même écran.
+        Ce qui s'appelait « Facultatif » : une seule ligne, repliée. Ce qu'on
+        y remplit se voit de toute façon dans le résultat — la quantité à
+        servir, les bouteilles, le dépassement du maximum.
       */}
-      <View style={styles.concentration}>
-        <View style={styles.moitie}>
+      <Pressable
+        onPress={() => setOptions(!options)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: options }}
+        style={({ pressed }) => [styles.options, pressed && styles.enfonce]}>
+        <Text style={styles.optionsTexte}>{t('dose.options')}</Text>
+        <Ionicons
+          name={options ? 'chevron-up' : 'chevron-down'}
+          size={icone.courante}
+          color={couleurs.texteSecondaire}
+        />
+      </Pressable>
+      {options && (
+        <Fondu style={styles.groupe}>
           <Champ
-            label={t('dose.mg')}
-            suffixe={t('dose.mg')}
-            valeur={concentrationMg}
-            onChange={setConcentrationMg}
-            clavier="decimal-pad"
-            champRef={champs.concentrationMg}
-            onTermine={() => enchainer('concentrationMg')}
+            label={t('dose.duree')}
+            valeur={jours}
+            onChange={setJours}
+            clavier="number-pad"
           />
-        </View>
-        <Text style={styles.barreOblique}>/</Text>
-        <View style={styles.moitie}>
           <Champ
-            label={t('dose.ml')}
-            suffixe={t('dose.ml')}
-            valeur={concentrationMl}
-            onChange={setConcentrationMl}
+            label={t('dose.format')}
+            valeur={formatMl}
+            onChange={setFormatMl}
             clavier="decimal-pad"
-            champRef={champs.concentrationMl}
-            onTermine={() => enchainer('concentrationMl')}
           />
-        </View>
-      </View>
-
-      <Separateur />
-      <SousTitre>{t('dose.facultatif')}</SousTitre>
-      <Champ
-        label={t('dose.duree')}
-        valeur={jours}
-        onChange={setJours}
-        clavier="number-pad"
-      />
-      <Champ
-        label={t('dose.format')}
-        valeur={formatMl}
-        onChange={setFormatMl}
-        clavier="decimal-pad"
-      />
-      <Champ
-        label={t('dose.maximum')}
-        valeur={maxParJour}
-        onChange={setMaxParJour}
-        clavier="decimal-pad"
-      />
+          <Champ
+            label={t('dose.maximum')}
+            valeur={maxParJour}
+            onChange={setMaxParJour}
+            clavier="decimal-pad"
+          />
+        </Fondu>
+      )}
 
       {resultat === null ? (
         <Doux>{t('dose.incomplet')}</Doux>
       ) : (
         <Fondu>
-          <Separateur />
           <Carte>
             {/* La chaîne complète, pas seulement la réponse. */}
             <Etape
@@ -370,10 +357,15 @@ export default function CalculateurDose() {
               alerte={resultat.depassement !== null}
             />
 
+            {/*
+              La ligne la plus lue de l'écran : c'est elle qui décide de ce
+              qu'on prépare. Elle se distingue par sa taille, plus par un cadre
+              mauve.
+            */}
             {resultat.quantiteTotale !== null && (
-              <View style={[styles.servir, { borderColor: accent }]}>
+              <View style={styles.servir}>
                 <Text style={styles.servirTitre}>{t('dose.aServir')}</Text>
-                <Text style={[styles.servirValeur, { color: accent }]}>
+                <Text style={styles.servirValeur}>
                   {t('dose.mlTotal', { valeur: nombre(resultat.quantiteTotale) })}
                 </Text>
               </View>
@@ -425,6 +417,39 @@ export default function CalculateurDose() {
               </Text>
             ))}
 
+          {/* Enregistrer ce calcul sous un nom. Jamais le poids. */}
+          <Pressable
+            onPress={() => setNommer(!nommer)}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.enregistrer, pressed && styles.enfonce]}>
+            <Ionicons
+              name={nommer ? 'close' : 'bookmark-outline'}
+              size={icone.courante}
+              color={couleurs.textePrincipal}
+            />
+            <Text style={styles.enregistrerTexte}>
+              {nommer ? t('commun.annuler') : t('dose.enregistrerRaccourci')}
+            </Text>
+          </Pressable>
+          {nommer && (
+            <>
+              <View style={styles.aideRaccourci}>
+                <Doux>{t('dose.raccourciAide')}</Doux>
+              </View>
+              <Champ
+                label={t('dose.nomRaccourci')}
+                valeur={nomRaccourci}
+                onChange={setNomRaccourci}
+                placeholder={t('dose.nomRaccourciPlaceholder')}
+                onTermine={enregistrerRaccourci}
+              />
+              <Bouton
+                titre={t('commun.enregistrer')}
+                variante="secondaire"
+                onPress={enregistrerRaccourci}
+              />
+            </>
+          )}
         </Fondu>
       )}
     </Ecran>
@@ -456,68 +481,89 @@ function Etape({
 }
 
 const styles = StyleSheet.create({
-  bascule: { flexDirection: 'row', flexWrap: 'wrap', gap: espace.s, marginTop: espace.s },
+  /** Entre deux groupes, l'espace qui remplace les en-têtes et les filets. */
+  groupe: { marginBottom: dimensions.formulaire.entreGroupes },
+  bascule: { flexDirection: 'row', flexWrap: 'wrap' },
   conversion: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginTop: espace.xs,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
   },
-  concentration: { flexDirection: 'row', alignItems: 'center', gap: espace.s },
+  etiquette: {
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
+    marginBottom: dimensions.etiquette.margeBasse,
+  },
+  concentration: { flexDirection: 'row', alignItems: 'center', gap: espace[2] },
   etapeAlerte: { color: couleurs.alerte },
-  depassement: { marginTop: espace.s, gap: espace.xs },
+  depassement: { marginTop: espace[2], gap: espace[1] },
   comparaison: {
     flexDirection: 'row',
     alignItems: 'baseline',
     flexWrap: 'wrap',
-    gap: espace.s,
+    gap: espace[2],
   },
   comparaisonNom: {
-    fontSize: texte.courant,
-    fontFamily: police.demi,
-    color: couleurs.doux,
+    ...typo.footnote,
+    fontWeight: graisse.demi,
+    color: couleurs.texteSecondaire,
   },
   comparaisonValeur: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   moitie: { flex: 1 },
   barreOblique: {
-    fontSize: texte.titre,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.title3,
+    color: couleurs.texteSecondaire,
   },
-  raccourcis: { flexDirection: 'row', flexWrap: 'wrap', gap: espace.s, marginTop: espace.s },
+  raccourcis: { flexDirection: 'row', flexWrap: 'wrap', gap: espace[2] },
+  /** Une capsule blanche sur le gris, comme celles qui se choisissent. */
   raccourci: {
-    borderWidth: 1,
-    borderRadius: rayon,
-    paddingVertical: espace.s,
-    paddingHorizontal: espace.m,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.capsule.rayon,
+    paddingHorizontal: dimensions.capsule.remplissageH,
     minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
     justifyContent: 'center',
   },
-  raccourciTexte: { fontSize: texte.lecture, fontFamily: police.demi },
-  etape: { paddingVertical: espace.xs },
-  etapeLigne: { flexDirection: 'row', justifyContent: 'space-between', gap: espace.m },
-  etapeGauche: { fontSize: texte.lecture, fontFamily: police.normal, color: couleurs.doux, flex: 1 },
-  etapeDroite: { fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
-  etapeSous: { fontSize: texte.secondaire, fontFamily: police.normal, color: couleurs.doux, textAlign: 'right' },
-  /** La ligne la plus lue de l'écran : c'est elle qui décide de ce qu'on prépare. */
-  servir: {
-    borderWidth: 1.5,
-    borderRadius: rayon,
-    padding: espace.m,
-    marginTop: espace.m,
+  raccourciTexte: { ...typo.subhead, fontWeight: graisse.demi, color: couleurs.textePrincipal },
+  enfonce: { opacity: 0.6 },
+  options: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.xs,
+    justifyContent: 'space-between',
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    marginBottom: dimensions.formulaire.entreChamps,
   },
-  servirTitre: { fontSize: texte.courant, fontFamily: police.demi, color: couleurs.doux },
-  servirValeur: { fontSize: texte.enTete, fontFamily: police.gras },
+  optionsTexte: { ...typo.body, color: couleurs.textePrincipal },
+  etape: { paddingVertical: espace[1] },
+  etapeLigne: { flexDirection: 'row', justifyContent: 'space-between', gap: espace[3] },
+  etapeGauche: { ...typo.subhead, color: couleurs.texteSecondaire, flex: 1 },
+  etapeDroite: { ...typo.body, fontWeight: graisse.demi, color: couleurs.textePrincipal },
+  etapeSous: { ...typo.caption1, color: couleurs.texteSecondaire, textAlign: 'right' },
+  servir: {
+    marginTop: espace[3],
+    alignItems: 'center',
+    gap: espace[1],
+  },
+  servirTitre: { ...typo.footnote, color: couleurs.texteSecondaire },
+  servirValeur: { ...typo.title1, fontWeight: graisse.grasse, color: couleurs.textePrincipal },
   alerte: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
     color: couleurs.alerte,
-    marginTop: espace.s,
+    marginTop: espace[2],
   },
+  enregistrer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace[2],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    marginTop: espace[4],
+  },
+  enregistrerTexte: { ...typo.body, color: couleurs.textePrincipal },
+  aideRaccourci: { marginBottom: espace[2] },
 });

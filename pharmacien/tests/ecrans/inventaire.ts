@@ -274,20 +274,53 @@ function contientEnTete(n: Noeud | string): boolean {
 }
 
 /**
- * Ce qu'un en-tête peut chapeauter : un champ, un interrupteur, une case, une
- * ligne qu'on touche. Une rangée de capsules qui se choisissent l'une l'autre
- * — kg ou lb — est **un** champ, pas deux.
+ * Ce qu'un en-tête peut chapeauter, compté comme le prompt le compte.
+ *
+ * Un champ, c'est une question posée à l'usager : un champ de saisie avec ce
+ * qui le règle, un interrupteur, une case, une ligne qu'on touche.
+ *
+ * - La rangée de capsules qui suit un champ de saisie **en fait partie** :
+ *   « Poids » et sa bascule kg/lb sont un seul champ. C'est ce qui fait dire
+ *   au prompt que « Patient chapeaute un seul champ ».
+ * - Une rangée de capsules sans champ de saisie devant elle est un champ à
+ *   elle seule — kg ou lb, jamais deux.
+ * - Deux champs de saisie posés sur la même ligne sont les deux moitiés d'un
+ *   seul : « 250 mg / 5 mL » est une concentration.
  */
 function champs(noeuds: (Noeud | string)[]): Set<unknown> {
   const vus = new Set<unknown>();
-  const aller = (x: Noeud | string, parent: Noeud | null) => {
+  let courant: { cle: unknown; saisie: boolean; ligne: Noeud | null } | null = null;
+  // La rangée la plus extérieure : la boîte d'un champ avec unité est
+  // elle-même une rangée, et deux moitiés ne partagent que celle du dehors.
+  const ligneDe = (ancetres: Noeud[]) => ancetres.find((a) => aplatir(a).flexDirection === 'row') ?? null;
+  const aller = (x: Noeud | string, ancetres: Noeud[]) => {
     if (typeof x === 'string' || x.type === 'RCTInputAccessoryView') return;
+    const parent = ancetres[ancetres.length - 1] ?? null;
     const etat = x.props.accessibilityState as Record<string, unknown> | undefined;
-    if (x.type === 'TextInput' || x.type === 'RCTSwitch') vus.add(x);
-    else if (estInteractif(x)) vus.add(etat && 'selected' in etat && parent ? parent : x);
-    (x.children ?? []).forEach((c) => aller(c, x));
+    const selection = !!etat && 'selected' in etat;
+    if (x.type === 'TextInput') {
+      const ligne = ligneDe(ancetres);
+      if (!(courant?.saisie && ligne && courant.ligne === ligne)) {
+        courant = { cle: x, saisie: true, ligne };
+        vus.add(x);
+      }
+    } else if (x.type === 'RCTSwitch') {
+      courant = { cle: x, saisie: false, ligne: null };
+      vus.add(x);
+    } else if (estInteractif(x)) {
+      if (selection && courant?.saisie) {
+        // La bascule d'un champ : elle lui appartient.
+      } else if (selection && parent && courant?.cle === parent) {
+        // Une autre capsule de la même rangée.
+      } else {
+        const cle = selection && parent ? parent : x;
+        courant = { cle, saisie: false, ligne: null };
+        vus.add(cle);
+      }
+    }
+    (x.children ?? []).forEach((c) => aller(c, [...ancetres, x]));
   };
-  noeuds.forEach((x) => aller(x, null));
+  noeuds.forEach((x) => aller(x, []));
   return vus;
 }
 

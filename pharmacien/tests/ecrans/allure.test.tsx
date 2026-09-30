@@ -147,7 +147,7 @@ async function monter(ecran: Ecran) {
  * Les écrans déjà passés au V2.6. La liste s'allonge d'un onglet par commit :
  * une refonte qui casse une mise en page doit rester trouvable.
  */
-const PASSES_V26: string[] = [];
+const PASSES_V26: string[] = ['Clinique · Calculateur de dose'];
 
 /** Relevé au montage de chaque écran, et lu par le test 11 plus bas. */
 const formesRelevees = new Map<string, string[]>();
