@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { listerFraisPeriode } from '../../src/db/frais';
 import { listerPharmacies, listerPharmaciesRecentes } from '../../src/db/pharmacies';
@@ -99,25 +99,25 @@ export default function Statistiques() {
 
   return (
     <Ecran>
-      {/* Libellés courts : un trait qui glisse ne peut pas suivre sur deux
-          rangées, donc la rangée doit tenir sur une seule ligne. Cinq choix ne
-          tiennent pas sur la largeur d'un petit téléphone : la rangée défile à
-          l'horizontale, et « 12 mois » vient en premier parce que c'est celui
-          qui est actif à l'ouverture. */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <Onglets
-          libelle={t('statistiques.periode')}
-          options={[
-            { valeur: 'douzeMois' as const, texte: t('statistiques.periodeDouzeMois') },
-            { valeur: 'mois' as const, texte: t('statistiques.ceMois') },
-            { valeur: 'moisDernier' as const, texte: t('statistiques.moisDernier') },
-            { valeur: 'trimestre' as const, texte: t('statistiques.troisMois') },
-            { valeur: 'personnalisee' as const, texte: t('commun.autre') },
-          ]}
-          valeur={preset}
-          onChange={setPreset}
-        />
-      </ScrollView>
+      {/* Dans l'ordre du temps, du plus court au plus long : Mois dernier ·
+          Ce mois · 3 mois · 12 mois · Autre. 12 mois reste choisi à
+          l'ouverture sans être le premier. La rangée ne défile pas : un onglet
+          coupé au bord de l'écran ne se devine pas. Les cinq se partagent la
+          largeur, remplissage réduit d'abord, texte ensuite. */}
+      <Onglets
+        libelle={t('statistiques.periode')}
+        testID="periodes"
+        remplir
+        options={[
+          { valeur: 'moisDernier' as const, texte: t('statistiques.moisDernier') },
+          { valeur: 'mois' as const, texte: t('statistiques.ceMois') },
+          { valeur: 'trimestre' as const, texte: t('statistiques.troisMois') },
+          { valeur: 'douzeMois' as const, texte: t('statistiques.periodeDouzeMois') },
+          { valeur: 'personnalisee' as const, texte: t('commun.autre') },
+        ]}
+        valeur={preset}
+        onChange={setPreset}
+      />
       {preset === 'personnalisee' ? (
         <>
           <SelecteurDate label={t('commun.du')} valeur={debutPerso} onChange={setDebutPerso} />

@@ -553,6 +553,9 @@ export function Bouton({
   );
 }
 
+/** Le texte d'un onglet rapetisse au plus de 15 % avant de se couper. */
+const ECHELLE_MIN_ONGLET = 0.85;
+
 /**
  * Rangée d'onglets. Le trait mauve glisse d'une option à l'autre au lieu de
  * sauter, et le libellé actif prend la couleur en même temps que le trait
@@ -566,6 +569,8 @@ export function Onglets<T extends string>({
   options,
   valeur,
   onChange,
+  remplir,
+  testID,
 }: {
   /** Ce que la rangée règle. « A – Z » posé seul ne dit pas qu'il s'agit du tri. */
   libelle?: string;
@@ -577,6 +582,13 @@ export function Onglets<T extends string>({
   options: { valeur: T; texte: string; icone?: ComponentProps<typeof Ionicons>['name'] }[];
   valeur: T;
   onChange: (v: T) => void;
+  /**
+   * La rangée occupe toute la largeur, et ses onglets se la partagent : aucun
+   * ne sort de l'écran. Le remplissage horizontal se réduit d'abord ; le texte
+   * ne rapetisse qu'en dernier recours, et ne se coupe jamais.
+   */
+  remplir?: boolean;
+  testID?: string;
 }) {
   const accent = useAccent();
   const actif = Math.max(0, options.findIndex((o) => o.valeur === valeur));
@@ -604,7 +616,7 @@ export function Onglets<T extends string>({
   return (
     <View style={styles.ongletsBloc}>
       {!!libelle && <Text style={styles.ongletsLibelle}>{libelle}</Text>}
-      <View style={styles.onglets}>
+      <View testID={testID} style={[styles.onglets, remplir && styles.ongletsRemplis]}>
         {options.map((option, i) => {
           const couleur = pretes
             ? position.interpolate({
@@ -627,7 +639,7 @@ export function Onglets<T extends string>({
                   return suivantes;
                 });
               }}
-              style={styles.onglet}
+              style={[styles.onglet, remplir && styles.ongletPartage]}
               accessibilityRole="button"
               accessibilityState={{ selected: i === actif }}
               hitSlop={6}>
@@ -639,6 +651,9 @@ export function Onglets<T extends string>({
                 />
               )}
               <Animated.Text
+                numberOfLines={remplir ? 1 : undefined}
+                adjustsFontSizeToFit={remplir}
+                minimumFontScale={remplir ? ECHELLE_MIN_ONGLET : undefined}
                 style={[
                   styles.ongletTexte,
                   { color: couleur },
@@ -890,6 +905,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignSelf: 'flex-start',
     paddingBottom: espace[2],
+  },
+  ongletsRemplis: {
+    alignSelf: 'stretch',
+  },
+  /* Chaque onglet part de sa largeur naturelle, prend sa part de ce qui reste,
+     et cède la sienne quand la rangée déborde. */
+  ongletPartage: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+    justifyContent: 'center',
+    paddingHorizontal: espace[1],
   },
   onglet: {
     flexDirection: 'row',
