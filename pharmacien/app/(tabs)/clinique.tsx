@@ -22,7 +22,7 @@ import {
 import { useTextes } from '../../src/i18n';
 import { aujourdhui } from '../../src/lib/dates';
 import { titreDuLien } from '../../src/lib/liens';
-import { ouvrirSource, partagerSource } from '../../src/lib/veille/ouvrir';
+import { ouvrirPageOfficielle, ouvrirSource, partagerSource } from '../../src/lib/veille/ouvrir';
 import { filtrerSources, type SourceCherchable } from '../../src/lib/veille/recherche';
 import { parTheme, type Theme } from '../../src/lib/liens';
 import { MOTS_CLES_DOSE } from '../../src/lib/dose';
@@ -369,6 +369,7 @@ function LigneSource({
       onLongPress={() => router.push(`/lien/${source.id}`)}
       delayLongPress={400}
       accessibilityRole="button"
+      testID={`source-${source.id}`}
       style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
       <View style={styles.texte}>
         <Text style={styles.titre}>{titreDuLien(source, traduire)}</Text>
@@ -398,13 +399,28 @@ function LigneSource({
           <Ionicons name="share-outline" size={icone.courante} color={couleurs.textePrincipal} />
         </Pressable>
       )}
-      <Pressable
-        onPress={() => router.push(`/lien/${source.id}`)}
-        accessibilityRole="button"
-        accessibilityLabel={traduire('commun.details')}
-        style={styles.icone}>
-        <Ionicons name="ellipsis-horizontal" size={icone.courante} color={couleurs.texteSecondaire} />
-      </Pressable>
+      {/* La page de la source est l'action secondaire de la ligne, jamais une
+          deuxième ligne : c'est elle qu'on rouvre quand on doute que le PDF
+          soit encore la bonne version. Le détail du signet reste à l'appui
+          long, et sur ce bouton pour un signet de l'usager qui n'a pas de
+          page. */}
+      {source.url_reference.trim() ? (
+        <Pressable
+          onPress={() => void ouvrirPageOfficielle(source)}
+          accessibilityRole="button"
+          accessibilityLabel={traduire('clinique.pageOfficielle')}
+          style={styles.icone}>
+          <Ionicons name="globe-outline" size={icone.courante} color={couleurs.texteSecondaire} />
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={() => router.push(`/lien/${source.id}`)}
+          accessibilityRole="button"
+          accessibilityLabel={traduire('commun.details')}
+          style={styles.icone}>
+          <Ionicons name="ellipsis-horizontal" size={icone.courante} color={couleurs.texteSecondaire} />
+        </Pressable>
+      )}
     </Pressable>
   );
 }

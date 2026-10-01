@@ -14,7 +14,12 @@ import { SOURCES_DEPART } from '../src/lib/veille/depart';
  * `url_document` quand elle existe. Le défaut était dans les données.
  */
 
-const MDCALC = SOURCES_DEPART.filter((s) => s.cle.startsWith('mdcalc_'));
+/**
+ * Les calculateurs, sans l'index : « Tous les calculateurs — MDCalc » ouvre
+ * l'accueil, et c'est son rôle (V2.5.4). Il est vérifié avec l'autre entrée
+ * d'index dans tests/liens-doublons.test.ts.
+ */
+const MDCALC = SOURCES_DEPART.filter((s) => s.cle.startsWith('mdcalc_') && s.cle !== 'mdcalc_index');
 
 describe('les calculateurs MDCalc', () => {
   test('aucun n’a d’adresse de document vide', () => {

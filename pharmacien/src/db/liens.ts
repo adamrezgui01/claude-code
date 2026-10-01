@@ -99,13 +99,20 @@ export function categories(): string[] {
  * Sème la liste de départ une seule fois. Le repère vit dans les réglages :
  * sans lui, un usager qui supprime tout verrait la liste revenir au prochain
  * lancement.
+ *
+ * Elle n'insère que les signets dont la clé manque. Au premier lancement,
+ * `amorcerVeille` passe avant elle, insère toute la liste et remet le repère à
+ * zéro en passant : semer sans regarder doublait alors chaque signet, et
+ * chaque sujet paraissait deux fois dans Clinique.
  */
 export function amorcerLiens() {
   const deja = db.getFirstSync<{ liens_amorces: number }>(
     'SELECT liens_amorces FROM reglages WHERE id = 1'
   );
   if (deja?.liens_amorces) return;
-  DEPART.forEach(creerLien);
+  for (const entree of DEPART) {
+    if (!db.getFirstSync('SELECT id FROM liens WHERE cle = ?', entree.cle)) creerLien(entree);
+  }
   db.runSync('UPDATE reglages SET liens_amorces = 1 WHERE id = 1');
 }
 

@@ -341,7 +341,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sousSection: 'liens_utiles',
     theme: 'cardioSang',
     sujets: ['anticoagulation'],
-    motsCles: 'thrombose, embolie, phlebite, caillot, thromboembolie, TVP, EP, DVT, PE, TEV, VTE, deep vein thrombosis, pulmonary embolism, venous thromboembolism, clot, apixaban, rivaroxaban, dabigatran, edoxaban, warfarine, tinzaparine, enoxaparine, heparine, eliquis, xarelto, pradaxa, lixiana, innohep, lovenox, score de wells, d-dimeres, echographie doppler, bas de compression, jambe enflee, mollet douloureux, essoufflement subit, douleur thoracique',
+    motsCles: 'thrombose, embolie, phlebite, caillot, thromboembolie, TVP, EP, DVT, PE, TEV, VTE, deep vein thrombosis, pulmonary embolism, venous thromboembolism, clot, apixaban, rivaroxaban, dabigatran, edoxaban, warfarine, tinzaparine, enoxaparine, heparine, eliquis, xarelto, pradaxa, lixiana, innohep, lovenox, d-dimeres, echographie doppler, bas de compression, jambe enflee, mollet douloureux, essoufflement subit, douleur thoracique',
   },
   {
     cle: 'inesss_warfarine',
@@ -961,7 +961,7 @@ export const SOURCES_DEPART: SourceDepart[] = [
     theme: 'respiratoire',
     sujets: ['mpoc', 'antibiotherapie'],
     motsCles:
-      'exacerbation de la mpoc, eampoc, exacerbation aigue, decompensation, mpoc qui se decompense, bronchite chronique, emphyseme, AECOPD, COPD exacerbation, acute exacerbation, prednisone, amoxicilline, doxycycline, azithromycine, clarithromycine, tmp-smx, salbutamol, ventolin, spiriva, symbicort, plan d’action, corticostherapie orale, il tousse plus qu’avant, ses secretions ont change de couleur, essoufflement qui empire',
+      'exacerbation de la mpoc, eampoc, exacerbation aigue, decompensation, mpoc qui se decompense, emphyseme, chronic bronchitis, AECOPD, COPD exacerbation, acute exacerbation, prednisone, amoxicilline, doxycycline, azithromycine, clarithromycine, tmp-smx, salbutamol, ventolin, spiriva, symbicort, plan d’action, corticostherapie orale, il tousse plus qu’avant, ses secretions ont change de couleur, essoufflement qui empire',
   },
   {
     cle: 'inesss_influenza',
@@ -1218,5 +1218,25 @@ export const SOURCES_DEPART: SourceDepart[] = [
     sujets: [],
     motsCles:
       'inesss, guides d’usage optimal, guide d’usage optimal, guo, index, liste des guides, tous les guides, outils cliniques, institut national d’excellence en sante, optimal use guides, clinical tools, guidelines list, je cherche un guide, il doit y avoir un guide la-dessus, quel guide inesss',
+  },
+  /*
+   * L'autre entrée d'index, et la dernière : la page d'accueil de MDCalc. Les
+   * onze calculateurs ouvrent chacun le leur ; celle-ci sert à trouver ceux
+   * que le répertoire n'a pas. C'est la seule entrée MDCalc qui ouvre
+   * l'accueil en principal.
+   */
+  {
+    cle: 'mdcalc_index',
+    titre: 'Tous les calculateurs — MDCalc',
+    url_document: 'https://www.mdcalc.com',
+    url_reference: 'https://www.mdcalc.com',
+    organisation: 'MDCalc',
+    type: 'outil',
+    officielle: false,
+    sousSection: 'outils',
+    theme: 'calculateurs',
+    sujets: [],
+    motsCles:
+      'mdcalc, md calc, tous les calculateurs, liste des calculateurs, calculateur medical, score clinique, scores cliniques, formule, outil de calcul, index, medical calculators, clinical scores, calculator list, clinical tools, je cherche un score, il doit y avoir un calculateur, quel score utiliser',
   },
 ];

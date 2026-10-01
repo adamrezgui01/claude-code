@@ -19,6 +19,8 @@ import { SOURCES_DEPART } from '../src/lib/veille/depart';
 const FOURNIES = SOURCES_DEPART;
 const DOCUMENTS = FOURNIES.filter((s) => s.sousSection === 'liens_utiles');
 const OUTILS = FOURNIES.filter((s) => s.sousSection === 'outils');
+/** L'index de MDCalc vit parmi les outils, et ouvre l'accueil : c'est son rôle. */
+const CALCULATEURS = OUTILS.filter((s) => s.cle !== 'mdcalc_index');
 
 /**
  * Les deux entrées dont l'ouverture n'est pas un document distinct, nommées
@@ -89,15 +91,16 @@ describe('les documents, et les deux exceptions nommées', () => {
 
 describe('les outils', () => {
   test('chacun ouvre son calculateur, jamais un accueil', () => {
-    const accueils = OUTILS.filter((s) => {
+    const accueils = CALCULATEURS.filter((s) => {
       const u = adresseDouverture(s) ?? '';
       return !/\/calc\/\d+\//.test(u);
     });
     expect(accueils.map((s) => s.cle)).toEqual([]);
   });
 
-  test('onze calculateurs, tous chez MDCalc', () => {
-    expect(OUTILS).toHaveLength(11);
+  test('onze calculateurs et l’index, tous chez MDCalc', () => {
+    expect(CALCULATEURS).toHaveLength(11);
+    expect(OUTILS).toHaveLength(12);
     for (const outil of OUTILS) {
       expect({ cle: outil.cle, chez: outil.url_document.includes('mdcalc.com') }).toEqual({
         cle: outil.cle,
@@ -108,10 +111,11 @@ describe('les outils', () => {
 });
 
 describe('ce que l’audit a compté', () => {
-  test('soixante-quatre entrées, cinquante-trois documents, onze outils', () => {
-    expect(FOURNIES).toHaveLength(64);
+  test('soixante-cinq entrées, cinquante-trois documents, douze outils', () => {
+    // L'index de MDCalc s'ajoute au V2.5.4 : onze calculateurs et lui.
+    expect(FOURNIES).toHaveLength(65);
     expect(DOCUMENTS).toHaveLength(53);
-    expect(OUTILS).toHaveLength(11);
+    expect(OUTILS).toHaveLength(12);
   });
 
   test('cinquante documents ouvrent un PDF', () => {

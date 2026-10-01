@@ -114,6 +114,26 @@ export function ouvertureDuLien(
   return { adresse: page, avertir: true };
 }
 
+/**
+ * Les deux pages d'index de l'application : la liste des guides de l'INESSS et
+ * l'accueil de MDCalc. Chacune a son entrée à elle — « Tous les guides… »,
+ * « Tous les calculateurs… » — et ce sont les deux seules à les ouvrir en
+ * principal. Pour tout le reste, elles ne sont que la page de repli.
+ */
+const PAGES_INDEX = [
+  'inesss.qc.ca/formations-et-outils/outils-cliniques/outils-par-types/guides-dusage-optimal.html',
+  'mdcalc.com',
+];
+
+export function estPageIndex(adresse: string): boolean {
+  const propre = adresse
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .replace(/\/+$/, '');
+  return PAGES_INDEX.includes(propre);
+}
+
 /** L'adresse seule, pour les appels qui n'ont rien à annoncer. */
 export function adresseDouverture(source: {
   url_document: string;

@@ -509,6 +509,15 @@ qu'on ne les redécouvre pas trois fois.
   qu'il va mal ce matin. Au moindre doute — pas de réseau, pas de réponse en deux
   secondes et demie — on ouvre le document : un doute ne doit jamais coûter un
   geste de plus au comptoir.
+- **Une seule ligne par sujet** dans Clinique, et elle ouvre le document
+  direct. `url_reference` n'est jamais une deuxième ligne : c'est l'action
+  secondaire de la même ligne, et le repli quand le document ne s'ouvre pas.
+  Deux entrées d'index, et deux seulement, ouvrent une page d'index en
+  principal : « Tous les guides d'usage optimal — INESSS » et « Tous les
+  calculateurs — MDCalc ». Une semaison n'insère qu'une clé absente : le
+  premier lancement passe par `amorcerVeille` **puis** `amorcerLiens`, et semer
+  sans regarder a doublé chaque signet jusqu'au V2.5.4. Un test démarre dans
+  l'ordre exact de `app/_layout.tsx` pour que ça ne se reproduise pas.
 - Quand la dose calculée dépasse la **dose maximale saisie**, l'application
   dit de combien et donne la chaîne du maximum — « Votre maximum : 1500
   mg/jour · 500 mg/prise · 10,0 mL/prise ». « Votre maximum », jamais

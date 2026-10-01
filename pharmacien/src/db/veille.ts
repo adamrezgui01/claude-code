@@ -1,4 +1,5 @@
 import { aujourdhui } from '../lib/dates';
+import { estPageIndex } from '../lib/liens';
 import { contenusAPerimer, sourceAChange } from '../lib/veille/peremption';
 import { SOURCES_DEPART, SUJETS_DEPART } from '../lib/veille/depart';
 import { cleDeRecherche, type Recherche, type RefusRecherche } from '../lib/veille/recherches';
@@ -63,6 +64,10 @@ export function amorcerVeille() {
   // Les sept calculateurs MDCalc qui ouvraient la page d'accueil, et les
   // guides INESSS qui ouvraient l'index.
   completerRepertoire('repertoire_v2_5_3');
+  retirerDoublons();
+  // L'entrée « Tous les calculateurs — MDCalc », et les mots-clés qui
+  // faisaient remonter un guide à côté du bon sur « bronchite » et « wells ».
+  completerRepertoire('repertoire_v2_5_4');
   if (dejaFait('veille_amorcee')) return;
 
   const parCle = new Map<string, number>();
@@ -155,6 +160,71 @@ function completerRepertoire(repere: string) {
   // repasse, et elle est sans effet sur ce qui l'est déjà.
   db.runSync('DELETE FROM reprises WHERE repere = ?', 'veille_amorcee');
   marquerFait(repere);
+}
+
+/**
+ * Une seule ligne par signet fourni.
+ *
+ * Jusqu'au V2.5.4, chaque signet fourni était semé deux fois au premier
+ * lancement (voir `amorcerLiens`), et chaque sujet paraissait deux fois dans
+ * Clinique. Pour chaque clé en double, on garde la ligne qui porte le document
+ * direct — à défaut, celle qui n'ouvre pas une page d'index, puis la plus
+ * ancienne —, on y rattache tout ce qui pointait vers les autres, et on
+ * supprime les autres.
+ *
+ * Ce qui pointait vers elles : les sujets, les notes, les événements, les
+ * recherches, la dernière consultation. Supprimer sans rattacher laisserait
+ * une note écrite sur la copie retirée pointer dans le vide.
+ *
+ * Le titre d'une copie que l'usager a renommée remplace celui de la ligne
+ * gardée : il garde son nom, comme partout ailleurs.
+ *
+ * Les signets de l'usager n'ont pas de clé et ne sont jamais touchés. Le
+ * ménage ne passe qu'une fois : après lui, deux lignes de même clé ne peuvent
+ * venir que de l'usager, et ce n'est plus à une reprise d'en juger.
+ */
+function retirerDoublons() {
+  if (dejaFait('liens_doublons')) return;
+
+  const doublees = db.getAllSync<{ cle: string }>(
+    "SELECT cle FROM liens WHERE cle <> '' GROUP BY cle HAVING COUNT(*) > 1"
+  );
+  for (const { cle } of doublees) {
+    const lignes = db.getAllSync<{ id: number; titre: string; url_document: string }>(
+      'SELECT id, titre, url_document FROM liens WHERE cle = ? ORDER BY id',
+      cle
+    );
+    const source = SOURCES_DEPART.find((s) => s.cle === cle);
+    const gardee =
+      lignes.find((l) => !!source && l.url_document.trim() === source.url_document) ??
+      lignes.find((l) => l.url_document.trim() && !estPageIndex(l.url_document)) ??
+      lignes[0];
+
+    for (const autre of lignes) {
+      if (autre.id === gardee.id) continue;
+      if (source && gardee.titre === source.titre && autre.titre !== source.titre) {
+        db.runSync('UPDATE liens SET titre = ? WHERE id = ?', autre.titre, gardee.id);
+        gardee.titre = autre.titre;
+      }
+      for (const sujet of sujetsDeLaSource(autre.id)) rattacherSujetSource(sujet.id, gardee.id);
+      db.runSync('DELETE FROM sujets_sources WHERE source_id = ?', autre.id);
+      db.runSync('UPDATE contenus SET source_id = ? WHERE source_id = ?', gardee.id, autre.id);
+      db.runSync('UPDATE evenements SET source_id = ? WHERE source_id = ?', gardee.id, autre.id);
+      db.runSync(
+        'UPDATE recherches SET source_ouverte = ? WHERE source_ouverte = ?',
+        gardee.id,
+        autre.id
+      );
+      db.runSync(
+        'UPDATE reglages SET veille_consultation_source = ? WHERE veille_consultation_source = ?',
+        gardee.id,
+        autre.id
+      );
+      db.runSync('DELETE FROM liens WHERE id = ?', autre.id);
+    }
+  }
+
+  marquerFait('liens_doublons');
 }
 
 function remplacerRepertoireV22() {

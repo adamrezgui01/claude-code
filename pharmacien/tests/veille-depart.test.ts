@@ -24,8 +24,9 @@ import {
 describe('les sujets de départ', () => {
   test('les calculateurs pointent vers MDCalc, jamais vers MedCalc', () => {
     // MedCalc tout court est un logiciel de statistiques, sans rapport.
+    // Onze calculateurs, et l'index de MDCalc depuis le V2.5.4.
     const calculateurs = SOURCES_DEPART.filter((s) => s.sousSection === 'outils');
-    expect(calculateurs.length).toBe(11);
+    expect(calculateurs.length).toBe(12);
     for (const source of calculateurs) {
       expect({ cle: source.cle, organisation: source.organisation }).toEqual({
         cle: source.cle,
@@ -101,11 +102,12 @@ describe('les sujets de départ', () => {
 });
 
 describe('le répertoire vérifié', () => {
-  test('cinquante-trois documents, et onze calculateurs', () => {
+  test('cinquante-trois documents, onze calculateurs et l’index MDCalc', () => {
     // Seize guides INESSS de plus en 2.5.3, et l'index comme entrée à part.
+    // L'index de MDCalc s'ajoute au V2.5.4 : les deux seules entrées d'index.
     const documents = SOURCES_DEPART.filter((s) => s.sousSection === 'liens_utiles');
     expect(documents).toHaveLength(53);
-    expect(SOURCES_DEPART).toHaveLength(64);
+    expect(SOURCES_DEPART).toHaveLength(65);
   });
 
   test('chacun porte une page officielle', () => {
@@ -141,7 +143,7 @@ describe('le répertoire vérifié', () => {
   test('les calculateurs sont des outils, tout le reste un lien utile', () => {
     const outils = SOURCES_DEPART.filter((s) => s.sousSection === 'outils');
     expect(outils.every((s) => s.cle.startsWith('mdcalc_'))).toBe(true);
-    expect(outils).toHaveLength(11);
+    expect(outils).toHaveLength(12);
   });
 
   test('une même page officielle peut couvrir plusieurs documents', () => {
