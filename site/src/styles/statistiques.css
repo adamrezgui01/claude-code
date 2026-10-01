@@ -1,0 +1,73 @@
+/* Les statistiques et leur graphique. */
+
+.plage {
+  margin-top: var(--espace-2);
+}
+
+.periode-autre {
+  margin-top: var(--espace-4);
+}
+
+.revenu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-1);
+  margin-top: var(--espace-6);
+}
+
+.revenu-montant {
+  font: var(--title1);
+  font-weight: var(--grasse);
+}
+
+.revenu + .section {
+  margin-top: var(--espace-4);
+}
+
+.graphique {
+  width: 100%;
+  min-height: var(--graphique);
+  margin-top: var(--espace-4);
+}
+
+/* Les repères de l'axe et les mois : Caption 1, le rôle d'une étiquette de
+   graphique. */
+.graphique .recharts-cartesian-axis-tick-value {
+  font: var(--caption1);
+  fill: var(--texte-secondaire);
+}
+
+/* La valeur posée sur une barre : Caption 2, comme dans l'application. À
+   douze pixels, « 1,2k » n'entrerait plus dans une colonne de téléphone, et la
+   règle qui interdit de tronquer les ferait toutes disparaître. */
+.graphique .etiquette-barre text,
+.graphique text.etiquette-barre {
+  font: var(--caption2);
+  font-weight: var(--demi);
+  fill: var(--texte-principal);
+}
+
+/* La bulle flotte au-dessus du graphique : elle porte la seule ombre. */
+.bulle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-1);
+  padding: var(--espace-2) var(--espace-3);
+  border-radius: var(--rayon);
+  background: var(--fond-eleve);
+  box-shadow: var(--ombre-flottante);
+}
+
+.bulle-mois {
+  font: var(--footnote);
+  color: var(--texte-secondaire);
+}
+
+.bulle-valeur {
+  font: var(--headline);
+}
+
+.recharts-wrapper:focus,
+.recharts-surface:focus {
+  outline: none;
+}

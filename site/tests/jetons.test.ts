@@ -87,6 +87,15 @@ describe('les jetons eux-mêmes', () => {
     expect(jeton('accent')).toBe(premierMauve);
   });
 
+  test('les dimensions du graphique sont celles des jetons', async () => {
+    // recharts dessine à partir de nombres : ils vivent à part, mais ne
+    // divergent pas des jetons qu'ils recopient.
+    const { GRAPHIQUE } = await import('../src/lib/dimensionsGraphique');
+    expect(`${GRAPHIQUE.rayonBarre}px`).toBe(jeton('barre-rayon'));
+    expect(`${GRAPHIQUE.margeHaute}px`).toBe(jeton('espace-5'));
+    expect(`${GRAPHIQUE.hauteur}px`).toBe(jeton('graphique'));
+  });
+
   test('une cible fait 44 pixels, le contenu 700', () => {
     expect(jeton('cible')).toBe('44px');
     expect(jeton('largeur-contenu')).toBe('700px');

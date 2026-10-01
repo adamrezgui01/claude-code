@@ -91,6 +91,8 @@
   --icone-grande: 24px;
   /* L'épaisseur du trait d'une icône, sans unité : elle suit la taille. */
   --trait-icone: 1.75;
+  /* La hauteur du graphique des statistiques. */
+  --graphique: 220px;
   /* La barre d'onglets du téléphone : une icône, un mot, comme celle d'iOS. */
   --barre-onglets: 49px;
 

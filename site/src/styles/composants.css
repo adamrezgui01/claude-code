@@ -99,7 +99,8 @@
   cursor: pointer;
 }
 
-.capsule[aria-pressed='true'] {
+.capsule[aria-pressed='true'],
+.capsule[aria-checked='true'] {
   background: var(--accent);
   color: var(--sur-accent);
   font-weight: var(--demi);

@@ -67,6 +67,11 @@ export function Retour({ vers }: { vers: string }) {
 /**
  * Des capsules qui se choisissent l'une l'autre : jour, semaine, mois ; kg ou
  * lb. La capsule choisie est l'élément actif, et porte le mauve.
+ *
+ * Ce sont des boutons radio : on y choisit une valeur, on n'y déclenche rien.
+ * L'icône y est donc permise sans être exigée — les périodes des statistiques
+ * s'écrivent en mots, comme dans l'application —, et là où le prompt la
+ * demande (la vue de l'horaire, les mesures), le test de l'écran la vérifie.
  */
 export function Choix<V extends string>({
   options,
@@ -80,13 +85,14 @@ export function Choix<V extends string>({
   etiquette: string;
 }) {
   return (
-    <div className="choix" role="group" aria-label={etiquette}>
+    <div className="choix" role="radiogroup" aria-label={etiquette}>
       {options.map((o) => (
         <button
           key={o.valeur}
           type="button"
+          role="radio"
           className="capsule"
-          aria-pressed={o.valeur === valeur}
+          aria-checked={o.valeur === valeur}
           onClick={() => onChange(o.valeur)}>
           {o.icone && <Icone nom={o.icone} />}
           <span>{o.texte}</span>

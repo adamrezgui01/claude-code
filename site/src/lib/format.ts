@@ -18,7 +18,8 @@ export function heures(total: number): string {
   const minutes = Math.round(total * 60);
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m === 0 ? `${h} h` : `${h} h ${`${m}`.padStart(2, '0')}`;
+  const entieres = nombre(h, 0);
+  return m === 0 ? `${entieres} h` : `${entieres} h ${`${m}`.padStart(2, '0')}`;
 }
 
 export function nombre(valeur: number, decimales = 1): string {

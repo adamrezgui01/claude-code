@@ -19,13 +19,15 @@ export function rendre(adresse: string): string {
 
 /**
  * Aucune commande n'est du texte seul. Chaque bouton et chaque lien porte une
- * icône ; une case de calendrier est une donnée qu'on choisit, pas une
- * commande, et une option de liste déroulante n'en est pas une non plus.
+ * icône. Deux exceptions, qui ne déclenchent rien : une case de calendrier
+ * (un jour qu'on choisit) et une option d'un groupe de choix (une valeur qu'on
+ * choisit, role="radio"). Là où le prompt veut une icône sur un choix — la vue
+ * de l'horaire, les mesures —, le test de l'écran la vérifie à part.
  */
 export function commandesSansIcone(html: string): string[] {
   const fautes: string[] = [];
   for (const m of html.matchAll(/<(button|a|summary)\b([^>]*)>([\s\S]*?)<\/\1>/g)) {
-    if (/role="gridcell"/.test(m[2])) continue;
+    if (/role="(gridcell|radio)"/.test(m[2])) continue;
     if (!m[3].includes('<svg')) fautes.push(m[3].replace(/<[^>]+>/g, '').trim() || m[2]);
   }
   return fautes;

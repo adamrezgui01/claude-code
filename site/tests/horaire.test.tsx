@@ -112,7 +112,7 @@ function exemples(): Record<Etat, { id: number; date: string }> {
 
 describe('l’horaire à l’écran', () => {
   test('le mois est la vue d’ouverture', () => {
-    expect(rendre('/')).toMatch(/aria-pressed="true"[^>]*>(?:(?!<\/button>).)*Mois/);
+    expect(rendre('/')).toMatch(/aria-checked="true"[^>]*>(?:(?!<\/button>).)*Mois/);
   });
 
   test('le sélecteur de vue porte une icône et un mot par vue', () => {
