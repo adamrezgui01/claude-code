@@ -6,6 +6,8 @@ import FichePharmacie from './ecrans/FichePharmacie';
 import FicheQuart from './ecrans/FicheQuart';
 import Horaire from './ecrans/Horaire';
 import Menu from './ecrans/Menu';
+import Parametres from './ecrans/Parametres';
+import Profil from './ecrans/Profil';
 import Repertoire from './ecrans/Repertoire';
 import Statistiques from './ecrans/Statistiques';
 import { Onglets } from './ui/Onglets';
@@ -29,6 +31,8 @@ export default function App() {
           <Route path="/clinique/dose" component={Dose} />
           <Route path="/statistiques" component={Statistiques} />
           <Route path="/menu" component={Menu} />
+          <Route path="/menu/profil" component={Profil} />
+          <Route path="/menu/parametres" component={Parametres} />
           <Route component={Horaire} />
         </Switch>
       </main>

@@ -158,6 +158,7 @@ textarea.saisie {
 .deux-colonnes {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
   gap: var(--espace-4);
 }
 
@@ -292,4 +293,12 @@ textarea.saisie {
 
 .alerte {
   color: var(--alerte);
+}
+
+.donnees-aide {
+  margin-bottom: var(--espace-3);
+}
+
+.actions-seules {
+  margin-top: 0;
 }

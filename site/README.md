@@ -21,6 +21,22 @@ l'ouvrir sur un téléphone du même réseau.
 
 `npm test` lance le typage, le lint, puis les tests.
 
+## Les cinq onglets
+
+Mêmes noms, même ordre que l'application : Horaire · Répertoire · Clinique ·
+Statistiques · Menu. En colonne à gauche sur un grand écran, en bas sous 700
+pixels.
+
+- **Horaire** : jour, semaine, mois ; une carte par quart, ses quatre états ;
+  un quart s'ouvre, se crée et se modifie. Pas de glisser-déposer.
+- **Répertoire** : la liste des pharmacies, chacune avec sa fiche —
+  coordonnées, conditions, historique, favori ou à éviter.
+- **Clinique** : la recherche par-dessus, puis Outils et Liens utiles ; le
+  calculateur de dose en tête des outils.
+- **Statistiques** : cinq périodes, trois mesures, le graphique des douze
+  derniers mois, les pharmacies trois par trois.
+- **Menu** : Profil et Paramètres.
+
 ## Ce qui le compose
 
 Vite, React et TypeScript. Trois dépendances, chacune pour une raison :
@@ -84,6 +100,26 @@ valeur écrite en dur ailleurs.
 
 Le contenu ne dépasse pas 700 pixels de large. Sous 700 pixels de fenêtre, la
 page devient celle d'un téléphone : une colonne, la barre d'onglets en bas.
+
+## Décisions
+
+Prises en le construisant, et écrites ici pour ne pas être redécouvertes :
+
+- Les étiquettes du graphique s'abrègent dès 1 000, pas dès 10 000 : c'est la
+  règle que l'application a adoptée après correction, et le site dit la même
+  chose qu'elle.
+- Un choix de valeur — une période, kg ou lb — est un bouton radio, pas une
+  commande : il peut s'écrire en mots seuls, comme dans l'application. La vue
+  de l'horaire et les mesures des statistiques portent icône et mot, comme le
+  prompt le demande.
+- La chaîne du calculateur s'écrit dans l'ordre réel de chaque unité : en
+  mg/kg/dose, poids × dose donne la dose d'une prise, que l'on multiplie
+  ensuite par les prises.
+- Un thème clinique d'une seule source rejoint « Autres guides » : un en-tête
+  au-dessus d'une seule ligne ne sépare rien.
+- Le jeu de démonstration facture un lot une fois son mois terminé et une
+  semaine après son dernier quart, pour que les quatre états se voient dès le
+  premier jour.
 
 ## Ce que le site ne fait pas
 
