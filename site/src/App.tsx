@@ -1,6 +1,7 @@
 import { Route, Switch } from 'wouter';
 
 import Clinique from './ecrans/Clinique';
+import Dose from './ecrans/Dose';
 import FichePharmacie from './ecrans/FichePharmacie';
 import FicheQuart from './ecrans/FicheQuart';
 import Horaire from './ecrans/Horaire';
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/repertoire" component={Repertoire} />
           <Route path="/repertoire/:id" component={FichePharmacie} />
           <Route path="/clinique" component={Clinique} />
+          <Route path="/clinique/dose" component={Dose} />
           <Route path="/statistiques" component={Statistiques} />
           <Route path="/menu" component={Menu} />
           <Route component={Horaire} />

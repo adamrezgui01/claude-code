@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { Link } from 'wouter';
 
 import { SOURCES } from '../donnees/sources';
-import { adresseDouverture, filtrerSources, LONGUEUR_MIN, parTheme, type Source } from '../lib/sources';
+import { MOTS_CLES_DOSE } from '../lib/dose';
+import { adresseDouverture, correspond, filtrerSources, LONGUEUR_MIN, parTheme, type Source } from '../lib/sources';
 import { Recherche } from '../ui/composants';
 import { Ecran, Vide } from '../ui/Ecran';
 import { Icone } from '../ui/Icone';
@@ -17,6 +19,12 @@ export default function Clinique() {
   const trouvees = filtrerSources(SOURCES, recherche);
   const outils = trouvees.filter((s) => s.sousSection === 'outils');
   const liens = trouvees.filter((s) => s.sousSection === 'liens_utiles');
+  // Le calculateur est un écran, pas un lien. Il se cherche comme une source
+  // quand même : on tape « mg/kg » sans savoir si c'est une page ou un outil.
+  const dose = correspond(
+    { cle: 'dose', titre: 'Calculateur de dose', organisation: '', motsCles: MOTS_CLES_DOSE } as Source,
+    recherche
+  );
 
   return (
     <Ecran titre="Clinique">
@@ -25,14 +33,31 @@ export default function Clinique() {
         <p className="aide indication">En dessous de trois lettres, seuls les sigles exacts répondent.</p>
       )}
 
-      {trouvees.length === 0 ? (
+      {trouvees.length === 0 && !dose ? (
         <Vide texte="Aucune source ne correspond." />
       ) : (
         <>
-          {outils.length > 0 && (
+          {(outils.length > 0 || dose) && (
             <section className="sous-section">
               <h2 className="titre-sous-section">Outils</h2>
-              <Lignes sources={outils} />
+              <div className="section-corps">
+                {dose && (
+                  <div className="section-ligne">
+                    <Link href="/clinique/dose" className="ligne-source-lien">
+                      <span className="ligne-source-texte">
+                        <span>Calculateur de dose</span>
+                        <span className="footnote secondaire">mg/kg, kg ou lb, chaîne complète</span>
+                      </span>
+                      <Icone nom="suivant" />
+                    </Link>
+                  </div>
+                )}
+                {outils.map((s) => (
+                  <div key={s.cle} className="section-ligne">
+                    <LigneSource source={s} />
+                  </div>
+                ))}
+              </div>
             </section>
           )}
           {liens.length > 0 && (

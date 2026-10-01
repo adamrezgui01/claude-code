@@ -1,0 +1,123 @@
+/* Le calculateur de dose. */
+
+.avis {
+  margin-top: calc(-1 * var(--espace-3));
+  margin-bottom: var(--espace-6);
+}
+
+/* Trois groupes sans en-tête : l'espace entre eux fait le travail que
+   faisaient les titres. */
+.groupe-dose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-2);
+  margin-bottom: var(--espace-8);
+}
+
+.groupe-dose > .champ + .choix {
+  margin-top: var(--espace-1);
+}
+
+.groupe-dose > .etiquette {
+  margin-top: var(--espace-2);
+}
+
+.concentration {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--espace-2);
+}
+
+.barre-oblique {
+  font: var(--title3);
+  color: var(--texte-secondaire);
+}
+
+/* Un champ et son unité, dedans, à droite. */
+.saisie-unite {
+  position: relative;
+  display: block;
+}
+
+.saisie-unite .saisie {
+  padding-right: var(--espace-10);
+}
+
+.suffixe {
+  position: absolute;
+  top: 50%;
+  right: var(--espace-4);
+  transform: translateY(-50%);
+  font: var(--body);
+  color: var(--texte-secondaire);
+  pointer-events: none;
+}
+
+.replie + .incomplet,
+.replie + .resultat {
+  margin-top: var(--espace-8);
+}
+
+.etape {
+  padding: var(--espace-3) 0;
+}
+
+.etape-ligne {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espace-4);
+  font: var(--body);
+}
+
+.etape-resultat {
+  font-weight: var(--demi);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.etape-exact {
+  display: block;
+  text-align: right;
+}
+
+.servir {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espace-4);
+  padding: var(--espace-4) 0;
+  font: var(--headline);
+}
+
+.servir-titre {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-1);
+}
+
+.servir-valeur {
+  font: var(--title2);
+  font-weight: var(--grasse);
+  white-space: nowrap;
+}
+
+.depassement {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-1);
+  margin-top: var(--espace-4);
+}
+
+.maximum {
+  font: var(--subhead);
+}
+
+.resultat > .alerte {
+  margin-top: var(--espace-2);
+}
+
+.alerte.etape-resultat {
+  color: var(--alerte);
+}
