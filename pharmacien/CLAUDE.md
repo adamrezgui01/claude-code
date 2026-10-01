@@ -481,6 +481,13 @@ qu'on ne les redécouvre pas trois fois.
   trouve « stérilet au cuivre », « protégée » trouve « relation sexuelle non
   protégée ». C'est ce qui rend un mot-clé de plusieurs mots utile, puisque
   personne ne le tape en entier.
+- Le Menu porte un champ **« Trouver »** qui cherche dans toute l'application
+  — écrans, réglages un par un, outils, sections du profil — avec le même
+  moteur (`src/lib/correspondance.ts`, hors du volet clinique). Un résultat
+  mène **à** l'endroit visé, pas à l'écran qui le contient : la destination
+  porte une `cible`, l'écran défile jusqu'à l'`Ancre` du même nom et la
+  surligne un instant. Une destination dont l'ancre manque ouvrirait l'écran
+  en haut sans rien dire ; un test vérifie que chacune existe.
 - Un signet qui s'adresse au **patient** plutôt qu'au pharmacien porte un
   repère sur sa ligne — « À remettre au patient » — et l'icône de partage **sur
   la ligne elle-même** : un feuillet, on l'envoie ou on l'imprime, c'est le geste

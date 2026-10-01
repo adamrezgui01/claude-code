@@ -747,6 +747,21 @@ export const fr = {
     parametresDetail: 'Rappels, langue, service d’adresses',
   },
 
+  trouver: {
+    champ: 'Trouver',
+    invite: 'Trouver — un écran, un réglage, un outil',
+    aucun: 'Rien ne correspond.',
+    mesDispos: 'Mes dispos',
+    heureRendezVous: 'Heure du rendez-vous du soir',
+    relance: 'Délai de relance des factures',
+    serviceAdresses: 'Service d’adresses',
+    reglagesPharmacie: 'Taux et kilométrage par défaut',
+    genreEcran: 'Écran',
+    genreReglage: 'Paramètres',
+    genreOutil: 'Outil',
+    genreProfil: 'Profil',
+  },
+
   liens: {
     pageOfficielle: 'Page officielle',
     pageOfficielleAide: 'La page de l’organisme qui présente le document. Elle suit sa version courante, alors que le fichier reste en ligne sous son ancien nom.',

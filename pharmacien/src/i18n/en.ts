@@ -745,6 +745,21 @@ export const en: Dictionnaire = {
     parametresDetail: 'Reminders, language, address service',
   },
 
+  trouver: {
+    champ: 'Find',
+    invite: 'Find — a screen, a setting, a tool',
+    aucun: 'Nothing matches.',
+    mesDispos: 'My availability',
+    heureRendezVous: 'Evening check-in time',
+    relance: 'Invoice follow-up delay',
+    serviceAdresses: 'Address service',
+    reglagesPharmacie: 'Default rate and mileage',
+    genreEcran: 'Screen',
+    genreReglage: 'Settings',
+    genreOutil: 'Tool',
+    genreProfil: 'Profile',
+  },
+
   liens: {
     pageOfficielle: 'Official page',
     pageOfficielleAide: 'The organization’s page presenting the document. It follows the current version, while the file stays online under its old name.',

@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -21,6 +21,7 @@ import { localiserAdresse } from '../src/lib/adressesRecherche';
 import { aujourdhui, formatDateCourte, joursEntre } from '../src/lib/dates';
 import { analyserNombre, argent, nombre } from '../src/lib/format';
 import {
+  Ancre,
   Bouton,
   Champ,
   ChampTelephone,
@@ -47,6 +48,8 @@ import { useTextes } from '../src/i18n';
 export default function Profil() {
   const { t } = useTextes();
   const router = useRouter();
+  /** La section visée par la recherche du Menu : l'écran s'ouvre sur elle. */
+  const { cible } = useLocalSearchParams<{ cible?: string }>();
 
   const [heuresCompletees, setHeuresCompletees] = useState('0');
   const [heuresRequises, setHeuresRequises] = useState('40');
@@ -110,149 +113,163 @@ export default function Profil() {
   if (!reglages) return null;
 
   return (
-    <Ecran>
-      {/* Une ligne qui se nomme elle-même : l'en-tête « Formation continue »
-          au-dessus ne couvrait qu'elle et son bouton. */}
-      <Rangee
-        label={t('profil.formationContinue')}
-        valeur={t('profil.compteur', {
-          faites: nombre(analyserNombre(heuresCompletees)),
-          requises: nombre(analyserNombre(heuresRequises)),
-        })}
-        fort
-      />
-      {!!finPeriode && (
-        <Doux>{t('profil.echeance', { date: formatDateCourte(finPeriode) })}</Doux>
-      )}
-      {!ajusteFormation ? (
+    <Ecran cible={cible}>
+      <Ancre id="formation">
+        {/* Une ligne qui se nomme elle-même : l'en-tête « Formation continue »
+            au-dessus ne couvrait qu'elle et son bouton. */}
+        <Rangee
+          label={t('profil.formationContinue')}
+          valeur={t('profil.compteur', {
+            faites: nombre(analyserNombre(heuresCompletees)),
+            requises: nombre(analyserNombre(heuresRequises)),
+          })}
+          fort
+        />
+        {!!finPeriode && (
+          <Doux>{t('profil.echeance', { date: formatDateCourte(finPeriode) })}</Doux>
+        )}
+        {!ajusteFormation ? (
+          <Pressable
+            onPress={() => setAjusteFormation(true)}
+            accessibilityRole="button"
+            style={styles.lienCible}>
+            <Ionicons name="create-outline" size={icone.courante} color={couleurs.textePrincipal} />
+            <Text style={styles.lien}>{t('commun.ajuster')}</Text>
+          </Pressable>
+        ) : (
+          <Fondu style={styles.bloc}>
+            <Champ
+              label={t('profil.heuresCompletees')}
+              valeur={heuresCompletees}
+              onChange={setHeuresCompletees}
+              clavier="decimal-pad"
+            />
+            <Champ
+              label={t('profil.heuresRequises')}
+              valeur={heuresRequises}
+              onChange={setHeuresRequises}
+              clavier="decimal-pad"
+            />
+            <SelecteurDate
+              label={t('profil.finPeriode')}
+              valeur={finPeriode || aujourdhui()}
+              onChange={setFinPeriode}
+            />
+            <Bouton titre={t('commun.enregistrer')} onPress={sauvegarderFormation} />
+          </Fondu>
+        )}
+      </Ancre>
+
+      <View style={styles.entreGroupes} />
+
+      <Ancre id="documents">
+        {/* L'en-tête ne paraît que s'il a une liste à coiffer. Sans document, la
+            phrase et le lien qui suit disent tout. */}
+        {documents.length === 0 ? (
+          <Vide texte={t('profil.aucunDocument')} />
+        ) : (
+          <Section titre={t('profil.documents')}>
+          {documents.map((d) => {
+            const restants = joursEntre(aujourdhui(), d.date_expiration);
+            return (
+              <Pressable
+                key={d.id}
+                onPress={() => router.push(`/document/${d.id}`)}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.document, pressed && { opacity: 0.6 }]}>
+                <View style={styles.documentTexte}>
+                  <Text style={styles.documentNom}>{d.nom}</Text>
+                  <Doux>
+                    {t('profil.expireLe', {
+                      date: formatDateCourte(d.date_expiration),
+                      jours: d.jours_avant_rappel,
+                    })}
+                  </Doux>
+                </View>
+                <Text style={[styles.restants, restants <= 0 && styles.expire]}>
+                  {restants <= 0 ? t('profil.expire') : t('profil.joursRestants', { jours: restants })}
+                </Text>
+              </Pressable>
+            );
+          })}
+          </Section>
+        )}
         <Pressable
-          onPress={() => setAjusteFormation(true)}
+          onPress={() => router.push('/document/nouveau')}
           accessibilityRole="button"
           style={styles.lienCible}>
-          <Ionicons name="create-outline" size={icone.courante} color={couleurs.textePrincipal} />
-          <Text style={styles.lien}>{t('commun.ajuster')}</Text>
+          <Ionicons name="add" size={icone.courante} color={couleurs.textePrincipal} />
+          <Text style={styles.lien}>{t('profil.ajouterDocument')}</Text>
         </Pressable>
-      ) : (
-        <Fondu style={styles.bloc}>
-          <Champ
-            label={t('profil.heuresCompletees')}
-            valeur={heuresCompletees}
-            onChange={setHeuresCompletees}
-            clavier="decimal-pad"
-          />
-          <Champ
-            label={t('profil.heuresRequises')}
-            valeur={heuresRequises}
-            onChange={setHeuresRequises}
-            clavier="decimal-pad"
-          />
-          <SelecteurDate
-            label={t('profil.finPeriode')}
-            valeur={finPeriode || aujourdhui()}
-            onChange={setFinPeriode}
-          />
-          <Bouton titre={t('commun.enregistrer')} onPress={sauvegarderFormation} />
-        </Fondu>
-      )}
+      </Ancre>
 
       <View style={styles.entreGroupes} />
 
-      {/* L'en-tête ne paraît que s'il a une liste à coiffer. Sans document, la
-          phrase et le lien qui suit disent tout. */}
-      {documents.length === 0 ? (
-        <Vide texte={t('profil.aucunDocument')} />
-      ) : (
-        <Section titre={t('profil.documents')}>
-        {documents.map((d) => {
-          const restants = joursEntre(aujourdhui(), d.date_expiration);
-          return (
-            <Pressable
-              key={d.id}
-              onPress={() => router.push(`/document/${d.id}`)}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.document, pressed && { opacity: 0.6 }]}>
-              <View style={styles.documentTexte}>
-                <Text style={styles.documentNom}>{d.nom}</Text>
-                <Doux>
-                  {t('profil.expireLe', {
-                    date: formatDateCourte(d.date_expiration),
-                    jours: d.jours_avant_rappel,
-                  })}
-                </Doux>
-              </View>
-              <Text style={[styles.restants, restants <= 0 && styles.expire]}>
-                {restants <= 0 ? t('profil.expire') : t('profil.joursRestants', { jours: restants })}
-              </Text>
-            </Pressable>
-          );
-        })}
+      <Ancre id="coordonnees">
+        {/* Ce qui décrit l'usager et ce qui part sur ses factures. Sans en-tête
+            « Informations » au-dessus : les trois sections qui suivent portent
+            déjà chacune le leur. */}
+        <Doux>{t('profil.coordonneesEntete')}</Doux>
+        <View style={styles.bloc} />
+
+        <Section titre={t('profil.identite')}>
+          <Champ
+            nu
+            label={t('profil.votreNom')}
+            valeur={reglages.nom}
+            onChange={(v) => modifier('nom', v)}
+          />
+          <Champ
+            nu
+            label={t('profil.permisOpq')}
+            valeur={reglages.permis_opq}
+            onChange={(v) => modifier('permis_opq', v)}
+          />
         </Section>
-      )}
-      <Pressable
-        onPress={() => router.push('/document/nouveau')}
-        accessibilityRole="button"
-        style={styles.lienCible}>
-        <Ionicons name="add" size={icone.courante} color={couleurs.textePrincipal} />
-        <Text style={styles.lien}>{t('profil.ajouterDocument')}</Text>
-      </Pressable>
 
-      <View style={styles.entreGroupes} />
+        <Section titre={t('profil.adresse')}>
+          <SaisieAdresse
+            adresse={adresseDesReglages(reglages)}
+            onChange={(a) => {
+              setReglages((actuels) => (actuels ? { ...actuels, ...champsAdresseReglages(a) } : actuels));
+              setEnregistre(false);
+            }}
+            cle={reglages.cle_itineraire}
+          />
+        </Section>
 
-      {/* Ce qui décrit l'usager et ce qui part sur ses factures. Sans en-tête
-          « Informations » au-dessus : les trois sections qui suivent portent
-          déjà chacune le leur. */}
-      <Doux>{t('profil.coordonneesEntete')}</Doux>
-      <View style={styles.bloc} />
+        <Section titre={t('profil.coordonnees')}>
+          <ChampTelephone
+            nu
+            label={t('pharmacie.telephone')}
+            valeur={reglages.telephone}
+            onChange={(v) => modifier('telephone', v)}
+          />
+          <Champ
+            nu
+            label={t('pharmacie.courriel')}
+            valeur={reglages.courriel}
+            onChange={(v) => modifier('courriel', v)}
+            clavier="email-address"
+          />
+        </Section>
+      </Ancre>
 
-      <Section titre={t('profil.identite')}>
-        <Champ
-          nu
-          label={t('profil.votreNom')}
-          valeur={reglages.nom}
-          onChange={(v) => modifier('nom', v)}
-        />
-        <Champ
-          nu
-          label={t('profil.permisOpq')}
-          valeur={reglages.permis_opq}
-          onChange={(v) => modifier('permis_opq', v)}
-        />
-      </Section>
-
-      <Section titre={t('profil.adresse')}>
-        <SaisieAdresse
-          adresse={adresseDesReglages(reglages)}
-          onChange={(a) => {
-            setReglages((actuels) => (actuels ? { ...actuels, ...champsAdresseReglages(a) } : actuels));
-            setEnregistre(false);
-          }}
-          cle={reglages.cle_itineraire}
-        />
-      </Section>
-
-      <Section titre={t('profil.coordonnees')}>
-        <ChampTelephone
-          nu
-          label={t('pharmacie.telephone')}
-          valeur={reglages.telephone}
-          onChange={(v) => modifier('telephone', v)}
-        />
-        <Champ
-          nu
-          label={t('pharmacie.courriel')}
-          valeur={reglages.courriel}
-          onChange={(v) => modifier('courriel', v)}
-          clavier="email-address"
-        />
-        <Champ
-          nu
-          label={t('profil.tauxParKmDefaut')}
-          valeur={`${reglages.taux_par_km}`}
-          onChange={(v) => modifier('taux_par_km', analyserNombre(v))}
-          clavier="decimal-pad"
-          aide={t('profil.tauxParKmAide', { montant: argent(reglages.taux_par_km) })}
-        />
-      </Section>
+      {/* Le taux au kilomètre n'est pas une coordonnée : c'est la valeur par
+          défaut des pharmacies, et la recherche du Menu doit pouvoir y mener
+          sans passer par le téléphone et le courriel. */}
+      <Ancre id="taux">
+        <Section>
+          <Champ
+            nu
+            label={t('profil.tauxParKmDefaut')}
+            valeur={`${reglages.taux_par_km}`}
+            onChange={(v) => modifier('taux_par_km', analyserNombre(v))}
+            clavier="decimal-pad"
+            aide={t('profil.tauxParKmAide', { montant: argent(reglages.taux_par_km) })}
+          />
+        </Section>
+      </Ancre>
 
       {/* Ces champs ne partent nulle part tout seuls : sans ce bouton, le nom,
           le permis et l'adresse saisis ici étaient perdus en quittant l'écran,

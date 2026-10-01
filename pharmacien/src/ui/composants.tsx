@@ -62,6 +62,38 @@ export function useDefilement() {
 }
 
 /**
+ * Les blocs d'un écran qu'on peut viser de l'extérieur — un réglage, une
+ * section du profil — et celui qu'on vise. C'est la recherche du Menu qui
+ * vise : un résultat ouvre l'écran **à** l'endroit cherché, pas en haut.
+ */
+const Ancres = createContext<{
+  cible?: string;
+  surlignee?: string;
+  noter: (id: string, y: number) => void;
+} | null>(null);
+
+/** Combien de temps le bloc visé reste surligné : assez pour que l'œil le trouve. */
+const DUREE_SURLIGNAGE = 1600;
+
+/**
+ * Un bloc qu'on peut viser. Posé directement dans un `Ecran`, il donne sa
+ * position à l'écran ; visé, l'écran y défile et le bloc se surligne un
+ * instant.
+ */
+export function Ancre({ id, children }: { id: string; children: ReactNode }) {
+  const ancres = useContext(Ancres);
+  const surlignee = ancres?.surlignee === id;
+  return (
+    <View
+      testID={`ancre-${id}`}
+      onLayout={(e) => ancres?.noter(id, e.nativeEvent.layout.y)}
+      style={[styles.ancre, surlignee && styles.ancreSurlignee]}>
+      {children}
+    </View>
+  );
+}
+
+/**
  * Enveloppe de tout écran qui contient des champs. Trois comportements que
  * l'usager attend de n'importe quelle application : le contenu remonte quand le
  * clavier s'ouvre, pour qu'un champ du bas reste visible ; le clavier se ferme
@@ -72,6 +104,7 @@ export function Ecran({
   style,
   fond,
   onglet,
+  cible,
 }: {
   children: ReactNode;
   style?: ViewStyle;
@@ -82,6 +115,8 @@ export function Ecran({
    * en haut (V2.5.4 E).
    */
   onglet?: boolean;
+  /** L'`Ancre` vers laquelle défiler à l'ouverture. */
+  cible?: string;
 }) {
   const liste = useRef<ScrollView>(null);
   const position = useRef(0);
@@ -90,6 +125,28 @@ export function Ecran({
     []
   );
   const surDefilement = useMemo(() => noterPosition(position), []);
+  const [surlignee, setSurlignee] = useState<string | undefined>(undefined);
+  const atteinte = useRef<string | undefined>(undefined);
+  const ancres = useMemo(
+    () => ({
+      cible,
+      surlignee,
+      noter: (id: string, y: number) => {
+        // Une seule fois par cible : un bloc qui se redessine plus tard ne
+        // doit pas ramener l'usager là où il ne regarde plus.
+        if (id !== cible || atteinte.current === cible) return;
+        atteinte.current = cible;
+        liste.current?.scrollTo({ y: Math.max(0, y - espace[4]), animated: true });
+        setSurlignee(id);
+      },
+    }),
+    [cible, surlignee]
+  );
+  useEffect(() => {
+    if (!surlignee) return;
+    const minuterie = setTimeout(() => setSurlignee(undefined), DUREE_SURLIGNAGE);
+    return () => clearTimeout(minuterie);
+  }, [surlignee]);
   return (
     <KeyboardAvoidingView
       style={[styles.ecran, fond && { backgroundColor: couleurs.fondEcran }]}
@@ -106,7 +163,9 @@ export function Ecran({
         keyboardDismissMode="on-drag"
         automaticallyAdjustKeyboardInsets>
         <Pressable onPress={Keyboard.dismiss} accessible={false}>
-          <Defilement.Provider value={defilement}>{children}</Defilement.Provider>
+          <Defilement.Provider value={defilement}>
+            <Ancres.Provider value={ancres}>{children}</Ancres.Provider>
+          </Defilement.Provider>
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -952,6 +1011,13 @@ const styles = StyleSheet.create({
   },
   ecran: {
     flex: 1,
+  },
+  /* Le surlignage déborde un peu du bloc, pour ne pas toucher son texte. */
+  ancre: {
+    borderRadius: dimensions.carte.rayon,
+  },
+  ancreSurlignee: {
+    backgroundColor: couleurs.grisPale,
   },
   ecranContenu: {
     paddingHorizontal: dimensions.ecran.margeH,

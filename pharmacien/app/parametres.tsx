@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -29,6 +29,7 @@ import { LANGUES, type ChoixLangue } from '../src/lib/langue';
 import { allumerDemo, eteindreDemo, modeDemoActif } from '../src/db/demo';
 import { replanifierRendezVous, reprogrammerRappels } from '../src/lib/reprogrammer';
 import {
+  Ancre,
   Bouton,
   Champ,
   Doux,
@@ -55,6 +56,8 @@ const DELAIS = [30, 60, 120, 180];
 export default function Parametres() {
   const router = useRouter();
   const { t } = useTextes();
+  /** Le réglage visé par la recherche du Menu : l'écran s'ouvre sur lui. */
+  const { cible } = useLocalSearchParams<{ cible?: string }>();
   const [reglages, setReglages] = useState<Reglages | null>(null);
   const [enregistre, setEnregistre] = useState(false);
   const [incomprises, setIncomprises] = useState(0);
@@ -175,43 +178,45 @@ export default function Parametres() {
   const delais = delaisSecondaires({ ...reglages, rappel_secondaire_actif: 1 });
 
   return (
-    <Ecran>
+    <Ecran cible={cible}>
       {/* Sans « Rappels de quart » au-dessus : un seul réglage suit, et la
           phrase qui l'introduit dit déjà de quoi il s'agit. */}
-      <Doux>
-        Un rappel part toujours 48 h avant un quart, et un mémo 2 h après sa fin — celui-là ne
-        demande rien, il rappelle seulement de corriger vos heures si elles ont changé.
-      </Doux>
-      <View style={styles.espacement} />
+      <Ancre id="rappelSupplementaire">
+        <Doux>
+          Un rappel part toujours 48 h avant un quart, et un mémo 2 h après sa fin — celui-là ne
+          demande rien, il rappelle seulement de corriger vos heures si elles ont changé.
+        </Doux>
+        <View style={styles.espacement} />
 
-      {/* Le sous-texte d'un réglage partage la marge de son libellé : c'est
-          l'encadré qui donne cette marge aux deux à la fois. */}
-      <Section>
-        <View style={styles.bloc}>
-          <Interrupteur
-            label={t('parametres.rappelSupplementaire')}
-            detail={t('parametres.rappelSupplementaireDetail')}
-            valeur={!!reglages.rappel_secondaire_actif}
-            onChange={(v) => modifier('rappel_secondaire_actif', v ? 1 : 0)}
-          />
-          {!!reglages.rappel_secondaire_actif && (
-            <Fondu>
-              <Text style={styles.label}>{t('parametres.combienAvant')}</Text>
-              <View style={styles.puces}>
-                {DELAIS.map((minutes) => (
-                  <Puce
-                    key={minutes}
-                    texte={minutes < 60 ? `${minutes} min` : `${minutes / 60} h`}
-                    actif={delais.includes(minutes)}
-                    onPress={() => basculerDelai(minutes)}
-                  />
-                ))}
-              </View>
-              <Doux>{t('parametres.plusieursDelais')}</Doux>
-            </Fondu>
-          )}
-        </View>
-      </Section>
+        {/* Le sous-texte d'un réglage partage la marge de son libellé : c'est
+            l'encadré qui donne cette marge aux deux à la fois. */}
+        <Section>
+          <View style={styles.bloc}>
+            <Interrupteur
+              label={t('parametres.rappelSupplementaire')}
+              detail={t('parametres.rappelSupplementaireDetail')}
+              valeur={!!reglages.rappel_secondaire_actif}
+              onChange={(v) => modifier('rappel_secondaire_actif', v ? 1 : 0)}
+            />
+            {!!reglages.rappel_secondaire_actif && (
+              <Fondu>
+                <Text style={styles.label}>{t('parametres.combienAvant')}</Text>
+                <View style={styles.puces}>
+                  {DELAIS.map((minutes) => (
+                    <Puce
+                      key={minutes}
+                      texte={minutes < 60 ? `${minutes} min` : `${minutes / 60} h`}
+                      actif={delais.includes(minutes)}
+                      onPress={() => basculerDelai(minutes)}
+                    />
+                  ))}
+                </View>
+                <Doux>{t('parametres.plusieursDelais')}</Doux>
+              </Fondu>
+            )}
+          </View>
+        </Section>
+      </Ancre>
 
       {/*
         Une facture oubliée, c'est de l'argent réel : un propriétaire laisse
@@ -219,62 +224,68 @@ export default function Parametres() {
         global — un délai par pharmacie ne se remplit intelligemment qu'après
         des mois d'usage, quand on sait laquelle paie lentement.
       */}
-      <Doux>
-        Une facture restée en attente au-delà de ce délai vous vaut une notification. Un seul
-        rappel, doux, sans répétition.
-      </Doux>
-      <View style={styles.espacement} />
-      <Section>
-        <Champ
-          nu
-          label={t('parametres.relanceDelai')}
-          valeur={`${reglages.delai_relance_factures}`}
-          onChange={(v) => modifier('delai_relance_factures', analyserNombre(v))}
-          clavier="number-pad"
-          aide={t('parametres.relanceAide')}
-        />
-      </Section>
+      <Ancre id="relance">
+        <Doux>
+          Une facture restée en attente au-delà de ce délai vous vaut une notification. Un seul
+          rappel, doux, sans répétition.
+        </Doux>
+        <View style={styles.espacement} />
+        <Section>
+          <Champ
+            nu
+            label={t('parametres.relanceDelai')}
+            valeur={`${reglages.delai_relance_factures}`}
+            onChange={(v) => modifier('delai_relance_factures', analyserNombre(v))}
+            clavier="number-pad"
+            aide={t('parametres.relanceAide')}
+          />
+        </Section>
+      </Ancre>
 
-      <SousTitre>{t('disponibilites.bornes')}</SousTitre>
-      <Doux>{t('disponibilites.bornesAide')}</Doux>
-      <View style={styles.espacement} />
-      <Section>
-        <SelecteurHeure
-          label={t('disponibilites.borneDebut')}
-          valeur={reglages.dispo_debut}
-          onChange={(v) => modifier('dispo_debut', v)}
-        />
-        <SelecteurHeure
-          label={t('disponibilites.borneFin')}
-          valeur={reglages.dispo_fin}
-          onChange={(v) => modifier('dispo_fin', v)}
-        />
-      </Section>
+      <Ancre id="bornes">
+        <SousTitre>{t('disponibilites.bornes')}</SousTitre>
+        <Doux>{t('disponibilites.bornesAide')}</Doux>
+        <View style={styles.espacement} />
+        <Section>
+          <SelecteurHeure
+            label={t('disponibilites.borneDebut')}
+            valeur={reglages.dispo_debut}
+            onChange={(v) => modifier('dispo_debut', v)}
+          />
+          <SelecteurHeure
+            label={t('disponibilites.borneFin')}
+            valeur={reglages.dispo_fin}
+            onChange={(v) => modifier('dispo_fin', v)}
+          />
+        </Section>
+      </Ancre>
 
       {/* Une étiquette de champ, pas un en-tête : elle nomme la seule rangée
           de capsules qui suit. */}
-      <Text style={styles.etiquette}>{t('parametres.langue')}</Text>
-      <Section>
-        <View style={styles.bloc}>
-          <View style={styles.puces}>
-            {(['auto', ...LANGUES] as ChoixLangue[]).map((choix) => (
-              <Puce
-                key={choix}
-                texte={t(
-                  choix === 'auto'
-                    ? 'parametres.langueAuto'
-                    : choix === 'fr'
-                      ? 'parametres.langueFr'
-                      : 'parametres.langueEn'
-                )}
-                actif={reglages.langue === choix}
-                onPress={() => void choisirLangue(choix)}
-              />
-            ))}
+      <Ancre id="langue">
+        <Text style={styles.etiquette}>{t('parametres.langue')}</Text>
+        <Section>
+          <View style={styles.bloc}>
+            <View style={styles.puces}>
+              {(['auto', ...LANGUES] as ChoixLangue[]).map((choix) => (
+                <Puce
+                  key={choix}
+                  texte={t(
+                    choix === 'auto'
+                      ? 'parametres.langueAuto'
+                      : choix === 'fr'
+                        ? 'parametres.langueFr'
+                        : 'parametres.langueEn'
+                  )}
+                  actif={reglages.langue === choix}
+                  onPress={() => void choisirLangue(choix)}
+                />
+              ))}
+            </View>
+            <Doux>{t('parametres.langueAide')}</Doux>
           </View>
-          <Doux>{t('parametres.langueAide')}</Doux>
-        </View>
-      </Section>
+        </Section>
+      </Ancre>
 
       {/*
         Le rendez-vous du soir porte tout ce qui est automatique. Il a sa
@@ -282,21 +293,23 @@ export default function Parametres() {
         sens depuis qu'il annonce aussi un quart de demain et une facture
         impayée.
       */}
-      <Section titre={t('rendezVous.reglages')}>
-        <Interrupteur
-          label={t('rendezVous.actif')}
-          detail={t('rendezVous.detail')}
-          valeur={veille.rappel}
-          onChange={(v) => changerVeille('veille_rappel_actif', v ? 1 : 0, { rappel: v })}
-        />
-        {veille.rappel && (
-          <SelecteurHeure
-            label={t('rendezVous.heure')}
-            valeur={veille.heure}
-            onChange={(v) => changerVeille('veille_heure', v, { heure: v })}
+      <Ancre id="rendezVous">
+        <Section titre={t('rendezVous.reglages')}>
+          <Interrupteur
+            label={t('rendezVous.actif')}
+            detail={t('rendezVous.detail')}
+            valeur={veille.rappel}
+            onChange={(v) => changerVeille('veille_rappel_actif', v ? 1 : 0, { rappel: v })}
           />
-        )}
-      </Section>
+          {veille.rappel && (
+            <SelecteurHeure
+              label={t('rendezVous.heure')}
+              valeur={veille.heure}
+              onChange={(v) => changerVeille('veille_heure', v, { heure: v })}
+            />
+          )}
+        </Section>
+      </Ancre>
 
       <Section titre={t('veille.reglages')}>
         <Compteur
@@ -383,25 +396,29 @@ export default function Parametres() {
         pas : sans quarts, il n'y a ni graphique, ni statistique, ni facture.
         L'éteindre efface exactement ce qu'il a écrit, et rien d'autre.
       */}
-      <Section>
-        <Interrupteur
-          label={t('demo.titre')}
-          detail={t('demo.detail')}
-          valeur={demo}
-          onChange={basculerDemo}
-        />
-      </Section>
+      <Ancre id="demo">
+        <Section>
+          <Interrupteur
+            label={t('demo.titre')}
+            detail={t('demo.detail')}
+            valeur={demo}
+            onChange={basculerDemo}
+          />
+        </Section>
+      </Ancre>
 
-      <Section>
-        <Champ
-          nu
-          label={t('parametres.cleItineraire')}
-          valeur={reglages.cle_itineraire}
-          onChange={(v) => modifier('cle_itineraire', v)}
-          masque
-          aide={t('parametres.cleAide')}
-        />
-      </Section>
+      <Ancre id="serviceAdresses">
+        <Section>
+          <Champ
+            nu
+            label={t('parametres.cleItineraire')}
+            valeur={reglages.cle_itineraire}
+            onChange={(v) => modifier('cle_itineraire', v)}
+            masque
+            aide={t('parametres.cleAide')}
+          />
+        </Section>
+      </Ancre>
 
       <Bouton
         titre={t(enregistre ? 'commun.enregistre' : 'commun.enregistrer')}

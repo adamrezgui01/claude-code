@@ -101,7 +101,9 @@ describe('3 et 4 — aucune icône de réglages flottante ; Paramètres reste da
     for (const f of [...fichiers('app'), ...fichiers('src')]) {
       const source = readFileSync(f, 'utf8');
       if (/name="(settings|cog)[^"]*"/.test(source)) fautes.push(`${f} : icône de réglages`);
-      if (/\/parametres['"`]/.test(source) && !f.endsWith(join('(tabs)', 'menu.tsx'))) fautes.push(`${f} : mène à Paramètres`);
+      // Le Menu, et l'index de sa recherche « Trouver », qui en fait partie.
+      const duMenu = f.endsWith(join('(tabs)', 'menu.tsx')) || f.endsWith(join('lib', 'trouver.ts'));
+      if (/\/parametres['"`]/.test(source) && !duMenu) fautes.push(`${f} : mène à Paramètres`);
     }
     expect(fautes).toEqual([]);
   });
