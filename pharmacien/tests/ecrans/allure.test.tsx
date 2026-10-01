@@ -149,34 +149,6 @@ async function monter(ecran: Ecran) {
   return screen.toJSON() as unknown as Noeud | Noeud[];
 }
 
-/**
- * Les écrans déjà passés au V2.6. La liste s'allonge d'un onglet par commit :
- * une refonte qui casse une mise en page doit rester trouvable.
- */
-const PASSES_V26: string[] = [
-  'Clinique · Calculateur de dose',
-  'Clinique · Clinique',
-  'Clinique · Lien (existant)',
-  'Clinique · Veille',
-  'Clinique · Révision',
-  'Clinique · Suivre un sujet',
-  'Clinique · À revérifier',
-  'Clinique · Note (nouvelle)',
-  'Clinique · Sujet',
-  'Horaire · Horaire',
-  'Horaire · Mes dispos',
-  'Horaire · Quart (nouveau)',
-  'Horaire · Quart (existant)',
-  'Horaire · Frais (nouveau)',
-  'Répertoire · Répertoire',
-  'Répertoire · Pharmacie (existante)',
-  'Répertoire · Pharmacie (nouvelle)',
-  'Statistiques · Statistiques',
-  'Statistiques · Générer une facture',
-  'Statistiques · Factures',
-  'Statistiques · Facture',
-];
-
 /** Relevé au montage de chaque écran, et lu par le test 11 plus bas. */
 const formesRelevees = new Map<string, string[]>();
 
@@ -255,13 +227,11 @@ async function monterVitrine() {
 }
 
 
-const aVerifier = () => ECRANS.filter((e) => PASSES_V26.includes(`${e.onglet} · ${e.nom}`));
-
 describe('5 — toute cible fait au moins 44 points dans les deux sens', () => {
   test('dans le système de composants', async () => {
     expect(ciblesTropPetites(await monterVitrine(), CIBLE_MIN)).toEqual([]);
   });
-  for (const ecran of aVerifier()) {
+  for (const ecran of ECRANS) {
     test(`${ecran.onglet} · ${ecran.nom}`, async () => {
       expect(ciblesTropPetites(await monter(ecran), CIBLE_MIN)).toEqual([]);
     });
@@ -272,7 +242,7 @@ describe('7 — aucun en-tête ne chapeaute un seul champ', () => {
   test('dans le système de composants', async () => {
     expect(enTetesInutiles(await monterVitrine())).toEqual([]);
   });
-  for (const ecran of aVerifier()) {
+  for (const ecran of ECRANS) {
     test(`${ecran.onglet} · ${ecran.nom}`, async () => {
       expect(enTetesInutiles(await monter(ecran))).toEqual([]);
     });
@@ -283,7 +253,7 @@ describe('8 — aucune bordure ne double une différence de fond', () => {
   test('dans le système de composants', async () => {
     expect(borduresEnDouble(await monterVitrine(), couleurs.fondEcran)).toEqual([]);
   });
-  for (const ecran of aVerifier()) {
+  for (const ecran of ECRANS) {
     test(`${ecran.onglet} · ${ecran.nom}`, async () => {
       expect(borduresEnDouble(await monter(ecran), couleurs.fondEcran)).toEqual([]);
     });
@@ -296,7 +266,7 @@ describe('10 — le mauve ne marque que l’élément actif et l’action princi
     expect(mauveHorsRole(arbre, ACCENT_DEFAUT)).toEqual([]);
     expect(actionsPrincipales(arbre)).toBe(1);
   });
-  for (const ecran of aVerifier()) {
+  for (const ecran of ECRANS) {
     test(`${ecran.onglet} · ${ecran.nom}`, async () => {
       const arbre = await monter(ecran);
       expect(mauveHorsRole(arbre, ACCENT_DEFAUT)).toEqual([]);
@@ -306,7 +276,7 @@ describe('10 — le mauve ne marque que l’élément actif et l’action princi
 });
 
 describe('11 — deux champs pris sur deux onglets ont la même hauteur et le même rayon', () => {
-  test('sur les écrans passés au V2.6, et dans le système de composants', async () => {
+  test('sur tous les écrans, et dans le système de composants', async () => {
     // Les formes ont été relevées au montage de chaque écran, plus haut.
     expect(formesRelevees.size).toBe(ECRANS.length);
     const parForme = new Map<string, Set<string>>();
@@ -316,7 +286,6 @@ describe('11 — deux champs pris sur deux onglets ont la même hauteur et le m�
     };
     for (const f of formesDesChamps(await monterVitrine(), couleurs.fondEcran)) noter(f, 'Charpente');
     for (const [ecran, formes] of formesRelevees) {
-      if (!PASSES_V26.includes(ecran)) continue;
       for (const f of formes) noter(f, ecran.split(' · ')[0]);
     }
     // Une seule forme de champ, où qu'on le prenne.

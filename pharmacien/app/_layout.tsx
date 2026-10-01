@@ -1,9 +1,3 @@
-import {
-  Nunito_400Regular,
-  Nunito_600SemiBold,
-  Nunito_700Bold,
-  useFonts,
-} from '@expo-google-fonts/nunito';
 import * as Notifications from 'expo-notifications';
 import { getLocales } from 'expo-localization';
 import { Stack, useRouter } from 'expo-router';
@@ -24,7 +18,7 @@ import { preparerNotifications } from '../src/lib/notifications';
 import { replanifierRendezVous } from '../src/lib/reprogrammer';
 import { Bienvenue } from '../src/ui/Bienvenue';
 import { EcranDePlantage } from '../src/ui/Filet';
-import { ACCENT_DEFAUT, couleurs, FournisseurTheme, police } from '../src/ui/theme';
+import { ACCENT_DEFAUT, couleurs, FournisseurTheme, graisse, typo } from '../src/ui/theme';
 import { useTextes } from '../src/i18n';
 
 /**
@@ -41,11 +35,6 @@ export default function Racine() {
   const router = useRouter();
   const [pret, setPret] = useState(false);
   const [accent, setAccent] = useState(ACCENT_DEFAUT);
-  const [policesPretes] = useFonts({
-    Nunito_400Regular,
-    Nunito_600SemiBold,
-    Nunito_700Bold,
-  });
 
   const [bienvenue, setBienvenue] = useState(false);
 
@@ -128,9 +117,10 @@ export default function Racine() {
     [accent]
   );
 
-  if (!pret || !policesPretes) {
+  // Aucune police à charger : celle du système est déjà là.
+  if (!pret) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', backgroundColor: couleurs.fond }}>
+      <View style={{ flex: 1, justifyContent: 'center', backgroundColor: couleurs.fondEcran }}>
         <ActivityIndicator color={ACCENT_DEFAUT} />
       </View>
     );
@@ -148,15 +138,19 @@ export default function Racine() {
           <>
         <Stack
           screenOptions={{
-            headerTintColor: accent,
-            headerTitleStyle: { color: couleurs.texte, fontFamily: police.demi },
-            headerStyle: { backgroundColor: couleurs.fond },
+            // Le retour est une commande comme une autre : il n'est ni l'élément
+            // actif ni l'action principale, donc il ne prend pas le mauve.
+            headerTintColor: couleurs.textePrincipal,
+            // Le titre de barre des HIG : un écran poussé garde `headline`, un
+            // `title1` écraserait le bouton de retour.
+            headerTitleStyle: { color: couleurs.textePrincipal, fontSize: typo.headline.fontSize, fontWeight: graisse.demi },
+            headerStyle: { backgroundColor: couleurs.fondEcran },
             headerShadowVisible: false,
-            contentStyle: { backgroundColor: couleurs.fond },
+            contentStyle: { backgroundColor: couleurs.fondEcran },
             animation: 'slide_from_right',
             // Sans ça, le bouton de retour reprend le titre de l'écran
             // précédent — donc « (tabs) », le nom technique de la route.
-            headerBackTitle: 'Retour',
+            headerBackTitle: t('commun.retour'),
           }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t('onglets.horaire') }} />
           <Stack.Screen name="quart/[id]" options={{ title: t('quart.leQuart') }} />

@@ -410,9 +410,11 @@ passent 5:1 de contraste avec du texte blanc, donc n'importe lequel reste
 lisible sur un bouton.
 
 Le reste est fixe : fond blanc cassé chaud (`#F6F4F2`), un seul rayon d'arrondi
-global (`rayon`), Nunito partout, les icônes d'Ionicons seulement, des
-transitions courtes. Les variations claires ou foncées de l'accent ne font que
-de l'ambiance et ne portent jamais d'information. Les couleurs d'état — succès,
+global (`rayon`), la police du système — SF Pro — dans les onze rôles
+typographiques des Human Interface Guidelines, les icônes d'Ionicons seulement,
+des transitions courtes. Le mauve marque l'élément actif et l'action principale
+de l'écran, rien d'autre. Tout vient de `src/ui/theme.tsx`, et aucun écran ne
+définit ses propres tailles, dimensions ou couleurs. Les couleurs d'état — succès,
 alerte, échéance sur la carte, paiement d'une facture — ne suivent pas l'accent :
 elles doivent rester lisibles quel que soit le mauve.
 

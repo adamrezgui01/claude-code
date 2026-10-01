@@ -433,17 +433,16 @@ export const fr = {
     titre: 'Profil',
     formationContinue: 'Formation continue',
     compteur: '{{faites}} h / {{requises}} h',
-    echeanceLe: ' — échéance le {{date}}',
+    echeance: 'Échéance le {{date}}',
     heuresCompletees: 'Heures complétées',
     heuresRequises: 'Heures requises',
     finPeriode: 'Fin de la période de référence',
     documents: 'Documents professionnels',
-    aucunDocument: 'Aucun document suivi.',
+    aucunDocument: 'Aucun document professionnel suivi.',
     expireLe: 'Expire le {{date}} · rappel {{jours}} j avant',
     expire: 'Expiré',
     joursRestants: '{{jours}} j',
     ajouterDocument: 'Ajouter un document',
-    informations: 'Informations et facturation',
     coordonneesEntete: 'Vos coordonnées apparaissent en en-tête de chaque facture.',
     identite: 'Identité',
     votreNom: 'Votre nom (pharmacien remplaçant)',
@@ -549,9 +548,6 @@ export const fr = {
     disposRetirees_one: '{{count}} journée retirée :',
     disposRetirees_other: '{{count}} journées retirées :',
     journal: 'Phrases incomprises',
-    journalDetail_one: '{{count}} phrase gardée',
-    journalDetail_other: '{{count}} phrases gardées',
-    journalAucune: 'Aucune pour l’instant',
     journalIntro:
       'Ce que la dictée n’a pas compris reste ici, sur l’appareil. Rien n’en sort tout seul.',
     copier: 'Copier la liste',
@@ -608,9 +604,6 @@ export const fr = {
     recherchesSansReponse: 'Recherches sans réponse',
     recherchesIntro:
       'Ce que vous avez cherché sans rien trouver reste ici, sur l’appareil. Rien n’en sort tout seul. C’est par là que votre bibliothèque de sources grandit.',
-    recherchesAucune: 'Aucune pour l’instant',
-    recherches_one: '{{count}} recherche gardée',
-    recherches_other: '{{count}} recherches gardées',
     titre: 'Clinique',
     revisionsDuJour_one: '{{count}} note à revoir ce soir',
     revisionsDuJour_other: '{{count}} notes à revoir ce soir',
@@ -731,19 +724,16 @@ export const fr = {
   },
   parametres: {
     titre: 'Paramètres',
-    rappelsQuart: 'Rappels de quart',
     rappelsIntro:
       'Un rappel part toujours 48 h avant un quart, et un mémo 2 h après sa fin — celui-là ne demande rien, il rappelle seulement de corriger vos heures si elles ont changé.',
     rappelSupplementaire: 'Rappel supplémentaire',
     rappelSupplementaireDetail: 'Un second rappel, plus près du quart',
     combienAvant: 'Combien de temps avant ?',
     plusieursDelais: 'Vous pouvez en choisir plusieurs. Ils prennent effet aux prochains quarts.',
-    relanceFactures: 'Relance des factures',
     relanceIntro:
       'Une facture restée en attente au-delà de ce délai vous vaut une notification. Un seul rappel, doux, sans répétition.',
     relanceDelai: 'Relancer après (jours)',
     relanceAide: '30 jours par défaut. Mettez zéro pour ne jamais être relancé.',
-    serviceAdresses: 'Service d’adresses',
     cleItineraire: 'Clé OpenRouteService (facultative)',
     cleAide:
       'Sert à chercher les adresses et à calculer les distances. C’est la seule fonction qui envoie des données à l’extérieur de l’appareil.',
@@ -759,20 +749,11 @@ export const fr = {
   },
 
   menu: {
-    profilMots: 'nom, permis, opq, adresse, facture, formation, documents, assurance, name, licence, address, invoice, training, insurance',
-    liensMots: 'signets, inesss, protocole, vaccin, urgence, info-santé, antipoison, bookmarks, protocol, vaccine, emergency, poison',
-    parametresMots: 'rappel, notification, couleur, accent, mauve, clé, openrouteservice, reminder, colour, key, language, langue',
     titre: 'Menu',
-    rechercher: 'Trouver une section',
-    aucuneSection: 'Aucune section ne correspond.',
     profil: 'Profil',
     profilDetail: 'Formation continue, documents, coordonnées',
     parametres: 'Paramètres',
     parametresDetail: 'Rappels, langue, service d’adresses',
-    liens: 'Liens et infos utiles',
-    liensDetail: 'Protocoles, ordonnances collectives, références',
-    factures: 'Factures',
-    facturesDetail: 'Ce qui est envoyé, ce qui est payé',
   },
 
   liens: {
@@ -830,7 +811,6 @@ export const fr = {
 
   demo: {
     titre: 'Mode démonstration',
-    actif: 'Remplir avec des données d’exemple',
     detail:
       'Une année de travail plausible : huit pharmacies, des quarts, des factures et quelques notes. Rien n’est envoyé nulle part, aucun rappel n’est programmé, et l’éteindre efface exactement ce qu’il a écrit.',
   },
@@ -941,7 +921,6 @@ export const fr = {
     supprimerRappel: 'Le rappel associé sera annulé.',
     exempleNom: 'Assurance responsabilité',
     rappelJours: 'Rappel (jours avant l’expiration)',
-    rappelAide: 'Le rappel est programmé à 9 h, le nombre de jours indiqué avant l’expiration.',
     titre: 'Document',
     titreNouveau: 'Nouveau document',
     nom: 'Nom du document',
@@ -1017,7 +996,6 @@ export const fr = {
     ceMoisCi: 'Ce mois-ci',
     exemplePharmacie: 'Familiprix du Centre',
     titre: 'Apparence',
-    couleur: 'Couleur d’accent',
     explication:
       'Choisissez sur votre écran, pas sur papier : un mauve ne se juge pas autrement.',
   },

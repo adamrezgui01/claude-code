@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router/js-tabs';
 
-import { couleurs, police, useAccent } from '../../src/ui/theme';
+import { couleurs, graisse, typo, useAccent } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 export default function DispositionOnglets() {
@@ -11,14 +11,19 @@ export default function DispositionOnglets() {
   return (
     <Tabs
       screenOptions={{
+        // L'onglet actif est l'élément actif de l'écran : c'est lui qui porte
+        // le mauve, et lui seul.
         tabBarActiveTintColor: accent,
-        tabBarInactiveTintColor: couleurs.doux,
-        tabBarLabelStyle: { fontFamily: police.demi, fontSize: 11 },
-        tabBarStyle: { backgroundColor: couleurs.carte, borderTopColor: couleurs.bordure },
-        headerTitleStyle: { color: couleurs.texte, fontFamily: police.gras, fontSize: 20 },
-        headerStyle: { backgroundColor: couleurs.fond },
+        tabBarInactiveTintColor: couleurs.texteSecondaire,
+        tabBarLabelStyle: { fontSize: typo.caption2.fontSize, fontWeight: graisse.moyenne },
+        // Blanche sur le gris de l'écran : la différence de fond marque déjà la
+        // limite, le filet qui la doublait est retiré.
+        tabBarStyle: { backgroundColor: couleurs.fondEleve, borderTopWidth: 0 },
+        // Le titre d'écran des HIG.
+        headerTitleStyle: { color: couleurs.textePrincipal, fontSize: typo.title1.fontSize, fontWeight: graisse.grasse },
+        headerStyle: { backgroundColor: couleurs.fondEcran },
         headerShadowVisible: false,
-        sceneStyle: { backgroundColor: couleurs.fond },
+        sceneStyle: { backgroundColor: couleurs.fondEcran },
       }}>
       <Tabs.Screen
         name="index"

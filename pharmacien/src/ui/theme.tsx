@@ -89,24 +89,6 @@ export const couleurs = {
   /** Étoile des favoris. Le repère « à éviter » reste en gris, volontairement discret. */
   favori: '#D9A21B',
   favoriPale: '#FBF3DF',
-
-  /*
-   * Les anciens noms, le temps que chaque onglet passe aux nouveaux. Ils
-   * disparaissent au dernier commit du V2.6 ; un test refuse qu'un fichier
-   * déjà passé s'en serve encore.
-   */
-  /** @deprecated `fondEcran` */
-  fond: '#F6F4F2',
-  /** @deprecated `fondEleve` */
-  carte: '#FFFFFF',
-  /** @deprecated `textePrincipal` */
-  texte: textePrincipal,
-  /** @deprecated `texteSecondaire` */
-  doux: texteSecondaire,
-  /** @deprecated une bordure qui double un fond disparaît ; un filet prend `filet` */
-  bordure: '#E6E2E6',
-  /** @deprecated `filet` */
-  bordurePale: '#F1EEF1',
 };
 
 /**
@@ -146,26 +128,7 @@ export const espace = {
   6: 24,
   8: 32,
   10: 40,
-  /** @deprecated `espace[1]` */
-  xs: 4,
-  /** @deprecated `espace[2]` */
-  s: 8,
-  /** @deprecated `espace[3]` */
-  m: 12,
-  /** @deprecated `espace[4]` */
-  l: 16,
-  /** @deprecated `espace[6]` */
-  xl: 24,
-  /** @deprecated `espace[8]` */
-  xxl: 32,
 } as const;
-
-/** @deprecated la police système : aucun `fontFamily`, une `graisse` */
-export const police = {
-  normal: 'Nunito_400Regular',
-  demi: 'Nunito_600SemiBold',
-  gras: 'Nunito_700Bold',
-};
 
 /**
  * Les graisses permises. Ultralight, Thin et Light n'y sont pas : elles se
@@ -215,27 +178,6 @@ export const typo = {
 
 /** Les onze tailles, et elles seules. */
 export const TAILLES = [...new Set(Object.values(typo).map((r) => r.fontSize))];
-
-/**
- * @deprecated les onze rôles de `typo`
- *
- * L'ancienne échelle, relevée sur l'usage. Elle reste le temps que chaque
- * onglet passe à `typo`, puis disparaît.
- */
-export const texte = {
-  microscopique: 8,
-  minuscule: 10,
-  fin: 11,
-  secondaire: 12,
-  courant: 13,
-  lecture: 14,
-  corps: 15,
-  saisie: 16,
-  titre: 18,
-  grandTitre: 20,
-  enTete: 24,
-  chiffre: 30,
-} as const;
 
 /**
  * La taille d'une icône. Trois, alignées sur le texte qu'elles accompagnent :
@@ -334,6 +276,10 @@ export const dimensions = {
   point: { cote: 4 },
   /** Une colonne de roulette : heures, minutes. */
   rouleau: { largeur: 96 },
+  /** La pastille d'une nuance de mauve, dans Apparence. */
+  nuance: { cote: 44 },
+  /** Le nombre d'un compteur, entre ses deux boutons. */
+  compteur: { largeurNombre: 64 },
   /** Une barre du graphique : coins du haut arrondis, deux points au moins pour qu'un zéro se voie. */
   barre: { rayon: 4, minimum: 2 },
   /** La carte de la question, en révision : elle ne change pas de taille d'une question à l'autre. */
@@ -397,20 +343,3 @@ export const ombreFlottante = {
   shadowOffset: { width: 0, height: 8 },
   elevation: 8,
 } as const;
-
-/**
- * @deprecated `ombreFlottante`, et seulement pour ce qui flotte
- *
- * L'ancienne ombre teintée de mauve, sur les cartes et les boutons. Elle reste
- * le temps que chaque onglet s'en passe.
- */
-export function ombre(accent: string, poids: 'carte' | 'bouton') {
-  const bouton = poids === 'bouton';
-  return {
-    shadowColor: accent,
-    shadowOpacity: bouton ? 0.26 : 0.1,
-    shadowRadius: bouton ? 16 : 12,
-    shadowOffset: { width: 0, height: bouton ? 6 : 3 },
-    elevation: bouton ? 5 : 2,
-  };
-}

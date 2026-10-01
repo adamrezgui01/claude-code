@@ -367,7 +367,11 @@ export function enTetesInutiles(racine: Noeud | Noeud[] | null): string[] {
       // Un titre posé entre deux commandes — le mois entre ses flèches — est
       // une barre de titre, pas un en-tête de section : il ne chapeaute rien,
       // il nomme ce qu'on regarde.
-      if (freres.some((f) => typeof f !== 'string' && estInteractif(f))) return;
+      // Seuls ses voisins immédiats comptent : un bouton plus bas dans le même
+      // écran n'en fait pas une barre de titre.
+      const place = freres.indexOf(unite);
+      const voisins = [freres[place - 1], freres[place + 1]];
+      if (voisins.some((f) => f && typeof f !== 'string' && estInteractif(f))) return;
       const suite: (Noeud | string)[] = [];
       for (const f of freres.slice(freres.indexOf(unite) + 1)) {
         if (contientEnTete(f)) break;

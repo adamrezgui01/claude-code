@@ -105,7 +105,7 @@ describe('le menu', () => {
    * `t(`menu.${cle}`)` — et le test des clés littérales ne les voit pas. Une
    * entrée ajoutée sans ses textes afficherait « menu.dispos » à l'usager.
    */
-  test('chaque entrée porte ses trois clés, dans les deux langues', () => {
+  test('chaque entrée porte ses deux clés, dans les deux langues', () => {
     const source = readFileSync(join('app', '(tabs)', 'menu.tsx'), 'utf8');
     const bloc = source.slice(source.indexOf('const ENTREES'), source.indexOf('] as const'));
     const cles = [...bloc.matchAll(/cle: '(\w+)'/g)].map((t) => t[1]);
@@ -113,13 +113,21 @@ describe('le menu', () => {
 
     const manquantes: string[] = [];
     for (const cle of cles) {
-      for (const suffixe of ['', 'Detail', 'Mots']) {
+      for (const suffixe of ['', 'Detail']) {
         const complete = `menu.${cle}${suffixe}`;
         if (!FR.has(complete)) manquantes.push(`fr → ${complete}`);
         if (!EN.has(complete)) manquantes.push(`en → ${complete}`);
       }
     }
     expect(manquantes).toEqual([]);
+  });
+
+  test('la recherche retirée part avec ses textes', () => {
+    // Deux entrées ne se cherchent pas : le V2.6 a retiré le champ, et ses
+    // mots-clés n'ont plus personne pour les lire.
+    for (const cle of ['menu.rechercher', 'menu.aucuneSection', 'menu.profilMots', 'menu.parametresMots']) {
+      expect({ cle, fr: FR.has(cle), en: EN.has(cle) }).toEqual({ cle, fr: false, en: false });
+    }
   });
 });
 

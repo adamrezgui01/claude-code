@@ -36,10 +36,11 @@ import {
   Fondu,
   Interrupteur,
   Puce,
+  Rangee,
   Section,
   SousTitre,
 } from '../src/ui/composants';
-import { couleurs, espace, police, rayon, texte, useAccent } from '../src/ui/theme';
+import { couleurs, dimensions, espace, graisse, icone, typo, CIBLE_MIN } from '../src/ui/theme';
 import { SelecteurHeure } from '../src/ui/Selecteurs';
 import { Compteur } from '../src/ui/Compteur';
 
@@ -53,7 +54,6 @@ const DELAIS = [30, 60, 120, 180];
  */
 export default function Parametres() {
   const router = useRouter();
-  const accent = useAccent();
   const { t } = useTextes();
   const [reglages, setReglages] = useState<Reglages | null>(null);
   const [enregistre, setEnregistre] = useState(false);
@@ -176,7 +176,8 @@ export default function Parametres() {
 
   return (
     <Ecran>
-      <SousTitre>{t('parametres.rappelsQuart')}</SousTitre>
+      {/* Sans « Rappels de quart » au-dessus : un seul réglage suit, et la
+          phrase qui l'introduit dit déjà de quoi il s'agit. */}
       <Doux>
         Un rappel part toujours 48 h avant un quart, et un mémo 2 h après sa fin — celui-là ne
         demande rien, il rappelle seulement de corriger vos heures si elles ont changé.
@@ -218,7 +219,6 @@ export default function Parametres() {
         global — un délai par pharmacie ne se remplit intelligemment qu'après
         des mois d'usage, quand on sait laquelle paie lentement.
       */}
-      <SousTitre>{t('parametres.relanceFactures')}</SousTitre>
       <Doux>
         Une facture restée en attente au-delà de ce délai vous vaut une notification. Un seul
         rappel, doux, sans répétition.
@@ -251,9 +251,9 @@ export default function Parametres() {
         />
       </Section>
 
-      <SousTitre>{t('parametres.langue')}</SousTitre>
-      <Doux>{t('parametres.langueAide')}</Doux>
-      <View style={styles.espacement} />
+      {/* Une étiquette de champ, pas un en-tête : elle nomme la seule rangée
+          de capsules qui suit. */}
+      <Text style={styles.etiquette}>{t('parametres.langue')}</Text>
       <Section>
         <View style={styles.bloc}>
           <View style={styles.puces}>
@@ -272,6 +272,7 @@ export default function Parametres() {
               />
             ))}
           </View>
+          <Doux>{t('parametres.langueAide')}</Doux>
         </View>
       </Section>
 
@@ -320,65 +321,61 @@ export default function Parametres() {
         />
       </Section>
 
-      <Section titre={t('clinique.recherchesSansReponse')}>
-        <Doux>{t('clinique.recherchesIntro')}</Doux>
-        <Text style={styles.compte}>
-          {sansReponse === 0
-            ? t('clinique.recherchesAucune')
-            : t('clinique.recherches', { count: sansReponse })}
-        </Text>
-        {sansReponse > 0 && (
-          <View style={styles.actionsJournal}>
-            <View style={styles.actionJournal}>
-              <Bouton
-                titre={t('dictee.copier')}
-                variante="secondaire"
-                onPress={() => void copierRecherches()}
-              />
+      {/* Deux journaux, une ligne chacun : le compte suffit à dire s'il y a
+          quelque chose à copier. Les deux en-têtes qui les coiffaient ne
+          couvraient aucun champ. */}
+      <Section>
+        <View style={styles.bloc}>
+          <Rangee label={t('clinique.recherchesSansReponse')} valeur={`${sansReponse}`} fort />
+          <Doux>{t('clinique.recherchesIntro')}</Doux>
+          {sansReponse > 0 && (
+            <View style={styles.actionsJournal}>
+              <View style={styles.actionJournal}>
+                <Bouton
+                  titre={t('dictee.copier')}
+                  variante="secondaire"
+                  onPress={() => void copierRecherches()}
+                />
+              </View>
+              <View style={styles.actionJournal}>
+                <Bouton
+                  titre={t('dictee.effacer')}
+                  variante="secondaire"
+                  onPress={() => {
+                    effacerRecherchesSansReponse();
+                    setSansReponse(0);
+                  }}
+                />
+              </View>
             </View>
-            <View style={styles.actionJournal}>
-              <Bouton
-                titre={t('dictee.effacer')}
-                variante="secondaire"
-                onPress={() => {
-                  effacerRecherchesSansReponse();
-                  setSansReponse(0);
-                }}
-              />
+          )}
+        </View>
+        <View style={styles.bloc}>
+          <Rangee label={t('dictee.journal')} valeur={`${incomprises}`} fort />
+          <Doux>{t('dictee.journalIntro')}</Doux>
+          {incomprises > 0 && (
+            <View style={styles.actionsJournal}>
+              <View style={styles.actionJournal}>
+                <Bouton
+                  titre={copiee ? t('dictee.copiee') : t('dictee.copier')}
+                  variante="secondaire"
+                  onPress={() => void copierJournal()}
+                />
+              </View>
+              <View style={styles.actionJournal}>
+                <Bouton
+                  titre={t('dictee.effacer')}
+                  variante="secondaire"
+                  onPress={() => {
+                    effacerIncomprises();
+                    setIncomprises(0);
+                    setCopiee(false);
+                  }}
+                />
+              </View>
             </View>
-          </View>
-        )}
-      </Section>
-
-      <Section titre={t('dictee.journal')}>
-        <Doux>{t('dictee.journalIntro')}</Doux>
-        <Text style={styles.compte}>
-          {incomprises === 0
-            ? t('dictee.journalAucune')
-            : t('dictee.journalDetail', { count: incomprises })}
-        </Text>
-        {incomprises > 0 && (
-          <View style={styles.actionsJournal}>
-            <View style={styles.actionJournal}>
-              <Bouton
-                titre={copiee ? t('dictee.copiee') : t('dictee.copier')}
-                variante="secondaire"
-                onPress={() => void copierJournal()}
-              />
-            </View>
-            <View style={styles.actionJournal}>
-              <Bouton
-                titre={t('dictee.effacer')}
-                variante="secondaire"
-                onPress={() => {
-                  effacerIncomprises();
-                  setIncomprises(0);
-                  setCopiee(false);
-                }}
-              />
-            </View>
-          </View>
-        )}
+          )}
+        </View>
       </Section>
 
       {/*
@@ -386,16 +383,16 @@ export default function Parametres() {
         pas : sans quarts, il n'y a ni graphique, ni statistique, ni facture.
         L'éteindre efface exactement ce qu'il a écrit, et rien d'autre.
       */}
-      <Section titre={t('demo.titre')}>
+      <Section>
         <Interrupteur
-          label={t('demo.actif')}
+          label={t('demo.titre')}
           detail={t('demo.detail')}
           valeur={demo}
           onChange={basculerDemo}
         />
       </Section>
 
-      <Section titre={t('parametres.serviceAdresses')}>
+      <Section>
         <Champ
           nu
           label={t('parametres.cleItineraire')}
@@ -414,13 +411,14 @@ export default function Parametres() {
 
       <Pressable
         onPress={() => router.push('/apparence')}
+        accessibilityRole="button"
         style={({ pressed }) => [styles.apparence, pressed && { opacity: 0.6 }]}>
-        <Ionicons name="color-palette-outline" size={20} color={accent} />
+        <Ionicons name="color-palette-outline" size={icone.courante} color={couleurs.textePrincipal} />
         <View style={styles.apparenceTexte}>
           <Text style={styles.apparenceTitre}>{t('parametres.apparence')}</Text>
           <Doux>{t('parametres.apparenceDetail')}</Doux>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={couleurs.doux} />
+        <Ionicons name="chevron-forward" size={icone.courante} color={couleurs.texteSecondaire} />
       </Pressable>
     </Ecran>
   );
@@ -428,52 +426,50 @@ export default function Parametres() {
 
 const styles = StyleSheet.create({
   bloc: {
-    paddingVertical: espace.m,
-    gap: espace.s,
+    paddingVertical: espace[3],
+    gap: espace[2],
   },
   espacement: {
-    height: espace.m,
+    height: espace[3],
   },
   label: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginBottom: espace.xs,
-    marginTop: espace.s,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
+    marginBottom: espace[1],
+    marginTop: espace[2],
+  },
+  etiquette: {
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
+    marginBottom: dimensions.etiquette.margeBasse,
   },
   puces: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  compte: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
-    marginTop: espace.s,
-  },
   actionsJournal: {
     flexDirection: 'row',
-    gap: espace.m,
-    marginTop: espace.m,
+    gap: espace[3],
+    marginTop: espace[3],
   },
   actionJournal: { flex: 1 },
   apparence: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.m,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.l,
-    marginTop: espace.l,
+    gap: espace[3],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    padding: dimensions.carte.remplissage,
+    marginTop: espace[4],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   apparenceTexte: {
     flex: 1,
   },
   apparenceTitre: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
 });

@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -26,20 +27,26 @@ import {
   Doux,
   Ecran,
   Fondu,
+  Rangee,
   Section,
-  Separateur,
-  SousTitre,
   Vide,
 } from '../src/ui/composants';
 import { SelecteurDate } from '../src/ui/Selecteurs';
 import { SaisieAdresse } from '../src/ui/SaisieAdresse';
-import { couleurs, espace, police, texte, useAccent } from '../src/ui/theme';
+import {
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  typo,
+  CIBLE_MIN,
+} from '../src/ui/theme';
 import { useTextes } from '../src/i18n';
 
 export default function Profil() {
   const { t } = useTextes();
   const router = useRouter();
-  const accent = useAccent();
 
   const [heuresCompletees, setHeuresCompletees] = useState('0');
   const [heuresRequises, setHeuresRequises] = useState('40');
@@ -104,17 +111,26 @@ export default function Profil() {
 
   return (
     <Ecran>
-      <SousTitre>{t('profil.formationContinue')}</SousTitre>
-      <Text style={styles.compteur}>
-        {t('profil.compteur', {
+      {/* Une ligne qui se nomme elle-même : l'en-tête « Formation continue »
+          au-dessus ne couvrait qu'elle et son bouton. */}
+      <Rangee
+        label={t('profil.formationContinue')}
+        valeur={t('profil.compteur', {
           faites: nombre(analyserNombre(heuresCompletees)),
           requises: nombre(analyserNombre(heuresRequises)),
         })}
-        {finPeriode ? t('profil.echeanceLe', { date: formatDateCourte(finPeriode) }) : ''}
-      </Text>
+        fort
+      />
+      {!!finPeriode && (
+        <Doux>{t('profil.echeance', { date: formatDateCourte(finPeriode) })}</Doux>
+      )}
       {!ajusteFormation ? (
-        <Pressable onPress={() => setAjusteFormation(true)} hitSlop={8}>
-          <Text style={[styles.lien, { color: accent }]}>{t('commun.ajuster')}</Text>
+        <Pressable
+          onPress={() => setAjusteFormation(true)}
+          accessibilityRole="button"
+          style={styles.lienCible}>
+          <Ionicons name="create-outline" size={icone.courante} color={couleurs.textePrincipal} />
+          <Text style={styles.lien}>{t('commun.ajuster')}</Text>
         </Pressable>
       ) : (
         <Fondu style={styles.bloc}>
@@ -139,18 +155,21 @@ export default function Profil() {
         </Fondu>
       )}
 
-      <Separateur />
+      <View style={styles.entreGroupes} />
 
-      <SousTitre>{t('profil.documents')}</SousTitre>
+      {/* L'en-tête ne paraît que s'il a une liste à coiffer. Sans document, la
+          phrase et le lien qui suit disent tout. */}
       {documents.length === 0 ? (
         <Vide texte={t('profil.aucunDocument')} />
       ) : (
-        documents.map((d) => {
+        <Section titre={t('profil.documents')}>
+        {documents.map((d) => {
           const restants = joursEntre(aujourdhui(), d.date_expiration);
           return (
             <Pressable
               key={d.id}
               onPress={() => router.push(`/document/${d.id}`)}
+              accessibilityRole="button"
               style={({ pressed }) => [styles.document, pressed && { opacity: 0.6 }]}>
               <View style={styles.documentTexte}>
                 <Text style={styles.documentNom}>{d.nom}</Text>
@@ -166,16 +185,22 @@ export default function Profil() {
               </Text>
             </Pressable>
           );
-        })
+        })}
+        </Section>
       )}
-      <Pressable onPress={() => router.push('/document/nouveau')} hitSlop={8}>
-        <Text style={[styles.lien, { color: accent }]}>{t('profil.ajouterDocument')}</Text>
+      <Pressable
+        onPress={() => router.push('/document/nouveau')}
+        accessibilityRole="button"
+        style={styles.lienCible}>
+        <Ionicons name="add" size={icone.courante} color={couleurs.textePrincipal} />
+        <Text style={styles.lien}>{t('profil.ajouterDocument')}</Text>
       </Pressable>
 
-      <Separateur />
+      <View style={styles.entreGroupes} />
 
-      {/* Ce qui décrit l'usager et ce qui part sur ses factures. */}
-      <SousTitre>{t('profil.informations')}</SousTitre>
+      {/* Ce qui décrit l'usager et ce qui part sur ses factures. Sans en-tête
+          « Informations » au-dessus : les trois sections qui suivent portent
+          déjà chacune le leur. */}
       <Doux>{t('profil.coordonneesEntete')}</Doux>
       <View style={styles.bloc} />
 
@@ -242,53 +267,57 @@ export default function Profil() {
 }
 
 const styles = StyleSheet.create({
-  compteur: {
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.texte,
-  },
   lien: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
-    paddingVertical: espace.s,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
+  lienCible: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace[2],
+    alignSelf: 'flex-start',
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+  },
+  entreGroupes: { height: dimensions.formulaire.entreGroupes },
   label: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginBottom: espace.xs,
-    marginTop: espace.s,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
+    marginBottom: espace[1],
+    marginTop: espace[2],
   },
   puces: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   bloc: {
-    marginTop: espace.m,
-    gap: espace.s,
+    marginTop: espace[3],
+    gap: espace[2],
   },
   document: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: espace.m,
-    paddingVertical: espace.s,
+    gap: espace[3],
+    paddingVertical: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   documentTexte: {
     flex: 1,
   },
   documentNom: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   restants: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
   },
   expire: {
     color: couleurs.alerte,
-    fontFamily: police.demi,
+    fontWeight: graisse.demi,
   },
 });

@@ -431,17 +431,16 @@ export const en: Dictionnaire = {
     titre: 'Profile',
     formationContinue: 'Continuing education',
     compteur: '{{faites}} h / {{requises}} h',
-    echeanceLe: ' — due on {{date}}',
+    echeance: 'Due on {{date}}',
     heuresCompletees: 'Hours completed',
     heuresRequises: 'Hours required',
     finPeriode: 'End of the reference period',
     documents: 'Professional documents',
-    aucunDocument: 'No document tracked.',
+    aucunDocument: 'No professional document tracked.',
     expireLe: 'Expires on {{date}} · reminder {{jours}} days before',
     expire: 'Expired',
     joursRestants: '{{jours}} d',
     ajouterDocument: 'Add a document',
-    informations: 'Details and invoicing',
     coordonneesEntete: 'Your details appear in the header of every invoice.',
     identite: 'Identity',
     votreNom: 'Your name (locum pharmacist)',
@@ -546,9 +545,6 @@ export const en: Dictionnaire = {
     disposRetirees_one: '{{count}} day removed:',
     disposRetirees_other: '{{count}} days removed:',
     journal: 'Sentences not understood',
-    journalDetail_one: '{{count}} sentence kept',
-    journalDetail_other: '{{count}} sentences kept',
-    journalAucune: 'None so far',
     journalIntro:
       'Whatever dictation did not understand stays here, on the device. Nothing leaves on its own.',
     copier: 'Copy the list',
@@ -605,9 +601,6 @@ export const en: Dictionnaire = {
     recherchesSansReponse: 'Searches with no answer',
     recherchesIntro:
       'What you searched for without finding anything stays here, on the device. Nothing leaves on its own. This is how your library of sources grows.',
-    recherchesAucune: 'None so far',
-    recherches_one: '{{count}} search kept',
-    recherches_other: '{{count}} searches kept',
     titre: 'Clinical',
     revisionsDuJour_one: '{{count}} note to review tonight',
     revisionsDuJour_other: '{{count}} notes to review tonight',
@@ -728,19 +721,16 @@ export const en: Dictionnaire = {
   },
   parametres: {
     titre: 'Settings',
-    rappelsQuart: 'Shift reminders',
     rappelsIntro:
       'A reminder always goes out 48 h before a shift, and a note 2 h after it ends — that one asks nothing, it only reminds you to correct your hours if they changed.',
     rappelSupplementaire: 'Extra reminder',
     rappelSupplementaireDetail: 'A second reminder, closer to the shift',
     combienAvant: 'How long before?',
     plusieursDelais: 'You can pick several. They apply to your next shifts.',
-    relanceFactures: 'Invoice follow-up',
     relanceIntro:
       'An invoice still pending beyond this delay earns you a notification. One gentle reminder, never repeated.',
     relanceDelai: 'Follow up after (days)',
     relanceAide: '30 days by default. Enter zero to never be reminded.',
-    serviceAdresses: 'Address service',
     cleItineraire: 'OpenRouteService key (optional)',
     cleAide:
       'Used to search addresses and calculate distances. It is the only feature that sends data off the device.',
@@ -756,20 +746,11 @@ export const en: Dictionnaire = {
   },
 
   menu: {
-    profilMots: 'name, licence, opq, address, invoice, training, documents, insurance, nom, permis, adresse, facture, formation',
-    liensMots: 'bookmarks, inesss, protocol, vaccine, emergency, info-santé, poison, signets, protocole, urgence',
-    parametresMots: 'reminder, notification, colour, color, accent, purple, key, openrouteservice, rappel, couleur, clé, language, langue',
     titre: 'Menu',
-    rechercher: 'Find a section',
-    aucuneSection: 'No section matches.',
     profil: 'Profile',
     profilDetail: 'Continuing education, documents, details',
     parametres: 'Settings',
     parametresDetail: 'Reminders, language, address service',
-    liens: 'Useful links and information',
-    liensDetail: 'Protocols, collective prescriptions, references',
-    factures: 'Invoices',
-    facturesDetail: 'What went out, what got paid',
   },
 
   liens: {
@@ -827,7 +808,6 @@ export const en: Dictionnaire = {
 
   demo: {
     titre: 'Demo mode',
-    actif: 'Fill with sample data',
     detail:
       'A plausible year of work: eight pharmacies, shifts, invoices and a few notes. Nothing is sent anywhere, no reminder is scheduled, and turning it off erases exactly what it wrote.',
   },
@@ -934,7 +914,6 @@ export const en: Dictionnaire = {
     supprimerRappel: 'Its reminder will be cancelled.',
     exempleNom: 'Liability insurance',
     rappelJours: 'Reminder (days before expiry)',
-    rappelAide: 'The reminder is set for 9 a.m., the given number of days before expiry.',
     titre: 'Document',
     titreNouveau: 'New document',
     nom: 'Document name',
@@ -1007,7 +986,6 @@ export const en: Dictionnaire = {
     ceMoisCi: 'This month',
     exemplePharmacie: 'Familiprix du Centre',
     titre: 'Appearance',
-    couleur: 'Accent colour',
     explication:
       'Choose on your screen, not on paper: a purple cannot be judged any other way.',
   },

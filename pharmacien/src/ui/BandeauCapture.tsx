@@ -16,7 +16,7 @@ import { useTextes } from '../i18n';
 import { doitProposerBandeau, offresBandeau } from '../lib/veille/capture';
 
 import { nomDuSujet } from '../lib/veille/sujets';
-import { couleurs, espace, police, rayon, texte, useAccent } from './theme';
+import { couleurs, dimensions, espace, graisse, icone, ombreFlottante, typo, useAccent, CIBLE_MIN } from './theme';
 
 /**
  * Le bandeau de capture.
@@ -76,7 +76,7 @@ export function BandeauCapture() {
   if (!source) return null;
 
   return (
-    <View style={[styles.bandeau, { borderColor: accent }]}>
+    <View style={styles.bandeau}>
       <View style={styles.texte}>
         <Text style={styles.question}>{t('veille.bandeauQuestion')}</Text>
         <Text style={styles.source} numberOfLines={1}>
@@ -89,6 +89,8 @@ export function BandeauCapture() {
           setSource(null);
           router.push(`/veille/note/nouvelle?source=${source.id}`);
         }}
+        accessibilityRole="button"
+        testID="action-principale"
         style={({ pressed }) => [styles.action, { backgroundColor: accent }, pressed && styles.attenue]}>
         <Text style={styles.actionTexte}>{t('veille.bandeauNote')}</Text>
       </Pressable>
@@ -101,9 +103,8 @@ export function BandeauCapture() {
           }}
           accessibilityRole="button"
           accessibilityLabel={t('veille.bandeauSuivre')}
-          hitSlop={8}
-          style={styles.secondaire}>
-          <Ionicons name="bookmark-outline" size={18} color={accent} />
+          style={styles.cible}>
+          <Ionicons name="bookmark-outline" size={icone.courante} color={couleurs.textePrincipal} />
         </Pressable>
       )}
 
@@ -114,8 +115,8 @@ export function BandeauCapture() {
         }}
         accessibilityRole="button"
         accessibilityLabel={t('commun.fermer')}
-        hitSlop={10}>
-        <Ionicons name="close" size={18} color={couleurs.doux} />
+        style={styles.cible}>
+        <Ionicons name="close" size={icone.courante} color={couleurs.texteSecondaire} />
       </Pressable>
     </View>
   );
@@ -124,23 +125,31 @@ export function BandeauCapture() {
 const styles = StyleSheet.create({
   bandeau: {
     position: 'absolute',
-    left: espace.m,
-    right: espace.m,
-    bottom: espace.xxl * 2,
+    left: espace[3],
+    right: espace[3],
+    bottom: espace[8] * 2,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.m,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1.5,
-    borderRadius: rayon,
-    paddingVertical: espace.m,
-    paddingHorizontal: espace.l,
+    gap: espace[3],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    paddingVertical: espace[3],
+    paddingHorizontal: dimensions.carte.remplissage,
+    // Il flotte au-dessus de l'écran : c'est l'ombre qui le détache, et le
+    // contour mauve qui le faisait en plus est retiré.
+    ...ombreFlottante,
   },
   texte: { flex: 1 },
-  question: { fontSize: texte.lecture, fontFamily: police.demi, color: couleurs.texte },
-  source: { fontSize: texte.secondaire, fontFamily: police.normal, color: couleurs.doux },
-  action: { borderRadius: rayon, paddingVertical: espace.s, paddingHorizontal: espace.m },
-  actionTexte: { fontSize: texte.courant, fontFamily: police.demi, color: '#FFFFFF' },
-  secondaire: { padding: espace.xs },
+  question: { ...typo.subhead, fontWeight: graisse.demi, color: couleurs.textePrincipal },
+  source: { ...typo.footnote, color: couleurs.texteSecondaire },
+  action: {
+    borderRadius: dimensions.bouton.rayon,
+    paddingHorizontal: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    justifyContent: 'center',
+  },
+  actionTexte: { ...typo.subhead, fontWeight: graisse.demi, color: couleurs.surAccent },
+  cible: { minHeight: CIBLE_MIN, minWidth: CIBLE_MIN, alignItems: 'center', justifyContent: 'center' },
   attenue: { opacity: 0.7 },
 });

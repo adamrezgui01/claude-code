@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useTextes } from '../i18n';
 import { ajusterCompteur } from '../lib/compteur';
-import { couleurs, espace, police, rayon, texte, useAccent } from './theme';
+import { couleurs, dimensions, espace, graisse, icone, typo, CIBLE_MIN } from './theme';
 
 /**
  * Un nombre qui se règle à deux boutons.
@@ -30,7 +30,6 @@ export function Compteur({
   max: number;
   onChange: (valeur: number) => void;
 }) {
-  const accent = useAccent();
   const [saisie, setSaisie] = useState<string | null>(null);
 
   function terminerSaisie() {
@@ -49,12 +48,12 @@ export function Compteur({
       <Text style={styles.label}>{label}</Text>
       <View style={styles.ligne}>
         <Bouton
-          icone="remove"
+          pictogramme="remove"
           desactive={auMinimum}
           onPress={() => onChange(ajusterCompteur(valeur, -1, min, max))}
         />
         <TextInput
-          style={[styles.nombre, { color: accent }]}
+          style={styles.nombre}
           value={saisie ?? `${valeur}`}
           onChangeText={setSaisie}
           onBlur={terminerSaisie}
@@ -64,7 +63,7 @@ export function Compteur({
           selectTextOnFocus
         />
         <Bouton
-          icone="add"
+          pictogramme="add"
           desactive={auMaximum}
           onPress={() => onChange(ajusterCompteur(valeur, 1, min, max))}
         />
@@ -74,59 +73,59 @@ export function Compteur({
   );
 }
 
+/**
+ * Un bouton rond, gris sur la ligne blanche : son fond le marque, pas un
+ * contour mauve. Le nombre n'est ni l'élément actif ni l'action principale.
+ */
 function Bouton({
-  icone,
+  pictogramme,
   desactive,
   onPress,
 }: {
-  icone: 'add' | 'remove';
+  pictogramme: 'add' | 'remove';
   desactive: boolean;
   onPress: () => void;
 }) {
   const { t } = useTextes();
-  const accent = useAccent();
   return (
     <Pressable
       onPress={onPress}
       disabled={desactive}
       accessibilityRole="button"
-      accessibilityLabel={t(icone === 'add' ? 'commun.augmenter' : 'commun.diminuer')}
-      hitSlop={8}
-      style={({ pressed }) => [
-        styles.rond,
-        { borderColor: desactive ? couleurs.bordure : accent },
-        pressed && !desactive && { backgroundColor: couleurs.bordurePale },
-        desactive && styles.attenue,
-      ]}>
-      <Ionicons name={icone} size={20} color={desactive ? couleurs.doux : accent} />
+      accessibilityLabel={t(pictogramme === 'add' ? 'commun.augmenter' : 'commun.diminuer')}
+      style={({ pressed }) => [styles.rond, pressed && !desactive && styles.enfonce, desactive && styles.attenue]}>
+      <Ionicons name={pictogramme} size={icone.courante} color={couleurs.textePrincipal} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  bloc: { paddingVertical: espace.m },
-  label: { fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
+  bloc: { paddingVertical: espace[3] },
+  label: { ...typo.body, fontWeight: graisse.demi, color: couleurs.textePrincipal },
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: espace.xl,
-    paddingVertical: espace.m,
+    gap: espace[6],
+    paddingVertical: espace[3],
   },
   rond: {
-    width: 44,
-    height: 44,
-    borderWidth: 1.5,
-    borderRadius: 22,
+    width: CIBLE_MIN,
+    height: CIBLE_MIN,
+    borderRadius: CIBLE_MIN / 2,
+    backgroundColor: couleurs.fondEcran,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  enfonce: { opacity: 0.6 },
   nombre: {
-    minWidth: 64,
+    minWidth: dimensions.compteur.largeurNombre,
+    minHeight: CIBLE_MIN,
     textAlign: 'center',
-    fontSize: texte.enTete,
-    fontFamily: police.gras,
+    ...typo.title1,
+    fontWeight: graisse.grasse,
+    color: couleurs.textePrincipal,
   },
   attenue: { opacity: 0.4 },
-  aide: { fontSize: texte.courant, fontFamily: police.normal, color: couleurs.doux, lineHeight: 18 },
+  aide: { ...typo.footnote,  color: couleurs.texteSecondaire },
 });

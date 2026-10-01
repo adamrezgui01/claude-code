@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, StyleSheet } from 'react-native';
+import { Alert } from 'react-native';
 
 import {
   creerDocument,
@@ -13,15 +13,8 @@ import { ajouterJours, aujourdhui } from '../../src/lib/dates';
 import { analyserNombre } from '../../src/lib/format';
 import { annulerRappel } from '../../src/lib/notifications';
 import { replanifierRendezVous } from '../../src/lib/reprogrammer';
-import {
-  Bouton,
-  Champ,
-  Doux,
-  Ecran,
-  Fondu,
-} from '../../src/ui/composants';
+import { Bouton, Champ, Ecran, Fondu } from '../../src/ui/composants';
 import { SelecteurDate } from '../../src/ui/Selecteurs';
-import { espace } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 export default function FormulaireDocument() {
@@ -86,8 +79,8 @@ export default function FormulaireDocument() {
   }
 
   return (
-    <Ecran style={styles.contenu}>
-      <Stack.Screen options={{ title: nouveau ? 'Nouveau document' : 'Document' }} />
+    <Ecran>
+      <Stack.Screen options={{ title: t(nouveau ? 'document.titreNouveau' : 'document.titre') }} />
 
       <Fondu>
       <Champ
@@ -103,7 +96,9 @@ export default function FormulaireDocument() {
         onChange={setJours}
         clavier="number-pad"
       />
-      <Doux>{t('document.rappelAide')}</Doux>
+      {/* L'aide qui suivait annonçait un rappel à 9 h : le document passe par
+          le rendez-vous du soir depuis le V2.5, et l'étiquette dit déjà
+          l'essentiel. */}
 
       <Bouton titre={t('commun.enregistrer')} onPress={enregistrer} />
       {!nouveau && <Bouton titre={t('commun.supprimer')} variante="danger" onPress={supprimer} />}
@@ -112,10 +107,3 @@ export default function FormulaireDocument() {
   );
 }
 
-const styles = StyleSheet.create({
-  contenu: {
-    padding: espace.l,
-    paddingBottom: espace.xxl,
-    gap: espace.s,
-  },
-});

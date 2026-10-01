@@ -12,7 +12,7 @@ import {
 import { localiserAdresse } from '../lib/adressesRecherche';
 import { Bouton, Champ, Doux, Ecran } from './composants';
 import { SaisieAdresse } from './SaisieAdresse';
-import { couleurs, espace, police, texte } from './theme';
+import { couleurs, espace, graisse, typo } from './theme';
 import { useTextes } from '../i18n';
 
 /**
@@ -100,22 +100,20 @@ export function Bienvenue({ onTermine }: { onTermine: () => void }) {
 const styles = StyleSheet.create({
   entete: {
     // Aucun en-tête de navigation au-dessus : l'écran porte sa propre marge.
-    marginTop: espace.xxl * 2,
-    marginBottom: espace.xl,
+    marginTop: espace[8] * 2,
+    marginBottom: espace[6],
   },
   titre: {
-    fontSize: texte.chiffre,
-    fontFamily: police.gras,
-    color: couleurs.texte,
+    ...typo.title1,
+    fontWeight: graisse.grasse,
+    color: couleurs.textePrincipal,
   },
   sousTitre: {
-    fontSize: texte.corps,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginTop: espace.s,
-    lineHeight: 21,
+    ...typo.body,
+    color: couleurs.texteSecondaire,
+    marginTop: espace[2],
   },
   action: {
-    marginTop: espace.xl,
+    marginTop: espace[6],
   },
 });

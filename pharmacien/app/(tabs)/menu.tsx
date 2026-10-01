@@ -1,11 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { normaliser } from '../../src/lib/texte';
-import { Ecran, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../../src/ui/theme';
+import { Ecran, Section } from '../../src/ui/composants';
+import { couleurs, espace, icone, typo, CIBLE_MIN } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 /**
@@ -29,120 +27,54 @@ const ENTREES = [
 export default function Menu() {
   const { t } = useTextes();
   const router = useRouter();
-  const accent = useAccent();
-  const [recherche, setRecherche] = useState('');
 
-  // Un filtre sur les entrées du menu, rien de plus : elle ne cherche ni les
-  // quarts, ni les pharmacies, ni les signets.
-  const sections = useMemo(
-    () =>
-      ENTREES.map((e) => ({
-        ...e,
-        titre: t(`menu.${e.cle}`),
-        detail: t(`menu.${e.cle}Detail`),
-        // Les mots-clés portent les deux langues : on cherche « invoice »
-        // comme « facture », sans avoir à deviner dans laquelle l'application
-        // est ouverte.
-        motsCles: t(`menu.${e.cle}Mots`),
-      })),
-    [t]
-  );
-
-  const visibles = useMemo(() => {
-    const terme = normaliser(recherche.trim());
-    if (!terme) return sections;
-    return sections.filter((e) =>
-      normaliser(`${e.titre} ${e.detail} ${e.motsCles}`).includes(terme)
-    );
-  }, [recherche, sections]);
-
+  /*
+   * Deux entrées, et plus de barre de recherche au-dessus. Elle filtrait le
+   * menu du temps où il en avait une douzaine ; pour deux lignes, c'était un
+   * champ de plus que l'œil devait traverser avant d'arriver à ce qu'il
+   * cherchait.
+   */
   return (
     <Ecran>
-      <View style={styles.recherche}>
-        <Ionicons name="search" size={16} color={couleurs.doux} />
-        <TextInput
-          style={styles.saisie}
-          value={recherche}
-          onChangeText={setRecherche}
-          placeholder={t('menu.rechercher')}
-          placeholderTextColor={couleurs.doux}
-          autoCorrect={false}
-          returnKeyType="search"
-        />
-        {recherche.length > 0 && (
-          <Pressable
-            onPress={() => setRecherche('')}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('commun.effacerRecherche')}>
-            <Ionicons name="close-circle" size={16} color={couleurs.doux} />
-          </Pressable>
-        )}
-      </View>
-
-      {visibles.length === 0 ? (
-        <Vide texte={t('menu.aucuneSection')} />
-      ) : (
-        visibles.map((entree) => (
+      <Section>
+        {ENTREES.map((entree) => (
           <Pressable
             key={entree.chemin}
             onPress={() => router.push(entree.chemin)}
+            accessibilityRole="button"
             style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-            <Ionicons name={entree.icone} size={22} color={accent} />
+            <Ionicons name={entree.icone} size={icone.grande} color={couleurs.texteSecondaire} />
             <View style={styles.texte}>
-              <Text style={styles.titre}>{entree.titre}</Text>
-              <Text style={styles.detail}>{entree.detail}</Text>
+              <Text style={styles.titre}>{t(`menu.${entree.cle}`)}</Text>
+              <Text style={styles.detail}>{t(`menu.${entree.cle}Detail`)}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={couleurs.doux} />
+            <Ionicons name="chevron-forward" size={icone.courante} color={couleurs.texteSecondaire} />
           </Pressable>
-        ))
-      )}
+        ))}
+      </Section>
     </Ecran>
   );
 }
 
 const styles = StyleSheet.create({
-  recherche: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: espace.s,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingHorizontal: espace.m,
-    minHeight: CIBLE_MIN,
-    marginBottom: espace.l,
-  },
-  saisie: {
-    flex: 1,
-    fontSize: texte.corps,
-    fontFamily: police.normal,
-    color: couleurs.texte,
-    paddingVertical: espace.s,
-  },
+  /** Une ligne de section : la section porte le fond et le filet. */
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.m,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.l,
-    marginBottom: espace.s,
+    gap: espace[3],
+    paddingVertical: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   texte: {
     flex: 1,
   },
   titre: {
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   detail: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
   },
 });
