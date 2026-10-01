@@ -23,8 +23,17 @@ import { normaliser } from '../../src/lib/texte';
 import { etatContenu } from '../../src/lib/veille/peremption';
 import { nomDuSujet } from '../../src/lib/veille/sujets';
 import { etatVeille } from '../../src/lib/veille/tableau';
-import { Bouton, Carte, Doux, Ecran, Fondu, SousTitre, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../../src/ui/theme';
+import { Bouton, Carte, Doux, Ecran, Fondu, Section, SousTitre, Vide } from '../../src/ui/composants';
+import {
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from '../../src/ui/theme';
 
 /**
  * Ma veille clinique.
@@ -40,7 +49,6 @@ import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '..
 export default function Veille() {
   const { t, langue } = useTextes();
   const router = useRouter();
-  const accent = useAccent();
 
   const [sujets, setSujets] = useState<Sujet[]>([]);
   const [suivis, setSuivis] = useState<Suivi[]>([]);
@@ -96,12 +104,12 @@ export default function Veille() {
     return (
       <Ecran>
         <Fondu>
-          <SousTitre>{t('veille.videTitre')}</SousTitre>
+          <Text style={styles.titreVide}>{t('veille.videTitre')}</Text>
           <Doux>{t('veille.videIntro')}</Doux>
           <View style={styles.espace} />
           <Bouton
             titre={t('veille.suivreSujet')}
-            icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
+            icone={<Ionicons name="add" size={icone.courante} color={couleurs.surAccent} />}
             onPress={() => router.push('/veille/suivre')}
           />
         </Fondu>
@@ -113,7 +121,7 @@ export default function Veille() {
     <Ecran style={styles.contenu}>
       <Fondu>
         <Carte style={styles.tete}>
-          <Text style={[styles.compte, { color: accent }]}>
+          <Text style={styles.compte}>
             {etat.revisions > 0 ? t('veille.revisions', { count: etat.revisions }) : t('veille.rienAReviser')}
           </Text>
           {etat.revisions > 0 && (
@@ -124,8 +132,9 @@ export default function Veille() {
         {(etat.sourcesARevoir > 0 || etat.notesARevoir > 0) && (
           <Pressable
             onPress={() => router.push('/veille/verifier')}
-            style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-            <Ionicons name="alert-circle-outline" size={20} color={accent} />
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.carteLigne, pressed && { opacity: 0.6 }]}>
+            <Ionicons name="alert-circle-outline" size={icone.courante} color={couleurs.alerte} />
             <View style={styles.texte}>
               <Text style={styles.titre}>{t('veille.aRevoir')}</Text>
               <Text style={styles.detail}>
@@ -137,16 +146,20 @@ export default function Veille() {
                   .join(' · ')}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={couleurs.doux} />
+            <Ionicons name="chevron-forward" size={icone.petite} color={couleurs.texteSecondaire} />
           </Pressable>
         )}
       </Fondu>
 
-      <SousTitre>{t('veille.sujetsSuivis')}</SousTitre>
+      {/* L'en-tête ne paraît qu'avec des sujets sous lui : au-dessus de
+          « Aucun sujet suivi », il disait deux fois la même chose. */}
+      {suivisActifs.length > 0 && <SousTitre>{t('veille.sujetsSuivis')}</SousTitre>}
       {suivisActifs.length === 0 ? (
         <Doux>{t('veille.videTitre')}</Doux>
       ) : (
-        suivisActifs.map((suivi) => {
+        // Une section, et plus la même icône devant chaque sujet.
+        <Section>
+        {suivisActifs.map((suivi) => {
           const sujet = sujets.find((s) => s.id === suivi.sujet_id);
           if (!sujet) return null;
           const vues = consultationsDuSujet(sujet.id);
@@ -154,8 +167,8 @@ export default function Veille() {
             <Pressable
               key={suivi.id}
               onPress={() => router.push(`/veille/sujet/${sujet.id}`)}
+              accessibilityRole="button"
               style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-              <Ionicons name="bookmark-outline" size={18} color={accent} />
               <View style={styles.texte}>
                 <Text style={styles.titre}>{nomDuSujet(sujet, traduire)}</Text>
                 <Text style={styles.detail}>
@@ -171,40 +184,41 @@ export default function Veille() {
                 </Text>
               </View>
               {suivi.statut === 'pause' && (
-                <Text style={[styles.pause, { color: accent }]}>{t('veille.enPause')}</Text>
+                <Text style={styles.pause}>{t('veille.enPause')}</Text>
               )}
-              <Ionicons name="chevron-forward" size={16} color={couleurs.doux} />
+              <Ionicons name="chevron-forward" size={icone.petite} color={couleurs.texteSecondaire} />
             </Pressable>
           );
-        })
+        })}
+        </Section>
       )}
 
       <Bouton
         titre={t('veille.suivreSujet')}
         variante="secondaire"
-        icone={<Ionicons name="add" size={18} color={couleurs.texte} />}
+        icone={<Ionicons name="add" size={icone.courante} color={couleurs.textePrincipal} />}
         onPress={() => router.push('/veille/suivre')}
       />
 
       <View style={styles.espace} />
       <SousTitre>{t('veille.toutesLesNotes')}</SousTitre>
       <View style={styles.recherche}>
-        <Ionicons name="search" size={16} color={couleurs.doux} />
+        <Ionicons name="search" size={icone.petite} color={couleurs.texteSecondaire} />
         <TextInput
           style={styles.saisie}
           value={recherche}
           onChangeText={setRecherche}
           placeholder={t('veille.chercherNote')}
-          placeholderTextColor={couleurs.doux}
+          placeholderTextColor={couleurs.texteSecondaire}
           returnKeyType="search"
         />
         {recherche.length > 0 && (
           <Pressable
             onPress={() => setRecherche('')}
-            hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={t('commun.effacerRecherche')}>
-            <Ionicons name="close-circle" size={16} color={couleurs.doux} />
+            accessibilityLabel={t('commun.effacerRecherche')}
+            style={styles.effacer}>
+            <Ionicons name="close-circle" size={icone.petite} color={couleurs.texteSecondaire} />
           </Pressable>
         )}
       </View>
@@ -212,16 +226,18 @@ export default function Veille() {
       {notesVisibles.length === 0 ? (
         <Vide texte={recherche ? t('veille.aucuneNoteTrouvee') : t('veille.aucuneNote')} />
       ) : (
-        notesVisibles.map((note) => (
+        // Une section ; l'icône ne reste que sur la note à revoir, où elle dit
+        // quelque chose.
+        <Section>
+        {notesVisibles.map((note) => (
           <Pressable
             key={note.id}
             onPress={() => router.push(`/veille/note/${note.id}`)}
+            accessibilityRole="button"
             style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-            <Ionicons
-              name={etatContenu(note, jour) === 'aRevoir' ? 'alert-circle-outline' : 'document-text-outline'}
-              size={18}
-              color={etatContenu(note, jour) === 'aRevoir' ? couleurs.alerte : accent}
-            />
+            {etatContenu(note, jour) === 'aRevoir' && (
+              <Ionicons name="alert-circle-outline" size={icone.courante} color={couleurs.alerte} />
+            )}
             <View style={styles.texte}>
               <Text style={styles.titre} numberOfLines={2}>
                 {note.texte}
@@ -233,13 +249,14 @@ export default function Veille() {
               </Text>
             </View>
           </Pressable>
-        ))
+        ))}
+        </Section>
       )}
 
       <Bouton
         titre={t('veille.ecrireNote')}
         variante="secondaire"
-        icone={<Ionicons name="create-outline" size={18} color={couleurs.texte} />}
+        icone={<Ionicons name="create-outline" size={icone.courante} color={couleurs.textePrincipal} />}
         onPress={() => router.push('/veille/note/nouvelle')}
       />
     </Ecran>
@@ -247,39 +264,58 @@ export default function Veille() {
 }
 
 const styles = StyleSheet.create({
-  // La première carte porte une ombre, et l'en-tête de navigation mord
-  // dessus : au repos, son titre était coupé et ne se lisait qu'après avoir
-  // fait défiler. Un peu d'air en haut, et elle est entière à l'ouverture.
-  contenu: { paddingTop: espace.xl },
-  tete: { gap: espace.m },
-  compte: { fontSize: texte.grandTitre, fontFamily: police.gras },
+  contenu: { paddingTop: espace[6] },
+  tete: { gap: espace[3] },
+  compte: { ...typo.title3, fontWeight: graisse.grasse, color: couleurs.textePrincipal },
+  titreVide: { ...typo.headline, color: couleurs.textePrincipal, marginBottom: espace[2] },
+  /** Une ligne seule, hors de toute section : elle porte son propre fond. */
+  carteLigne: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace[3],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    padding: dimensions.carte.remplissage,
+    marginBottom: dimensions.formulaire.entreGroupes,
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+  },
+  /** Une ligne de section : la section porte le fond et le filet. */
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.m,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.l,
-    marginBottom: espace.s,
+    gap: espace[3],
+    paddingVertical: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
-  texte: { flex: 1, gap: espace.xs },
-  titre: { fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
-  detail: { fontSize: texte.courant, fontFamily: police.normal, color: couleurs.doux },
-  pause: { fontSize: texte.secondaire, fontFamily: police.demi },
-  espace: { height: espace.l },
+  texte: { flex: 1, gap: espace[1] },
+  titre: { ...typo.body, color: couleurs.textePrincipal },
+  detail: { ...typo.footnote, color: couleurs.texteSecondaire },
+  pause: { ...typo.caption1, fontWeight: graisse.demi, color: couleurs.texteSecondaire },
+  espace: { height: espace[4] },
+  /** La barre de recherche a la forme d'un champ : même hauteur, même rayon, aucun contour. */
   recherche: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingHorizontal: espace.m,
-    minHeight: CIBLE_MIN,
-    marginBottom: espace.m,
+    gap: espace[2],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.champ.rayon,
+    paddingHorizontal: dimensions.champ.remplissageH,
+    minHeight: dimensions.champ.hauteur,
+    marginBottom: espace[3],
   },
-  saisie: { flex: 1, fontSize: texte.corps, fontFamily: police.normal, color: couleurs.texte },
+  saisie: {
+    flex: 1,
+    ...typo.body,
+    color: couleurs.textePrincipal,
+    minHeight: dimensions.champ.hauteur,
+    minWidth: CIBLE_MIN,
+  },
+  effacer: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

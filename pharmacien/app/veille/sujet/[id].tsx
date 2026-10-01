@@ -20,8 +20,8 @@ import { useTextes } from '../../../src/i18n';
 import { formatDateCourte } from '../../../src/lib/dates';
 import { titreDuLien } from '../../../src/lib/liens';
 import { nomDuSujet } from '../../../src/lib/veille/sujets';
-import { Bouton, Doux, Ecran, SousTitre, Vide } from '../../../src/ui/composants';
-import { couleurs, espace, police, rayon, texte, useAccent } from '../../../src/ui/theme';
+import { Bouton, Doux, Ecran, Vide, Rangee, Section } from '../../../src/ui/composants';
+import { couleurs, espace, icone, typo, useAccent, CIBLE_MIN } from '../../../src/ui/theme';
 
 /**
  * Un sujet suivi.
@@ -33,7 +33,6 @@ import { couleurs, espace, police, rayon, texte, useAccent } from '../../../src/
 export default function SujetSuivi() {
   const { t, langue } = useTextes();
   const router = useRouter();
-  const accent = useAccent();
   const params = useLocalSearchParams<{ id: string }>();
   const sujetId = Number(params.id);
 
@@ -73,57 +72,64 @@ export default function SujetSuivi() {
         </Doux>
       )}
 
-      <SousTitre>{t('veille.sourcesDuSujet')}</SousTitre>
-      {sources.length === 0 ? (
-        <Vide texte={t('veille.aucuneSource')} />
-      ) : (
-        sources.map((source) => (
-          <Pressable
-            key={source.id}
-            onPress={() => router.push(`/lien/${source.id}`)}
-            style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-            <Ionicons name="link-outline" size={18} color={accent} />
-            <Text style={styles.titre}>{titreDuLien(source, traduire)}</Text>
-          </Pressable>
-        ))
-      )}
-
-      <SousTitre>{t('veille.notesDuSujet')}</SousTitre>
-      {notes.length === 0 ? (
+      {/*
+        Les sources et les notes du sujet, dans une même section, chaque ligne
+        marquée de l'icône de son genre : un lien, une note. Deux en-têtes
+        au-dessus d'une ligne chacun ne séparaient rien que l'icône ne sépare.
+      */}
+      {sources.length === 0 && notes.length === 0 ? (
         <Vide texte={t('veille.aucuneNote')} />
       ) : (
-        notes.map((note) => (
-          <Pressable
-            key={note.id}
-            onPress={() => router.push(`/veille/note/${note.id}`)}
-            style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-            <Ionicons name="document-text-outline" size={18} color={accent} />
-            <Text style={styles.titre} numberOfLines={2}>
-              {note.texte}
-            </Text>
-          </Pressable>
-        ))
+        <Section>
+          {sources.map((source) => (
+            <Pressable
+              key={`source-${source.id}`}
+              onPress={() => router.push(`/lien/${source.id}`)}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
+              <Ionicons name="link-outline" size={icone.courante} color={couleurs.texteSecondaire} />
+              <Text style={styles.titre}>{titreDuLien(source, traduire)}</Text>
+              <Ionicons name="chevron-forward" size={icone.petite} color={couleurs.texteSecondaire} />
+            </Pressable>
+          ))}
+          {notes.map((note) => (
+            <Pressable
+              key={`note-${note.id}`}
+              onPress={() => router.push(`/veille/note/${note.id}`)}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
+              <Ionicons name="document-text-outline" size={icone.courante} color={couleurs.texteSecondaire} />
+              <Text style={styles.titre} numberOfLines={2}>
+                {note.texte}
+              </Text>
+              <Ionicons name="chevron-forward" size={icone.petite} color={couleurs.texteSecondaire} />
+            </Pressable>
+          ))}
+        </Section>
       )}
 
       <Bouton
         titre={t('veille.ecrireNote')}
         variante="secondaire"
-        icone={<Ionicons name="create-outline" size={18} color={couleurs.texte} />}
+        icone={<Ionicons name="create-outline" size={icone.courante} color={couleurs.textePrincipal} />}
         onPress={() => router.push(`/veille/note/nouvelle?sujets=${sujetId}`)}
       />
 
       <View style={styles.espace} />
-      <SousTitre>{t('veille.historique')}</SousTitre>
-      {evenements.map((e) => (
-        <View key={e.id} style={styles.evenement}>
-          <Text style={styles.detail}>
-            {t(`veille.evenement${e.type[0].toUpperCase()}${e.type.slice(1)}`)}
-          </Text>
-          <Text style={styles.detail}>{formatDateCourte(e.le.slice(0, 10), langue)}</Text>
-        </View>
-      ))}
+      {/* L'historique, sans titre : chaque ligne dit ce qui s'est passé et
+          quand. */}
+      {evenements.length > 0 && (
+        <Section>
+          {evenements.map((e) => (
+            <Rangee
+              key={e.id}
+              label={t(`veille.evenement${e.type[0].toUpperCase()}${e.type.slice(1)}`)}
+              valeur={formatDateCourte(e.le.slice(0, 10), langue)}
+            />
+          ))}
+        </Section>
+      )}
 
-      <View style={styles.espace} />
       {!!suivi && suivi.statut !== 'retire' && (
         <>
           <Bouton
@@ -149,23 +155,15 @@ export default function SujetSuivi() {
 }
 
 const styles = StyleSheet.create({
+  /** Une ligne de section : la section porte le fond et le filet. */
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.m,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.l,
-    marginBottom: espace.s,
+    gap: espace[3],
+    paddingVertical: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
-  titre: { flex: 1, fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
-  evenement: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: espace.s,
-  },
-  detail: { fontSize: texte.courant, fontFamily: police.normal, color: couleurs.doux },
-  espace: { height: espace.l },
+  titre: { flex: 1, ...typo.body, color: couleurs.textePrincipal },
+  espace: { height: espace[4] },
 });

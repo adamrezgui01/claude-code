@@ -347,7 +347,21 @@ export function enTetesInutiles(racine: Noeud | Noeud[] | null): string[] {
     racine,
     (n, _fond, parents) => {
       if (n.props.accessibilityRole !== 'header') return;
-      const parent = parents[parents.length - 1];
+      // Un en-tête posé avec son icône dans une même rangée : c'est la rangée
+      // qui chapeaute ce qui la suit. On remonte tant que les voisins ne sont
+      // que des icônes.
+      let unite: Noeud = n;
+      let rang = parents.length - 1;
+      while (
+        rang > 0 &&
+        (parents[rang].children ?? []).every(
+          (f) => f === unite || (typeof f !== 'string' && estIcone(f))
+        )
+      ) {
+        unite = parents[rang];
+        rang -= 1;
+      }
+      const parent = parents[rang];
       if (!parent) return;
       const freres = parent.children ?? [];
       // Un titre posé entre deux commandes — le mois entre ses flèches — est
@@ -355,7 +369,7 @@ export function enTetesInutiles(racine: Noeud | Noeud[] | null): string[] {
       // il nomme ce qu'on regarde.
       if (freres.some((f) => typeof f !== 'string' && estInteractif(f))) return;
       const suite: (Noeud | string)[] = [];
-      for (const f of freres.slice(freres.indexOf(n) + 1)) {
+      for (const f of freres.slice(freres.indexOf(unite) + 1)) {
         if (contientEnTete(f)) break;
         suite.push(f);
       }

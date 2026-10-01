@@ -6,8 +6,16 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { creerSujet, listerSujets, suivreSujet } from '../../src/db/veille';
 import { useTextes } from '../../src/i18n';
 import { chercherSujets, MOTIFS, nomDuSujet, sujetExistant } from '../../src/lib/veille/sujets';
-import { Bouton, Doux, Ecran, Fondu, Puce, SousTitre } from '../../src/ui/composants';
-import { couleurs, dimensions, espace, police, rayon, texte, useAccent } from '../../src/ui/theme';
+import { Bouton, Doux, Ecran, Fondu, Puce, Section } from '../../src/ui/composants';
+import {
+  couleurs,
+  dimensions,
+  espace,
+  icone,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from '../../src/ui/theme';
 
 /**
  * Suivre un sujet.
@@ -19,7 +27,6 @@ import { couleurs, dimensions, espace, police, rayon, texte, useAccent } from '.
 export default function Suivre() {
   const { t } = useTextes();
   const router = useRouter();
-  const accent = useAccent();
   const [nom, setNom] = useState('');
   const [motif, setMotif] = useState<string>('');
   const [sujets] = useState(listerSujets);
@@ -41,42 +48,47 @@ export default function Suivre() {
     <Ecran>
       <Stack.Screen options={{ title: t('veille.suivreSujet') }} />
 
-      <SousTitre>{t('veille.nomSujet')}</SousTitre>
-      <View style={[styles.recherche, { borderColor: nom ? accent : couleurs.bordure }]}>
-        <Ionicons name="search" size={16} color={couleurs.doux} />
+      {/* Deux étiquettes de champ, et plus deux en-têtes : chacune nomme une
+          question, pas un groupe. */}
+      <Text style={styles.etiquette}>{t('veille.nomSujet')}</Text>
+      <View style={styles.recherche}>
+        <Ionicons name="search" size={icone.petite} color={couleurs.texteSecondaire} />
         <TextInput
           style={styles.saisie}
           value={nom}
           onChangeText={setNom}
           placeholder={t('veille.nomSujetAide')}
-          placeholderTextColor={couleurs.doux}
+          placeholderTextColor={couleurs.texteSecondaire}
           autoFocus
         />
       </View>
 
-      <Fondu>
-        {trouves.map((sujet) => (
-          <Pressable
-            key={sujet.id}
-            onPress={() => suivre(sujet.id)}
-            style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-            <Ionicons name="bookmark-outline" size={18} color={accent} />
-            <Text style={styles.titre}>{nomDuSujet(sujet, traduire)}</Text>
-          </Pressable>
-        ))}
+      {(trouves.length > 0 || peutCreer) && (
+        <Fondu>
+          <Section>
+            {trouves.map((sujet) => (
+              <Pressable
+                key={sujet.id}
+                onPress={() => suivre(sujet.id)}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
+                <Text style={styles.titre}>{nomDuSujet(sujet, traduire)}</Text>
+              </Pressable>
+            ))}
+            {peutCreer && (
+              <Pressable
+                onPress={() => suivre(creerSujet(nom))}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
+                <Ionicons name="add-circle-outline" size={icone.courante} color={couleurs.textePrincipal} />
+                <Text style={styles.titre}>{t('veille.creerSujet', { nom: nom.trim() })}</Text>
+              </Pressable>
+            )}
+          </Section>
+        </Fondu>
+      )}
 
-        {peutCreer && (
-          <Pressable
-            onPress={() => suivre(creerSujet(nom))}
-            style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-            <Ionicons name="add-circle-outline" size={18} color={accent} />
-            <Text style={styles.titre}>{t('veille.creerSujet', { nom: nom.trim() })}</Text>
-          </Pressable>
-        )}
-      </Fondu>
-
-      <View style={styles.espace} />
-      <SousTitre>{t('veille.pourquoi')}</SousTitre>
+      <Text style={styles.etiquette}>{t('veille.pourquoi')}</Text>
       <View style={styles.puces}>
         <Puce texte={t('veille.sansMotif')} actif={motif === ''} onPress={() => setMotif('')} />
         {MOTIFS.map((m) => (
@@ -97,30 +109,39 @@ export default function Suivre() {
 }
 
 const styles = StyleSheet.create({
+  etiquette: {
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
+    marginBottom: dimensions.etiquette.margeBasse,
+  },
+  /** La barre de recherche a la forme d'un champ : même hauteur, même rayon, aucun contour. */
   recherche: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1.5,
-    borderRadius: rayon,
-    paddingHorizontal: espace.m,
+    gap: espace[2],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.champ.rayon,
+    paddingHorizontal: dimensions.champ.remplissageH,
     minHeight: dimensions.champ.hauteur,
-    marginBottom: espace.m,
+    marginBottom: dimensions.formulaire.entreChamps,
   },
-  saisie: { flex: 1, fontSize: texte.saisie, fontFamily: police.normal, color: couleurs.texte },
+  saisie: {
+    flex: 1,
+    ...typo.body,
+    color: couleurs.textePrincipal,
+    minHeight: dimensions.champ.hauteur,
+    minWidth: CIBLE_MIN,
+  },
+  /** Une ligne de section : la section porte le fond et le filet. */
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.m,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.l,
-    marginBottom: espace.s,
+    gap: espace[3],
+    paddingVertical: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
-  titre: { flex: 1, fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
+  titre: { flex: 1, ...typo.body, color: couleurs.textePrincipal },
+  espace: { height: espace[4] },
   puces: { flexDirection: 'row', flexWrap: 'wrap' },
-  espace: { height: espace.l },
 });

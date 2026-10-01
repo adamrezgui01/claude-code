@@ -22,8 +22,17 @@ import { fileDuJour } from '../../src/lib/veille/file';
 import { etatContenu } from '../../src/lib/veille/peremption';
 import { questionPosee } from '../../src/lib/veille/revision';
 import { nomDuSujet } from '../../src/lib/veille/sujets';
-import { Bouton, Carte, Doux, Ecran, Fondu, SousTitre } from '../../src/ui/composants';
-import { couleurs, espace, police, texte, useAccent } from '../../src/ui/theme';
+import { Bouton, Carte, Doux, Ecran, Fondu } from '../../src/ui/composants';
+import {
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from '../../src/ui/theme';
 
 /**
  * La séance de révision.
@@ -41,7 +50,6 @@ import { couleurs, espace, police, texte, useAccent } from '../../src/ui/theme';
 export default function Revision() {
   const { t } = useTextes();
   const router = useRouter();
-  const accent = useAccent();
   const jour = aujourdhui();
 
   const [file] = useState<Contenu[]>(() => {
@@ -124,15 +132,17 @@ export default function Revision() {
             <Text style={styles.reponse}>{note.texte}</Text>
             {!!source && (
               <>
-                <View style={styles.separation} />
+                {/* L'espace sépare la réponse de sa source ; le filet qui le
+                    faisait en plus est retiré. */}
                 <Pressable
                   onPress={() => {
                     noterConsultation(source.id);
                     void Linking.openURL(source.url_document);
                   }}
+                  accessibilityRole="link"
                   style={({ pressed }) => [styles.lien, pressed && { opacity: 0.6 }]}>
-                  <Ionicons name="open-outline" size={16} color={accent} />
-                  <Text style={[styles.lienTexte, { color: accent }]}>
+                  <Ionicons name="open-outline" size={icone.petite} color={couleurs.textePrincipal} />
+                  <Text style={styles.lienTexte}>
                     {titreDuLien(source, traduire)}
                     {note.version_source ? ` · ${note.version_source}` : ''}
                   </Text>
@@ -141,7 +151,8 @@ export default function Revision() {
             )}
           </Carte>
 
-          <SousTitre>{' '}</SousTitre>
+          {/* Un en-tête vide servait d'espace ici. L'espace, c'est l'espace. */}
+          <View style={styles.avantChoix} />
           <Bouton titre={t('revision.su')} variante="succes" onPress={() => repondre('su')} />
           <Bouton titre={t('revision.aRevoir')} variante="secondaire" onPress={() => repondre('aRevoir')} />
           <Bouton titre={t('revision.reporter')} variante="secondaire" onPress={() => repondre('reporte')} />
@@ -152,11 +163,18 @@ export default function Revision() {
 }
 
 const styles = StyleSheet.create({
-  question: { minHeight: 120, justifyContent: 'center' },
-  texteQuestion: { fontSize: texte.titre, fontFamily: police.demi, color: couleurs.texte, lineHeight: 26 },
-  reponse: { fontSize: texte.saisie, fontFamily: police.normal, color: couleurs.texte, lineHeight: 24 },
-  separation: { height: 1, backgroundColor: couleurs.bordure, marginVertical: espace.m },
-  lien: { flexDirection: 'row', alignItems: 'center', gap: espace.s },
-  lienTexte: { flex: 1, fontSize: texte.lecture, fontFamily: police.demi },
-  fini: { fontSize: texte.titre, fontFamily: police.demi, color: couleurs.texte, textAlign: 'center' },
+  question: { minHeight: dimensions.question.hauteur, justifyContent: 'center' },
+  texteQuestion: { ...typo.title3, fontWeight: graisse.demi, color: couleurs.textePrincipal },
+  reponse: { ...typo.body, color: couleurs.textePrincipal },
+  lien: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace[2],
+    marginTop: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+  },
+  lienTexte: { flex: 1, ...typo.subhead, fontWeight: graisse.demi, color: couleurs.textePrincipal },
+  avantChoix: { height: espace[4] },
+  fini: { ...typo.title3, fontWeight: graisse.demi, color: couleurs.textePrincipal, textAlign: 'center' },
 });

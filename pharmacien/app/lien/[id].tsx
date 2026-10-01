@@ -100,7 +100,8 @@ export default function FormulaireLien() {
     <Ecran>
       <Stack.Screen options={{ title: t(nouveau ? 'liens.titreNouveau' : 'liens.titreModifier') }} />
 
-      <Section titre={t('liens.leSignet')}>
+      {/* Sans « Le signet » au-dessus : l'écran s'appelle déjà ainsi. */}
+      <Section>
         <Champ nu label={t('liens.titreChamp')} valeur={titre} onChange={setTitre} />
         <Champ
           nu
@@ -124,8 +125,9 @@ export default function FormulaireLien() {
         />
       </Section>
 
-      <Section titre={t('liens.categorie')}>
-        <Champ nu label={t('liens.nomCategorie')} valeur={categorie} onChange={setCategorie} />
+      {/* Un champ, et son étiquette dit ce que disait l'en-tête au-dessus. */}
+      <Section>
+        <Champ nu label={t('liens.categorie')} valeur={categorie} onChange={setCategorie} />
       </Section>
       {existantes.length > 0 && (
         <View style={styles.puces}>
@@ -145,10 +147,11 @@ export default function FormulaireLien() {
         />
       </Section>
 
-      <Section titre={t('liens.motsCles')}>
+      <Section>
         <Champ
           nu
-          label={t('liens.motsClesAide')}
+          label={t('liens.motsCles')}
+          aide={t('liens.motsClesAide')}
           valeur={motsCles}
           onChange={setMotsCles}
           multiligne
@@ -171,10 +174,10 @@ const styles = StyleSheet.create({
   puces: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: espace.xl,
+    marginBottom: espace[6],
   },
   actions: {
-    marginTop: espace.m,
-    gap: espace.s,
+    marginTop: espace[3],
+    gap: espace[2],
   },
 });

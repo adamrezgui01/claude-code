@@ -19,8 +19,16 @@ import { aujourdhui } from '../../../src/lib/dates';
 import { ESPACEMENT_SIMPLE } from '../../../src/lib/veille/espacement';
 import { nomDuSujet } from '../../../src/lib/veille/sujets';
 import { titreDuLien } from '../../../src/lib/liens';
-import { Bouton, Champ, Doux, Ecran, Puce, SousTitre } from '../../../src/ui/composants';
-import { couleurs, espace, police, texte } from '../../../src/ui/theme';
+import { Bouton, Champ, Doux, Ecran, Puce } from '../../../src/ui/composants';
+import {
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  typo,
+  CIBLE_MIN,
+} from '../../../src/ui/theme';
 
 /**
  * Écrire une note.
@@ -49,6 +57,8 @@ export default function Note() {
   const [texte, setTexte] = useState('');
   const [question, setQuestion] = useState('');
   const [sourceId, setSourceId] = useState<number | null>(null);
+  /** La liste des sources, facultative, commence repliée. */
+  const [sourcesOuvertes, setSourcesOuvertes] = useState(false);
   const [choisis, setChoisis] = useState<number[]>([]);
   const [sujets] = useState(listerSujets);
   const [sources] = useState(listerSources);
@@ -127,7 +137,8 @@ export default function Note() {
         placeholder={t('veille.questionPlaceholder')}
       />
 
-      <SousTitre>{t('veille.sujetsDeLaNote')}</SousTitre>
+      {/* Une étiquette de champ : les capsules sont une seule question. */}
+      <Text style={styles.etiquette}>{t('veille.sujetsDeLaNote')}</Text>
       <View style={styles.puces}>
         {sujets.map((sujet) => (
           <Puce
@@ -145,28 +156,52 @@ export default function Note() {
         ))}
       </View>
 
-      <SousTitre>{t('veille.sourceDeLaNote')}</SousTitre>
-      <View style={styles.puces}>
-        <Puce texte={t('veille.aucuneSource')} actif={sourceId === null} onPress={() => setSourceId(null)} />
-        {sources.map((s) => (
-          <Puce
-            key={s.id}
-            texte={titreDuLien(s, traduire)}
-            actif={sourceId === s.id}
-            onPress={() => {
-              setSourceId(s.id);
-              setVersion(s.version);
-            }}
-          />
-        ))}
-      </View>
+      {/*
+        La source est facultative : elle commence repliée, derrière une ligne
+        qui dit celle qui est choisie. Les quarante-sept capsules ne prennent
+        plus l'écran pour une question à laquelle on répond « aucune » le plus
+        souvent.
+      */}
+      <Pressable
+        onPress={() => setSourcesOuvertes(!sourcesOuvertes)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: sourcesOuvertes }}
+        style={styles.deplier}>
+        <View style={styles.deplierTexte}>
+          <Text style={styles.deplierLabel}>{t('veille.sourceDeLaNote')}</Text>
+          <Text style={styles.deplierValeur} numberOfLines={1}>
+            {source ? titreDuLien(source, traduire) : t('veille.aucuneSource')}
+          </Text>
+        </View>
+        <Ionicons
+          name={sourcesOuvertes ? 'chevron-up' : 'chevron-down'}
+          size={icone.courante}
+          color={couleurs.texteSecondaire}
+        />
+      </Pressable>
+      {sourcesOuvertes && (
+        <View style={styles.puces}>
+          <Puce texte={t('veille.aucuneSource')} actif={sourceId === null} onPress={() => setSourceId(null)} />
+          {sources.map((s) => (
+            <Puce
+              key={s.id}
+              texte={titreDuLien(s, traduire)}
+              actif={sourceId === s.id}
+              onPress={() => {
+                setSourceId(s.id);
+                setVersion(s.version);
+              }}
+            />
+          ))}
+        </View>
+      )}
       {!!source && !!version && <Doux>{t('veille.versionFigee', { version })}</Doux>}
 
       <View style={styles.espace} />
       <Bouton titre={t('commun.enregistrer')} onPress={enregistrer} />
       {!nouvelle && (
-        <Pressable onPress={supprimer} style={styles.supprimer} hitSlop={8}>
-          <Ionicons name="trash-outline" size={16} color={couleurs.alerte} />
+        <Pressable onPress={supprimer} style={styles.supprimer} accessibilityRole="button">
+          <Ionicons name="trash-outline" size={icone.petite} color={couleurs.alerte} />
           <Text style={styles.supprimerTexte}>{t('veille.supprimerNote')}</Text>
         </Pressable>
       )}
@@ -175,14 +210,33 @@ export default function Note() {
 }
 
 const styles = StyleSheet.create({
-  puces: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: espace.m },
-  espace: { height: espace.l },
+  etiquette: {
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
+    marginBottom: dimensions.etiquette.margeBasse,
+  },
+  puces: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: espace[3] },
+  espace: { height: espace[4] },
+  deplier: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    marginTop: espace[3],
+    marginBottom: espace[2],
+  },
+  deplierTexte: { flex: 1 },
+  deplierLabel: { ...typo.body, color: couleurs.textePrincipal },
+  deplierValeur: { ...typo.footnote, color: couleurs.texteSecondaire },
   supprimer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: espace.s,
-    paddingVertical: espace.l,
+    gap: espace[2],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    marginTop: espace[2],
   },
-  supprimerTexte: { fontSize: texte.lecture, fontFamily: police.demi, color: couleurs.alerte },
+  supprimerTexte: { ...typo.subhead, fontWeight: graisse.demi, color: couleurs.alerte },
 });

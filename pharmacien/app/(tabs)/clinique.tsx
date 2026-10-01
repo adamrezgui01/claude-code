@@ -29,8 +29,17 @@ import { MOTS_CLES_DOSE } from '../../src/lib/dose';
 import { cleARevoir } from '../../src/lib/veille/recherches';
 import { nomDuSujet } from '../../src/lib/veille/sujets';
 import { etatVeille } from '../../src/lib/veille/tableau';
-import { Doux, Ecran, Etiquette, Fondu, SousTitre, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../../src/ui/theme';
+import { Ecran, Etiquette, Fondu, Section, SousTitre, Vide } from '../../src/ui/composants';
+import {
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from '../../src/ui/theme';
 
 type SourceListee = Source & SourceCherchable;
 
@@ -167,7 +176,7 @@ export default function Clinique() {
           rentre pas, et ça se dit sans que personne ait eu à l'admettre. */}
       {!!aRevoir && (
         <Fondu>
-          <View style={[styles.rappel, { borderColor: accent }]}>
+          <View style={styles.rappel}>
             <View style={styles.texte}>
               <Text style={styles.titre}>{t('clinique.bandeauTitre')}</Text>
               <Text style={styles.detail}>{aRevoir}</Text>
@@ -178,6 +187,9 @@ export default function Clinique() {
                 setARevoir(null);
                 router.push(`/veille/note/nouvelle?titre=${encodeURIComponent(aRevoir)}`);
               }}
+              // La seule invitation de l'écran : c'est son action principale.
+              testID="action-principale"
+              accessibilityRole="button"
               style={({ pressed }) => [
                 styles.action,
                 { backgroundColor: accent },
@@ -192,8 +204,8 @@ export default function Clinique() {
               }}
               accessibilityRole="button"
               accessibilityLabel={t('commun.fermer')}
-              hitSlop={10}>
-              <Ionicons name="close" size={18} color={couleurs.doux} />
+              style={styles.fermer}>
+              <Ionicons name="close" size={icone.courante} color={couleurs.texteSecondaire} />
             </Pressable>
           </View>
         </Fondu>
@@ -203,38 +215,35 @@ export default function Clinique() {
         <Fondu>
           <Pressable
             onPress={() => router.push('/veille/revision')}
-            style={({ pressed }) => [
-              styles.revisions,
-              { borderColor: accent },
-              pressed && { opacity: 0.6 },
-            ]}>
-            <Ionicons name="school-outline" size={20} color={accent} />
-            <Text style={[styles.revisionsTexte, { color: accent }]}>
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.revisions, pressed && { opacity: 0.6 }]}>
+            <Ionicons name="school-outline" size={icone.courante} color={couleurs.texteSecondaire} />
+            <Text style={styles.revisionsTexte}>
               {t('clinique.revisionsDuJour', { count: revisions })}
             </Text>
-            <Ionicons name="chevron-forward" size={16} color={accent} />
+            <Ionicons name="chevron-forward" size={icone.petite} color={couleurs.texteSecondaire} />
           </Pressable>
         </Fondu>
       )}
 
       <View style={styles.recherche}>
-        <Ionicons name="search" size={16} color={couleurs.doux} />
+        <Ionicons name="search" size={icone.petite} color={couleurs.texteSecondaire} />
         <TextInput
           style={styles.saisie}
           value={recherche}
           onChangeText={setRecherche}
           placeholder={t('clinique.chercher')}
-          placeholderTextColor={couleurs.doux}
+          placeholderTextColor={couleurs.texteSecondaire}
           autoCorrect={false}
           returnKeyType="search"
         />
         {cherche && (
           <Pressable
             onPress={() => setRecherche('')}
-            hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={t('commun.effacerRecherche')}>
-            <Ionicons name="close-circle" size={16} color={couleurs.doux} />
+            accessibilityLabel={t('commun.effacerRecherche')}
+            style={styles.effacer}>
+            <Ionicons name="close-circle" size={icone.petite} color={couleurs.texteSecondaire} />
           </Pressable>
         )}
       </View>
@@ -249,48 +258,39 @@ export default function Clinique() {
                   pictogrammes seuls ne se distinguent pas à cette taille, et
                   personne n'apprend une légende pour lire une liste. */}
               <View style={styles.entete}>
-                <Ionicons name={ICONES_THEME[groupe.theme]} size={17} color={accent} />
+                <Ionicons
+                  name={ICONES_THEME[groupe.theme]}
+                  size={icone.petite}
+                  color={couleurs.texteSecondaire}
+                />
                 <SousTitre>{t(`themes.${groupe.theme}`)}</SousTitre>
               </View>
-              {/* Le calculateur de dose est un écran, pas un signet. Il ouvre
-                  la section des calculateurs, là où on le cherche. */}
-              {groupe.theme === 'calculateurs' && doseVisible && (
-                <Pressable
-                  onPress={() => router.push('/clinique/dose')}
-                  style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-                  <Ionicons name="calculator-outline" size={18} color={accent} />
-                  <View style={styles.texte}>
-                    <Text style={styles.titre}>{t('dose.titre')}</Text>
-                    <Text style={styles.detail}>{t('dose.avis')}</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color={couleurs.doux} />
-                </Pressable>
-              )}
-              {groupe.liens.map((source) => (
-                <LigneSource
-                  key={`${groupe.theme}-${source.id}`}
-                  source={source}
-                  traduire={traduire}
-                  onOuvrir={() => noterSourceOuverte(notee, source.id)}
-                />
-              ))}
-              <View style={styles.espace} />
+              {/* Un thème, une section : un fond blanc, un filet entre deux
+                  sources, et plus de cadre autour de chacune. */}
+              <Section>
+                {/* Le calculateur de dose est un écran, pas un signet. Il ouvre
+                    la section des calculateurs, là où on le cherche. */}
+                {groupe.theme === 'calculateurs' && doseVisible && (
+                  <LigneDose onPress={() => router.push('/clinique/dose')} />
+                )}
+                {groupe.liens.map((source) => (
+                  <LigneSource
+                    key={`${groupe.theme}-${source.id}`}
+                    source={source}
+                    traduire={traduire}
+                    onOuvrir={() => noterSourceOuverte(notee, source.id)}
+                  />
+                ))}
+              </Section>
             </Fondu>
           ))}
 
           {/* Le calculateur cherché seul, sans qu'aucun signet ne réponde. */}
           {groupes.length === 0 && doseVisible && (
             <Fondu>
-              <Pressable
-                onPress={() => router.push('/clinique/dose')}
-                style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-                <Ionicons name="calculator-outline" size={18} color={accent} />
-                <View style={styles.texte}>
-                  <Text style={styles.titre}>{t('dose.titre')}</Text>
-                  <Text style={styles.detail}>{t('dose.avis')}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={couleurs.doux} />
-              </Pressable>
+              <Section>
+                <LigneDose onPress={() => router.push('/clinique/dose')} />
+              </Section>
             </Fondu>
           )}
         </>
@@ -298,24 +298,26 @@ export default function Clinique() {
 
       {!cherche && (
         <>
-          <Pressable
-            onPress={() => router.push('/veille')}
-            style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-            <Ionicons name="bookmark-outline" size={18} color={accent} />
-            <Text style={styles.titre}>{t('clinique.maVeille')}</Text>
-            <Ionicons name="chevron-forward" size={16} color={couleurs.doux} />
-          </Pressable>
+          <Section>
+            <Pressable
+              onPress={() => router.push('/veille')}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
+              <Ionicons name="bookmark-outline" size={icone.courante} color={couleurs.texteSecondaire} />
+              <Text style={styles.titre}>{t('clinique.maVeille')}</Text>
+              <Ionicons name="chevron-forward" size={icone.petite} color={couleurs.texteSecondaire} />
+            </Pressable>
+          </Section>
 
           {/* Les numéros d'urgence suivent les sources : ils faisaient partie
               de « Liens et infos utiles », et les laisser derrière aurait été
               les perdre. */}
           {SECTIONS.map((section) => (
-            <View key={section.titre} style={styles.espace}>
-              <SousTitre>{t('clinique.urgences')}</SousTitre>
+            <Section key={section.titre} titre={t('clinique.urgences')}>
               {section.liens.map((lien) => (
                 <LigneFixe key={lien.libelle} lien={lien} />
               ))}
-            </View>
+            </Section>
           ))}
         </>
       )}
@@ -323,6 +325,28 @@ export default function Clinique() {
   );
 }
 
+/** Le calculateur de dose, posé en tête des calculateurs comme une source. */
+function LigneDose({ onPress }: { onPress: () => void }) {
+  const { t } = useTextes();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
+      <View style={styles.texte}>
+        <Text style={styles.titre}>{t('dose.titre')}</Text>
+        <Text style={styles.detail}>{t('dose.avis')}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={icone.petite} color={couleurs.texteSecondaire} />
+    </Pressable>
+  );
+}
+
+/**
+ * Une source, sur une ligne de sa section. Sans icône devant : c'était la
+ * même feuille sur quarante-cinq lignes, et le feuillet à remettre au patient
+ * porte déjà son étiquette.
+ */
 function LigneSource({
   source,
   traduire,
@@ -332,7 +356,6 @@ function LigneSource({
   traduire: (cle: string) => string;
   onOuvrir: () => void;
 }) {
-  const accent = useAccent();
   const router = useRouter();
   const aRemettre = !!source.pour_patient;
   return (
@@ -345,12 +368,8 @@ function LigneSource({
       }}
       onLongPress={() => router.push(`/lien/${source.id}`)}
       delayLongPress={400}
+      accessibilityRole="button"
       style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-      <Ionicons
-        name={aRemettre ? 'person-outline' : 'document-text-outline'}
-        size={18}
-        color={accent}
-      />
       <View style={styles.texte}>
         <Text style={styles.titre}>{titreDuLien(source, traduire)}</Text>
         {!!source.organisation && (
@@ -375,23 +394,22 @@ function LigneSource({
           onPress={() => void partagerSource(source)}
           accessibilityRole="button"
           accessibilityLabel={traduire('commun.partager')}
-          hitSlop={12}>
-          <Ionicons name="share-outline" size={18} color={accent} />
+          style={styles.icone}>
+          <Ionicons name="share-outline" size={icone.courante} color={couleurs.textePrincipal} />
         </Pressable>
       )}
       <Pressable
         onPress={() => router.push(`/lien/${source.id}`)}
         accessibilityRole="button"
         accessibilityLabel={traduire('commun.details')}
-        hitSlop={12}>
-        <Ionicons name="ellipsis-horizontal" size={18} color={couleurs.doux} />
+        style={styles.icone}>
+        <Ionicons name="ellipsis-horizontal" size={icone.courante} color={couleurs.texteSecondaire} />
       </Pressable>
     </Pressable>
   );
 }
 
 function LigneFixe({ lien }: { lien: LienFixe }) {
-  const accent = useAccent();
   return (
     <Pressable
       onPress={() =>
@@ -399,8 +417,13 @@ function LigneFixe({ lien }: { lien: LienFixe }) {
           lien.type === 'tel' ? `tel:${lien.valeur.replace(/[^\d+]/g, '')}` : lien.valeur
         )
       }
+      accessibilityRole="button"
       style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-      <Ionicons name={lien.type === 'tel' ? 'call' : 'open-outline'} size={18} color={accent} />
+      <Ionicons
+        name={lien.type === 'tel' ? 'call-outline' : 'open-outline'}
+        size={icone.courante}
+        color={couleurs.texteSecondaire}
+      />
       <View style={styles.texte}>
         <Text style={styles.titre}>{lien.libelle}</Text>
         {!!lien.detail && <Text style={styles.detail}>{lien.detail}</Text>}
@@ -410,64 +433,93 @@ function LigneFixe({ lien }: { lien: LienFixe }) {
 }
 
 const styles = StyleSheet.create({
-  contenu: { paddingTop: espace.xl },
+  contenu: { paddingTop: espace[6] },
+  /** Blanc sur le gris, sans contour mauve : l'invitation se lit à son bouton. */
   rappel: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.m,
-    borderWidth: 1.5,
-    borderRadius: rayon,
-    paddingVertical: espace.m,
-    paddingHorizontal: espace.l,
-    marginBottom: espace.l,
+    gap: espace[3],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    paddingVertical: espace[3],
+    paddingLeft: dimensions.carte.remplissage,
+    marginBottom: espace[4],
   },
-  action: { borderRadius: rayon, paddingVertical: espace.s, paddingHorizontal: espace.m },
-  actionTexte: { fontSize: texte.courant, fontFamily: police.demi, color: '#FFFFFF' },
+  action: {
+    borderRadius: dimensions.bouton.rayon,
+    paddingHorizontal: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    justifyContent: 'center',
+  },
+  actionTexte: { ...typo.footnote, fontWeight: graisse.demi, color: couleurs.surAccent },
+  fermer: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   revisions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.m,
-    borderWidth: 1.5,
-    borderRadius: rayon,
-    paddingVertical: espace.m,
-    paddingHorizontal: espace.l,
-    marginBottom: espace.l,
+    gap: espace[3],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    paddingVertical: espace[3],
+    paddingHorizontal: dimensions.carte.remplissage,
+    marginBottom: espace[4],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
-  revisionsTexte: { flex: 1, fontSize: texte.corps, fontFamily: police.demi },
+  revisionsTexte: { flex: 1, ...typo.body, fontWeight: graisse.demi, color: couleurs.textePrincipal },
+  /** La barre de recherche a la forme d'un champ : même hauteur, même rayon, aucun contour. */
   recherche: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingHorizontal: espace.m,
-    minHeight: CIBLE_MIN,
-    marginBottom: espace.l,
+    gap: espace[2],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.champ.rayon,
+    paddingHorizontal: dimensions.champ.remplissageH,
+    minHeight: dimensions.champ.hauteur,
+    marginBottom: dimensions.formulaire.entreGroupes,
   },
-  saisie: { flex: 1, fontSize: texte.corps, fontFamily: police.normal, color: couleurs.texte },
+  saisie: {
+    flex: 1,
+    ...typo.body,
+    color: couleurs.textePrincipal,
+    minHeight: dimensions.champ.hauteur,
+    minWidth: CIBLE_MIN,
+  },
+  effacer: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  /** Une ligne de section : la section porte le fond et le filet. */
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.m,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.l,
-    marginBottom: espace.s,
+    gap: espace[3],
+    paddingVertical: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
-  texte: { flex: 1, gap: espace.xs },
-  titre: { flex: 1, fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
-  detail: { fontSize: texte.courant, fontFamily: police.normal, color: couleurs.doux },
+  icone: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  texte: { flex: 1, gap: espace[1] },
+  titre: { flex: 1, ...typo.body, color: couleurs.textePrincipal },
+  detail: { ...typo.footnote, color: couleurs.texteSecondaire },
   etiquette: {
-    marginTop: espace.xs,
+    marginTop: espace[1],
   },
   entete: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
+    gap: espace[2],
   },
-  espace: { marginTop: espace.m },
 });

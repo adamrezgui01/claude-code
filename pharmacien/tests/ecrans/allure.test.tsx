@@ -155,6 +155,14 @@ async function monter(ecran: Ecran) {
  */
 const PASSES_V26: string[] = [
   'Clinique · Calculateur de dose',
+  'Clinique · Clinique',
+  'Clinique · Lien (existant)',
+  'Clinique · Veille',
+  'Clinique · Révision',
+  'Clinique · Suivre un sujet',
+  'Clinique · À revérifier',
+  'Clinique · Note (nouvelle)',
+  'Clinique · Sujet',
   'Horaire · Horaire',
   'Horaire · Mes dispos',
   'Horaire · Quart (nouveau)',

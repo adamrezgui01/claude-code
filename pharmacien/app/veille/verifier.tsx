@@ -21,7 +21,7 @@ import { titreDuLien } from '../../src/lib/liens';
 import { etatContenu, etatSource } from '../../src/lib/veille/peremption';
 import { ouvrirPageOfficielle, ouvrirSource } from '../../src/lib/veille/ouvrir';
 import { Bouton, Carte, Champ, Doux, Ecran, Fondu, SousTitre, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, texte, useAccent } from '../../src/ui/theme';
+import { couleurs, espace, graisse, icone, typo, useAccent, CIBLE_MIN } from '../../src/ui/theme';
 
 /**
  * À revérifier.
@@ -38,7 +38,6 @@ import { couleurs, espace, police, texte, useAccent } from '../../src/ui/theme';
 export default function Verifier() {
   const { t, langue } = useTextes();
   const router = useRouter();
-  const accent = useAccent();
   const jour = aujourdhui();
 
   const [sources, setSources] = useState<Source[]>([]);
@@ -101,11 +100,15 @@ export default function Verifier() {
     );
   }
 
+  const deuxGroupes = aRevoir.length > 0 && notesARevoir.length > 0;
+
   return (
     <Ecran>
       <Stack.Screen options={{ title: t('veille.aRevoir') }} />
 
-      {aRevoir.length > 0 && <SousTitre>{t('veille.sourcesARevoir')}</SousTitre>}
+      {/* Les deux en-têtes ne paraissent que si les deux groupes sont là :
+          seul, un en-tête ne sépare rien. */}
+      {deuxGroupes && <SousTitre>{t('veille.sourcesARevoir')}</SousTitre>}
       {aRevoir.map((source) => (
         <Carte key={source.id} style={styles.carte}>
           <Text style={styles.titre}>{titreDuLien(source, traduire)}</Text>
@@ -117,9 +120,10 @@ export default function Verifier() {
 
           <Pressable
             onPress={() => void ouvrirSource(source, !!reglagesVeille().veille_navigateur)}
+            accessibilityRole="link"
             style={({ pressed }) => [styles.lien, pressed && { opacity: 0.6 }]}>
-            <Ionicons name="open-outline" size={16} color={accent} />
-            <Text style={[styles.lienTexte, { color: accent }]}>{t('veille.ouvrirSource')}</Text>
+            <Ionicons name="open-outline" size={icone.petite} color={couleurs.textePrincipal} />
+            <Text style={styles.lienTexte}>{t('veille.ouvrirSource')}</Text>
           </Pressable>
 
           {/* Quand on doute qu'un PDF soit encore la bonne version, c'est
@@ -127,8 +131,9 @@ export default function Verifier() {
           {!!source.url_reference && (
             <Pressable
               onPress={() => void ouvrirPageOfficielle(source)}
+              accessibilityRole="link"
               style={({ pressed }) => [styles.lien, pressed && { opacity: 0.6 }]}>
-              <Ionicons name="globe-outline" size={16} color={couleurs.doux} />
+              <Ionicons name="globe-outline" size={icone.petite} color={couleurs.texteSecondaire} />
               <Text style={styles.lienDiscret}>{t('clinique.pageOfficielle')}</Text>
             </Pressable>
           )}
@@ -180,7 +185,7 @@ export default function Verifier() {
         </Carte>
       ))}
 
-      {notesARevoir.length > 0 && <SousTitre>{t('veille.notesARevoir')}</SousTitre>}
+      {deuxGroupes && <SousTitre>{t('veille.notesARevoir')}</SousTitre>}
       {notesARevoir.map((note) => {
         const source = note.source_id ? obtenirSource(note.source_id) : null;
         return (
@@ -194,9 +199,10 @@ export default function Verifier() {
             {!!source && (
               <Pressable
                 onPress={() => void ouvrirSource(source, !!reglagesVeille().veille_navigateur)}
+                accessibilityRole="link"
                 style={({ pressed }) => [styles.lien, pressed && { opacity: 0.6 }]}>
-                <Ionicons name="open-outline" size={16} color={accent} />
-                <Text style={[styles.lienTexte, { color: accent }]}>
+                <Ionicons name="open-outline" size={icone.petite} color={couleurs.textePrincipal} />
+                <Text style={styles.lienTexte}>
                   {titreDuLien(source, traduire)}
                 </Text>
               </Pressable>
@@ -221,7 +227,8 @@ export default function Verifier() {
                 />
               </View>
             </View>
-            <Pressable onPress={() => supprimer(note.id)} hitSlop={8} style={styles.supprimer}>
+            <Pressable onPress={() => supprimer(note.id)} accessibilityRole="button" style={styles.supprimer}>
+              <Ionicons name="trash-outline" size={icone.petite} color={couleurs.alerte} />
               <Text style={styles.supprimerTexte}>{t('veille.supprimerNote')}</Text>
             </Pressable>
           </Carte>
@@ -232,13 +239,26 @@ export default function Verifier() {
 }
 
 const styles = StyleSheet.create({
-  carte: { gap: espace.s, marginBottom: espace.m },
-  titre: { fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte, lineHeight: 21 },
-  lien: { flexDirection: 'row', alignItems: 'center', gap: espace.s, paddingVertical: espace.xs },
-  lienTexte: { fontSize: texte.lecture, fontFamily: police.demi },
-  lienDiscret: { fontSize: texte.courant, fontFamily: police.normal, color: couleurs.doux },
-  actions: { flexDirection: 'row', gap: espace.m, marginTop: espace.s },
+  carte: { gap: espace[2], marginBottom: espace[3] },
+  titre: { ...typo.body, fontWeight: graisse.demi, color: couleurs.textePrincipal },
+  lien: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace[2],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+  },
+  lienTexte: { ...typo.subhead, fontWeight: graisse.demi, color: couleurs.textePrincipal },
+  lienDiscret: { ...typo.footnote,  color: couleurs.texteSecondaire },
+  actions: { flexDirection: 'row', gap: espace[3], marginTop: espace[2] },
   action: { flex: 1 },
-  supprimer: { alignItems: 'center', paddingTop: espace.s },
-  supprimerTexte: { fontSize: texte.courant, fontFamily: police.demi, color: couleurs.alerte },
+  supprimer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: espace[1],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+  },
+  supprimerTexte: { ...typo.footnote, fontWeight: graisse.demi, color: couleurs.alerte },
 });

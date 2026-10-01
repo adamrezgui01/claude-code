@@ -276,7 +276,17 @@ describe('les écrans passés aux jetons', () => {
  */
 const PASSES_V26: Record<string, string[]> = {
   Charpente: ['src/ui/composants.tsx', 'src/ui/Filet.tsx'],
-  Clinique: ['app/clinique/dose.tsx'],
+  Clinique: [
+    'app/clinique/dose.tsx',
+    'app/(tabs)/clinique.tsx',
+    'app/lien/[id].tsx',
+    'app/veille/index.tsx',
+    'app/veille/revision.tsx',
+    'app/veille/suivre.tsx',
+    'app/veille/verifier.tsx',
+    'app/veille/note/[id].tsx',
+    'app/veille/sujet/[id].tsx',
+  ],
   Horaire: [
     'app/(tabs)/index.tsx',
     'app/disponibilites.tsx',
