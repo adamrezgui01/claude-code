@@ -83,7 +83,6 @@ export const fr = {
     vueAgenda: 'Agenda',
     vueListe: 'Liste',
     vueCarte: 'Carte',
-    affichage: 'Affichage',
     jour: 'Jour',
     semaine: 'Semaine',
     mois: 'Mois',
@@ -169,7 +168,6 @@ export const fr = {
     repeterExplication:
       'Chaque jour coché crée un quart indépendant, copie de celui-ci. Les modifier ou les supprimer ensuite ne touche jamais les autres.',
     joursOccupes: 'Les jours grisés portent déjà un quart à ces heures. Ils seront sautés.',
-    fraisExtra: 'Frais extra',
     aucunFraisExtra: 'Rien de facturé en plus des heures pour ce quart.',
     sansRecu: 'Sans reçu',
     totalFrais: 'Total des frais {{montant}}',
@@ -221,7 +219,6 @@ export const fr = {
   },
 
   pharmacie: {
-    resultats: 'Résultats',
     titreNouvelle: 'Nouvelle pharmacie',
     titre: 'Pharmacie',
     pageIdentite: 'Identité',
@@ -979,8 +976,6 @@ export const fr = {
     partageImpossible: 'Le partage n’a pas fonctionné.',
     resume_one: '{{count}} journée offerte sur la période.',
     resume_other: '{{count}} journées offertes sur la période.',
-    rienDePrive:
-      'L’image ne montre aucun nom de pharmacie, aucune heure et aucun montant.',
     partager: 'Partager mes disponibilités',
     consigne:
       'Touchez une journée pour l’offrir. Glissez pour en offrir plusieurs.',

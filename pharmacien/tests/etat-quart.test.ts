@@ -135,10 +135,12 @@ describe('les quatre états, et leur marque', () => {
     expect(new Set(marques).size).toBe(4);
   });
 
-  test('un quart à venir garde la couleur d’accent, un quart réglé prend le gris', () => {
-    expect(marqueDuQuart('aVenir').ton).toBe('accent');
+  test('un quart à venir garde la teinte vive, un quart réglé prend le gris', () => {
+    // Le vif était le mauve jusqu'au V2.6 : le mauve ne marque plus que
+    // l'élément actif et l'action principale. La règle, elle, n'a pas bougé.
+    expect(marqueDuQuart('aVenir').ton).toBe('vif');
     // Fait, pas encore facturé : c'est l'étape qui rapporte, elle reste vive.
-    expect(marqueDuQuart('aFacturer').ton).toBe('accent');
+    expect(marqueDuQuart('aFacturer').ton).toBe('vif');
     expect(marqueDuQuart('facture').ton).toBe('gris');
     expect(marqueDuQuart('paye').ton).toBe('gris');
   });

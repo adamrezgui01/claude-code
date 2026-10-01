@@ -12,8 +12,8 @@ import { quartVerrouille } from '../../src/lib/facturation';
 import { argent } from '../../src/lib/format';
 import { montantsDuQuart } from '../../src/lib/montants';
 import { annulerRappels } from '../../src/lib/notifications';
-import { Bouton, Carte, Doux, Ecran, Fondu, SousTitre, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../../src/ui/theme';
+import { Bouton, Carte, Doux, Ecran, Fondu, Section, Vide } from '../../src/ui/composants';
+import { couleurs, espace, graisse, icone, typo, CIBLE_MIN } from '../../src/ui/theme';
 
 /**
  * Annuler un quart, après l'avoir dit à voix haute.
@@ -31,7 +31,6 @@ import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '..
 export default function AnnulerQuart() {
   const { t, langue } = useTextes();
   const router = useRouter();
-  const accent = useAccent();
   const params = useLocalSearchParams<{ ids?: string; date?: string }>();
 
   const candidats = useMemo(
@@ -75,15 +74,16 @@ export default function AnnulerQuart() {
       {annule !== null ? (
         <Fondu>
           <Carte>
-            <SousTitre>{t('annulation.faite')}</SousTitre>
+            <Text style={styles.titreCarte}>{t('annulation.faite')}</Text>
             <Doux>{t('annulation.faiteDetail', { jour: formatDateLongue(annule, langue) })}</Doux>
           </Carte>
           <View style={styles.espacement} />
           <Pressable
             onPress={() => offrirLaJournee(annule)}
+            accessibilityRole="button"
             style={({ pressed }) => [styles.dispo, pressed && { opacity: 0.6 }]}>
-            <Ionicons name="calendar-clear-outline" size={18} color={accent} />
-            <Text style={[styles.disposTexte, { color: accent }]}>
+            <Ionicons name="calendar-clear-outline" size={icone.courante} color={couleurs.textePrincipal} />
+            <Text style={styles.disposTexte}>
               {t('annulation.rendreDispo')}
             </Text>
           </Pressable>
@@ -96,11 +96,17 @@ export default function AnnulerQuart() {
         />
       ) : quart === null ? (
         <>
-          <Doux>{t('annulation.lequel')}</Doux>
+          <View style={styles.consigne}>
+            <Doux>{t('annulation.lequel')}</Doux>
+          </View>
+          {/* Une section : un fond blanc, et un filet entre deux lignes,
+              jamais sous la dernière. */}
+          <Section>
           {candidats.map((candidat) => (
             <Pressable
               key={candidat.id}
               onPress={() => setChoisi(candidat.id)}
+              accessibilityRole="button"
               style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
               <View style={styles.texte}>
                 <Text style={styles.nom}>{candidat.pharmacie_nom}</Text>
@@ -110,14 +116,15 @@ export default function AnnulerQuart() {
                   {formatHeure(candidat.heure_fin, langue)}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={couleurs.doux} />
+              <Ionicons name="chevron-forward" size={icone.petite} color={couleurs.texteSecondaire} />
             </Pressable>
           ))}
+          </Section>
         </>
       ) : (
         <>
           <Carte>
-            <SousTitre>{quart.pharmacie_nom}</SousTitre>
+            <Text style={styles.titreCarte}>{quart.pharmacie_nom}</Text>
             <Text style={styles.detail}>
               {formatDateLongue(quart.date, langue)} · {formatHeure(quart.heure_debut, langue)} –{' '}
               {formatHeure(quart.heure_fin, langue)}
@@ -135,14 +142,14 @@ export default function AnnulerQuart() {
             <>
               <Bouton
                 titre={t('annulation.parLaPharmacie')}
-                icone={<Ionicons name="business-outline" size={18} color="#FFFFFF" />}
+                icone={<Ionicons name="business-outline" size={icone.courante} color={couleurs.surAccent} />}
                 onPress={() => void confirmer('pharmacie')}
               />
               <View style={styles.espacement} />
               <Bouton
                 titre={t('annulation.parMoi')}
                 variante="secondaire"
-                icone={<Ionicons name="person-outline" size={18} color={accent} />}
+                icone={<Ionicons name="person-outline" size={icone.courante} color={couleurs.textePrincipal} />}
                 onPress={() => void confirmer('moi')}
               />
             </>
@@ -154,26 +161,27 @@ export default function AnnulerQuart() {
 }
 
 const styles = StyleSheet.create({
-  espacement: { height: espace.m },
+  espacement: { height: espace[3] },
+  consigne: { marginBottom: espace[3] },
+  titreCarte: { ...typo.headline, color: couleurs.textePrincipal, marginBottom: espace[1] },
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.m,
-    paddingVertical: espace.m,
-    borderBottomWidth: 1,
-    borderBottomColor: couleurs.bordure,
+    gap: espace[3],
+    paddingVertical: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   texte: { flex: 1 },
-  nom: { fontSize: texte.saisie, fontFamily: police.demi, color: couleurs.texte },
-  detail: { fontSize: texte.lecture, fontFamily: police.normal, color: couleurs.doux },
-  montant: { fontSize: texte.grandTitre, fontFamily: police.gras, color: couleurs.texte, marginTop: espace.s },
+  nom: { ...typo.body, fontWeight: graisse.demi, color: couleurs.textePrincipal },
+  detail: { ...typo.subhead,  color: couleurs.texteSecondaire },
+  montant: { ...typo.title3, fontWeight: graisse.grasse, color: couleurs.textePrincipal, marginTop: espace[2] },
   dispo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
+    gap: espace[2],
     minHeight: CIBLE_MIN,
-    paddingHorizontal: espace.s,
-    borderRadius: rayon,
+    minWidth: CIBLE_MIN,
   },
-  disposTexte: { fontSize: texte.corps, fontFamily: police.demi },
+  disposTexte: { ...typo.body, color: couleurs.textePrincipal },
 });

@@ -55,7 +55,7 @@ import {
 import { BandeAttente } from '../../src/ui/BandeAttente';
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { Pageur } from '../../src/ui/Pageur';
-import { accentPale, couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../../src/ui/theme';
+import { couleurs, dimensions, espace, graisse, icone, typo, CIBLE_MIN } from '../../src/ui/theme';
 import { VueCarte, type PointCarte } from '../../src/ui/VueCarte';
 import { VueColonnes } from '../../src/ui/VueColonnes';
 import { useTextes } from '../../src/i18n';
@@ -78,7 +78,6 @@ export default function Horaire() {
   const { t } = useTextes();
   const router = useRouter();
   const navigation = useNavigation();
-  const accent = useAccent();
   // Ce qui reste à l'agenda une fois l'en-tête, la barre d'onglets et le bouton
   // d'ajout déduits : la vue s'y ajuste plutôt que d'imposer un défilement.
   const { height } = useWindowDimensions();
@@ -163,8 +162,8 @@ export default function Horaire() {
             accessibilityRole="button"
             accessibilityLabel={t('disponibilites.titre')}
             style={styles.dispos}>
-            <Ionicons name="calendar-clear-outline" size={18} color={accent} />
-            <Text style={[styles.disposTexte, { color: accent }]}>{t('disponibilites.titre')}</Text>
+            <Ionicons name="calendar-clear-outline" size={icone.courante} color={couleurs.textePrincipal} />
+            <Text style={styles.disposTexte}>{t('disponibilites.titre')}</Text>
           </Pressable>
           <Pressable
             onPress={() => setAideOuverte(true)}
@@ -172,12 +171,12 @@ export default function Horaire() {
             accessibilityRole="button"
             accessibilityLabel={t('horaire.aideTitre')}
             style={styles.icone}>
-            <Ionicons name="help-circle-outline" size={24} color={accent} />
+            <Ionicons name="help-circle-outline" size={icone.grande} color={couleurs.textePrincipal} />
           </Pressable>
         </View>
       ),
     });
-  }, [navigation, accent, router, t]);
+  }, [navigation, router, t]);
 
   /**
    * Une disponibilité dictée s'écrit ici, puis l'écran des dispos s'ouvre :
@@ -463,9 +462,9 @@ export default function Horaire() {
     <ScrollView contentContainerStyle={styles.contenu} scrollEnabled={!duplication}>
       {rappelFactures && (
         <Fondu>
-          <Carte style={styles.bandeau}>
+          <Carte>
             <View style={styles.enteteBandeau}>
-              <Ionicons name="cash-outline" size={18} color={couleurs.doux} />
+              <Ionicons name="cash-outline" size={icone.courante} color={couleurs.texteSecondaire} />
               <Text style={styles.titreBandeau}>{t('horaire.rappelFacturesTitre')}</Text>
             </View>
             <Doux>{t('horaire.rappelFacturesDetail')}</Doux>
@@ -476,15 +475,17 @@ export default function Horaire() {
                   setRappelFactures(false);
                   router.push('/factures');
                 }}
-                hitSlop={8}>
-                <Text style={[styles.lienBandeau, { color: accent }]}>{t('horaire.rappelFacturesVoir')}</Text>
+                accessibilityRole="button"
+                style={styles.lienCible}>
+                <Text style={styles.lienBandeau}>{t('horaire.rappelFacturesVoir')}</Text>
               </Pressable>
               <Pressable
                 onPress={() => {
                   reporterRappelFactures();
                   setRappelFactures(false);
                 }}
-                hitSlop={8}>
+                accessibilityRole="button"
+                style={styles.lienCible}>
                 <Text style={styles.lienBandeauDoux}>{t('horaire.rappelFacturesPlusTard')}</Text>
               </Pressable>
             </View>
@@ -516,8 +517,9 @@ export default function Horaire() {
 
       {vue === 'agenda' && (
         <Fondu>
+          {/* Sans « Affichage » au-dessus : jour, semaine et mois, avec leur
+              icône, disent d'eux-mêmes ce que la rangée règle. */}
           <Onglets
-            libelle={t('horaire.affichage')}
             options={[
               { valeur: 'jour' as const, texte: t('horaire.jour'), icone: 'today-outline' as const },
               {
@@ -547,11 +549,11 @@ export default function Horaire() {
             <>
               <View style={styles.navigation}>
                 <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('commun.periodePrecedente')}
-        onPress={() => setJour(ajouterJours(jour, -pas))}
-        hitSlop={10}>
-                  <Ionicons name="chevron-back" size={22} color={accent} />
+                  accessibilityRole="button"
+                  accessibilityLabel={t('commun.periodePrecedente')}
+                  onPress={() => setJour(ajouterJours(jour, -pas))}
+                  style={styles.fleche}>
+                  <Ionicons name="chevron-back" size={icone.grande} color={couleurs.texteSecondaire} />
                 </Pressable>
                 <Text style={styles.periode}>
                   {affichage === 'jour'
@@ -559,11 +561,11 @@ export default function Horaire() {
                     : `${formatJourCourt(semaine[0])} – ${formatJourCourt(semaine[6])}`}
                 </Text>
                 <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('commun.periodeSuivante')}
-        onPress={() => setJour(ajouterJours(jour, pas))}
-        hitSlop={10}>
-                  <Ionicons name="chevron-forward" size={22} color={accent} />
+                  accessibilityRole="button"
+                  accessibilityLabel={t('commun.periodeSuivante')}
+                  onPress={() => setJour(ajouterJours(jour, pas))}
+                  style={styles.fleche}>
+                  <Ionicons name="chevron-forward" size={icone.grande} color={couleurs.texteSecondaire} />
                 </Pressable>
               </View>
               <Pageur
@@ -587,10 +589,11 @@ export default function Horaire() {
               />
 
               {/* La journée garde ses cartes sous la timeline : elles portent le
-                  taux, les frais et les notes, que les blocs ne montrent pas. */}
+                  taux, les frais et les notes, que les blocs ne montrent pas.
+                  La date n'est pas répétée au-dessus : la navigation l'écrit
+                  déjà, en tête de l'agenda. */}
               {affichage === 'jour' && (
                 <>
-                  <Text style={styles.jour}>{formatDateLongue(jour)}</Text>
                   {quartsDuJour.length === 0 ? (
                     <Vide texte={t('horaire.aucunQuartCeJour')} />
                   ) : (
@@ -615,7 +618,7 @@ export default function Horaire() {
             <View style={styles.ajoutPrincipal}>
               <Bouton
                 titre={t('horaire.ajouterQuart')}
-                icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
+                icone={<Ionicons name="add" size={icone.courante} color={couleurs.surAccent} />}
                 onPress={() => router.push(`/quart/nouveau?date=${jour}`)}
               />
             </View>
@@ -698,7 +701,7 @@ export default function Horaire() {
             <View style={styles.ajoutPrincipal}>
               <Bouton
                 titre={t('horaire.ajouterQuart')}
-                icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
+                icone={<Ionicons name="add" size={icone.courante} color={couleurs.surAccent} />}
                 onPress={() => router.push('/quart/nouveau')}
               />
             </View>
@@ -725,7 +728,7 @@ export default function Horaire() {
             <View style={styles.ajoutPrincipal}>
               <Bouton
                 titre={t('horaire.ajouterQuart')}
-                icone={<Ionicons name="add" size={20} color="#FFFFFF" />}
+                icone={<Ionicons name="add" size={icone.courante} color={couleurs.surAccent} />}
                 onPress={() => router.push(`/quart/nouveau?date=${jour}`)}
               />
             </View>
@@ -776,17 +779,15 @@ export default function Horaire() {
  */
 function BoutonMicro({ onPress }: { onPress: () => void }) {
   const { t } = useTextes();
-  const accent = useAccent();
+  // Blanc sur le gris, sans contour mauve : l'action principale est le bouton
+  // d'ajout à côté, et un seul fond mauve suffit à la dire.
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
       accessibilityLabel={t('dictee.titre')}
-      style={({ pressed }) => [
-        styles.micro,
-        { borderColor: accent },
-        pressed && { backgroundColor: accentPale(accent) },
-      ]}>
-      <Ionicons name="mic-outline" size={22} color={accent} />
+      style={({ pressed }) => [styles.micro, pressed && styles.enfonce]}>
+      <Ionicons name="mic-outline" size={icone.grande} color={couleurs.textePrincipal} />
     </Pressable>
   );
 }
@@ -796,86 +797,93 @@ const styles = StyleSheet.create({
   dispos: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.xs,
+    gap: espace[1],
     minHeight: CIBLE_MIN,
-    paddingHorizontal: espace.xs,
+    minWidth: CIBLE_MIN,
+    paddingHorizontal: espace[1],
   },
   disposTexte: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   ligneAjout: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    gap: espace.m,
+    gap: espace[3],
   },
   ajoutPrincipal: { flex: 1 },
+  /** Carré, de la hauteur du bouton d'ajout qu'il accompagne. */
   micro: {
-    width: 52,
-    borderWidth: 1.5,
-    borderRadius: rayon,
+    width: dimensions.bouton.hauteur,
+    minHeight: dimensions.bouton.hauteur,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.bouton.rayon,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  enfonce: { opacity: 0.6 },
   contenu: {
-    padding: espace.l,
-    // Même raison qu'ailleurs : le bouton d'ajout ne doit pas finir sous la
-    // barre d'onglets.
-    paddingBottom: espace.xxl * 3,
+    paddingHorizontal: dimensions.ecran.margeH,
+    paddingTop: dimensions.ecran.margeHaut,
+    // Le bouton d'ajout ne doit pas finir collé à la barre d'onglets.
+    paddingBottom: espace[10],
   },
   enTete: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   icone: {
-    paddingHorizontal: espace.s,
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  bandeau: {
-    backgroundColor: couleurs.carte,
+  fleche: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lienCible: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    justifyContent: 'center',
   },
   enteteBandeau: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
-    marginBottom: espace.xs,
+    gap: espace[2],
+    marginBottom: espace[1],
   },
   titreBandeau: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   actionsBandeau: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: espace.m,
+    marginTop: espace[3],
   },
   lienBandeau: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   lienBandeauDoux: {
-    fontSize: texte.lecture,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
   },
   navigation: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: espace.s,
+    marginBottom: espace[2],
   },
   periode: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
-    textTransform: 'capitalize',
-  },
-  jour: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
-    marginBottom: espace.s,
-    marginTop: espace.s,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
     textTransform: 'capitalize',
   },
 });

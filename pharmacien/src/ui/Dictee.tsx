@@ -16,7 +16,17 @@ import {
 import { formatDateCourte } from '../lib/dates';
 import type { Langue } from '../lib/langue';
 import { Bouton } from './composants';
-import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from './theme';
+import {
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  ombreFlottante,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from './theme';
 
 /**
  * La dictée.
@@ -149,12 +159,12 @@ export function Dictee({
 
   return (
     <Modal visible={ouvert} transparent animationType="fade" onRequestClose={onFermer}>
-      <Pressable style={styles.voile} onPress={onFermer}>
-        <Pressable style={styles.feuille} onPress={() => {}}>
+      <Pressable style={styles.voile} onPress={onFermer} accessible={false}>
+        <Pressable style={styles.feuille} onPress={() => {}} accessible={false}>
           <Text style={styles.titre}>{t('dictee.titre')}</Text>
 
           <TextInput
-            style={[styles.champ, { borderColor: accent }]}
+            style={styles.champ}
             value={phrase}
             onChangeText={(texte) => {
               setPhrase(texte);
@@ -162,14 +172,14 @@ export function Dictee({
               setCommandes(null);
             }}
             placeholder={t('dictee.exemple')}
-            placeholderTextColor={couleurs.doux}
+            placeholderTextColor={couleurs.texteSecondaire}
             multiline
             autoFocus
             returnKeyType="done"
             onSubmitEditing={terminer}
           />
           <View style={styles.indice}>
-            <Ionicons name="mic-outline" size={16} color={couleurs.doux} />
+            <Ionicons name="mic-outline" size={icone.petite} color={couleurs.texteSecondaire} />
             <Text style={styles.indiceTexte}>{t('dictee.micro')}</Text>
           </View>
 
@@ -183,7 +193,11 @@ export function Dictee({
               <Text style={styles.resume}>{t('dictee.plusieurs', { count: commandes.length })}</Text>
               {commandes.map((commande, rang) => (
                 <View key={rang} style={styles.carte}>
-                  <Ionicons name={ICONE_COMMANDE[commande.action] ?? 'ellipse-outline'} size={16} color={accent} />
+                  <Ionicons
+                    name={ICONE_COMMANDE[commande.action] ?? 'ellipse-outline'}
+                    size={icone.courante}
+                    color={couleurs.texteSecondaire}
+                  />
                   <Text style={styles.carteTexte} numberOfLines={2}>
                     {resumerCommande(commande, langue, t)}
                   </Text>
@@ -191,8 +205,8 @@ export function Dictee({
                     onPress={() => setCommandes(commandes.filter((_, n) => n !== rang))}
                     accessibilityRole="button"
                     accessibilityLabel={t('commun.retirer')}
-                    hitSlop={12}>
-                    <Ionicons name="close" size={16} color={couleurs.doux} />
+                    style={styles.retirer}>
+                    <Ionicons name="close" size={icone.petite} color={couleurs.texteSecondaire} />
                   </Pressable>
                 </View>
               ))}
@@ -212,10 +226,9 @@ export function Dictee({
                         <Pressable
                           key={etiquette}
                           onPress={() => repondre(rang, question, n)}
-                          style={[
-                            styles.puce,
-                            retenu && { borderColor: accent, backgroundColor: accent },
-                          ]}>
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: retenu }}
+                          style={[styles.puce, retenu && { backgroundColor: accent }]}>
                           <Text style={[styles.puceTexte, retenu && styles.puceTexteRetenu]}>
                             {etiquette}
                           </Text>
@@ -261,7 +274,7 @@ export function Dictee({
             onPress={terminer}
             desactive={phrase.trim().length === 0 || commandes?.length === 0}
           />
-          <Pressable onPress={onFermer} hitSlop={8}>
+          <Pressable onPress={onFermer} accessibilityRole="button" style={styles.annulerCible}>
             <Text style={styles.annuler}>{t('commun.annuler')}</Text>
           </Pressable>
         </Pressable>
@@ -336,61 +349,73 @@ function resumer(
 const styles = StyleSheet.create({
   voile: {
     flex: 1,
-    backgroundColor: '#1E1B2299',
+    backgroundColor: couleurs.voile,
     justifyContent: 'center',
-    padding: espace.l,
+    padding: dimensions.ecran.margeH,
   },
+  /** La feuille flotte au-dessus de l'écran : elle porte l'ombre. */
   feuille: {
-    backgroundColor: couleurs.carte,
-    borderRadius: rayon * 1.5,
-    padding: espace.xl,
-    gap: espace.m,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.feuille.rayon,
+    padding: espace[6],
+    gap: espace[3],
+    ...ombreFlottante,
   },
-  titre: { fontSize: texte.titre, fontFamily: police.gras, color: couleurs.texte },
+  titre: { ...typo.title3, fontWeight: graisse.grasse, color: couleurs.textePrincipal },
+  /** Un champ sur la feuille blanche : le gris de l'écran le marque, pas un contour mauve. */
   champ: {
-    borderWidth: 1.5,
-    borderRadius: rayon,
-    padding: espace.m,
-    minHeight: 92,
-    fontSize: texte.saisie,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    backgroundColor: couleurs.fondEcran,
+    borderRadius: dimensions.champ.rayon,
+    padding: espace[3],
+    minHeight: dimensions.champMultiligne.hauteur,
+    minWidth: CIBLE_MIN,
+    ...typo.body,
+    color: couleurs.textePrincipal,
     textAlignVertical: 'top',
   },
-  indice: { flexDirection: 'row', alignItems: 'center', gap: espace.s },
-  indiceTexte: { fontSize: texte.courant, fontFamily: police.normal, color: couleurs.doux, flex: 1 },
-  resultat: { gap: espace.m },
+  indice: { flexDirection: 'row', alignItems: 'center', gap: espace[2] },
+  indiceTexte: { ...typo.footnote, color: couleurs.texteSecondaire, flex: 1 },
+  resultat: { gap: espace[3] },
   carte: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingVertical: espace.s,
-    paddingHorizontal: espace.m,
+    gap: espace[2],
+    backgroundColor: couleurs.fondEcran,
+    borderRadius: dimensions.carte.rayon,
+    paddingLeft: espace[3],
     minHeight: CIBLE_MIN,
   },
-  carteTexte: { flex: 1, fontSize: texte.lecture, fontFamily: police.normal, color: couleurs.texte },
-  resume: { fontSize: texte.corps, fontFamily: police.demi, color: couleurs.texte },
-  question: { gap: espace.s },
-  questionTexte: { fontSize: texte.lecture, fontFamily: police.normal, color: couleurs.doux },
-  choix: { flexDirection: 'row', flexWrap: 'wrap', gap: espace.s },
-  puce: {
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingVertical: espace.s,
-    paddingHorizontal: espace.m,
+  carteTexte: { flex: 1, ...typo.subhead, color: couleurs.textePrincipal },
+  retirer: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  puceTexte: { fontSize: texte.lecture, fontFamily: police.demi, color: couleurs.texte },
-  puceTexteRetenu: { color: '#FFFFFF' },
-  echec: { fontSize: texte.lecture, fontFamily: police.normal, color: couleurs.doux, lineHeight: 20 },
+  resume: { ...typo.body, fontWeight: graisse.demi, color: couleurs.textePrincipal },
+  question: { gap: espace[2] },
+  questionTexte: { ...typo.subhead, color: couleurs.texteSecondaire },
+  choix: { flexDirection: 'row', flexWrap: 'wrap', gap: espace[2] },
+  puce: {
+    backgroundColor: couleurs.fondEcran,
+    borderRadius: dimensions.capsule.rayon,
+    paddingHorizontal: dimensions.capsule.remplissageH,
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    justifyContent: 'center',
+  },
+  puceTexte: { ...typo.subhead, fontWeight: graisse.demi, color: couleurs.textePrincipal },
+  puceTexteRetenu: { color: couleurs.surAccent },
+  echec: { ...typo.subhead, color: couleurs.texteSecondaire },
+  annulerCible: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    justifyContent: 'center',
+  },
   annuler: {
     textAlign: 'center',
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
-    color: couleurs.doux,
-    paddingVertical: espace.s,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.texteSecondaire,
   },
 });

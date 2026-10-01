@@ -136,7 +136,13 @@ export function etatFacturation(
  * veut dire « rien à faire » : le quart s'en vient, ou il est réglé.
  */
 export type MarqueQuart = {
-  ton: 'accent' | 'gris' | 'annule';
+  /**
+   * Vif : il reste de l'argent en jeu. Gris : facturé, donc figé. Le vif était
+   * le mauve de l'application jusqu'au V2.6 ; c'est maintenant l'encre du
+   * texte, parce que le mauve ne marque plus que l'élément actif et l'action
+   * principale.
+   */
+  ton: 'vif' | 'gris' | 'annule';
   creuse: boolean;
 };
 
@@ -145,9 +151,9 @@ export function marqueDuQuart(etat: EtatFacturation): MarqueQuart {
     case 'annule':
       return { ton: 'annule', creuse: true };
     case 'aVenir':
-      return { ton: 'accent', creuse: false };
+      return { ton: 'vif', creuse: false };
     case 'aFacturer':
-      return { ton: 'accent', creuse: true };
+      return { ton: 'vif', creuse: true };
     case 'facture':
       return { ton: 'gris', creuse: true };
     case 'paye':

@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import Supercluster from 'supercluster';
 
-import { couleurs, espace, police, rayon, texte } from './theme';
+import { couleurs, dimensions, espace, graisse, typo, CIBLE_MIN } from './theme';
 import { useTextes } from '../i18n';
 
 export type PointCarte = {
@@ -138,7 +138,7 @@ export function VueCarte({
             <Text
               style={[
                 styles.choixTexte,
-                historiqueMois === h.mois && { fontFamily: police.demi, color: couleurs.texte },
+                historiqueMois === h.mois && { fontWeight: graisse.demi, color: couleurs.textePrincipal },
               ]}>
               {t(`carte.${h.cle}`)}
             </Text>
@@ -164,88 +164,87 @@ export function VueCarte({
 }
 
 const styles = StyleSheet.create({
+  /** La carte remplit son cadre ; ses tuiles le distinguent du fond, sans contour. */
   cadre: {
-    height: 440,
-    borderRadius: rayon,
+    height: dimensions.carteGeo.hauteur,
+    borderRadius: dimensions.carte.rayon,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    marginBottom: espace.m,
+    marginBottom: espace[4],
   },
   carte: {
     ...StyleSheet.absoluteFill,
   },
   point: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    width: dimensions.repere.cote,
+    height: dimensions.repere.cote,
+    borderRadius: dimensions.repere.cote / 2,
+    borderWidth: dimensions.repere.contour,
+    borderColor: couleurs.surAccent,
   },
   grappe: {
-    minWidth: 32,
-    height: 32,
-    paddingHorizontal: 6,
-    borderRadius: 16,
-    backgroundColor: couleurs.texte,
+    minWidth: dimensions.repere.grappe,
+    height: dimensions.repere.grappe,
+    paddingHorizontal: espace[2],
+    borderRadius: dimensions.repere.grappe / 2,
+    backgroundColor: couleurs.textePrincipal,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderWidth: dimensions.repere.contour,
+    borderColor: couleurs.surAccent,
   },
   grappeTexte: {
-    color: '#FFFFFF',
-    fontSize: texte.courant,
-    fontFamily: police.gras,
+    color: couleurs.surAccent,
+    ...typo.footnote,
+    fontWeight: graisse.grasse,
   },
   historique: {
     position: 'absolute',
-    top: espace.s,
-    right: espace.s,
+    top: espace[2],
+    right: espace[2],
     flexDirection: 'row',
-    backgroundColor: '#FFFFFFEE',
-    borderRadius: 999,
-    padding: 2,
+    backgroundColor: couleurs.fondFlottant,
+    borderRadius: dimensions.capsule.rayon,
+    padding: espace[1],
   },
   choixHistorique: {
-    paddingHorizontal: espace.m,
-    paddingVertical: espace.xs,
-    borderRadius: 999,
+    paddingHorizontal: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    justifyContent: 'center',
+    borderRadius: dimensions.capsule.rayon,
   },
   choixActif: {
-    backgroundColor: couleurs.fond,
+    backgroundColor: couleurs.fondEcran,
   },
   choixTexte: {
-    fontSize: texte.secondaire,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.caption1,
+    color: couleurs.texteSecondaire,
   },
   legende: {
     position: 'absolute',
-    left: espace.s,
-    right: espace.s,
-    bottom: espace.s,
+    left: espace[2],
+    right: espace[2],
+    bottom: espace[2],
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: espace.m,
-    backgroundColor: '#FFFFFFEE',
-    borderRadius: rayon,
-    paddingVertical: espace.s,
-    paddingHorizontal: espace.m,
+    gap: espace[3],
+    backgroundColor: couleurs.fondFlottant,
+    borderRadius: dimensions.carte.rayon,
+    paddingVertical: espace[2],
+    paddingHorizontal: espace[3],
   },
   entreeLegende: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.xs,
+    gap: espace[1],
   },
   pastille: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: dimensions.pastille.cote,
+    height: dimensions.pastille.cote,
+    borderRadius: dimensions.pastille.cote / 2,
   },
   legendeTexte: {
-    fontSize: texte.fin,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.caption2,
+    color: couleurs.texteSecondaire,
   },
 });

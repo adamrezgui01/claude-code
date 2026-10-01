@@ -12,7 +12,7 @@ import {
 } from '../lib/dates';
 import { Pageur } from './Pageur';
 import { useTextes } from '../i18n';
-import { couleurs, espace, police, rayon, texte, useAccent } from './theme';
+import { couleurs, dimensions, espace, graisse, icone, typo, useAccent, CIBLE_MIN } from './theme';
 
 /**
  * Calendrier de sélection multiple. On pointe les jours un à un plutôt que de
@@ -43,16 +43,16 @@ export function CalendrierMultiple({
           onPress={() => setMois(ajouterMois(mois, -1))}
           accessibilityRole="button"
           accessibilityLabel={t('commun.moisPrecedent')}
-          hitSlop={12} style={styles.fleche}>
-          <Ionicons name="chevron-back" size={20} color={accent} />
+          style={styles.fleche}>
+          <Ionicons name="chevron-back" size={icone.courante} color={couleurs.texteSecondaire} />
         </Pressable>
         <Text style={styles.mois}>{formatMoisAnnee(mois)}</Text>
         <Pressable
           onPress={() => setMois(ajouterMois(mois, 1))}
           accessibilityRole="button"
           accessibilityLabel={t('commun.moisSuivant')}
-          hitSlop={12} style={styles.fleche}>
-          <Ionicons name="chevron-forward" size={20} color={accent} />
+          style={styles.fleche}>
+          <Ionicons name="chevron-forward" size={icone.courante} color={couleurs.texteSecondaire} />
         </Pressable>
       </View>
 
@@ -86,6 +86,8 @@ export function CalendrierMultiple({
                   <Pressable
                     key={iso}
                     onPress={() => onBasculer(iso)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: choisi }}
                     style={({ pressed }) => [styles.case, pressed && { opacity: 0.6 }]}>
                     <View
                       style={[
@@ -93,17 +95,17 @@ export function CalendrierMultiple({
                         choisi && { backgroundColor: accent },
                         // Le gris dit « indisponible » sans ajouter une
                         // troisième couleur à interpréter.
-                        !choisi && occupe && { backgroundColor: couleurs.bordure },
-                        !choisi && !occupe && cest && { borderWidth: 1.5, borderColor: accent },
+                        !choisi && occupe && { backgroundColor: couleurs.filet },
                       ]}>
                       {/* Le chiffre reste : l'usager doit voir quelle date il
                           coche, pas seulement qu'elle est cochée. */}
                       <Text
                         style={[
                           styles.chiffre,
-                          choisi && { color: '#FFFFFF', fontFamily: police.gras },
-                          !choisi && occupe && { color: couleurs.doux },
-                          !choisi && !occupe && cest && { color: accent, fontFamily: police.demi },
+                          choisi && { color: couleurs.surAccent, fontWeight: graisse.grasse },
+                          !choisi && occupe && { color: couleurs.texteSecondaire },
+                          // Aujourd'hui se lit au gras ; le mauve est aux jours cochés.
+                          !choisi && !occupe && cest && { fontWeight: graisse.grasse },
                         ]}>
                         {analyserDate(iso).getDate()}
                       </Text>
@@ -121,28 +123,29 @@ export function CalendrierMultiple({
 
 const styles = StyleSheet.create({
   cadre: {
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.m,
-    marginBottom: espace.m,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    padding: espace[3],
+    marginBottom: espace[4],
   },
   entete: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: espace.s,
+    marginBottom: espace[2],
   },
   fleche: {
-    padding: espace.s,
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mois: {
     flex: 1,
     textAlign: 'center',
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
     textTransform: 'capitalize',
   },
   ligne: {
@@ -151,26 +154,27 @@ const styles = StyleSheet.create({
   enteteJour: {
     flex: 1,
     textAlign: 'center',
-    fontSize: texte.fin,
-    fontFamily: police.demi,
-    color: couleurs.doux,
-    marginBottom: espace.xs,
+    ...typo.caption2,
+    fontWeight: graisse.demi,
+    color: couleurs.texteSecondaire,
+    marginBottom: espace[1],
   },
   case: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: espace.xs,
+    paddingVertical: espace[1],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   pastille: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: dimensions.jour.cote,
+    height: dimensions.jour.cote,
+    borderRadius: dimensions.jour.cote / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   chiffre: {
-    fontSize: texte.corps,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
 });

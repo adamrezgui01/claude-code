@@ -21,7 +21,7 @@ import {
 } from '../lib/disponibilites';
 import { MAINTIEN_LONG, TOLERANCE_IMMOBILE } from '../lib/gestes';
 import type { PointEcran } from './FeuilleSurgissante';
-import { couleurs, espace, police, rayon, texte } from './theme';
+import { couleurs, dimensions, espace, graisse, typo } from './theme';
 
 /**
  * Un mois de disponibilités, et les trois gestes qui le modifient.
@@ -247,7 +247,9 @@ function Case({
 
   return (
     <View style={[styles.case, { width: cote, height: cote }]}>
+      {/* Offerte, c'est une journée choisie : la sélection porte le mauve. */}
       <View
+        accessibilityState={{ selected: offerte }}
         style={[
           styles.pastille,
           offerte && { backgroundColor: accent },
@@ -264,12 +266,13 @@ function Case({
         {!!heures && <Text style={styles.heures}>{heures}</Text>}
 
         {/*
-          Le point du quart. Blanc sur une journée offerte, mauve sinon :
-          mauve sur mauve, il disparaîtrait exactement là où on veut le voir.
+          Le point du quart. Blanc sur une journée offerte, l'encre d'un quart
+          sinon : sur le mauve, il disparaîtrait exactement là où on veut le
+          voir.
         */}
         {donnee.quart && (
           <View
-            style={[styles.point, { backgroundColor: offerte ? '#FFFFFF' : accent }]}
+            style={[styles.point, { backgroundColor: offerte ? couleurs.surAccent : couleurs.quartVif }]}
           />
         )}
       </View>
@@ -283,18 +286,18 @@ const styles = StyleSheet.create({
   },
   initiale: {
     textAlign: 'center',
-    fontSize: texte.secondaire,
-    fontFamily: police.demi,
-    color: couleurs.doux,
-    marginBottom: espace.xs,
+    ...typo.caption1,
+    fontWeight: graisse.demi,
+    color: couleurs.texteSecondaire,
+    marginBottom: espace[1],
   },
   case: {
-    padding: 2,
+    padding: espace[1],
   },
   pastille: {
     flex: 1,
-    borderRadius: rayon - 4,
-    backgroundColor: couleurs.bordurePale,
+    borderRadius: dimensions.bloc.rayon,
+    backgroundColor: couleurs.filet,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -302,30 +305,29 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   chiffre: {
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   chiffreOffert: {
-    color: '#FFFFFF',
-    fontFamily: police.gras,
+    color: couleurs.surAccent,
+    fontWeight: graisse.grasse,
   },
   chiffrePasse: {
-    color: couleurs.doux,
+    color: couleurs.texteSecondaire,
     opacity: 0.4,
-    fontFamily: police.normal,
   },
   heures: {
-    fontSize: texte.minuscule,
-    fontFamily: police.demi,
-    color: '#FFFFFF',
+    ...typo.caption2,
+    fontWeight: graisse.demi,
+    color: couleurs.surAccent,
   },
   point: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    top: espace[1],
+    right: espace[1],
+    width: dimensions.pastille.cote,
+    height: dimensions.pastille.cote,
+    borderRadius: dimensions.pastille.cote / 2,
   },
 });

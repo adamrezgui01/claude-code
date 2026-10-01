@@ -252,6 +252,9 @@ export function mauveHorsRole(racine: Noeud | Noeud[] | null, accent: string): s
           etat?.selected === true ||
           etat?.checked === true ||
           p.props.testID === 'action-principale' ||
+          // L'échantillon d'une légende reproduit l'élément actif pour dire ce
+          // que veut sa couleur : il en porte le mauve à ce titre.
+          p.props.testID === 'echantillon-actif' ||
           (p.type === 'RCTSwitch' && p.props.value === true)
         );
       });
@@ -297,7 +300,9 @@ function champs(noeuds: (Noeud | string)[]): Set<unknown> {
     if (typeof x === 'string' || x.type === 'RCTInputAccessoryView') return;
     const parent = ancetres[ancetres.length - 1] ?? null;
     const etat = x.props.accessibilityState as Record<string, unknown> | undefined;
-    const selection = !!etat && 'selected' in etat;
+    // React Native pose `selected: undefined` sur chaque Pressable : c'est la
+    // valeur qui dit qu'on se choisit, pas la présence de la clé.
+    const selection = typeof etat?.selected === 'boolean';
     if (x.type === 'TextInput') {
       const ligne = ligneDe(ancetres);
       if (!(courant?.saisie && ligne && courant.ligne === ligne)) {
@@ -307,6 +312,12 @@ function champs(noeuds: (Noeud | string)[]): Set<unknown> {
     } else if (x.type === 'RCTSwitch') {
       courant = { cle: x, saisie: false, ligne: null };
       vus.add(x);
+    } else if (x.props.accessible === true && !estInteractif(x) && x.props.accessibilityLabel) {
+      // Une ligne qu'on lit sans la toucher — « Date · 12 mars » : sur une
+      // fiche en lecture seule, c'est un champ comme un autre.
+      courant = { cle: x, saisie: false, ligne: null };
+      vus.add(x);
+      return;
     } else if (estInteractif(x)) {
       if (selection && courant?.saisie) {
         // La bascule d'un champ : elle lui appartient.
@@ -339,6 +350,10 @@ export function enTetesInutiles(racine: Noeud | Noeud[] | null): string[] {
       const parent = parents[parents.length - 1];
       if (!parent) return;
       const freres = parent.children ?? [];
+      // Un titre posé entre deux commandes — le mois entre ses flèches — est
+      // une barre de titre, pas un en-tête de section : il ne chapeaute rien,
+      // il nomme ce qu'on regarde.
+      if (freres.some((f) => typeof f !== 'string' && estInteractif(f))) return;
       const suite: (Noeud | string)[] = [];
       for (const f of freres.slice(freres.indexOf(n) + 1)) {
         if (contientEnTete(f)) break;
@@ -347,7 +362,7 @@ export function enTetesInutiles(racine: Noeud | Noeud[] | null): string[] {
       const groupe = champs(suite);
       const ailleurs = [...tous].filter((c) => !groupe.has(c)).length;
       if (groupe.size < 2 || ailleurs === 0) {
-        inutiles.push(`${decrire(n)} (${groupe.size} champ${groupe.size > 1 ? 's' : ''})`);
+        inutiles.push(`${decrire(n)} (${groupe.size} sous lui, ${ailleurs} ailleurs)`);
       }
     },
     '#FFFFFF'

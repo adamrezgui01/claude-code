@@ -277,6 +277,28 @@ describe('les écrans passés aux jetons', () => {
 const PASSES_V26: Record<string, string[]> = {
   Charpente: ['src/ui/composants.tsx', 'src/ui/Filet.tsx'],
   Clinique: ['app/clinique/dose.tsx'],
+  Horaire: [
+    'app/(tabs)/index.tsx',
+    'app/disponibilites.tsx',
+    'app/quart/[id].tsx',
+    'app/quart/annuler.tsx',
+    'app/frais/[id].tsx',
+    'src/ui/Pageur.tsx',
+    'src/ui/FeuilleSurgissante.tsx',
+    'src/ui/Selecteurs.tsx',
+    'src/ui/Dictee.tsx',
+    'src/ui/VueCarte.tsx',
+    'src/ui/LigneQuart.tsx',
+    'src/ui/VueColonnes.tsx',
+    'src/ui/Calendrier.tsx',
+    'src/ui/CalendrierMultiple.tsx',
+    'src/ui/BandeAttente.tsx',
+    'src/ui/GrilleMois.tsx',
+    'src/ui/GrilleDispos.tsx',
+    'src/ui/Recompense.tsx',
+    'src/ui/SelecteurPharmacie.tsx',
+    'src/ui/ListeRepliable.tsx',
+  ],
 };
 
 const lire = (f: string) => readFileSync(f, 'utf8');

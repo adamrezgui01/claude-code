@@ -22,7 +22,7 @@ import { MAINTIEN_LONG, TOLERANCE_IMMOBILE } from '../lib/gestes';
 import { formatMoisAnnee } from '../lib/dates';
 import type { Langue } from '../lib/langue';
 import type { PointEcran } from './FeuilleSurgissante';
-import { espace, police, texte } from './theme';
+import { couleurs, dimensions, espace, graisse, imagePartagee, typo } from './theme';
 
 /**
  * La grille des journées offertes, et les trois gestes qui la modifient.
@@ -235,11 +235,14 @@ function Case({
 
   return (
     <View style={styles.case}>
+      {/* Offerte, c'est une journée choisie : la sélection porte le mauve.
+          Partielle, ses heures s'écrivent dans la case ; le contour blanc
+          qui le disait une seconde fois est retiré. */}
       <View
+        accessibilityState={{ selected: etat !== 'neutre' }}
         style={[
           styles.pastille,
           etat === 'neutre' ? styles.pastilleNeutre : { backgroundColor: accent },
-          etat === 'partiel' && styles.pastillePartielle,
         ]}>
         <Text style={[styles.chiffre, etat !== 'neutre' && styles.chiffreOffert]}>
           {Number(jour.date.slice(8))}
@@ -266,53 +269,50 @@ function Case({
 }
 
 const styles = StyleSheet.create({
-  bloc: { marginBottom: espace.m },
+  bloc: { marginBottom: espace[3] },
   mois: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: '#1E1B22',
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: imagePartagee.texte,
     textTransform: 'capitalize',
-    marginBottom: espace.xs,
+    marginBottom: espace[1],
   },
   ligne: { flexDirection: 'row' },
   initiale: {
     flex: 1,
     textAlign: 'center',
-    fontSize: texte.fin,
-    fontFamily: police.demi,
-    color: '#6E6875',
-    marginBottom: espace.xs,
+    ...typo.caption2,
+    fontWeight: graisse.demi,
+    color: imagePartagee.texteSecondaire,
+    marginBottom: espace[1],
   },
   case: {
     flex: 1,
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 2,
+    padding: espace[1],
   },
   pastille: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: 8,
+    borderRadius: dimensions.bloc.rayon,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pastilleNeutre: { backgroundColor: '#F1EEF1' },
-  /** Une bordure pâle dit « pas toute la journée » sans changer la couleur. */
-  pastillePartielle: { borderWidth: 2, borderColor: '#FFFFFF' },
+  pastilleNeutre: { backgroundColor: imagePartagee.libre },
   /** Assez gros pour rester lisible quand l'image s'affiche en vignette. */
-  chiffre: { fontSize: texte.corps, fontFamily: police.demi, color: '#6E6875' },
-  chiffreOffert: { color: '#FFFFFF', fontFamily: police.gras },
-  heures: { fontSize: texte.microscopique, fontFamily: police.demi, color: '#FFFFFF' },
-  quartHeures: { fontSize: texte.microscopique, fontFamily: police.demi, color: '#8A8592' },
+  chiffre: { ...typo.body, fontWeight: graisse.demi, color: imagePartagee.texteSecondaire },
+  chiffreOffert: { color: couleurs.surAccent, fontWeight: graisse.grasse },
+  heures: { ...typo.caption2, fontWeight: graisse.demi, color: couleurs.surAccent },
+  quartHeures: { ...typo.caption2, fontWeight: graisse.demi, color: couleurs.attente },
   pointQuart: {
     position: 'absolute',
-    top: 3,
-    right: 3,
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: '#FFFFFF',
-    opacity: 0.85,
+    top: espace[1],
+    right: espace[1],
+    width: dimensions.point.cote,
+    height: dimensions.point.cote,
+    borderRadius: dimensions.point.cote / 2,
+    backgroundColor: couleurs.surAccent,
   },
 });

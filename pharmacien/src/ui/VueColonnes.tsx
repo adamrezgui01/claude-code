@@ -7,7 +7,7 @@ import { aimanter, minutesDebut, minutesEnHeure, minutesFin } from '../lib/agend
 import { MAINTIEN_COURT, MAINTIEN_LONG, TOLERANCE_IMMOBILE } from '../lib/gestes';
 import { analyserDate, aujourdhui } from '../lib/dates';
 import { etatFige, marqueDuQuart, type EtatFacturation } from '../lib/facturation';
-import { accentPale, couleurs, espace, police, rayon, texte, useAccent } from './theme';
+import { couleurs, dimensions, espace, graisse, typo, useAccent } from './theme';
 import { useTextes } from '../i18n';
 
 /**
@@ -316,8 +316,8 @@ export function VueColonnes({
       style={styles.cadre}
       onLayout={(e: LayoutChangeEvent) => setLargeur(e.nativeEvent.layout.width)}>
       {!!source && (
-        <View style={[styles.consigne, { borderColor: accent }]}>
-          <Text style={[styles.consigneTexte, { color: accent }]}>
+        <View style={styles.consigne}>
+          <Text style={styles.consigneTexte}>
             {mode === 'dupliquer'
               ? t('horaire.consigneCopier', { pharmacie: source.pharmacie_nom })
               : t('horaire.consigneDeplacer', { pharmacie: source.pharmacie_nom })}
@@ -334,11 +334,11 @@ export function VueColonnes({
             const cest = jour === aujourdhui();
             return (
               <View key={jour} style={styles.entete}>
-                <Text style={[styles.enteteJour, cest && { color: accent }]}>
+                {/* Aujourd'hui se lit au gras, pas au mauve. */}
+                <Text style={[styles.enteteJour, cest && styles.aujourdhui]}>
                   {JOURS_COURTS[(d.getDay() + 6) % 7]}
                 </Text>
-                <Text
-                  style={[styles.enteteDate, cest && { color: accent, fontFamily: police.gras }]}>
+                <Text style={[styles.enteteDate, cest && styles.aujourdhui]}>
                   {d.getDate()}
                 </Text>
               </View>
@@ -391,6 +391,7 @@ export function VueColonnes({
           const marque = marqueDuQuart(etats.get(quart.id) ?? 'aVenir');
           const verrouille = verrouilles.has(quart.id);
           const enCours = source?.id === quart.id;
+          const vif = !annule && !verrouille;
           return (
             <View
               key={quart.id}
@@ -406,12 +407,13 @@ export function VueColonnes({
                   // figé. Un quart effectué mais pas encore facturé garde sa
                   // couleur, bien vivante — les deux états ne doivent jamais
                   // se confondre à l'œil.
+                  // Foncé contre pâle : les deux états se distinguent sans
+                  // cadre, et sans mauve — un quart est du contenu.
                   backgroundColor: annule
-                    ? couleurs.fond
+                    ? couleurs.fondEcran
                     : verrouille
                       ? couleurs.grisPale
-                      : accentPale(accent),
-                  borderColor: annule || verrouille ? couleurs.attente : accent,
+                      : couleurs.quartVif,
                   opacity: enCours ? 0.3 : 1,
                 },
               ]}>
@@ -423,26 +425,29 @@ export function VueColonnes({
                 <View
                   style={[
                     styles.pastilleFacture,
-                    { borderColor: marque.ton === 'accent' ? accent : couleurs.attente },
+                    // Un repère sur une pastille change de couleur avec elle.
+                    { borderColor: vif ? couleurs.surQuartVif : couleurs.attente },
                   ]}
                 />
               )}
-              <Text style={[styles.blocNom, annule && styles.barre]} numberOfLines={unSeulJour ? 1 : 2}>
+              <Text
+                style={[styles.blocNom, vif && styles.surVif, annule && styles.barre]}
+                numberOfLines={unSeulJour ? 1 : 2}>
                 {quart.pharmacie_nom}
               </Text>
               {unSeulJour ? (
-                <Text style={styles.blocHeure} numberOfLines={1}>
+                <Text style={[styles.blocHeure, vif && styles.surVif]} numberOfLines={1}>
                   {minutesEnHeure(minutesDebut(quart))} – {minutesEnHeure(minutesFin(quart))}
                 </Text>
               ) : (
                 <>
                   {/* Une heure tronquée vaut moins que pas d'heure du tout :
                       la fin ne s'affiche que s'il y a la place. */}
-                  <Text style={styles.blocHeure} numberOfLines={1}>
+                  <Text style={[styles.blocHeure, vif && styles.surVif]} numberOfLines={1}>
                     {formaterHeureCourte(minutesDebut(quart))}
                   </Text>
                   {h >= HAUTEUR_DEUX_HEURES && (
-                    <Text style={styles.blocHeure} numberOfLines={1}>
+                    <Text style={[styles.blocHeure, vif && styles.surVif]} numberOfLines={1}>
                       {formaterHeureCourte(minutesFin(quart))}
                     </Text>
                   )}
@@ -458,20 +463,26 @@ export function VueColonnes({
             pointerEvents="none"
             style={[
               styles.fantome,
+              // La copie qu'on promène est l'élément actif de l'écran : le
+              // mauve lui revient. Déplacée, elle est pleine ; dupliquée, un
+              // contour pointillé sur le blanc de la grille.
+              mode === 'dupliquer'
+                ? { borderWidth: dimensions.fantome.contour, borderStyle: 'dashed', borderColor: accent }
+                : { backgroundColor: accent },
               {
-                borderColor: accent,
-                borderStyle: mode === 'dupliquer' ? 'dashed' : 'solid',
-                backgroundColor: mode === 'dupliquer' ? couleurs.carte : accentPale(accent),
                 top: coinDuBloc(pointe).y,
                 height: touche.current?.hauteur ?? 28,
                 left: coinDuBloc(pointe).x,
                 width: touche.current?.largeur ?? Math.max(24, largeurColonne - 4),
               },
             ]}>
-            <Text style={[styles.blocNom, { color: accent }]} numberOfLines={1}>
+            <Text
+              style={[styles.blocNom, { color: mode === 'dupliquer' ? accent : couleurs.surAccent }]}
+              numberOfLines={1}>
               {mode === 'dupliquer' ? `Copie · ${source.pharmacie_nom}` : source.pharmacie_nom}
             </Text>
-            <Text style={[styles.blocHeure, { color: accent }]}>
+            <Text
+              style={[styles.blocHeure, { color: mode === 'dupliquer' ? accent : couleurs.surAccent }]}>
               {minutesEnHeure(cible(pointe).minutes)}
             </Text>
           </View>
@@ -482,118 +493,118 @@ export function VueColonnes({
 }
 
 const styles = StyleSheet.create({
+  /** Blanc sur le gris de l'écran : pas de contour. */
   cadre: {
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingBottom: espace.m,
-    marginBottom: espace.m,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    paddingBottom: espace[3],
+    marginBottom: espace[4],
     overflow: 'hidden',
   },
   consigne: {
-    borderBottomWidth: 2,
-    paddingHorizontal: espace.m,
-    paddingVertical: espace.s,
+    paddingHorizontal: espace[3],
+    paddingVertical: espace[2],
   },
   consigneTexte: {
-    fontSize: texte.courant,
-    fontFamily: police.demi,
+    ...typo.footnote,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   entetes: {
     flexDirection: 'row',
-    paddingTop: espace.m,
-    paddingBottom: espace.s,
+    paddingTop: espace[3],
+    paddingBottom: espace[2],
   },
   entete: {
     flex: 1,
     alignItems: 'center',
   },
   enteteJour: {
-    fontSize: texte.fin,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.caption2,
+    color: couleurs.texteSecondaire,
   },
   enteteDate: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
+  },
+  aujourdhui: {
+    fontWeight: graisse.grasse,
+    color: couleurs.textePrincipal,
   },
   grille: {
     position: 'relative',
-    marginTop: espace.m,
+    marginTop: espace[3],
   },
   heureTexte: {
     position: 'absolute',
     left: 0,
     width: LARGEUR_AXE,
-    fontSize: texte.minuscule,
+    ...typo.caption2,
     lineHeight: HAUTEUR_LIBELLE,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    color: couleurs.texteSecondaire,
     textAlign: 'center',
   },
   trait: {
     position: 'absolute',
     left: LARGEUR_AXE,
     right: 0,
-    height: 1,
-    backgroundColor: couleurs.bordure,
+    height: dimensions.filet.epaisseur,
+    backgroundColor: couleurs.filet,
   },
+  /* Un pointillé sans fond : c'est lui seul qui dit où un bloc va tomber. */
   traitDemi: {
     position: 'absolute',
     left: LARGEUR_AXE,
     right: 0,
-    borderTopWidth: 1,
+    borderTopWidth: dimensions.filet.epaisseur,
     borderStyle: 'dashed',
-    borderColor: couleurs.bordurePale,
+    borderColor: couleurs.filet,
   },
   separateur: {
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: 1,
-    backgroundColor: couleurs.bordure,
+    width: dimensions.filet.epaisseur,
+    backgroundColor: couleurs.filet,
   },
   bloc: {
     position: 'absolute',
-    borderWidth: 1,
-    borderLeftWidth: 3,
-    borderRadius: rayon / 2,
-    paddingHorizontal: espace.s,
-    paddingVertical: espace.xs,
+    borderRadius: dimensions.bloc.rayon,
+    paddingHorizontal: espace[2],
+    paddingVertical: espace[1],
     overflow: 'hidden',
   },
+  /* Un anneau sans fond : sur le bloc, il est la seule marque de l'état. */
   pastilleFacture: {
     position: 'absolute',
-    top: 3,
-    right: 3,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    borderWidth: 2,
-    backgroundColor: '#FFFFFF',
+    top: espace[1],
+    right: espace[1],
+    width: dimensions.pastille.cote,
+    height: dimensions.pastille.cote,
+    borderRadius: dimensions.pastille.cote / 2,
+    borderWidth: dimensions.pastille.contour,
   },
   blocNom: {
-    fontSize: texte.secondaire,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.caption1,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   blocHeure: {
-    fontSize: texte.minuscule,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.caption2,
+    color: couleurs.texteSecondaire,
+  },
+  surVif: {
+    color: couleurs.surQuartVif,
   },
   barre: {
     textDecorationLine: 'line-through',
-    color: couleurs.doux,
+    color: couleurs.texteSecondaire,
   },
   fantome: {
     position: 'absolute',
-    borderWidth: 2,
-    borderRadius: rayon / 2,
-    paddingHorizontal: espace.s,
-    paddingVertical: espace.xs,
+    borderRadius: dimensions.bloc.rayon,
+    paddingHorizontal: espace[2],
+    paddingVertical: espace[1],
     overflow: 'hidden',
   },
 });

@@ -40,12 +40,22 @@ import {
   formatPlageDates,
   joursCourts,
 } from '../src/lib/dates';
-import { Bouton, Doux, Onglets, SousTitre } from '../src/ui/composants';
+import { Bouton, Doux, Onglets } from '../src/ui/composants';
 import { FeuilleSurgissante, type PointEcran } from '../src/ui/FeuilleSurgissante';
 import { GrilleDispos } from '../src/ui/GrilleDispos';
 import { GrilleMois } from '../src/ui/GrilleMois';
 import { SelecteurDate, SelecteurHeure } from '../src/ui/Selecteurs';
-import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from '../src/ui/theme';
+import {
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  imagePartagee,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from '../src/ui/theme';
 
 /**
  * La valeur de l'onglet qui ouvre les deux sélecteurs de date. Les trois
@@ -60,9 +70,9 @@ const PERSONNALISE = 'perso';
  * par texto. Une grille se lit d'un coup d'œil ; une liste de dates demande à
  * être lue, et se relit mal dans une conversation.
  *
- * L'image ne porte aucun nom de pharmacie, aucune heure, aucun montant. Elle
- * circule dans des groupes de remplaçants : ce qui n'a pas à en sortir n'en
- * sort pas.
+ * L'image ne porte aucun nom de pharmacie, aucun quart, aucun montant : seules
+ * les heures offertes y figurent. Elle circule dans des groupes de remplaçants :
+ * ce qui n'a pas à en sortir n'en sort pas.
  */
 export default function Disponibilites() {
   const { t, langue } = useTextes();
@@ -265,7 +275,6 @@ export default function Disponibilites() {
         <View style={styles.enteteMois}>
           <Fleche
             sens={-1}
-            accent={accent}
             actif={moisNavigable(moisVu, -1, cejour)}
             etiquette={t('disponibilites.moisPrecedent')}
             onPress={() => setMoisVu(decalerMois(moisVu, -1))}
@@ -275,7 +284,6 @@ export default function Disponibilites() {
           </Text>
           <Fleche
             sens={1}
-            accent={accent}
             actif={moisNavigable(moisVu, 1, cejour)}
             etiquette={t('disponibilites.moisSuivant')}
             onPress={() => setMoisVu(decalerMois(moisVu, 1))}
@@ -297,10 +305,10 @@ export default function Disponibilites() {
         </View>
 
         <View style={styles.legendeGrille}>
-          <Entree couleur={accent} texte={t('disponibilites.offert')} />
-          <Entree couleur={accent} point texte={t('disponibilites.heuresPrecises')} />
-          <Entree couleur={accent} rond texte={t('disponibilites.quartPrevu')} />
-          <Entree couleur={couleurs.bordurePale} texte={t('disponibilites.libre')} />
+          <Entree couleur={accent} actif texte={t('disponibilites.offert')} />
+          <Entree couleur={accent} actif point texte={t('disponibilites.heuresPrecises')} />
+          <Entree couleur={accent} actif rond texte={t('disponibilites.quartPrevu')} />
+          <Entree couleur={couleurs.filet} texte={t('disponibilites.libre')} />
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -372,11 +380,11 @@ export default function Disponibilites() {
 
           <View style={styles.legende}>
             <View style={styles.legendeEntree}>
-              <View style={[styles.puce, { backgroundColor: accent }]} />
+              <View testID="echantillon-actif" style={[styles.puce, { backgroundColor: accent }]} />
               <Text style={styles.legendeTexte}>{t('disponibilites.offert')}</Text>
             </View>
             <View style={styles.legendeEntree}>
-              <View style={[styles.puce, { backgroundColor: '#F1EEF1' }]} />
+              <View style={[styles.puce, { backgroundColor: imagePartagee.libre }]} />
               <Text style={styles.legendeTexte}>{t('disponibilites.nonDeclare')}</Text>
             </View>
           </View>
@@ -386,11 +394,16 @@ export default function Disponibilites() {
         <View style={styles.actions}>
           <Bouton
             titre={t('commun.partager')}
-            icone={<Ionicons name="share-outline" size={18} color="#FFFFFF" />}
+            icone={<Ionicons name="share-outline" size={icone.courante} color={couleurs.surAccent} />}
             onPress={() => void partager()}
           />
         </View>
-        <Doux>{t('disponibilites.rienDePrive')}</Doux>
+        {/*
+          La phrase qui promettait « aucune heure » sous l'image est retirée :
+          une journée offerte sur des heures précises les montre, « 9–17 ».
+          Elle était devenue fausse, et l'aperçu juste au-dessus montre
+          exactement ce qui part.
+        */}
       </ScrollView>
 
       <FeuilleSurgissante
@@ -399,7 +412,7 @@ export default function Disponibilites() {
         onFermer={() => setHeures(null)}>
         {heures && (
           <>
-            <SousTitre>{formatDateLongue(heures.date, langue)}</SousTitre>
+            <Text style={styles.titreFeuille}>{formatDateLongue(heures.date, langue)}</Text>
             <Doux>{resumerJournee(heures.date)}</Doux>
             <Text style={styles.phrase}>{t('disponibilites.jeSuisDisponible')}</Text>
             <View style={styles.deuxChamps}>
@@ -424,7 +437,7 @@ export default function Disponibilites() {
             {refus && <Text style={styles.refus}>{t('disponibilites.finAvantDebut')}</Text>}
             <Bouton
               titre={t('commun.enregistrer')}
-              icone={<Ionicons name="checkmark" size={18} color="#FFFFFF" />}
+              icone={<Ionicons name="checkmark" size={icone.courante} color={couleurs.surAccent} />}
               onPress={enregistrerHeures}
             />
           </>
@@ -448,13 +461,11 @@ export default function Disponibilites() {
  */
 function Fleche({
   sens,
-  accent,
   actif,
   etiquette,
   onPress,
 }: {
   sens: -1 | 1;
-  accent: string;
   actif: boolean;
   etiquette: string;
   onPress: () => void;
@@ -466,26 +477,32 @@ function Fleche({
       accessibilityRole="button"
       accessibilityLabel={etiquette}
       accessibilityState={{ disabled: !actif }}
-      hitSlop={8}
       style={({ pressed }) => [styles.fleche, pressed && actif && { opacity: 0.6 }]}>
       <Ionicons
         name={sens === -1 ? 'chevron-back' : 'chevron-forward'}
-        size={22}
-        color={actif ? accent : couleurs.bordure}
+        size={icone.grande}
+        color={actif ? couleurs.texteSecondaire : couleurs.filet}
       />
     </Pressable>
   );
 }
 
-/** Une entrée de la légende. Quatre états, quatre échantillons. */
+/**
+ * Une entrée de la légende. Quatre états, quatre échantillons.
+ *
+ * Un échantillon de l'état choisi reproduit l'élément actif : il en porte le
+ * mauve, et le repère `echantillon-actif` le dit au test du mauve.
+ */
 function Entree({
   couleur,
   texte,
   point,
   rond,
+  actif,
 }: {
   couleur: string;
   texte: string;
+  actif?: boolean;
   /** Une journée offerte sur des heures précises : le carré porte ses heures. */
   point?: boolean;
   /** Un quart prévu : le carré porte son point blanc. */
@@ -493,7 +510,9 @@ function Entree({
 }) {
   return (
     <View style={styles.legendeEntree}>
-      <View style={[styles.puce, { backgroundColor: couleur }]}>
+      <View
+        testID={actif ? 'echantillon-actif' : undefined}
+        style={[styles.puce, { backgroundColor: couleur }]}>
         {point && <Text style={styles.puceHeures}>9–17</Text>}
         {rond && <View style={styles.pucePoint} />}
       </View>
@@ -505,43 +524,44 @@ function Entree({
 const styles = StyleSheet.create({
   cadre: {
     flex: 1,
-    backgroundColor: couleurs.fond,
+    backgroundColor: couleurs.fondEcran,
   },
   contenu: {
-    padding: espace.l,
-    paddingBottom: espace.xxl,
+    paddingHorizontal: dimensions.ecran.margeH,
+    paddingTop: dimensions.ecran.margeHaut,
+    paddingBottom: espace[10],
   },
   image: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: rayon,
-    padding: espace.l,
-    marginBottom: espace.m,
+    backgroundColor: imagePartagee.fond,
+    borderRadius: dimensions.carte.rayon,
+    padding: espace[4],
+    marginBottom: espace[3],
   },
   enteteImage: {
-    marginBottom: espace.m,
+    marginBottom: espace[3],
   },
   titre: {
     /* Assez gros pour être le titre, assez petit pour que la plage tienne
        sur deux lignes au pire. */
-    fontSize: texte.titre,
-    fontFamily: police.gras,
-    color: '#1E1B22',
+    ...typo.title3,
+    fontWeight: graisse.grasse,
+    color: imagePartagee.texte,
   },
   nom: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: '#1E1B22',
-    marginTop: espace.xs,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: imagePartagee.texte,
+    marginTop: espace[1],
   },
   bloc: {
-    marginBottom: espace.m,
+    marginBottom: espace[3],
   },
   mois: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: '#1E1B22',
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: imagePartagee.texte,
     textTransform: 'capitalize',
-    marginBottom: espace.xs,
+    marginBottom: espace[1],
   },
   ligne: {
     flexDirection: 'row',
@@ -549,96 +569,94 @@ const styles = StyleSheet.create({
   initiale: {
     flex: 1,
     textAlign: 'center',
-    fontSize: texte.fin,
-    fontFamily: police.demi,
-    color: '#6E6875',
-    marginBottom: espace.xs,
+    ...typo.caption2,
+    fontWeight: graisse.demi,
+    color: imagePartagee.texteSecondaire,
+    marginBottom: espace[1],
   },
   case: {
     flex: 1,
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 2,
+    padding: espace[1],
   },
   pastille: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: 8,
+    borderRadius: dimensions.bloc.rayon,
     alignItems: 'center',
     justifyContent: 'center',
   },
   /** Assez gros pour rester lisible quand l'image s'affiche en vignette. */
   chiffre: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: '#6E6875',
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: imagePartagee.texteSecondaire,
   },
   chiffreOffert: {
-    color: '#FFFFFF',
-    fontFamily: police.gras,
-  },
-  /** Une bordure pâle dit « pas toute la journée » sans changer la couleur. */
-  pastillePartielle: {
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    color: couleurs.surAccent,
+    fontWeight: graisse.grasse,
   },
   heures: {
-    fontSize: texte.microscopique,
-    fontFamily: police.demi,
-    color: '#FFFFFF',
+    ...typo.caption2,
+    fontWeight: graisse.demi,
+    color: couleurs.surAccent,
   },
   legende: {
     flexDirection: 'row',
-    gap: espace.l,
-    marginTop: espace.xs,
+    gap: espace[4],
+    marginTop: espace[1],
   },
   legendeEntree: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
+    gap: espace[2],
   },
   puce: {
-    width: 18,
-    height: 18,
-    borderRadius: 5,
+    width: dimensions.echantillon.largeur,
+    height: dimensions.echantillon.hauteur,
+    borderRadius: dimensions.case.rayon,
     alignItems: 'center',
     justifyContent: 'center',
   },
   legendeTexte: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: '#1E1B22',
+    ...typo.footnote,
+    color: imagePartagee.texte,
   },
   actions: {
-    marginTop: espace.s,
-    marginBottom: espace.m,
+    marginTop: espace[2],
+    marginBottom: espace[3],
+  },
+  titreFeuille: {
+    ...typo.headline,
+    color: couleurs.textePrincipal,
+    textTransform: 'capitalize',
   },
   phrase: {
-    fontSize: texte.corps,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   deuxChamps: {
     flexDirection: 'row',
-    gap: espace.m,
+    gap: espace[3],
   },
   moitie: {
     flex: 1,
   },
   editeur: {
-    marginBottom: espace.l,
+    marginBottom: espace[4],
   },
   refus: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
     color: couleurs.alerte,
   },
   enteteMois: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: espace.s,
+    marginBottom: espace[2],
   },
   fleche: {
     /* La même cible que partout ailleurs, même si le chevron fait 22 points. */
@@ -648,29 +666,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   nomDuMois: {
-    fontSize: texte.titre,
-    fontFamily: police.gras,
-    color: couleurs.texte,
+    ...typo.title3,
+    fontWeight: graisse.grasse,
+    color: couleurs.textePrincipal,
     textTransform: 'capitalize',
   },
   legendeGrille: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: espace.m,
-    marginBottom: espace.l,
+    gap: espace[3],
+    marginBottom: espace[4],
   },
   puceHeures: {
-    fontSize: texte.microscopique,
-    fontFamily: police.demi,
-    color: '#FFFFFF',
+    ...typo.caption2,
+    fontWeight: graisse.demi,
+    color: couleurs.surAccent,
   },
   pucePoint: {
     position: 'absolute',
-    top: 2,
-    right: 2,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#FFFFFF',
+    top: espace[1],
+    right: espace[1],
+    width: dimensions.point.cote,
+    height: dimensions.point.cote,
+    borderRadius: dimensions.point.cote / 2,
+    backgroundColor: couleurs.surAccent,
   },
 });

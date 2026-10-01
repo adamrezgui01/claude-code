@@ -5,7 +5,7 @@ import { LayoutChangeEvent, Pressable, StyleSheet, Text, View, type ViewStyle } 
 import { useTextes } from '../i18n';
 import { apercu } from '../lib/listes';
 import { useDefilement } from './composants';
-import { espace, police, texte, useAccent, CIBLE_MIN } from './theme';
+import { couleurs, espace, graisse, icone, typo, CIBLE_MIN } from './theme';
 
 /**
  * Une section de liste : trois éléments, puis un contrôle.
@@ -43,7 +43,6 @@ export function ListeRepliable<T>({
   maximum?: number;
 }) {
   const { t } = useTextes();
-  const accent = useAccent();
   const defilement = useDefilement();
   const [deploye, setDeploye] = useState(false);
   const hauteurDuHaut = useRef(0);
@@ -70,14 +69,15 @@ export function ListeRepliable<T>({
         <Pressable
           onPress={basculer}
           accessibilityRole="button"
-          hitSlop={8}
           style={({ pressed }) => [styles.controle, pressed && { opacity: 0.6 }]}>
+          {/* Le contrôle n'est ni l'élément actif ni l'action principale : il
+              se lit en gris, comme une commande secondaire. */}
           <Ionicons
             name={controle === 'replier' ? 'chevron-up' : 'chevron-down'}
-            size={16}
-            color={accent}
+            size={icone.petite}
+            color={couleurs.texteSecondaire}
           />
-          <Text style={[styles.texte, { color: accent }]}>
+          <Text style={styles.texte}>
             {controle === 'replier' ? t('commun.reduire') : t('commun.voirLes', { count: total })}
           </Text>
         </Pressable>
@@ -91,13 +91,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: espace.xs,
+    gap: espace[1],
     /* Une cible confortable même quand le mot est court. */
     minHeight: CIBLE_MIN,
-    paddingHorizontal: espace.m,
+    minWidth: CIBLE_MIN,
+    paddingHorizontal: espace[3],
   },
   texte: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.texteSecondaire,
   },
 });

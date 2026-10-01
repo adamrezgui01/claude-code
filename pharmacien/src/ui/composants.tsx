@@ -458,8 +458,8 @@ export function FicheAide({
   const accent = useAccent();
   return (
     <Modal visible={ouvert} transparent animationType="fade" onRequestClose={onFermer}>
-      <Pressable style={styles.voile} onPress={onFermer}>
-        <Pressable style={styles.fiche} onPress={() => {}}>
+      <Pressable style={styles.voile} onPress={onFermer} accessible={false}>
+        <Pressable style={styles.fiche} onPress={() => {}} accessible={false}>
           <Text style={styles.ficheTitre}>{titre}</Text>
           {children}
           <Pressable
@@ -766,8 +766,10 @@ export function Rangee({
    */
   fort?: boolean;
 }) {
+  // VoiceOver lit la ligne d'un bloc : « Date, 12 mars », plutôt que deux
+  // éléments qu'il faudrait parcourir un à un.
   const contenu = (
-    <View style={styles.rangee}>
+    <View style={styles.rangee} accessible={!onPress} accessibilityLabel={`${label}, ${valeur}`}>
       <Text style={styles.rangeeLabel}>{label}</Text>
       <Text style={[styles.rangeeValeur, fort && styles.rangeeForte]}>{valeur}</Text>
     </View>

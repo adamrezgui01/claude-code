@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text } from 'react-native';
 
-import { couleurs, espace, police, texte } from './theme';
+import { couleurs, espace, graisse, icone, typo } from './theme';
 
 /**
  * Le seul moment où l'application se permet d'être visible : quand l'usager
@@ -52,7 +52,7 @@ export function Recompense({
           ],
         },
       ]}>
-      <Ionicons name="checkmark-circle" size={72} color={couleurs.succes} />
+      <Ionicons name="checkmark-circle" size={icone.illustration} color={couleurs.succes} />
       <Text style={styles.texte}>{texte}</Text>
     </Animated.View>
   );
@@ -63,13 +63,13 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F6F4F2F2',
-    gap: espace.m,
+    backgroundColor: couleurs.voileClair,
+    gap: espace[3],
     zIndex: 10,
   },
   texte: {
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
 });

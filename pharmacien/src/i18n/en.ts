@@ -86,7 +86,6 @@ export const en: Dictionnaire = {
     vueAgenda: 'Agenda',
     vueListe: 'List',
     vueCarte: 'Map',
-    affichage: 'View',
     jour: 'Day',
     semaine: 'Week',
     mois: 'Month',
@@ -171,7 +170,6 @@ export const en: Dictionnaire = {
     repeterExplication:
       'Each checked day creates an independent shift, a copy of this one. Editing or deleting one later never affects the others.',
     joursOccupes: 'Greyed days already hold a shift at these hours. They will be skipped.',
-    fraisExtra: 'Extra expenses',
     aucunFraisExtra: 'Nothing billed beyond the hours for this shift.',
     sansRecu: 'No receipt',
     totalFrais: 'Total expenses {{montant}}',
@@ -223,7 +221,6 @@ export const en: Dictionnaire = {
   },
 
   pharmacie: {
-    resultats: 'Results',
     titreNouvelle: 'New pharmacy',
     titre: 'Pharmacy',
     pageIdentite: 'Identity',
@@ -970,7 +967,6 @@ export const en: Dictionnaire = {
     partageImpossible: 'Sharing did not work.',
     resume_one: '{{count}} day offered in this period.',
     resume_other: '{{count}} days offered in this period.',
-    rienDePrive: 'The image shows no pharmacy name, no hours and no amounts.',
     partager: 'Share my availability',
     consigne: 'Tap a day to offer it. Drag to offer several.',
     dejaUnQuart: 'You already have a shift',

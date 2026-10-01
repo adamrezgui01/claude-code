@@ -33,6 +33,7 @@ export const ACCENT_DEFAUT: string = MAUVES[0].valeur;
  */
 const textePrincipal = '#1E1B22';
 const texteSecondaire = '#6E6875';
+const fondEcran = '#F6F4F2';
 
 export const couleurs = {
   /** Titres, valeurs, contenu. */
@@ -40,7 +41,7 @@ export const couleurs = {
   /** Étiquettes, aide, unités. */
   texteSecondaire,
   /** Le fond général : un gris chaud à peine perceptible, plutôt que du blanc pur. */
-  fondEcran: '#F6F4F2',
+  fondEcran,
   /** Cartes et champs de saisie : ce qui se pose sur le fond. */
   fondEleve: '#FFFFFF',
 
@@ -52,8 +53,21 @@ export const couleurs = {
   filet: `${texteSecondaire}33`,
   /** Le voile sous une fiche posée par-dessus l'écran. */
   voile: `${textePrincipal}99`,
+  /** Ce qui flotte sur la carte géographique : le blanc d'une carte, à peine voilé. */
+  fondFlottant: '#FFFFFFEE',
+  /** Le voile clair d'une confirmation : le fond de l'écran, presque opaque. */
+  voileClair: `${fondEcran}F2`,
   /** L'encre d'un texte ou d'une icône posé sur l'accent plein. */
   surAccent: '#FFFFFF',
+  /**
+   * Un quart vivant — à venir, ou fait et pas encore facturé. L'encre du texte
+   * principal : un quart est du contenu, pas un accent, et le mauve partout
+   * dans l'horaire n'accentuait plus rien. Facturé, il passe au gris ; c'est
+   * la seule chose que le gris dit.
+   */
+  quartVif: textePrincipal,
+  /** Ce qui s'écrit sur un quart vivant : le blanc de la carte, en encre inversée. */
+  surQuartVif: '#FFFFFF',
 
   /*
    * Les couleurs qui portent une information. Elles ne décorent rien : un
@@ -94,6 +108,20 @@ export const couleurs = {
   /** @deprecated `filet` */
   bordurePale: '#F1EEF1',
 };
+
+/**
+ * L'image des disponibilités part sur le téléphone de quelqu'un d'autre, dont
+ * on ne connaît ni le thème ni l'application de messagerie. Elle garde un fond
+ * clair quoi qu'il arrive : ses couleurs sont les siennes, et ne suivront pas
+ * un futur mode sombre.
+ */
+export const imagePartagee = {
+  fond: '#FFFFFF',
+  texte: textePrincipal,
+  texteSecondaire,
+  /** Une journée qui n'est pas offerte. */
+  libre: '#F1EEF1',
+} as const;
 
 /** Une seule valeur pour l'arrondi des cartes, boutons et champs. */
 export const rayon = 16;
@@ -218,6 +246,8 @@ export const icone = {
   petite: 16,
   courante: 20,
   grande: 24,
+  /** Le crochet d'une confirmation, seul au milieu de l'écran. */
+  illustration: 72,
 } as const;
 
 /**
@@ -283,8 +313,8 @@ export const dimensions = {
   carte: { rayon, remplissage: espace[4], margeBasse: espace[3] },
   /** Le filet entre deux lignes : un point, sur la largeur du contenu seulement. */
   filet: { epaisseur: 1 },
-  /** Une pastille : le point d'un quart, un repère d'état. */
-  pastille: { cote: 8 },
+  /** Une pastille : le point d'un quart, un repère d'état. Creuse, un anneau. */
+  pastille: { cote: 8, contour: 1.5 },
   /**
    * Une case à cocher. Son contour est la seule chose qui la marque sur une
    * ligne blanche : c'est l'un des rares cas où une bordure reste permise.
@@ -294,6 +324,31 @@ export const dimensions = {
   feuille: { rayon: rayon * 1.5 },
   /** Le trait qui souligne l'onglet actif. */
   soulignement: { epaisseur: 2 },
+  /** Un bloc de quart dans l'agenda : plus serré qu'une carte. */
+  bloc: { rayon: rayon / 2 },
+  /** La copie qu'on promène au doigt : un contour pointillé, le seul qu'elle ait. */
+  fantome: { contour: 2 },
+  /** Un jour dans la feuille de choix d'une date : la pastille ronde du chiffre. */
+  jour: { cote: 38 },
+  /** Le point sous un jour qui porte déjà un quart. */
+  point: { cote: 4 },
+  /** Une colonne de roulette : heures, minutes. */
+  rouleau: { largeur: 96 },
+  /** La carte géographique de l'horaire, et ses repères. */
+  carteGeo: { hauteur: 440 },
+  /**
+   * Un repère sur la carte. Son anneau blanc le détache des tuiles, que rien
+   * d'autre ne sépare de lui : c'est l'un des rares contours permis.
+   */
+  repere: { cote: 18, grappe: 32, contour: 2 },
+  /** La photo d'un reçu, sur la fiche d'un frais. */
+  recu: { hauteur: 220 },
+  /**
+   * Un échantillon de légende. Assez large pour porter « 9–17 » en caption2 :
+   * à dix-huit points de côté, il fallait un texte de huit, hors des onze
+   * rôles.
+   */
+  echantillon: { largeur: 32, hauteur: 20 },
 } as const;
 
 type Theme = {

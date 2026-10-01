@@ -6,7 +6,17 @@ import { ajouterMois, aujourdhui, formatMoisAnnee, grilleMois, JOURS_COURTS } fr
 import { marqueDuQuart, type EtatFacturation } from '../lib/facturation';
 import { useTextes } from '../i18n';
 import { Pageur } from './Pageur';
-import { accentPale, couleurs, espace, police, rayon, texte, useAccent } from './theme';
+import {
+  accentPale,
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from './theme';
 
 export function Calendrier({
   mois,
@@ -38,20 +48,18 @@ export function Calendrier({
       <View style={styles.entete}>
         <Pressable
           onPress={() => onChangerMois(-1)}
-          hitSlop={12}
           accessibilityRole="button"
           accessibilityLabel={t('commun.moisPrecedent')}
           style={styles.fleche}>
-          <Ionicons name="chevron-back" size={20} color={accent} />
+          <Ionicons name="chevron-back" size={icone.courante} color={couleurs.texteSecondaire} />
         </Pressable>
         <Text style={styles.mois}>{formatMoisAnnee(mois)}</Text>
         <Pressable
           onPress={() => onChangerMois(1)}
-          hitSlop={12}
           accessibilityRole="button"
           accessibilityLabel={t('commun.moisSuivant')}
           style={styles.fleche}>
-          <Ionicons name="chevron-forward" size={20} color={accent} />
+          <Ionicons name="chevron-forward" size={icone.courante} color={couleurs.texteSecondaire} />
         </Pressable>
       </View>
 
@@ -81,12 +89,16 @@ export function Calendrier({
                   <Pressable
                     key={j}
                     onPress={() => onSelectionner(iso)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: selectionne }}
                     style={[styles.case, selectionne && { backgroundColor: accentPale(accent) }]}>
+                    {/* Aujourd'hui se lit au gras, pas au mauve : le mauve est
+                        pour le jour choisi, l'élément actif de la grille. */}
                     <Text
                       style={[
                         styles.numero,
-                        iso === ceJour && { fontFamily: police.gras, color: accent },
-                        selectionne && styles.numeroSelectionne,
+                        iso === ceJour && styles.numeroAujourdhui,
+                        selectionne && { color: accent, fontWeight: graisse.grasse },
                       ]}>
                       {Number(iso.slice(8))}
                     </Text>
@@ -96,14 +108,14 @@ export function Calendrier({
                         // point de sept pixels. Une nuance de gris de plus ne
                         // se verrait pas à cette taille.
                         const marque = marqueDuQuart(etats.get(q.id) ?? 'aVenir');
-                        const teinte = marque.ton === 'accent' ? accent : couleurs.attente;
+                        const teinte = marque.ton === 'vif' ? couleurs.quartVif : couleurs.attente;
                         return (
                           <View
                             key={q.id}
                             style={[
                               styles.point,
                               marque.creuse
-                                ? { borderWidth: 1.5, borderColor: teinte }
+                                ? { borderWidth: dimensions.pastille.contour, borderColor: teinte }
                                 : { backgroundColor: teinte },
                               chevauchements.has(q.id) && styles.pointConflit,
                             ]}
@@ -124,28 +136,30 @@ export function Calendrier({
 }
 
 const styles = StyleSheet.create({
+  /** Blanc sur le gris de l'écran : pas de contour. */
   cadre: {
-    backgroundColor: couleurs.carte,
-    borderRadius: rayon,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    padding: espace.s,
-    marginBottom: espace.m,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    padding: espace[2],
+    marginBottom: espace[4],
   },
   entete: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: espace.s,
-    paddingVertical: espace.s,
+    paddingHorizontal: espace[2],
+    paddingVertical: espace[2],
   },
   fleche: {
-    padding: espace.xs,
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mois: {
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
     textTransform: 'capitalize',
   },
   ligne: {
@@ -154,50 +168,53 @@ const styles = StyleSheet.create({
   enteteJour: {
     flex: 1,
     textAlign: 'center',
-    fontSize: texte.fin,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    paddingVertical: espace.xs,
+    ...typo.caption2,
+    color: couleurs.texteSecondaire,
+    paddingVertical: espace[1],
   },
   case: {
     flex: 1,
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: rayon,
-    margin: 1,
+    borderRadius: dimensions.carte.rayon,
+    /* La case prend toute sa place : c'est elle qu'on touche. Carrée, elle
+       dépasse les 44 points dès que l'écran fait plus de 308 de large. */
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   numero: {
-    fontSize: texte.lecture,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.subhead,
+    color: couleurs.textePrincipal,
   },
-  numeroSelectionne: {
-    fontFamily: police.gras,
+  numeroAujourdhui: {
+    fontWeight: graisse.grasse,
   },
   points: {
     flexDirection: 'row',
-    height: 6,
-    marginTop: espace.xs,
-    gap: espace.xs,
+    height: dimensions.pastille.cote,
+    marginTop: espace[1],
+    gap: espace[1],
   },
   point: {
-    /* Sept pixels : assez pour qu'un point creux se lise comme un anneau. */
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    /* Assez pour qu'un point creux se lise comme un anneau. */
+    width: dimensions.pastille.cote,
+    height: dimensions.pastille.cote,
+    borderRadius: dimensions.pastille.cote / 2,
   },
   pointConflit: {
     backgroundColor: couleurs.alerte,
   },
+  /* Un contour sans fond : sur la case, c'est la seule chose qui marque le
+     chevauchement en plus du point rouge. */
   bordureConflit: {
     position: 'absolute',
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
-    borderRadius: rayon,
-    borderWidth: 1,
+    borderRadius: dimensions.carte.rayon,
+    borderWidth: dimensions.filet.epaisseur,
     borderColor: couleurs.alerte,
   },
 });

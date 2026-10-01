@@ -16,7 +16,7 @@ import {
   Fondu,
   SousTitre,
 } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, texte } from '../../src/ui/theme';
+import { couleurs, dimensions, espace, graisse, icone, typo } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 export default function FormulaireFrais() {
@@ -156,7 +156,8 @@ export default function FormulaireFrais() {
             <View style={styles.boutonsPhoto}>
               <Bouton
                 titre={t('frais.prendrePhoto')}
-                icone={<Ionicons name="camera-outline" size={18} color="#FFFFFF" />}
+                variante="secondaire"
+                icone={<Ionicons name="camera-outline" size={icone.courante} color={couleurs.textePrincipal} />}
                 onPress={() => ajouterPhoto(true)}
               />
               <Bouton
@@ -179,35 +180,35 @@ export default function FormulaireFrais() {
 
 const styles = StyleSheet.create({
   espacement: {
-    marginTop: espace.m,
+    marginTop: espace[3],
   },
   photo: {
     width: '100%',
-    height: 220,
-    borderRadius: rayon,
-    backgroundColor: couleurs.fond,
+    height: dimensions.recu.hauteur,
+    borderRadius: dimensions.carte.rayon,
+    backgroundColor: couleurs.fondEcran,
   },
   actionsPhoto: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: espace.m,
+    marginTop: espace[3],
   },
   boutonsPhoto: {
-    marginTop: espace.m,
-    gap: espace.s,
+    marginTop: espace[3],
+    gap: espace[2],
   },
   lien: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   retirer: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
     color: couleurs.alerte,
   },
   actions: {
-    marginTop: espace.l,
-    gap: espace.s,
+    marginTop: espace[4],
+    gap: espace[2],
   },
 });

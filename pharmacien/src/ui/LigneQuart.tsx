@@ -6,7 +6,7 @@ import type { EtatFacturation } from '../lib/facturation';
 import { argent, heures } from '../lib/format';
 import { heuresTravaillees } from '../lib/stats';
 import { Etiquette } from './composants';
-import { couleurs, espace, police, rayon, texte, useAccent } from './theme';
+import { couleurs, dimensions, espace, graisse, typo, CIBLE_MIN } from './theme';
 import { useTextes } from '../i18n';
 
 export function LigneQuart({
@@ -36,7 +36,6 @@ export function LigneQuart({
   onPressPharmacie?: () => void;
 }) {
   const { t } = useTextes();
-  const accent = useAccent();
   const duree = heuresTravaillees(quart);
   const debut = quart.heure_debut_reelle || quart.heure_debut;
   const fin = quart.heure_fin_reelle || quart.heure_fin;
@@ -46,23 +45,25 @@ export function LigneQuart({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
       style={({ pressed }) => [
         styles.ligne,
         enConflit && styles.conflit,
-        enCours && styles.enCours,
         pressed && styles.presse,
       ]}>
       <View style={styles.gauche}>
         {enCours && <Text style={styles.maintenant}>{t('horaire.enCours')}</Text>}
         {afficherDate && <Text style={styles.date}>{formatJourCourt(quart.date)}</Text>}
-        <Pressable onPress={onPressPharmacie} disabled={!onPressPharmacie} hitSlop={6}>
-          <Text
-            style={[
-              styles.pharmacie,
-              onPressPharmacie && { color: accent },
-              annule && styles.barre,
-            ]}
-            numberOfLines={1}>
+        {/* Le nom ouvre la fiche de la pharmacie. En gras, pas en mauve : ce
+            n'est ni l'élément actif ni l'action principale de l'écran. La
+            marge de toucher monte sa ligne de texte à 44 points. */}
+        <Pressable
+          onPress={onPressPharmacie}
+          disabled={!onPressPharmacie}
+          accessibilityRole={onPressPharmacie ? 'link' : undefined}
+          hitSlop={{ top: MARGE_NOM, bottom: MARGE_NOM }}
+          style={styles.cibleNom}>
+          <Text style={[styles.pharmacie, annule && styles.barre]} numberOfLines={1}>
             {quart.pharmacie_nom}
           </Text>
         </Pressable>
@@ -123,34 +124,41 @@ export function LigneQuart({
   );
 }
 
+/** Ce qu'il faut ajouter au-dessus et au-dessous du nom pour faire 44 points. */
+const MARGE_NOM = (CIBLE_MIN - typo.headline.lineHeight) / 2;
+
 const styles = StyleSheet.create({
+  /*
+   * Blanc sur le gris de l'écran, sans contour. Le chevauchement garde son fond
+   * rouge pâle ; le quart en cours dit « En cours » en rouge au-dessus du nom,
+   * et le cadre rouge qui le répétait est retiré.
+   */
   ligne: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.l,
-    marginBottom: espace.s,
-    gap: espace.m,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    padding: dimensions.carte.remplissage,
+    marginBottom: espace[2],
+    gap: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   conflit: {
-    borderColor: couleurs.alerte,
     backgroundColor: couleurs.alertePale,
   },
-  enCours: {
-    borderColor: couleurs.urgent,
-    borderWidth: 2,
+  cibleNom: {
+    alignSelf: 'flex-start',
+    minHeight: typo.headline.lineHeight,
+    minWidth: CIBLE_MIN,
   },
   maintenant: {
-    fontSize: texte.fin,
-    fontFamily: police.gras,
+    ...typo.caption2,
+    fontWeight: graisse.grasse,
     color: couleurs.urgent,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: espace.xs,
+    marginBottom: espace[1],
   },
   presse: {
     opacity: 0.6,
@@ -162,51 +170,46 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   date: {
-    fontSize: texte.secondaire,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginBottom: espace.xs,
+    ...typo.caption1,
+    color: couleurs.texteSecondaire,
+    marginBottom: espace[1],
     textTransform: 'capitalize',
   },
   pharmacie: {
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.headline,
+    color: couleurs.textePrincipal,
   },
   barre: {
     textDecorationLine: 'line-through',
-    color: couleurs.doux,
+    color: couleurs.texteSecondaire,
   },
   horaire: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginTop: espace.xs,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
+    marginTop: espace[1],
   },
   notes: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginTop: espace.xs,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
+    marginTop: espace[1],
     fontStyle: 'italic',
   },
   etiquette: {
-    marginTop: espace.s,
+    marginTop: espace[2],
   },
   montant: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   taux: {
-    fontSize: texte.secondaire,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.caption1,
+    color: couleurs.texteSecondaire,
   },
   alerte: {
-    fontSize: texte.fin,
-    fontFamily: police.demi,
+    ...typo.caption2,
+    fontWeight: graisse.demi,
     color: couleurs.alerte,
-    marginTop: espace.xs,
+    marginTop: espace[1],
   },
 });

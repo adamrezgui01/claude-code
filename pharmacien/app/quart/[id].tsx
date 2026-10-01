@@ -66,14 +66,22 @@ import {
   Interrupteur,
   Puce,
   Rangee,
-  Separateur,
   SousTitre,
 } from '../../src/ui/composants';
 import { SelecteurDate, SelecteurDuree, SelecteurHeure } from '../../src/ui/Selecteurs';
 import { Recompense } from '../../src/ui/Recompense';
 import { CalendrierMultiple } from '../../src/ui/CalendrierMultiple';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
-import { couleurs, espace, police, rayon, texte, useAccent } from '../../src/ui/theme';
+import {
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 /** Durées de pause courantes. « Autre » ouvre la roulette. */
@@ -82,7 +90,6 @@ const PAUSES = [30, 45, 60];
 export default function FormulaireQuart() {
   const { t } = useTextes();
   const router = useRouter();
-  const accent = useAccent();
   const params = useLocalSearchParams<{
     id: string;
     date?: string;
@@ -565,7 +572,7 @@ export default function FormulaireQuart() {
 
         <Carte style={styles.verrou}>
           <View style={styles.verrouEntete}>
-            <Ionicons name="lock-closed-outline" size={20} color={couleurs.attente} />
+            <Ionicons name="lock-closed-outline" size={icone.courante} color={couleurs.attente} />
             <Text style={styles.verrouTitre}>{t('quart.verrouilleTitre')}</Text>
           </View>
           <Doux>
@@ -577,13 +584,13 @@ export default function FormulaireQuart() {
             <Bouton
               titre={t('quart.voirLaFacture')}
               variante="secondaire"
-              icone={<Ionicons name="document-text-outline" size={18} color={couleurs.texte} />}
+              icone={<Ionicons name="document-text-outline" size={icone.courante} color={couleurs.textePrincipal} />}
               onPress={() => router.push(`/facture/${facture.id}`)}
             />
           )}
         </Carte>
 
-        <SousTitre>{t('quart.leQuart')}</SousTitre>
+        {/* Sans « Le quart » au-dessus : l'écran s'appelle déjà ainsi. */}
         <Carte>
           <Rangee label={t('quart.pharmacie')} valeur={nomPharmacie} fort />
           <Rangee label={t('quart.date')} valeur={formatDateLongue(date)} />
@@ -639,13 +646,13 @@ export default function FormulaireQuart() {
           )}
         </Carte>
 
+        {/* Une étiquette de champ dans la carte, pas un en-tête au-dessus :
+            un en-tête sur un seul texte ne sépare rien. */}
         {!!notes.trim() && (
-          <>
-            <SousTitre>{t('quart.notes')}</SousTitre>
-            <Carte>
-              <Text style={styles.notesFigees}>{notes}</Text>
-            </Carte>
-          </>
+          <Carte>
+            <Text style={styles.label}>{t('quart.notes')}</Text>
+            <Text style={styles.notesFigees}>{notes}</Text>
+          </Carte>
         )}
       </Ecran>
     );
@@ -658,7 +665,9 @@ export default function FormulaireQuart() {
           options={{ title: t(nouveau ? 'quart.titreNouveau' : 'quart.titreModifier') }}
         />
 
-        <SousTitre>{t('quart.pharmacie')}</SousTitre>
+        {/* Sans « Pharmacie » au-dessus : c'était le seul en-tête du
+            formulaire, il ne séparait rien, et la recherche dit d'elle-même
+            ce qu'elle cherche. */}
         <SelecteurPharmacie
           pharmacies={pharmacies}
           recentes={recentes}
@@ -720,7 +729,7 @@ export default function FormulaireQuart() {
           </Fondu>
         )}
 
-        <Separateur />
+        <View style={styles.entreGroupes} />
 
         <SelecteurDate
           label={t('quart.date')}
@@ -760,15 +769,19 @@ export default function FormulaireQuart() {
           {traverseMinuit(heureDebut, heureFin) ? t('quart.seTermineLendemain') : ''}
         </Text>
 
-        <Pressable style={styles.ligneDetails} onPress={() => setDetails((d) => !d)} hitSlop={6}>
+        <Pressable
+          style={styles.ligneDetails}
+          onPress={() => setDetails((d) => !d)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: details }}>
           <View style={styles.detailsTexte}>
             <Text style={styles.detailsLabel}>{t('quart.plusDeDetails')}</Text>
             {!details && <Text style={styles.detailsResume}>{resumeDetails()}</Text>}
           </View>
           <Ionicons
             name={details ? 'chevron-up' : 'chevron-down'}
-            size={18}
-            color={accent}
+            size={icone.courante}
+            color={couleurs.texteSecondaire}
           />
         </Pressable>
 
@@ -814,7 +827,7 @@ export default function FormulaireQuart() {
               />
             )}
 
-            <Separateur />
+            <View style={styles.entreGroupes} />
             <SousTitre>{t('quart.fraisDuQuart')}</SousTitre>
             {modeDeplacement === 'km' && (
               <>
@@ -848,8 +861,11 @@ export default function FormulaireQuart() {
                 {sansDomicile && (
                   <Carte style={styles.eviter}>
                     <Doux>{t('quart.sansDomicile')}</Doux>
-                    <Pressable onPress={() => router.push('/profil')} hitSlop={8}>
-                      <Text style={[styles.lien, { color: accent }]}>{t('quart.ouvrirProfil')}</Text>
+                    <Pressable
+                      onPress={() => router.push('/profil')}
+                      accessibilityRole="link"
+                      style={styles.lienCible}>
+                      <Text style={styles.lien}>{t('quart.ouvrirProfil')}</Text>
                     </Pressable>
                   </Carte>
                 )}
@@ -884,12 +900,11 @@ export default function FormulaireQuart() {
               placeholder={t('commun.montantZero')}
             />
 
-            <Separateur />
+            <View style={styles.entreGroupes} />
             <Champ label={t('quart.notes')} valeur={notes} onChange={setNotes} multiligne />
 
             {nouveau && (
               <>
-                <Separateur />
                 <Interrupteur
                   label={t('quart.repeter')}
                   detail={t('quart.repeterDetail')}
@@ -925,10 +940,11 @@ export default function FormulaireQuart() {
           </Fondu>
         )}
 
+        {/* Les frais ponctuels, sans en-tête : chaque ligne porte sa
+            description et son montant, et le vide le dit en toutes lettres. */}
         {!nouveau && (
           <>
-            <Separateur />
-            <SousTitre>{t('quart.fraisExtra')}</SousTitre>
+            <View style={styles.entreGroupes} />
             {frais.length === 0 ? (
               <Doux>{t('quart.aucunFraisExtra')}</Doux>
             ) : (
@@ -936,6 +952,7 @@ export default function FormulaireQuart() {
                 <Pressable
                   key={f.id}
                   onPress={() => router.push(`/frais/${f.id}`)}
+                  accessibilityRole="button"
                   style={({ pressed }) => [styles.frais, pressed && { opacity: 0.6 }]}>
                   <View style={styles.fraisTexte}>
                     <Text style={styles.fraisDescription}>{f.description || 'Frais'}</Text>
@@ -946,26 +963,23 @@ export default function FormulaireQuart() {
               ))
             )}
             {totalFrais > 0 && (
-              <Text style={[styles.total, { color: accent }]}>
-                Total des frais {argent(totalFrais)}
-              </Text>
+              <Rangee label={t('quart.totalFraisLabel')} valeur={argent(totalFrais)} fort />
             )}
             <Bouton
               titre={t('quart.chargerEnPlus')}
               variante="secondaire"
-              icone={<Ionicons name="add" size={18} color={couleurs.texte} />}
+              icone={<Ionicons name="add" size={icone.courante} color={couleurs.textePrincipal} />}
               onPress={() => router.push(`/frais/nouveau?quart=${quartId}`)}
             />
           </>
         )}
 
-        <Carte style={styles.note}>
-          <Doux>
-            Un rappel part 48 h avant le quart. Deux heures après sa fin, un mémo vous propose de
-            corriger vos heures si elles étaient différentes — l’ignorer ne change rien.
-          </Doux>
-        </Carte>
-
+        {/*
+          La note « un rappel part 48 h avant, un mémo deux heures après » est
+          retirée : elle décrivait des notifications que le V2.5 a remplacées
+          par un seul rendez-vous du soir. Elle était devenue fausse, en plus
+          d'être une boîte de plus.
+        */}
         <View style={styles.actions}>
           <Bouton titre={t('commun.enregistrer')} onPress={valider} />
           {!nouveau && (
@@ -973,7 +987,7 @@ export default function FormulaireQuart() {
               <Bouton
                 titre={t('quart.dupliquer')}
                 variante="secondaire"
-                icone={<Ionicons name="copy-outline" size={18} color={couleurs.texte} />}
+                icone={<Ionicons name="copy-outline" size={icone.courante} color={couleurs.textePrincipal} />}
                 onPress={() => router.push(`/quart/nouveau?duplique=${quartId}`)}
               />
               <Bouton
@@ -1009,125 +1023,115 @@ export default function FormulaireQuart() {
 }
 
 const styles = StyleSheet.create({
+  /** Entre deux groupes, l'espace qui remplace le filet. */
+  entreGroupes: {
+    height: dimensions.formulaire.entreGroupes,
+  },
   espacement: {
-    marginTop: espace.m,
+    marginTop: espace[3],
   },
   proposition: {
-    marginTop: espace.m,
-    gap: espace.s,
+    marginTop: espace[3],
+    gap: espace[2],
   },
   rangee: {
     flexDirection: 'row',
-    gap: espace.m,
+    gap: espace[3],
   },
   label: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginBottom: espace.xs,
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
+    marginBottom: dimensions.etiquette.margeBasse,
   },
   puces: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   duree: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
-    color: couleurs.texte,
-    marginVertical: espace.m,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
+    marginVertical: espace[3],
   },
+  /** Une ligne, sans boîte : la même que « Options » du calculateur. */
   ligneDetails: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: espace.m,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingVertical: espace.m,
-    paddingHorizontal: espace.l,
-    marginBottom: espace.m,
+    gap: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    marginBottom: espace[4],
   },
   detailsTexte: {
     flex: 1,
   },
   detailsLabel: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   detailsResume: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginTop: espace.xs,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
+    marginTop: espace[1],
+  },
+  lienCible: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    justifyContent: 'center',
   },
   lien: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
-    marginTop: espace.s,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   eviter: {
-    backgroundColor: couleurs.fond,
-    marginTop: espace.m,
+    backgroundColor: couleurs.fondEcran,
+    marginTop: espace[3],
   },
   frais: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.m,
-    marginBottom: espace.s,
-    gap: espace.m,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    padding: espace[3],
+    marginBottom: espace[2],
+    gap: espace[3],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   fraisTexte: {
     flex: 1,
   },
   fraisDescription: {
-    fontSize: texte.corps,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   fraisMontant: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
-  },
-  total: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
-    marginBottom: espace.m,
-  },
-  note: {
-    marginTop: espace.l,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   verrou: {
     backgroundColor: couleurs.grisPale,
-    borderColor: couleurs.attente,
-    gap: espace.m,
+    gap: espace[3],
   },
   verrouEntete: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
+    gap: espace[2],
   },
   verrouTitre: {
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.headline,
+    color: couleurs.textePrincipal,
   },
   notesFigees: {
-    fontSize: texte.corps,
-    fontFamily: police.normal,
-    color: couleurs.texte,
-    lineHeight: 21,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   actions: {
-    marginTop: espace.m,
-    gap: espace.s,
+    marginTop: dimensions.formulaire.entreGroupes,
+    gap: espace[2],
   },
 });

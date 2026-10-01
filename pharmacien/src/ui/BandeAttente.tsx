@@ -4,7 +4,7 @@ import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react
 
 import { useTextes } from '../i18n';
 import { bandeAttente, type ComptesAttente, type GenreAttente } from '../lib/attente';
-import { couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from './theme';
+import { couleurs, dimensions, espace, graisse, icone, typo, CIBLE_MIN } from './theme';
 
 /**
  * Ce qui traîne, en haut de l'horaire.
@@ -33,7 +33,6 @@ export function BandeAttente({
   onOuvrir: (genre: GenreAttente) => void;
 }) {
   const { t } = useTextes();
-  const accent = useAccent();
   const [tout, setTout] = useState(false);
   const glisse = useRef(new Animated.Value(0)).current;
 
@@ -60,13 +59,13 @@ export function BandeAttente({
   return (
     <Animated.View
       {...gestes.panHandlers}
-      style={[styles.bande, { borderColor: accent, transform: [{ translateX: glisse }] }]}>
+      style={[styles.bande, { transform: [{ translateX: glisse }] }]}>
       {visibles.map(({ genre, compte }) => (
         <Pressable
           key={genre}
           onPress={() => onOuvrir(genre)}
           style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
-          <Ionicons name={ICONES[genre]} size={16} color={accent} />
+          <Ionicons name={ICONES[genre]} size={icone.courante} color={couleurs.texteSecondaire} />
           <View style={styles.texte}>
             <Text style={styles.principal}>{t(`attente.${genre}`, { count: compte })}</Text>
             {/* Le mémo de fin de quart n'existe plus comme notification : cette
@@ -74,13 +73,13 @@ export function BandeAttente({
                 choix valide, pas un oubli. */}
             {genre === 'heures' && <Text style={styles.dessous}>{t('attente.heuresDetail')}</Text>}
           </View>
-          <Ionicons name="chevron-forward" size={16} color={couleurs.doux} />
+          <Ionicons name="chevron-forward" size={icone.petite} color={couleurs.texteSecondaire} />
         </Pressable>
       ))}
 
       {reste > 0 && !tout && (
-        <Pressable onPress={() => setTout(true)} hitSlop={8}>
-          <Text style={[styles.voirTout, { color: accent }]}>{t('attente.voirTout')}</Text>
+        <Pressable onPress={() => setTout(true)} accessibilityRole="button" style={styles.voirToutCible}>
+          <Text style={styles.voirTout}>{t('attente.voirTout')}</Text>
         </Pressable>
       )}
     </Animated.View>
@@ -101,40 +100,44 @@ function toutesLesLignes(comptes: ComptesAttente) {
 }
 
 const styles = StyleSheet.create({
+  /** Blanc sur le gris de l'écran : le fond la détache, sans contour mauve. */
   bande: {
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderRadius: rayon,
-    padding: espace.s,
-    marginBottom: espace.m,
-    gap: espace.xs,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    paddingHorizontal: dimensions.carte.remplissage,
+    paddingVertical: espace[1],
+    marginBottom: espace[4],
   },
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
-    paddingVertical: espace.s,
-    paddingHorizontal: espace.xs,
+    gap: espace[3],
+    paddingVertical: espace[2],
     minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+  },
+  voirToutCible: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    justifyContent: 'center',
   },
   texte: {
     flex: 1,
   },
   principal: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   dessous: {
-    fontSize: texte.fin,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginTop: espace.xs,
+    ...typo.caption2,
+    color: couleurs.texteSecondaire,
+    marginTop: espace[1],
   },
   voirTout: {
-    fontSize: texte.courant,
-    fontFamily: police.demi,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
     textAlign: 'center',
-    paddingVertical: espace.s,
   },
 });

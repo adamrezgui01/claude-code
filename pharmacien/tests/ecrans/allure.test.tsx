@@ -43,6 +43,12 @@ import { screen } from '@testing-library/react-native';
  * les fasse avancer — ici, jamais.
  */
 jest.useFakeTimers();
+/*
+ * Et une date fixe. Le jeu de démonstration, la grille des dispos et la bande
+ * d'attente dépendent du jour : sans elle, le compte d'un écran changerait
+ * d'un matin à l'autre, et « avant » et « après » ne se compareraient plus.
+ */
+jest.setSystemTime(new Date('2026-09-30T12:00:00'));
 import type { ComponentType } from 'react';
 
 import { allumerDemo } from '../../src/db/demo';
@@ -147,7 +153,14 @@ async function monter(ecran: Ecran) {
  * Les écrans déjà passés au V2.6. La liste s'allonge d'un onglet par commit :
  * une refonte qui casse une mise en page doit rester trouvable.
  */
-const PASSES_V26: string[] = ['Clinique · Calculateur de dose'];
+const PASSES_V26: string[] = [
+  'Clinique · Calculateur de dose',
+  'Horaire · Horaire',
+  'Horaire · Mes dispos',
+  'Horaire · Quart (nouveau)',
+  'Horaire · Quart (existant)',
+  'Horaire · Frais (nouveau)',
+];
 
 /** Relevé au montage de chaque écran, et lu par le test 11 plus bas. */
 const formesRelevees = new Map<string, string[]>();

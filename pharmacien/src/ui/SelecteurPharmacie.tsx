@@ -5,10 +5,20 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { Pharmacie } from '../db/types';
 import { ligneVille } from '../lib/adresses';
 import { filtrerPharmacies } from '../lib/repertoire';
-import { normaliser } from '../lib/texte';
+
 import { Puce } from './composants';
 import { ListeRepliable } from './ListeRepliable';
-import { accentPale, couleurs, espace, police, rayon, texte, useAccent, CIBLE_MIN } from './theme';
+import {
+  accentPale,
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from './theme';
 import { useTextes } from '../i18n';
 
 
@@ -47,22 +57,22 @@ export function SelecteurPharmacie({
       {!!enTete && <View style={styles.enTete}>{enTete}</View>}
 
       <View style={styles.recherche}>
-        <Ionicons name="search" size={16} color={couleurs.doux} />
+        <Ionicons name="search" size={icone.petite} color={couleurs.texteSecondaire} />
         <TextInput
           style={styles.saisie}
           value={recherche}
           onChangeText={setRecherche}
           placeholder={t('repertoire.rechercher')}
-          placeholderTextColor={couleurs.doux}
+          placeholderTextColor={couleurs.texteSecondaire}
           autoCorrect={false}
         />
         {cherche && (
           <Pressable
             onPress={() => setRecherche('')}
-            hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={t('commun.effacerRecherche')}>
-            <Ionicons name="close-circle" size={16} color={couleurs.doux} />
+            accessibilityLabel={t('commun.effacerRecherche')}
+            style={styles.effacer}>
+            <Ionicons name="close-circle" size={icone.petite} color={couleurs.texteSecondaire} />
           </Pressable>
         )}
       </View>
@@ -71,7 +81,7 @@ export function SelecteurPharmacie({
         <ListeRepliable
           elements={recentes}
           cleDe={(p) => `${p.id}`}
-          enTete={<Text style={styles.section}>{t('repertoire.triRecentes')}</Text>}
+          enTete={<Text style={styles.etiquette}>{t('repertoire.triRecentes')}</Text>}
           styleListe={styles.puces}
           rendre={(p) => (
             <Puce
@@ -83,36 +93,35 @@ export function SelecteurPharmacie({
         />
       )}
 
+      {/*
+        La liste suit la recherche sans titre : « Toutes » ou « Résultats »
+        au-dessus d'elle ne disait rien que la liste ne dise. « Récentes »
+        reste, en étiquette : sans lui, les capsules et la liste montreraient
+        les mêmes noms sans dire pourquoi.
+      */}
       {filtrees.length === 0 ? (
-        <>
-          <Text style={styles.section}>
-            {t(cherche ? 'pharmacie.resultats' : 'repertoire.toutes')}
-          </Text>
-          <Text style={styles.aucune}>{t('repertoire.aucunResultat')}</Text>
-        </>
+        <Text style={styles.aucune}>{t('repertoire.aucunResultat')}</Text>
       ) : (
         <ListeRepliable
           elements={filtrees}
           cleDe={(p) => `${p.id}`}
-          enTete={
-            <Text style={styles.section}>
-              {t(cherche ? 'pharmacie.resultats' : 'repertoire.toutes')}
-            </Text>
-          }
+          enTete={<View style={styles.avantListe} />}
           rendre={(p) => {
             const choisie = selection.includes(p.id);
             return (
               <Pressable
                 onPress={() => onSelectionner(p.id)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: choisie }}
                 style={({ pressed }) => [
                   styles.ligne,
-                  choisie && { borderColor: accent, backgroundColor: accentPale(accent) },
+                  choisie && { backgroundColor: accentPale(accent) },
                   pressed && { opacity: 0.6 },
                 ]}>
-                {!!p.favori && <Ionicons name="star" size={15} color={couleurs.favori} />}
+                {!!p.favori && <Ionicons name="star" size={icone.petite} color={couleurs.favori} />}
                 <View style={styles.texte}>
                   <Text
-                    style={[styles.nom, choisie && { fontFamily: police.demi, color: accent }]}
+                    style={[styles.nom, choisie && { fontWeight: graisse.demi, color: accent }]}
                     numberOfLines={1}>
                     {p.nom}
                   </Text>
@@ -122,7 +131,7 @@ export function SelecteurPharmacie({
                     </Text>
                   )}
                 </View>
-                {choisie && <Ionicons name="checkmark" size={18} color={accent} />}
+                {choisie && <Ionicons name="checkmark" size={icone.courante} color={accent} />}
               </Pressable>
             );
           }}
@@ -136,34 +145,39 @@ const styles = StyleSheet.create({
   enTete: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: espace.s,
+    marginBottom: espace[2],
   },
+  /** La barre de recherche a la forme d'un champ : même hauteur, même rayon, aucun contour. */
   recherche: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingHorizontal: espace.m,
-    minHeight: CIBLE_MIN,
+    gap: espace[2],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.champ.rayon,
+    paddingHorizontal: dimensions.champ.remplissageH,
+    minHeight: dimensions.champ.hauteur,
   },
   saisie: {
     flex: 1,
-    fontSize: texte.corps,
-    fontFamily: police.normal,
-    color: couleurs.texte,
-    paddingVertical: espace.s,
+    ...typo.body,
+    color: couleurs.textePrincipal,
+    minHeight: dimensions.champ.hauteur,
+    minWidth: CIBLE_MIN,
   },
-  section: {
-    fontSize: texte.secondaire,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginTop: espace.m,
-    marginBottom: espace.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  effacer: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  etiquette: {
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
+    marginTop: espace[4],
+    marginBottom: dimensions.etiquette.margeBasse,
+  },
+  avantListe: {
+    height: espace[4],
   },
   puces: {
     flexDirection: 'row',
@@ -173,38 +187,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: espace.m,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingHorizontal: espace.m,
-    paddingVertical: espace.s,
-    marginBottom: espace.xs,
+    gap: espace[3],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    paddingHorizontal: espace[3],
+    paddingVertical: espace[2],
+    marginBottom: espace[1],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   texte: {
     flex: 1,
   },
   nom: {
-    fontSize: texte.corps,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   adresse: {
-    fontSize: texte.secondaire,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.caption1,
+    color: couleurs.texteSecondaire,
   },
   aucune: {
-    fontSize: texte.lecture,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    paddingVertical: espace.s,
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
+    paddingVertical: espace[2],
   },
   lien: {
-    color: couleurs.texte,
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
-    paddingVertical: espace.s,
+    color: couleurs.textePrincipal,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    paddingVertical: espace[2],
   },
 });

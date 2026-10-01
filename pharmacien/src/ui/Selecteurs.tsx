@@ -21,7 +21,18 @@ import {
   JOURS_COURTS,
 } from '../lib/dates';
 import { Pageur } from './Pageur';
-import { accentPale, couleurs, dimensions, espace, police, rayon, texte, useAccent } from './theme';
+import {
+  accentPale,
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  ombreFlottante,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from './theme';
 import { useTextes } from '../i18n';
 
 /**
@@ -34,7 +45,7 @@ import { useTextes } from '../i18n';
  * nous échapper.
  */
 
-const HAUTEUR_LIGNE = 44;
+const HAUTEUR_LIGNE = CIBLE_MIN;
 /** Trois lignes visibles de part et d'autre de la sélection. */
 const LIGNES_VISIBLES = 5;
 const HAUTEUR_ROULEAU = HAUTEUR_LIGNE * LIGNES_VISIBLES;
@@ -55,9 +66,11 @@ function Feuille({
   const accent = useAccent();
   return (
     <Modal visible={ouvert} transparent animationType="fade" onRequestClose={onFermer}>
-      <Pressable style={styles.voile} onPress={onFermer}>
-        <Pressable style={styles.feuille} onPress={() => {}}>
-          <View style={styles.poignee} />
+      <Pressable style={styles.voile} onPress={onFermer} accessible={false}>
+        <Pressable style={styles.feuille} onPress={() => {}} accessible={false}>
+          {/* Pas de poignée : la feuille ne se glisse pas, elle se referme au
+              crochet ou d'une tape à côté. Une poignée promettrait un geste
+              qui n'existe pas. */}
           <Text style={styles.feuilleTitre}>{titre}</Text>
           {children}
           {/*
@@ -69,13 +82,14 @@ function Feuille({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('commun.termine')}
+              testID="action-principale"
               style={({ pressed }) => [
                 styles.valider,
                 { backgroundColor: accent },
                 pressed && { opacity: 0.8 },
               ]}
               onPress={onFermer}>
-              <Ionicons name="checkmark" size={24} color="#FFFFFF" />
+              <Ionicons name="checkmark" size={icone.grande} color={couleurs.surAccent} />
             </Pressable>
           </View>
         </Pressable>
@@ -130,14 +144,16 @@ function Rouleau({
               key={v}
               style={styles.ligne}
               onPress={() => onChange(v)}
-              hitSlop={4}>
+              accessibilityRole="button"
+              accessibilityState={{ selected: actif }}>
               <Text
                 style={[
                   styles.ligneTexte,
                   // Les voisines s'estompent, pour que l'œil trouve la sélection
                   // sans avoir à lire.
                   { opacity: actif ? 1 : Math.max(0.25, 1 - ecart * 0.3) },
-                  actif && { color: accent, fontFamily: police.gras, fontSize: 24 },
+                  actif && styles.ligneActive,
+                  actif && { color: accent },
                 ]}>
                 {format(v)}
               </Text>
@@ -148,7 +164,7 @@ function Rouleau({
 
       <View
         pointerEvents="none"
-        style={[styles.bande, { backgroundColor: accentPale(accent), borderColor: accent }]}
+        style={[styles.bande, { backgroundColor: accentPale(accent) }]}
       />
     </View>
   );
@@ -197,7 +213,7 @@ export function SelecteurHeure({
       <Text style={styles.label}>{label}</Text>
       <Pressable style={styles.boite} onPress={() => setOuvert(true)}>
         <Text style={styles.boiteTexte}>{valeur}</Text>
-        <Ionicons name="time-outline" size={16} color={couleurs.doux} />
+        <Ionicons name="time-outline" size={icone.petite} color={couleurs.texteSecondaire} />
       </Pressable>
 
       <Feuille ouvert={ouvert} titre={t('commun.heureDe', { moment: label.toLowerCase() })} onFermer={() => setOuvert(false)}>
@@ -314,9 +330,9 @@ export function SelecteurDate({
   return (
     <View style={styles.champ}>
       <Text style={styles.label}>{label}</Text>
-      <Pressable style={styles.boite} onPress={() => setOuvert(true)}>
+      <Pressable style={styles.boite} onPress={() => setOuvert(true)} accessibilityRole="button">
         <Text style={styles.boiteTexte}>{formatDateLongue(valeur)}</Text>
-        <Ionicons name="calendar-outline" size={16} color={couleurs.doux} />
+        <Ionicons name="calendar-outline" size={icone.petite} color={couleurs.texteSecondaire} />
       </Pressable>
 
       <Feuille ouvert={ouvert} titre={label} onFermer={() => setOuvert(false)}>
@@ -325,18 +341,16 @@ export function SelecteurDate({
             accessibilityRole="button"
             accessibilityLabel={t('commun.moisPrecedent')}
             onPress={() => setMois(ajouterMois(mois, -1))}
-            hitSlop={12}
             style={styles.fleche}>
-            <Ionicons name="chevron-back" size={20} color={accent} />
+            <Ionicons name="chevron-back" size={icone.courante} color={couleurs.texteSecondaire} />
           </Pressable>
           <Text style={styles.titreMois}>{formatMoisAnnee(mois)}</Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('commun.moisSuivant')}
             onPress={() => setMois(ajouterMois(mois, 1))}
-            hitSlop={12}
             style={styles.fleche}>
-            <Ionicons name="chevron-forward" size={20} color={accent} />
+            <Ionicons name="chevron-forward" size={icone.courante} color={couleurs.texteSecondaire} />
           </Pressable>
         </View>
 
@@ -370,6 +384,8 @@ export function SelecteurDate({
                         onChange(jour);
                         setOuvert(false);
                       }}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: choisi, disabled: horsBornes }}
                       style={({ pressed }) => [
                         styles.case,
                         pressed && { opacity: 0.6 },
@@ -379,20 +395,19 @@ export function SelecteurDate({
                         style={[
                           styles.pastille,
                           choisi && { backgroundColor: accent },
-                          // Aujourd'hui se distingue du jour choisi : contour seul.
-                          !choisi && cest && { borderWidth: 1.5, borderColor: accent },
                         ]}>
+                        {/* Aujourd'hui se lit au gras ; le mauve est au jour choisi. */}
                         <Text
                           style={[
                             styles.chiffre,
-                            choisi && { color: '#FFFFFF', fontFamily: police.gras },
-                            !choisi && cest && { color: accent, fontFamily: police.demi },
+                            choisi && { color: couleurs.surAccent, fontWeight: graisse.grasse },
+                            !choisi && cest && { fontWeight: graisse.grasse },
                           ]}>
                           {analyserDate(jour).getDate()}
                         </Text>
                       </View>
                       {joursMarques?.has(jour) && !choisi && (
-                        <View style={[styles.point, { backgroundColor: accent }]} />
+                        <View style={[styles.point, { backgroundColor: couleurs.quartVif }]} />
                       )}
                     </Pressable>
                   );
@@ -402,8 +417,11 @@ export function SelecteurDate({
           }
         />
 
-        <Pressable onPress={() => setMois(dateISO(new Date()))} hitSlop={8}>
-          <Text style={[styles.aujourdhui, { color: accent }]}>{t('commun.aujourdhui')}</Text>
+        <Pressable
+          onPress={() => setMois(dateISO(new Date()))}
+          accessibilityRole="button"
+          style={styles.aujourdhuiCible}>
+          <Text style={styles.aujourdhui}>{t('commun.aujourdhui')}</Text>
         </Pressable>
       </Feuille>
     </View>
@@ -415,129 +433,121 @@ const styles = StyleSheet.create({
     opacity: 0.25,
   },
   champ: {
-    marginBottom: espace.m,
+    marginBottom: dimensions.formulaire.entreChamps,
   },
   champCourt: {
     flex: 1,
   },
   label: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginBottom: espace.xs,
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
+    marginBottom: dimensions.etiquette.margeBasse,
   },
+  /** La forme d'un champ : blanc sur le gris, sans contour. */
   boite: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: espace.s,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingHorizontal: espace.l,
-    paddingVertical: espace.m,
+    gap: espace[2],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.champ.rayon,
+    paddingHorizontal: dimensions.champ.remplissageH,
+    paddingVertical: dimensions.champ.remplissageV,
     minHeight: dimensions.champ.hauteur,
+    minWidth: CIBLE_MIN,
   },
   boiteTexte: {
-    fontSize: texte.saisie,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   voile: {
     flex: 1,
-    backgroundColor: '#1E1B2299',
+    backgroundColor: couleurs.voile,
     justifyContent: 'flex-end',
   },
+  /** La feuille flotte au-dessus de l'écran : elle porte l'ombre, pas de contour. */
   feuille: {
-    backgroundColor: couleurs.carte,
-    borderTopLeftRadius: rayon * 2,
-    borderTopRightRadius: rayon * 2,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    paddingTop: espace.m,
-    paddingBottom: espace.xxl,
-    paddingHorizontal: espace.xl,
-    shadowColor: '#1E1B22',
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: -6 },
-    elevation: 12,
-  },
-  poignee: {
-    alignSelf: 'center',
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: couleurs.bordure,
-    marginBottom: espace.m,
+    backgroundColor: couleurs.fondEleve,
+    borderTopLeftRadius: dimensions.feuille.rayon,
+    borderTopRightRadius: dimensions.feuille.rayon,
+    paddingTop: espace[6],
+    paddingBottom: espace[8],
+    paddingHorizontal: espace[6],
+    ...ombreFlottante,
   },
   feuilleTitre: {
-    fontSize: texte.titre,
-    fontFamily: police.gras,
-    color: couleurs.texte,
+    ...typo.title3,
+    fontWeight: graisse.grasse,
+    color: couleurs.textePrincipal,
     textAlign: 'center',
-    marginBottom: espace.l,
+    marginBottom: espace[4],
     textTransform: 'capitalize',
   },
   rouleaux: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: espace.s,
+    gap: espace[2],
   },
   unite: {
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.doux,
-    marginBottom: espace.xs,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.texteSecondaire,
+    marginBottom: espace[1],
   },
   deuxPoints: {
-    fontSize: texte.chiffre,
-    fontFamily: police.gras,
-    color: couleurs.texte,
-    marginBottom: espace.xs,
+    ...typo.title1,
+    fontWeight: graisse.grasse,
+    color: couleurs.textePrincipal,
+    marginBottom: espace[1],
   },
   rouleau: {
     height: HAUTEUR_ROULEAU,
-    width: 96,
+    width: dimensions.rouleau.largeur,
     justifyContent: 'center',
   },
   ligne: {
     height: HAUTEUR_LIGNE,
+    minWidth: CIBLE_MIN,
     alignItems: 'center',
     justifyContent: 'center',
   },
   ligneTexte: {
-    fontSize: texte.grandTitre,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.title3,
+    color: couleurs.textePrincipal,
   },
+  ligneActive: {
+    ...typo.title2,
+    fontWeight: graisse.grasse,
+  },
+  /** La bande derrière la valeur retenue : un fond pâle, sans contour. */
   bande: {
     position: 'absolute',
     left: 0,
     right: 0,
     top: HAUTEUR_LIGNE * 2,
     height: HAUTEUR_LIGNE,
-    borderRadius: rayon,
-    borderWidth: 1,
+    borderRadius: dimensions.carte.rayon,
     zIndex: -1,
   },
   enteteMois: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: espace.m,
+    marginBottom: espace[3],
   },
   fleche: {
-    padding: espace.s,
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   titreMois: {
     flex: 1,
     textAlign: 'center',
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
     textTransform: 'capitalize',
   },
   semaine: {
@@ -546,50 +556,57 @@ const styles = StyleSheet.create({
   jourSemaine: {
     flex: 1,
     textAlign: 'center',
-    fontSize: texte.fin,
-    fontFamily: police.demi,
-    color: couleurs.doux,
-    marginBottom: espace.xs,
+    ...typo.caption2,
+    fontWeight: graisse.demi,
+    color: couleurs.texteSecondaire,
+    marginBottom: espace[1],
   },
   case: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: espace.xs,
+    paddingVertical: espace[1],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   pastille: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: dimensions.jour.cote,
+    height: dimensions.jour.cote,
+    borderRadius: dimensions.jour.cote / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   chiffre: {
-    fontSize: texte.saisie,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   point: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: espace.xs,
+    width: dimensions.point.cote,
+    height: dimensions.point.cote,
+    borderRadius: dimensions.point.cote / 2,
+    marginTop: espace[1],
+  },
+  aujourdhuiCible: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    justifyContent: 'center',
+    marginTop: espace[2],
   },
   aujourdhui: {
     textAlign: 'center',
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
-    marginTop: espace.m,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   validerRangee: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: espace.l,
+    marginTop: espace[4],
   },
-  /** Cible tactile de 48 points, même si le crochet en occupe 24. */
+  /** Le crochet : l'action principale de la feuille. */
   valider: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: CIBLE_MIN,
+    height: CIBLE_MIN,
+    borderRadius: CIBLE_MIN / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },

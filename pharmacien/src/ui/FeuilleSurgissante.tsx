@@ -1,15 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  Easing,
-  LayoutChangeEvent,
-  Modal,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Animated, Easing, LayoutChangeEvent, Modal, Pressable, StyleSheet } from 'react-native';
 
-import { couleurs, espace, rayon } from './theme';
+import { couleurs, dimensions, espace, ombreFlottante } from './theme';
 
 /**
  * Une fenêtre qui naît là où le doigt s'est posé.
@@ -79,9 +71,9 @@ export function FeuilleSurgissante({
 
   return (
     <Modal visible={ouvert} transparent animationType="none" onRequestClose={onFermer}>
-      <Pressable style={styles.voile} onPress={onFermer}>
+      <Pressable style={styles.voile} onPress={onFermer} accessible={false}>
         <Animated.View style={style} onLayout={mesurer}>
-          <Pressable style={styles.feuille} onPress={() => {}}>
+          <Pressable style={styles.feuille} onPress={() => {}} accessible={false}>
             {children}
           </Pressable>
         </Animated.View>
@@ -93,14 +85,16 @@ export function FeuilleSurgissante({
 const styles = StyleSheet.create({
   voile: {
     flex: 1,
-    backgroundColor: '#1E1B2299',
+    backgroundColor: couleurs.voile,
     justifyContent: 'center',
-    padding: espace.l,
+    padding: dimensions.ecran.margeH,
   },
+  /** La feuille flotte au-dessus de l'écran : elle porte l'ombre. */
   feuille: {
-    backgroundColor: couleurs.carte,
-    borderRadius: rayon * 1.5,
-    padding: espace.xl,
-    gap: espace.m,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.feuille.rayon,
+    padding: espace[6],
+    gap: espace[3],
+    ...ombreFlottante,
   },
 });
