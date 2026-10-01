@@ -2,7 +2,6 @@ import * as Haptics from 'expo-haptics';
 import { useRef, useState } from 'react';
 import {
   LayoutChangeEvent,
-  PanResponder,
   StyleSheet,
   Text,
   View,
@@ -12,6 +11,7 @@ import {
 import {
   apresLaTape,
   apresLeGlisser,
+  caseSous,
   joursTraverses,
   resumerPlages,
   type CaseMois,
@@ -26,22 +26,32 @@ import { couleurs, dimensions, espace, graisse, typo } from './theme';
 /**
  * Un mois de disponibilités, et les trois gestes qui le modifient.
  *
- * Elle remplace la grille déroulante, qui montrait l'année entière : on ne
- * savait plus où on était, on ne voyait pas ce qui était touchable, et un
- * glissement qui voulait peindre trois journées faisait défiler la page à la
- * place. Un mois à la fois, sans défilement vertical, règle les trois.
- *
  * **Aucun balayage horizontal pour changer de mois.** Le doigt qui traverse
  * l'écran peint des journées ; les flèches de l'en-tête changent de mois.
- * Deux gestes horizontaux sur le même écran, c'est le conflit qu'on traînait.
  *
- * Tout le toucher tient dans un seul `PanResponder` posé sur la grille. Un
+ * Le toucher passe par le système de responder de React Native, posé
+ * directement sur la surface de la grille — sans `PanResponder`. Un
  * `Pressable` par case garderait le doigt pour lui, et le glissement d'une
  * case à l'autre ne se verrait jamais.
+ *
+ * **Où est le doigt.** Le V2.5.3 lisait `locationX` et `locationY`. Sur un
+ * téléphone, ces deux valeurs sont relatives à la vue la plus profonde sous le
+ * doigt — la pastille d'une journée —, pas à la grille : une tape au centre du
+ * 20 donnait environ (22, 22), c'est-à-dire la première case. D'où la journée
+ * qui ne réagissait qu'une fois sur huit, quand le hasard tombait juste. La
+ * case se calcule maintenant sur la position du doigt dans l'écran (`pageX`,
+ * `pageY`) moins l'origine de la grille dans la fenêtre. L'origine se remesure
+ * à chaque changement de taille et à chaque contact : si la grille se
+ * retrouvait un jour dans un conteneur qui défile, le décalage serait compté.
  */
 
 /** Une case ne descend jamais sous la cible tactile ordinaire. */
 export const COTE_MIN = 44;
+
+/** La rangée des initiales, au-dessus des cases : sa hauteur ne sert pas aux cases. */
+const HAUTEUR_INITIALES = typo.caption1.lineHeight + espace[1];
+
+type Origine = { x: number; y: number };
 
 export function GrilleMois({
   mois,
@@ -63,33 +73,27 @@ export function GrilleMois({
   const moisRef = useRef(mois);
   moisRef.current = mois;
   const coteRef = useRef(COTE_MIN);
+  const surface = useRef<View>(null);
+  const origine = useRef<Origine>({ x: 0, y: 0 });
 
-  const depart = useRef<string | null>(null);
+  const depart = useRef<{ date: string; x: number; y: number } | null>(null);
   const geste = useRef<Geste>('offrir');
   const glisse = useRef(false);
   const ouvert = useRef(false);
   const minuterie = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /**
-   * La case sous le doigt. `null` hors grille, ou sur un jour d'un autre mois.
-   *
-   * Les coordonnées peuvent manquer : le système interroge parfois le
-   * responder sans événement, pour savoir si la vue accepte le toucher. Sans
-   * point à examiner, la réponse est « aucune case ».
-   */
-  function caseSous(x: number | undefined, y: number | undefined): CaseMois | null {
-    if (x === undefined || y === undefined) return null;
-    const c = coteRef.current;
-    if (c <= 0) return null;
-    const colonne = Math.floor(x / c);
-    const rangee = Math.floor(y / c);
-    if (colonne < 0 || colonne > 6 || rangee < 0) return null;
-    return moisRef.current.semaines[rangee]?.[colonne] ?? null;
+  /** Où est la grille dans la fenêtre, défilement compris. */
+  function mesurerOrigine() {
+    surface.current?.measureInWindow?.((x, y) => {
+      if (Number.isFinite(x) && Number.isFinite(y)) origine.current = { x, y };
+    });
   }
 
-  /** Une journée passée ne se déclare pas : le doigt la traverse sans effet. */
-  function dateVivanteSous(x: number | undefined, y: number | undefined): string | null {
-    const c = caseSous(x, y);
+  /** La journée vivante sous le doigt : jamais une case vide ou passée. */
+  function dateSous(e?: GestureResponderEvent): string | null {
+    const ne = e?.nativeEvent;
+    if (!ne || ne.pageX === undefined || ne.pageY === undefined) return null;
+    const c = caseSous(moisRef.current, coteRef.current, ne.pageX - origine.current.x, ne.pageY - origine.current.y);
     return c && !c.passee ? c.jour.date : null;
   }
 
@@ -105,93 +109,82 @@ export function GrilleMois({
     minuterie.current = null;
   }
 
-  /**
-   * Le point du doigt, quand il y en a un.
-   *
-   * Le système interroge parfois la vue sans événement, seulement pour savoir
-   * si elle prend le toucher. La réponse est oui : c'est au moment du contact
-   * qu'on regarde sur quelle journée le doigt est tombé, pas avant.
-   */
-  function pointDe(e?: GestureResponderEvent): { x?: number; y?: number } | null {
-    if (!e?.nativeEvent) return null;
-    return { x: e.nativeEvent.locationX, y: e.nativeEvent.locationY };
+  function distance(e: GestureResponderEvent): number {
+    if (!depart.current) return 0;
+    return Math.hypot(e.nativeEvent.pageX - depart.current.x, e.nativeEvent.pageY - depart.current.y);
   }
 
-  const pan = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: (e) => {
-        const p = pointDe(e);
-        return p === null || !!dateVivanteSous(p.x, p.y);
-      },
-      // Le glissement doit primer sur le défilement de la page, sinon la
-      // sélection ne dépasse jamais une case.
-      onMoveShouldSetPanResponder: (e, mouvement) => {
-        const p = pointDe(e);
-        if (p === null) return true;
-        return (
-          Math.hypot(mouvement?.dx ?? 0, mouvement?.dy ?? 0) > TOLERANCE_IMMOBILE &&
-          !!dateVivanteSous(p.x, p.y)
-        );
-      },
-      onPanResponderTerminationRequest: () => !glisse.current,
+  const gestes = {
+    // Le système interroge parfois la vue sans point à examiner : la réponse
+    // est oui, et c'est au contact qu'on regarde quelle journée est touchée.
+    onStartShouldSetResponder: (e: GestureResponderEvent) => !e?.nativeEvent || !!dateSous(e),
+    onMoveShouldSetResponder: (e: GestureResponderEvent) => !e?.nativeEvent || !!dateSous(e),
+    // Une fois le glissement parti, personne d'autre ne prend le doigt.
+    onResponderTerminationRequest: () => !glisse.current,
 
-      onPanResponderGrant: (e) => {
-        const { locationX, locationY, pageX, pageY } = e.nativeEvent;
-        const date = dateVivanteSous(locationX, locationY);
-        depart.current = date;
-        glisse.current = false;
-        ouvert.current = false;
-        if (!date) return;
-        geste.current = apresLeGlisser(etatDe(date));
+    onResponderGrant: (e: GestureResponderEvent) => {
+      const date = dateSous(e);
+      const { pageX, pageY } = e.nativeEvent;
+      depart.current = date ? { date, x: pageX, y: pageY } : null;
+      glisse.current = false;
+      ouvert.current = false;
+      // La prochaine mesure servira au glissement et au relâchement.
+      mesurerOrigine();
+      if (!date) return;
+      geste.current = apresLeGlisser(etatDe(date));
 
-        // Le maintien immobile ouvre les heures. Même durée que dans
-        // l'Horaire : un doigt n'apprend qu'une fois.
-        minuterie.current = setTimeout(() => {
-          ouvert.current = true;
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-          onHeures?.(date, { x: pageX, y: pageY });
-        }, MAINTIEN_LONG);
-      },
+      // Le maintien immobile ouvre les heures. Même durée que dans
+      // l'Horaire : un doigt n'apprend qu'une fois.
+      minuterie.current = setTimeout(() => {
+        ouvert.current = true;
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+        onHeures?.(date, { x: pageX, y: pageY });
+      }, MAINTIEN_LONG);
+    },
 
-      onPanResponderMove: (e, mouvement) => {
-        if (ouvert.current || !depart.current) return;
-        if (Math.hypot(mouvement.dx, mouvement.dy) <= TOLERANCE_IMMOBILE) return;
-        arreter();
-        glisse.current = true;
-        const date = dateVivanteSous(e.nativeEvent.locationX, e.nativeEvent.locationY);
-        setApercu({
-          dates: new Set(joursTraverses(depart.current, date ?? depart.current)),
-          geste: geste.current,
-        });
-      },
+    onResponderMove: (e: GestureResponderEvent) => {
+      if (ouvert.current || !depart.current) return;
+      if (!glisse.current && distance(e) <= TOLERANCE_IMMOBILE) return;
+      arreter();
+      glisse.current = true;
+      const date = dateSous(e) ?? depart.current.date;
+      setApercu({ dates: new Set(joursTraverses(depart.current.date, date)), geste: geste.current });
+    },
 
-      onPanResponderRelease: (e) => {
-        arreter();
-        const debut = depart.current;
-        depart.current = null;
-        setApercu(null);
-        if (!debut || ouvert.current) return;
+    onResponderRelease: (e: GestureResponderEvent) => {
+      arreter();
+      const debut = depart.current;
+      depart.current = null;
+      setApercu(null);
+      if (!debut || ouvert.current) return;
+      if (!glisse.current) {
+        onGeste?.([debut.date], apresLaTape(etatDe(debut.date)));
+        return;
+      }
+      onGeste?.(joursTraverses(debut.date, dateSous(e) ?? debut.date), geste.current);
+    },
 
-        if (!glisse.current) {
-          onGeste?.([debut], apresLaTape(etatDe(debut)));
-          return;
-        }
-        const date = dateVivanteSous(e.nativeEvent.locationX, e.nativeEvent.locationY);
-        onGeste?.(joursTraverses(debut, date ?? debut), geste.current);
-      },
+    onResponderTerminate: () => {
+      arreter();
+      depart.current = null;
+      setApercu(null);
+    },
+  };
 
-      onPanResponderTerminate: () => {
-        arreter();
-        depart.current = null;
-        setApercu(null);
-      },
-    })
-  ).current;
-
+  /**
+   * La taille d'une case : la largeur divisée en sept, sans dépasser ce que la
+   * hauteur disponible permet pour toutes les rangées. La grille occupe la
+   * place restante de l'écran et n'en déborde jamais.
+   */
   function mesurer(e: LayoutChangeEvent) {
-    const c = Math.max(COTE_MIN, e.nativeEvent.layout.width / 7);
+    const { width, height } = e.nativeEvent.layout;
+    const parLargeur = width / 7;
+    const rangees = Math.max(1, moisRef.current.semaines.length);
+    const parHauteur = height > 0 ? (height - HAUTEUR_INITIALES) / rangees : parLargeur;
+    const c = Math.max(COTE_MIN, Math.min(parLargeur, parHauteur));
     coteRef.current = c;
     setCote(c);
+    mesurerOrigine();
   }
 
   /** L'état de la case, aperçu du glissement compris. */
@@ -201,7 +194,7 @@ export function GrilleMois({
   }
 
   return (
-    <View onLayout={mesurer}>
+    <View style={styles.cadre} onLayout={mesurer}>
       <View style={styles.ligne}>
         {initiales.map((initiale, i) => (
           <Text key={i} style={[styles.initiale, { width: cote }]}>
@@ -211,12 +204,12 @@ export function GrilleMois({
       </View>
 
       {/*
-        Un repère de test sur la surface tactile. Les trois gestes vivent dans
-        un seul `PanResponder` posé sur une `View` sans rôle : il n'y a rien
-        d'accessible à viser, et poser une étiquette ici ferait de la grille
-        entière un seul élément pour VoiceOver.
+        Un repère de test sur la surface tactile. Les trois gestes vivent sur
+        une `View` sans rôle : il n'y a rien d'accessible à viser, et poser une
+        étiquette ici ferait de la grille entière un seul élément pour
+        VoiceOver.
       */}
-      <View testID="grille-mois" {...pan.panHandlers}>
+      <View ref={surface} testID="grille-mois" onLayout={mesurerOrigine} {...gestes}>
         {mois.semaines.map((semaine, rang) => (
           <View key={rang} style={styles.ligne}>
             {semaine.map((c, colonne) => (
@@ -281,6 +274,9 @@ function Case({
 }
 
 const styles = StyleSheet.create({
+  cadre: {
+    flex: 1,
+  },
   ligne: {
     flexDirection: 'row',
   },

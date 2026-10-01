@@ -304,6 +304,18 @@ qu'on ne les redécouvre pas trois fois.
   mois à la fois**, et deux flèches en changent — le glissement ne sert qu'à
   peindre. La grille déroulante qui montrait l'année entière est supprimée : on
   ne savait plus où on était, et un mois qu'on ne voit pas entier ne se lit pas.
+- **Une grille qui porte des gestes ne vit dans aucun conteneur qui défile.**
+  Le défilement se dispute le doigt avec elle. « Mes dispos » l'a appris deux
+  fois : le partage — plage, aperçu, compte, bouton — vit sur son propre écran,
+  et l'écran de la grille tient dans la hauteur du téléphone.
+- **La case sous le doigt se calcule sur `pageX` et `pageY`, moins l'origine
+  de la grille dans la fenêtre — jamais sur `locationX`.** Sur un téléphone,
+  `locationX` et `locationY` sont relatifs à la vue la plus profonde sous le
+  doigt, la pastille d'une journée : une tape au centre du 20 donnait la
+  première case, et la journée ne réagissait qu'une fois sur huit. Les tests ne
+  le voyaient pas parce qu'ils donnaient la même valeur aux deux ; ils
+  localisent maintenant le doigt comme un téléphone (`avecLocalisation`). Et
+  l'origine se remesure à chaque changement de taille et à chaque contact.
 - Un geste qu'aucun texte n'annonce n'est pas utilisé, même réparé. Tout écran
   dont le contenu se modifie au doigt porte sa consigne en une ligne, et une
   légende quand les états se distinguent par la couleur. Sur « Mes dispos » :

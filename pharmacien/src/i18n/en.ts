@@ -928,6 +928,8 @@ export const en: Dictionnaire = {
     titreImageAvecPlage: 'Availability — {{plage}}',
     periode: 'Period',
     semainesCourt: '{{n}} wk',
+    voiciCeQuiPart: 'This is what the pharmacy will receive.',
+    envoyer: 'Send',
     personnalise: 'Custom',
     offert: 'Offered',
     nonDeclare: 'Not declared',

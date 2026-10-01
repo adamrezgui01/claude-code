@@ -108,6 +108,7 @@ function premier(table: string, ou = '1 = 1'): string {
 export const ECRANS: Ecran[] = [
   { onglet: 'Horaire', nom: 'Horaire', charger: () => require('../../app/(tabs)/index').default },
   { onglet: 'Horaire', nom: 'Mes dispos', charger: () => require('../../app/disponibilites').default },
+  { onglet: 'Horaire', nom: 'Partager mes dispos', charger: () => require('../../app/disponibilites/partager').default },
   { onglet: 'Horaire', nom: 'Quart (nouveau)', charger: () => require('../../app/quart/[id]').default, params: () => ({ id: 'nouveau' }) },
   { onglet: 'Horaire', nom: 'Quart (existant)', charger: () => require('../../app/quart/[id]').default, params: () => ({ id: premier('quarts') }) },
   { onglet: 'Horaire', nom: 'Frais (nouveau)', charger: () => require('../../app/frais/[id]').default, params: () => ({ id: 'nouveau', quart: premier('quarts') }) },

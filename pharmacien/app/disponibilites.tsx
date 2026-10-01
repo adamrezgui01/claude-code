@@ -1,9 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Sharing from 'expo-sharing';
 import { Stack, useRouter } from 'expo-router';
-import React, { useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import ViewShot, { captureRef } from 'react-native-view-shot';
+import { useMemo, useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   declarerJournee,
@@ -16,14 +14,11 @@ import { useTextes } from '../src/i18n';
 import {
   aimanterHeure,
   ajusterAutourDuQuart,
-  bornerPlage,
   chevauchement,
   disponibilitesEntre,
   finProposee,
-  joursOfferts,
   plageValide,
   moisAffiche,
-  moisCouverts,
   moisNavigable,
   resumerPlages,
   MOIS_MAX,
@@ -33,53 +28,41 @@ import {
   aujourdhui,
   debutMois,
   decalerMois,
-  finMois,
   formatDateLongue,
   formatHeure,
   formatMoisAnnee,
-  formatPlageDates,
   joursCourts,
 } from '../src/lib/dates';
-import { Bouton, Doux, Onglets } from '../src/ui/composants';
+import { Bouton, Doux } from '../src/ui/composants';
 import { FeuilleSurgissante, type PointEcran } from '../src/ui/FeuilleSurgissante';
-import { GrilleDispos } from '../src/ui/GrilleDispos';
 import { GrilleMois } from '../src/ui/GrilleMois';
-import { SelecteurDate, SelecteurHeure } from '../src/ui/Selecteurs';
+import { SelecteurHeure } from '../src/ui/Selecteurs';
 import {
   couleurs,
   dimensions,
   espace,
   graisse,
   icone,
-  imagePartagee,
   typo,
   useAccent,
   CIBLE_MIN,
 } from '../src/ui/theme';
 
 /**
- * La valeur de l'onglet qui ouvre les deux sélecteurs de date. Les trois
- * autres portent un nombre de semaines.
- */
-const PERSONNALISE = 'perso';
-
-/**
- * Les disponibilités, en une image prête à envoyer.
+ * Les disponibilités : un mois, les gestes qui le remplissent, et un bouton
+ * pour l'envoyer.
  *
- * Un propriétaire demande « t'es libre quand ? » par texto, et la réponse part
- * par texto. Une grille se lit d'un coup d'œil ; une liste de dates demande à
- * être lue, et se relit mal dans une conversation.
- *
- * L'image ne porte aucun nom de pharmacie, aucun quart, aucun montant : seules
- * les heures offertes y figurent. Elle circule dans des groupes de remplaçants :
- * ce qui n'a pas à en sortir n'en sort pas.
+ * **Rien ne défile ici.** La grille porte les gestes, et une grille posée dans
+ * un conteneur qui défile se dispute le doigt avec lui : le V2.5.3 avait
+ * remis sous la grille la légende de l'image, le sélecteur de plage, l'aperçu
+ * et le compte, le contenu débordait, le défilement revenait, et les gestes
+ * mouraient. Tout ce qui sert au partage vit sur son propre écran
+ * (`disponibilites/partager`), qui s'ouvre du bouton du bas.
  */
 export default function Disponibilites() {
   const { t, langue } = useTextes();
   const accent = useAccent();
   const router = useRouter();
-  const capture = useRef<React.ComponentRef<typeof ViewShot>>(null);
-  const [choix, setChoix] = useState<string>('1');
   const [plages, setPlages] = useState(listerDisponibilites);
   const [quarts] = useState(listerQuarts);
   const [reglages] = useState(obtenirReglages);
@@ -88,42 +71,18 @@ export default function Disponibilites() {
   const dernierJour = decalerMois(cejour, MOIS_MAX);
   /** Le mois montré. L'écran ouvre sur le mois courant, pas sur le suivant. */
   const [moisVu, setMoisVu] = useState(() => debutMois(cejour));
-  const [debutPlage, setDebutPlage] = useState(debutMois(cejour));
-  const [finPlage, setFinPlage] = useState(finMois(cejour));
 
   /**
-   * Deux périodes, et c'est voulu.
-   *
-   * Celle qu'on modifie va jusqu'à la limite d'un an : une journée qu'on veut
-   * offrir en mars ne doit pas attendre que le sélecteur soit réglé sur le bon
-   * nombre de semaines. La grille défile, elle ne bute pas.
-   *
-   * Celle qu'on partage est la fenêtre choisie. On déclare largement, on
-   * envoie ce qui a été demandé.
+   * La période qu'on modifie va jusqu'à la limite d'un an : une journée qu'on
+   * veut offrir en mars ne doit pas attendre. Celle qu'on partage se choisit
+   * sur l'écran du partage.
    */
   const edition = useMemo(
     () => disponibilitesEntre(plages, cejour, dernierJour, quarts),
     [plages, quarts, cejour, dernierJour]
   );
-  const bornee = useMemo(
-    () => bornerPlage(debutPlage, finPlage, cejour),
-    [debutPlage, finPlage, cejour]
-  );
-  /**
-   * Ce qu'on partage : le mois affiché, ou deux ou trois à partir de lui, ou
-   * une plage choisie à la main. Par défaut le mois affiché — c'est celui
-   * qu'on regarde quand on décide d'envoyer.
-   */
-  const periode = useMemo(() => {
-    if (choix === PERSONNALISE) {
-      return disponibilitesEntre(plages, bornee.debut, bornee.fin, quarts);
-    }
-    const debut = moisVu < debutMois(cejour) ? debutMois(cejour) : moisVu;
-    return disponibilitesEntre(plages, debut, finMois(decalerMois(moisVu, Number(choix) - 1)), quarts);
-  }, [plages, quarts, choix, bornee, moisVu, cejour]);
 
   const grille = useMemo(() => moisAffiche(edition, moisVu, cejour), [edition, moisVu, cejour]);
-  const blocs = useMemo(() => moisCouverts(periode), [periode]);
   const initiales = joursCourts(langue);
   const [heures, setHeures] = useState<{ date: string; point: PointEcran } | null>(null);
   const bornes = { debut: reglages.dispo_debut, fin: reglages.dispo_fin };
@@ -248,29 +207,13 @@ export default function Disponibilites() {
     router.push(`/quart/${premier.id}`);
   }
 
-  async function partager() {
-    try {
-      // La capture se fait sur le nœud, pas sur l'écran : ce qui part est la
-      // carte seule, sans le sélecteur de période ni le bouton.
-      const uri = await captureRef(capture, { format: 'png', quality: 1, result: 'tmpfile' });
-      if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert(t('disponibilites.partageImpossible'));
-        return;
-      }
-      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('disponibilites.titre') });
-    } catch (erreur) {
-      Alert.alert(t('disponibilites.partageImpossible'), `${erreur}`);
-    }
-  }
-
   return (
     <View style={styles.cadre}>
       <Stack.Screen options={{ title: t('disponibilites.titre') }} />
-      <ScrollView contentContainerStyle={styles.contenu}>
+      <View style={styles.contenu}>
         {/*
           Un mois à la fois, et deux flèches. Pas de balayage horizontal pour
-          en changer : le doigt qui traverse l'écran peint des journées, et
-          deux gestes horizontaux sur le même écran s'annulent l'un l'autre.
+          en changer : le doigt qui traverse l'écran peint des journées.
         */}
         <View style={styles.enteteMois}>
           <Fleche
@@ -279,7 +222,7 @@ export default function Disponibilites() {
             etiquette={t('disponibilites.moisPrecedent')}
             onPress={() => setMoisVu(decalerMois(moisVu, -1))}
           />
-          <Text accessibilityRole="header" style={styles.nomDuMois}>
+          <Text accessibilityRole="header" style={styles.nomDuMois} numberOfLines={1}>
             {formatMoisAnnee(moisVu, langue)}
           </Text>
           <Fleche
@@ -290,10 +233,10 @@ export default function Disponibilites() {
           />
         </View>
 
-        {/* Trois tentatives ont échoué sans que rien à l'écran n'indique quoi
-            faire. Même réparé, un geste invisible n'est pas utilisé. */}
+        {/* Même réparé, un geste qu'aucun texte n'annonce n'est pas utilisé. */}
         <Doux>{t('disponibilites.consigne')}</Doux>
 
+        {/* La grille prend toute la place qui reste, et n'en déborde jamais. */}
         <View style={styles.editeur}>
           <GrilleMois
             mois={grille}
@@ -311,100 +254,12 @@ export default function Disponibilites() {
           <Entree couleur={couleurs.filet} texte={t('disponibilites.libre')} />
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <Onglets
-            libelle={t('disponibilites.plagePartagee')}
-            options={[
-              { valeur: '1', texte: t('disponibilites.ceMois') },
-              ...[2, 3].map((n) => ({
-                valeur: `${n}`,
-                texte: t('disponibilites.moisCourt', { n }),
-              })),
-              {
-                valeur: PERSONNALISE,
-                texte: t('disponibilites.personnalise'),
-                icone: 'calendar-outline' as const,
-              },
-            ]}
-            valeur={choix}
-            onChange={setChoix}
-          />
-        </ScrollView>
-
-        {choix === PERSONNALISE && (
-          <View style={styles.deuxChamps}>
-            <View style={styles.moitie}>
-              <SelecteurDate
-                label={t('commun.du')}
-                valeur={bornee.debut}
-                min={cejour}
-                max={dernierJour}
-                onChange={(v) => {
-                  setDebutPlage(v);
-                  // Une fin avant le début n'est pas une plage : elle suit.
-                  if (v > finPlage) setFinPlage(v);
-                }}
-              />
-            </View>
-            <View style={styles.moitie}>
-              <SelecteurDate
-                label={t('commun.au')}
-                valeur={bornee.fin}
-                min={bornee.debut}
-                max={dernierJour}
-                onChange={setFinPlage}
-              />
-            </View>
-          </View>
-        )}
-
-        {/*
-          Fond clair quoi qu'il arrive : l'image part sur le téléphone de
-          quelqu'un d'autre, dont on ne connaît ni le thème ni l'application de
-          messagerie.
-        */}
-        <ViewShot ref={capture} style={styles.image}>
-          {/* Le titre nomme la plage : l'image se retrouve seule dans une
-              conversation trois semaines plus tard. */}
-          <View style={styles.enteteImage}>
-            <Text style={styles.titre}>
-              {t('disponibilites.titreImageAvecPlage', {
-                plage: formatPlageDates(periode.debut, periode.fin, langue),
-              })}
-            </Text>
-            {!!reglages.nom.trim() && <Text style={styles.nom}>{reglages.nom.trim()}</Text>}
-          </View>
-
-          {/* La même grille, sans les gestes ni les quarts : c'est l'image. */}
-          <GrilleDispos blocs={blocs} initiales={initiales} langue={langue} accent={accent} />
-
-          <View style={styles.legende}>
-            <View style={styles.legendeEntree}>
-              <View testID="echantillon-actif" style={[styles.puce, { backgroundColor: accent }]} />
-              <Text style={styles.legendeTexte}>{t('disponibilites.offert')}</Text>
-            </View>
-            <View style={styles.legendeEntree}>
-              <View style={[styles.puce, { backgroundColor: imagePartagee.libre }]} />
-              <Text style={styles.legendeTexte}>{t('disponibilites.nonDeclare')}</Text>
-            </View>
-          </View>
-        </ViewShot>
-
-        <Doux>{t('disponibilites.resume', { count: joursOfferts(periode) })}</Doux>
-        <View style={styles.actions}>
-          <Bouton
-            titre={t('commun.partager')}
-            icone={<Ionicons name="share-outline" size={icone.courante} color={couleurs.surAccent} />}
-            onPress={() => void partager()}
-          />
-        </View>
-        {/*
-          La phrase qui promettait « aucune heure » sous l'image est retirée :
-          une journée offerte sur des heures précises les montre, « 9–17 ».
-          Elle était devenue fausse, et l'aperçu juste au-dessus montre
-          exactement ce qui part.
-        */}
-      </ScrollView>
+        <Bouton
+          titre={t('commun.partager')}
+          icone={<Ionicons name="share-outline" size={icone.courante} color={couleurs.surAccent} />}
+          onPress={() => router.push(`/disponibilites/partager?mois=${moisVu}`)}
+        />
+      </View>
 
       <FeuilleSurgissante
         ouvert={heures !== null}
@@ -512,11 +367,13 @@ function Entree({
     <View style={styles.legendeEntree}>
       <View
         testID={actif ? 'echantillon-actif' : undefined}
-        style={[styles.puce, { backgroundColor: couleur }]}>
+        style={[styles.puce, point && styles.puceLarge, { backgroundColor: couleur }]}>
         {point && <Text style={styles.puceHeures}>9–17</Text>}
         {rond && <View style={styles.pucePoint} />}
       </View>
-      <Text style={styles.legendeTexte}>{texte}</Text>
+      <Text style={styles.legendeTexte} numberOfLines={1}>
+        {texte}
+      </Text>
     </View>
   );
 }
@@ -526,107 +383,74 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: couleurs.fondEcran,
   },
+  /** Tout tient dans l'écran : la grille prend ce que le reste laisse. */
   contenu: {
+    flex: 1,
     paddingHorizontal: dimensions.ecran.margeH,
     paddingTop: dimensions.ecran.margeHaut,
-    paddingBottom: espace[10],
+    paddingBottom: espace[6],
+    gap: espace[3],
   },
-  image: {
-    backgroundColor: imagePartagee.fond,
-    borderRadius: dimensions.carte.rayon,
-    padding: espace[4],
-    marginBottom: espace[3],
+  enteteMois: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  enteteImage: {
-    marginBottom: espace[3],
+  fleche: {
+    minWidth: CIBLE_MIN,
+    minHeight: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  titre: {
-    /* Assez gros pour être le titre, assez petit pour que la plage tienne
-       sur deux lignes au pire. */
+  nomDuMois: {
+    flexShrink: 1,
     ...typo.title3,
     fontWeight: graisse.grasse,
-    color: imagePartagee.texte,
-  },
-  nom: {
-    ...typo.body,
-    fontWeight: graisse.demi,
-    color: imagePartagee.texte,
-    marginTop: espace[1],
-  },
-  bloc: {
-    marginBottom: espace[3],
-  },
-  mois: {
-    ...typo.body,
-    fontWeight: graisse.demi,
-    color: imagePartagee.texte,
+    color: couleurs.textePrincipal,
     textTransform: 'capitalize',
-    marginBottom: espace[1],
   },
-  ligne: {
-    flexDirection: 'row',
-  },
-  initiale: {
+  editeur: {
     flex: 1,
-    textAlign: 'center',
-    ...typo.caption2,
-    fontWeight: graisse.demi,
-    color: imagePartagee.texteSecondaire,
-    marginBottom: espace[1],
   },
-  case: {
-    flex: 1,
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: espace[1],
-  },
-  pastille: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: dimensions.bloc.rayon,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  /** Assez gros pour rester lisible quand l'image s'affiche en vignette. */
-  chiffre: {
-    ...typo.body,
-    fontWeight: graisse.demi,
-    color: imagePartagee.texteSecondaire,
-  },
-  chiffreOffert: {
-    color: couleurs.surAccent,
-    fontWeight: graisse.grasse,
-  },
-  heures: {
-    ...typo.caption2,
-    fontWeight: graisse.demi,
-    color: couleurs.surAccent,
-  },
-  legende: {
+  /** Une seule ligne : quatre échantillons compacts, quatre mots. */
+  legendeGrille: {
     flexDirection: 'row',
-    gap: espace[4],
-    marginTop: espace[1],
+    justifyContent: 'space-between',
+    gap: espace[2],
   },
   legendeEntree: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace[2],
+    gap: espace[1],
   },
   puce: {
-    width: dimensions.echantillon.largeur,
+    width: dimensions.echantillon.hauteur,
     height: dimensions.echantillon.hauteur,
     borderRadius: dimensions.case.rayon,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  legendeTexte: {
-    ...typo.footnote,
-    color: imagePartagee.texte,
+  /** L'échantillon des heures précises porte « 9–17 » : il lui faut la largeur. */
+  puceLarge: {
+    width: dimensions.echantillon.largeur,
   },
-  actions: {
-    marginTop: espace[2],
-    marginBottom: espace[3],
+  puceHeures: {
+    ...typo.caption2,
+    fontWeight: graisse.demi,
+    color: couleurs.surAccent,
+  },
+  pucePoint: {
+    position: 'absolute',
+    top: espace[1],
+    right: espace[1],
+    width: dimensions.point.cote,
+    height: dimensions.point.cote,
+    borderRadius: dimensions.point.cote / 2,
+    backgroundColor: couleurs.surAccent,
+  },
+  legendeTexte: {
+    ...typo.caption1,
+    color: couleurs.textePrincipal,
   },
   titreFeuille: {
     ...typo.headline,
@@ -644,51 +468,9 @@ const styles = StyleSheet.create({
   moitie: {
     flex: 1,
   },
-  editeur: {
-    marginBottom: espace[4],
-  },
   refus: {
     ...typo.subhead,
     fontWeight: graisse.demi,
     color: couleurs.alerte,
-  },
-  enteteMois: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: espace[2],
-  },
-  fleche: {
-    /* La même cible que partout ailleurs, même si le chevron fait 22 points. */
-    minWidth: CIBLE_MIN,
-    minHeight: CIBLE_MIN,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nomDuMois: {
-    ...typo.title3,
-    fontWeight: graisse.grasse,
-    color: couleurs.textePrincipal,
-    textTransform: 'capitalize',
-  },
-  legendeGrille: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: espace[3],
-    marginBottom: espace[4],
-  },
-  puceHeures: {
-    ...typo.caption2,
-    fontWeight: graisse.demi,
-    color: couleurs.surAccent,
-  },
-  pucePoint: {
-    position: 'absolute',
-    top: espace[1],
-    right: espace[1],
-    width: dimensions.point.cote,
-    height: dimensions.point.cote,
-    borderRadius: dimensions.point.cote / 2,
-    backgroundColor: couleurs.surAccent,
   },
 });

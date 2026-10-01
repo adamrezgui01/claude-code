@@ -171,6 +171,7 @@ export default function Racine() {
           <Stack.Screen name="factures" options={{ title: t('facture.titreListe') }} />
           <Stack.Screen name="apparence" options={{ title: t('apparence.titre') }} />
           <Stack.Screen name="disponibilites" options={{ title: t('disponibilites.titre') }} />
+          <Stack.Screen name="disponibilites/partager" options={{ title: t('disponibilites.partager') }} />
         </Stack>
           <BandeauCapture />
           </>

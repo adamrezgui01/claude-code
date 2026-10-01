@@ -937,6 +937,8 @@ export const fr = {
     titreImageAvecPlage: 'Disponibilités — {{plage}}',
     periode: 'Période',
     semainesCourt: '{{n}} sem.',
+    voiciCeQuiPart: 'Voici ce que la pharmacie va recevoir.',
+    envoyer: 'Envoyer',
     personnalise: 'Personnalisé',
     offert: 'Offert',
     nonDeclare: 'Non déclaré',

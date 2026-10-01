@@ -1,7 +1,8 @@
 jest.mock('expo-sqlite', () => require('../base').fauxExpoSqlite);
+const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   Stack: { Screen: () => null },
-  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({ push: mockPush, back: jest.fn() }),
   useLocalSearchParams: () => ({}),
 }));
 jest.mock('react-native-view-shot', () => {
@@ -16,7 +17,7 @@ import Disponibilites from '../../app/disponibilites';
 import { listerDisponibilites } from '../../src/db/disponibilites';
 import { initialiserBase } from '../../src/db/index';
 import { neuveBase } from '../base';
-import { glisser, taper } from './gestes';
+import { avecLocalisation, glisser, maintenir, taper } from './gestes';
 import { rendre } from './socle';
 
 /**
@@ -39,6 +40,7 @@ function centre(colonne: number, rangee: number) {
 
 /** L'horloge est figée : sans ça, le mois courant change avec le calendrier. */
 beforeEach(() => {
+  mockPush.mockClear();
   jest.useFakeTimers({ doNotFake: ['nextTick'] });
   jest.setSystemTime(new Date('2026-10-02T12:00:00'));
   neuveBase();
@@ -151,21 +153,126 @@ describe('ce que l’écran dit de lui-même', () => {
     ).toBeTruthy();
   });
 
-  test('la légende a ses quatre entrées', async () => {
+  test('la légende a ses quatre entrées, une seule fois', async () => {
+    // La légende de l'image partagée vit sur l'autre écran : les deux ne se
+    // suivent plus.
     await poser();
-    // « Offert » paraît deux fois : dans cette légende et dans celle de
-    // l'image partagée. Les trois autres n'appartiennent qu'à la grille.
-    expect(screen.getAllByText('Offert').length).toBeGreaterThan(0);
-    for (const mot of ['Heures précises', 'Quart prévu', 'Libre']) {
-      expect(screen.getByText(mot)).toBeTruthy();
+    for (const mot of ['Offert', 'Heures précises', 'Quart prévu', 'Libre']) {
+      expect(screen.getAllByText(mot)).toHaveLength(1);
     }
+    expect(screen.queryByText('Non déclaré')).toBeNull();
   });
 
-  test('la plage à partager part du mois affiché', async () => {
+  test('Partager ouvre l’écran du partage, sur le mois affiché', async () => {
     await poser();
-    expect(screen.getByText('Ce mois-ci')).toBeTruthy();
-    expect(screen.getByText('2 mois')).toBeTruthy();
-    expect(screen.getByText('3 mois')).toBeTruthy();
-    expect(screen.getByText('Personnalisé')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Mois suivant'));
+    await fireEvent.press(screen.getByText('Partager'));
+    expect(mockPush).toHaveBeenCalledWith('/disponibilites/partager?mois=2026-11-01');
+  });
+
+  test('le sélecteur de plage et l’aperçu n’y sont plus', async () => {
+    await poser();
+    expect(screen.queryByText('Ce mois-ci')).toBeNull();
+    expect(screen.queryByText('Personnalisé')).toBeNull();
+  });
+});
+
+// ===========================================================================
+// V2.5.4 A — la grille ne vit dans aucun défilement, et elle sait où est le
+// doigt
+// ===========================================================================
+
+/**
+ * Le doigt tel que le téléphone le rapporte. `pageX` et `pageY` disent où il
+ * est sur l'écran ; `locationX` et `locationY`, où il est **dans la vue la plus
+ * profonde qu'il touche** — la pastille d'une journée, à quelques points de
+ * son coin. Les premiers tests donnaient les mêmes valeurs aux deux, et
+ * passaient pendant que l'écran confondait le 20 avec le 1er.
+ */
+const commeUnTelephone = (p: { x: number; y: number }) => ({ x: p.x % COTE, y: p.y % COTE });
+
+function hotes(noeud: unknown, type: string): number {
+  if (!noeud || typeof noeud !== 'object') return 0;
+  if (Array.isArray(noeud)) return noeud.reduce((n, e) => n + hotes(e, type), 0);
+  const n = noeud as { type?: string; children?: unknown[] };
+  return (n.type === type ? 1 : 0) + hotes(n.children ?? [], type);
+}
+
+/** Octobre 2026 : le 1er est un jeudi, le 31 un samedi. On est le 2. */
+const PREMIERE_RANGEE: [number, string][] = [
+  [4, '2026-10-02'],
+  [5, '2026-10-03'],
+  [6, '2026-10-04'],
+];
+const DERNIERE_RANGEE: [number, string][] = [
+  [0, '2026-10-26'],
+  [1, '2026-10-27'],
+  [2, '2026-10-28'],
+  [3, '2026-10-29'],
+  [4, '2026-10-30'],
+  [5, '2026-10-31'],
+];
+
+describe('V2.5.4 A — les gestes de Mes dispos', () => {
+  test('1 — l’écran ne contient aucun conteneur défilant', async () => {
+    await poser();
+    expect(hotes(screen.toJSON(), 'RCTScrollView')).toBe(0);
+  });
+
+  for (const [colonne, date] of PREMIERE_RANGEE) {
+    test(`2 — une tape sur le ${date} bascule le ${date} (première rangée)`, async () => {
+      const grille = await poser();
+      await avecLocalisation(commeUnTelephone, () => taper(grille, centre(colonne, 0)));
+      expect(listerDisponibilites().map((p) => p.date)).toEqual([date]);
+    });
+  }
+
+  for (const [colonne, date] of DERNIERE_RANGEE) {
+    test(`2 — une tape sur le ${date} bascule le ${date} (dernière rangée)`, async () => {
+      const grille = await poser();
+      await avecLocalisation(commeUnTelephone, () => taper(grille, centre(colonne, 4)));
+      expect(listerDisponibilites().map((p) => p.date)).toEqual([date]);
+    });
+  }
+
+  test('2 — une tape sur le 20 octobre bascule le 20 octobre', async () => {
+    const grille = await poser();
+    await avecLocalisation(commeUnTelephone, () => taper(grille, centre(1, 3)));
+    expect(listerDisponibilites().map((p) => p.date)).toEqual(['2026-10-20']);
+  });
+
+  test('3 — une tape suffit : pas deux, pas huit', async () => {
+    const grille = await poser();
+    await avecLocalisation(commeUnTelephone, () => taper(grille, centre(1, 3)));
+    expect(listerDisponibilites()).toHaveLength(1);
+    await avecLocalisation(commeUnTelephone, () => taper(grille, centre(1, 3)));
+    expect(listerDisponibilites()).toHaveLength(0);
+  });
+
+  test('4 — un glissement du 5 au 9 touche les cinq journées', async () => {
+    const grille = await poser();
+    await avecLocalisation(commeUnTelephone, () => glisser(grille, centre(0, 1), centre(4, 1)));
+    expect(listerDisponibilites().map((p) => p.date)).toEqual([
+      '2026-10-05',
+      '2026-10-06',
+      '2026-10-07',
+      '2026-10-08',
+      '2026-10-09',
+    ]);
+  });
+
+  test('5 — un appui de 500 ms ouvre la feuille des heures, et n’écrit rien', async () => {
+    const grille = await poser();
+    await avecLocalisation(commeUnTelephone, () => maintenir(grille, centre(1, 3), 500));
+    expect(screen.getByText('Je suis disponible')).toBeTruthy();
+    expect(listerDisponibilites()).toEqual([]);
+  });
+
+  test('6 — aucun PanResponder dans l’écran ni dans sa grille', () => {
+    const fs = require('node:fs');
+    for (const fichier of ['app/disponibilites.tsx', 'src/ui/GrilleMois.tsx']) {
+      const source = fs.readFileSync(fichier, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+      expect({ fichier, panResponder: source.includes('PanResponder') }).toEqual({ fichier, panResponder: false });
+    }
   });
 });

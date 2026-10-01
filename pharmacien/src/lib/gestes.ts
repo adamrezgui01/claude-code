@@ -13,8 +13,10 @@ export const MAINTIEN_COURT = 180;
 /**
  * Maintien long, immobile : le geste change de nature. Dans l'Horaire il
  * bascule en duplication ; dans « Mes dispos » il ouvre les heures.
+ * Une demi-seconde, comme l'appui long du système : 650 ms se faisaient
+ * attendre, et un doigt qui attend relâche avant que rien n'arrive.
  */
-export const MAINTIEN_LONG = 650;
+export const MAINTIEN_LONG = 500;
 
 /** Au-delà, le doigt glisse : le maintien long ne se déclenche plus. */
 export const TOLERANCE_IMMOBILE = 8;

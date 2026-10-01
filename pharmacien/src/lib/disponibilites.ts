@@ -470,3 +470,17 @@ export function ajusterAutourDuQuart(plage: Heures, quart: Heures): Heures | nul
   const retenu = dureeAvant >= dureeApres ? avant : apres;
   return { debut: minutesEnHeure(retenu.debut), fin: minutesEnHeure(retenu.fin) };
 }
+
+/**
+ * La case sous un point, en coordonnées de la grille : `null` hors grille ou
+ * sur un jour qui n'est pas du mois. Le point se calcule avant, sur la
+ * position du doigt dans l'écran moins l'origine de la grille — jamais sur
+ * `locationX`, relatif à la vue touchée.
+ */
+export function caseSous(mois: MoisAffiche, cote: number, x: number, y: number): CaseMois | null {
+  if (cote <= 0 || x < 0 || y < 0) return null;
+  const colonne = Math.floor(x / cote);
+  const rangee = Math.floor(y / cote);
+  if (colonne > 6) return null;
+  return mois.semaines[rangee]?.[colonne] ?? null;
+}

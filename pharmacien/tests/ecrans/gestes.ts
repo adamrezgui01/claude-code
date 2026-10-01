@@ -1,4 +1,4 @@
-import { fireEvent } from '@testing-library/react-native';
+import { act, fireEvent } from '@testing-library/react-native';
 import type { TestInstance } from 'test-renderer';
 
 /**
@@ -27,12 +27,35 @@ const DOIGT = 1;
  */
 let horloge = 1_000_000;
 
+/**
+ * Où tombe le doigt dans l'élément touché. Par défaut, au même endroit que sur
+ * l'écran — c'est ce que les premiers tests supposaient, et c'est faux sur un
+ * téléphone : `locationX` est relatif à la **vue la plus profonde sous le
+ * doigt** (la pastille d'une journée), pas à la vue qui porte le geste. Un
+ * test qui veut ressembler au téléphone passe sa propre fonction.
+ */
+export type Localiser = (p: { x: number; y: number }) => { x: number; y: number };
+
+let localiser: Localiser = (p) => p;
+
+/** Le temps d'un bloc : les gestes qu'il pilote localisent le doigt ainsi. */
+export async function avecLocalisation(fonction: Localiser, bloc: () => Promise<void>) {
+  const avant = localiser;
+  localiser = fonction;
+  try {
+    await bloc();
+  } finally {
+    localiser = avant;
+  }
+}
+
 function evenement(x: number, y: number, depart: { x: number; y: number }, debutDuGeste: number) {
   horloge += 16;
+  const local = localiser({ x, y });
   const touche = {
     identifier: DOIGT,
-    locationX: x,
-    locationY: y,
+    locationX: local.x,
+    locationY: local.y,
     pageX: x,
     pageY: y,
     target: 1,
@@ -87,6 +110,8 @@ export async function glisser(cible: TestInstance, depart: Point, arrivee: Point
 export async function maintenir(cible: TestInstance, point: Point, millisecondes: number) {
   const debut = horloge;
   await fireEvent(cible, 'responderGrant', evenement(point.x, point.y, point, debut));
-  jest.advanceTimersByTime(millisecondes);
+  await act(async () => {
+    jest.advanceTimersByTime(millisecondes);
+  });
   await fireEvent(cible, 'responderRelease', evenement(point.x, point.y, point, debut));
 }
