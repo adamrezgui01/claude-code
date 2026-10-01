@@ -1,0 +1,184 @@
+/*
+ * La mise en page et la typographie. Toute valeur vient de jetons.css : ici,
+ * on assemble, on ne choisit pas.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fond-ecran);
+  color: var(--texte-principal);
+  font: var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+/* --- Les onze rôles -------------------------------------------------- */
+
+.large-title { font: var(--large-title); }
+.title1 { font: var(--title1); }
+.title2 { font: var(--title2); }
+.title3 { font: var(--title3); }
+.headline { font: var(--headline); }
+.body { font: var(--body); }
+.callout { font: var(--callout); }
+.subhead { font: var(--subhead); }
+.footnote { font: var(--footnote); }
+.caption1 { font: var(--caption1); }
+.caption2 { font: var(--caption2); }
+
+.secondaire { color: var(--texte-secondaire); }
+
+/* --- Les icônes ------------------------------------------------------ */
+
+.icone {
+  flex: none;
+  width: var(--icone);
+  height: var(--icone);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--trait-icone);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.icone-petite { width: var(--icone-petite); height: var(--icone-petite); }
+.icone-grande { width: var(--icone-grande); height: var(--icone-grande); }
+.icone-pleine { fill: currentColor; }
+
+/* --- Le cadre -------------------------------------------------------- */
+
+.contenu {
+  width: 100%;
+  max-width: var(--largeur-contenu);
+  margin: 0 auto;
+  padding: var(--espace-6) var(--marge-ecran) var(--espace-10);
+}
+
+.titre-ecran {
+  font: var(--title1);
+  font-weight: var(--grasse);
+  margin-bottom: var(--espace-6);
+}
+
+.vide {
+  font: var(--body);
+  color: var(--texte-secondaire);
+  text-align: center;
+  padding: var(--espace-10) 0;
+}
+
+/* --- La barre d'onglets ---------------------------------------------
+ * Blanche sur le gris de l'écran : la différence de fond marque la limite,
+ * sans filet. L'onglet actif porte le mauve, et lui seul.
+ */
+
+.onglets {
+  background: var(--fond-eleve);
+}
+
+.onglet {
+  display: flex;
+  align-items: center;
+  min-width: var(--cible);
+  min-height: var(--cible);
+  color: var(--texte-secondaire);
+  text-decoration: none;
+}
+
+.onglet[aria-current='page'] {
+  color: var(--accent);
+}
+
+.onglet:focus-visible {
+  outline: var(--pastille-contour) solid var(--accent);
+  outline-offset: calc(-1 * var(--espace-1));
+}
+
+/* Un grand écran : la barre passe à gauche, en colonne. */
+@media (min-width: 700px) {
+  .cadre {
+    display: grid;
+    grid-template-columns: var(--colonne-onglets) minmax(0, 1fr);
+    min-height: 100vh;
+  }
+
+  .onglets {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espace-1);
+    padding: var(--espace-6) var(--espace-3);
+  }
+
+  .onglet {
+    gap: var(--espace-3);
+    padding: 0 var(--espace-3);
+    border-radius: var(--rayon);
+    font: var(--body);
+  }
+
+  .onglet[aria-current='page'] {
+    background: var(--accent-pale);
+    font-weight: var(--demi);
+  }
+}
+
+/* Sous 700 pixels : un téléphone. Une colonne, la barre en bas. */
+@media (max-width: 699.98px) {
+  .contenu {
+    padding-bottom: calc(var(--barre-onglets) + var(--espace-10) + env(safe-area-inset-bottom));
+  }
+
+  .onglets {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .onglet {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--espace-1);
+    min-height: var(--barre-onglets);
+    padding: var(--espace-1) 0;
+  }
+
+  .onglet-nom {
+    font: var(--caption2);
+    font-weight: var(--moyenne);
+  }
+}

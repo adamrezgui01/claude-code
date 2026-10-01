@@ -1,0 +1,104 @@
+/*
+ * Les jetons du site. Les mêmes que ceux de l'application (V2.6,
+ * pharmacien/src/ui/theme.tsx) : le site et l'application doivent avoir l'air
+ * du même produit.
+ *
+ * C'est le seul fichier où une couleur, une taille de texte ou une dimension
+ * s'écrit en valeur. Partout ailleurs, elle se prend ici par son nom. Un test
+ * (tests/jetons.test.ts) le vérifie.
+ */
+
+:root {
+  /* --- Couleur ---------------------------------------------------------
+   * Quatre neutres, nommés par leur rôle et jamais par leur teinte, plus
+   * l'accent. Le mauve ne marque que l'élément actif et l'action principale.
+   */
+  --texte-principal: #1E1B22;
+  --texte-secondaire: #6E6875;
+  --fond-ecran: #F6F4F2;
+  --fond-eleve: #FFFFFF;
+  --accent: #7847C2;
+
+  /* Des dérivés, pas des neutres de plus. */
+  --filet: #6E687533;
+  --voile: #1E1B2299;
+  --accent-pale: #7847C21E;
+  --sur-accent: #FFFFFF;
+
+  /* Les couleurs qui portent une information : une alerte, un paiement, un
+     favori. L'esthétique n'y touche pas. */
+  --alerte: #B4431F;
+  --alerte-pale: #FBEAE3;
+  --succes: #2F7D52;
+  --succes-pale: #E4F1E9;
+  --attente: #8A8592;
+  --gris-pale: #EDEBEF;
+  --favori: #D9A21B;
+
+  /* --- Typographie -----------------------------------------------------
+   * La pile système : SF Pro sur les appareils Apple, sans rien télécharger.
+   * Onze rôles, relevés sur les Human Interface Guidelines, et aucune autre
+   * taille dans le site. Un pixel ici vaut un point sur un téléphone.
+   */
+  --police: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+
+  --large-title: 400 34px/41px var(--police);
+  --title1: 400 28px/34px var(--police);
+  --title2: 400 22px/28px var(--police);
+  --title3: 400 20px/25px var(--police);
+  --headline: 600 17px/22px var(--police);
+  --body: 400 17px/22px var(--police);
+  --callout: 400 16px/21px var(--police);
+  --subhead: 400 15px/20px var(--police);
+  --footnote: 400 13px/18px var(--police);
+  --caption1: 400 12px/16px var(--police);
+  --caption2: 400 11px/13px var(--police);
+
+  /* Graisses permises. Jamais en dessous de Regular. */
+  --reguliere: 400;
+  --moyenne: 500;
+  --demi: 600;
+  --grasse: 700;
+
+  /* --- Espacement ------------------------------------------------------
+   * 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40. La clé compte les pas de quatre.
+   */
+  --espace-1: 4px;
+  --espace-2: 8px;
+  --espace-3: 12px;
+  --espace-4: 16px;
+  --espace-5: 20px;
+  --espace-6: 24px;
+  --espace-8: 32px;
+  --espace-10: 40px;
+
+  /* --- Dimensions ------------------------------------------------------ */
+  --rayon: 16px;
+  --rayon-capsule: 999px;
+  /* Toute cible fait au moins 44 pixels dans les deux sens. */
+  --cible: 44px;
+  --champ: 50px;
+  --bouton: 52px;
+  --filet-epaisseur: 1px;
+  --pastille: 8px;
+  --pastille-contour: 1.5px;
+  --case: 22px;
+  --case-rayon: 6px;
+  --case-contour: 1.5px;
+  --barre-rayon: 4px;
+  --icone-petite: 16px;
+  --icone: 20px;
+  --icone-grande: 24px;
+  /* L'épaisseur du trait d'une icône, sans unité : elle suit la taille. */
+  --trait-icone: 1.75;
+  /* La barre d'onglets du téléphone : une icône, un mot, comme celle d'iOS. */
+  --barre-onglets: 49px;
+
+  /* La page. Une ligne de 1400 pixels ne se lit pas. */
+  --largeur-contenu: 700px;
+  --marge-ecran: var(--espace-5);
+  --colonne-onglets: 200px;
+
+  /* La seule ombre du site, pour ce qui flotte réellement. */
+  --ombre-flottante: 0 8px 24px #1E1B221F;
+}
