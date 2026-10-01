@@ -14,8 +14,8 @@ import { annulationsPharmacie } from '../../src/db/quarts';
 import { ligneVille } from '../../src/lib/adresses';
 import { aujourdhui } from '../../src/lib/dates';
 import { filtrerPharmacies, pharmacieQuiAnnule } from '../../src/lib/repertoire';
-import { Bouton, Ecran, Fondu, Onglets, Vide } from '../../src/ui/composants';
-import { couleurs, espace, police, rayon, texte, CIBLE_MIN } from '../../src/ui/theme';
+import { Bouton, Ecran, Onglets, Vide } from '../../src/ui/composants';
+import { couleurs, dimensions, espace, icone, typo, CIBLE_MIN } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 type Tri = 'alphabetique' | 'recentes';
@@ -36,9 +36,19 @@ export default function Repertoire() {
 
   const cherche = recherche.trim().length > 0;
 
-  const filtrees = useMemo(() => filtrerPharmacies(pharmacies, recherche), [pharmacies, recherche]);
-
-  const favorites = useMemo(() => pharmacies.filter((p) => p.favori), [pharmacies]);
+  /*
+   * Les favorites en tête, puis le reste, dans l'ordre du tri choisi. Elles
+   * paraissaient deux fois — dans une section « Favoris », puis dans la liste
+   * complète sous « Toutes les pharmacies » — et l'étoile dorée suffit à les
+   * reconnaître. C'est l'ordre du sélecteur de pharmacie de la fiche du quart.
+   */
+  const filtrees = useMemo(
+    () =>
+      filtrerPharmacies(pharmacies, recherche).sort(
+        (a, b) => (b.favori ? 1 : 0) - (a.favori ? 1 : 0)
+      ),
+    [pharmacies, recherche]
+  );
 
   function basculerFavori(p: Pharmacie) {
     definirFavori(p.id, !p.favori);
@@ -50,23 +60,23 @@ export default function Repertoire() {
       {pharmacies.length > 0 && (
         <>
           <View style={styles.recherche}>
-            <Ionicons name="search" size={16} color={couleurs.doux} />
+            <Ionicons name="search" size={icone.petite} color={couleurs.texteSecondaire} />
             <TextInput
               style={styles.saisie}
               value={recherche}
               onChangeText={setRecherche}
               placeholder={t('repertoire.rechercher')}
-              placeholderTextColor={couleurs.doux}
+              placeholderTextColor={couleurs.texteSecondaire}
               autoCorrect={false}
               returnKeyType="search"
             />
             {cherche && (
               <Pressable
-            onPress={() => setRecherche('')}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('commun.effacerRecherche')}>
-                <Ionicons name="close-circle" size={16} color={couleurs.doux} />
+                onPress={() => setRecherche('')}
+                accessibilityRole="button"
+                accessibilityLabel={t('commun.effacerRecherche')}
+                style={styles.effacer}>
+                <Ionicons name="close-circle" size={icone.petite} color={couleurs.texteSecondaire} />
               </Pressable>
             )}
           </View>
@@ -81,23 +91,6 @@ export default function Repertoire() {
             onChange={setTri}
           />
         </>
-      )}
-
-      {!cherche && favorites.length > 0 && (
-        <Fondu>
-          <Text style={styles.section}>Favoris</Text>
-          {favorites.map((p) => (
-            <LignePharmacie
-              key={`favori-${p.id}`}
-              pharmacie={p}
-              onPress={() => router.push(`/pharmacie/${p.id}`)}
-              onEtoile={() => basculerFavori(p)}
-            />
-          ))}
-          <Text style={styles.section}>
-            {t(tri === 'alphabetique' ? 'repertoire.toutes' : 'repertoire.plusRecentes')}
-          </Text>
-        </Fondu>
       )}
 
       {filtrees.length === 0 ? (
@@ -142,17 +135,21 @@ function LignePharmacie({
    */
   const annuleSouvent = pharmacieQuiAnnule(annulationsPharmacie(pharmacie.id), aujourdhui());
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.ligne, pressed && { opacity: 0.6 }]}>
       {/* L'étoile se bascule d'un geste, sans ouvrir la fiche. */}
       <Pressable
         onPress={onEtoile}
         accessibilityRole="button"
         accessibilityLabel={t('pharmacie.favori')}
-        hitSlop={10}>
+        accessibilityState={{ checked: !!pharmacie.favori }}
+        style={styles.etoile}>
         <Ionicons
           name={pharmacie.favori ? 'star' : 'star-outline'}
-          size={18}
-          color={pharmacie.favori ? couleurs.favori : couleurs.bordure}
+          size={icone.courante}
+          color={pharmacie.favori ? couleurs.favori : couleurs.filet}
         />
       </Pressable>
       <View style={styles.texte}>
@@ -165,7 +162,7 @@ function LignePharmacie({
           {annuleSouvent && (
             <Ionicons
               name="alert-circle-outline"
-              size={15}
+              size={icone.petite}
               color={couleurs.alerte}
               accessibilityLabel={t('pharmacie.annuleSouventCourt')}
             />
@@ -187,44 +184,48 @@ function LignePharmacie({
 }
 
 const styles = StyleSheet.create({
+  /** La barre de recherche a la forme d'un champ : même hauteur, même rayon, aucun contour. */
   recherche: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingHorizontal: espace.m,
-    minHeight: CIBLE_MIN,
-    marginBottom: espace.s,
+    gap: espace[2],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.champ.rayon,
+    paddingHorizontal: dimensions.champ.remplissageH,
+    minHeight: dimensions.champ.hauteur,
+    marginBottom: espace[2],
   },
   saisie: {
     flex: 1,
-    fontSize: texte.corps,
-    fontFamily: police.normal,
-    color: couleurs.texte,
-    paddingVertical: espace.s,
+    ...typo.body,
+    color: couleurs.textePrincipal,
+    minHeight: dimensions.champ.hauteur,
+    minWidth: CIBLE_MIN,
   },
-  section: {
-    fontSize: texte.secondaire,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginTop: espace.s,
-    marginBottom: espace.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  effacer: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  /** Blanc sur le gris de l'écran, sans contour. */
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.m,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.m,
-    marginBottom: espace.s,
+    gap: espace[2],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    paddingVertical: espace[3],
+    paddingRight: espace[3],
+    marginBottom: espace[2],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+  },
+  etoile: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   texte: {
     flex: 1,
@@ -232,31 +233,28 @@ const styles = StyleSheet.create({
   nomRangee: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
+    gap: espace[2],
   },
   pointEviter: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    width: dimensions.pastille.cote,
+    height: dimensions.pastille.cote,
+    borderRadius: dimensions.pastille.cote / 2,
     backgroundColor: couleurs.attente,
   },
   nom: {
     flexShrink: 1,
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.headline,
+    color: couleurs.textePrincipal,
   },
   nomEviter: {
-    color: couleurs.doux,
+    color: couleurs.texteSecondaire,
   },
   detail: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
   },
   compte: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
   },
 });

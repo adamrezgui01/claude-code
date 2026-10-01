@@ -63,13 +63,21 @@ import {
   Onglets,
   Puce,
   Section,
-  Separateur,
   SousTitre,
 } from '../../src/ui/composants';
 import { deposerPharmacieCreee } from '../../src/lib/retourPharmacie';
 import { SaisieAdresse } from '../../src/ui/SaisieAdresse';
 import { SelecteurDuree } from '../../src/ui/Selecteurs';
-import { couleurs, espace, police, rayon, texte, useAccent } from '../../src/ui/theme';
+import {
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 /** Durées de pause courantes. « Autre » ouvre la roulette. */
@@ -78,7 +86,6 @@ const PAUSES = [30, 45, 60];
 export default function FichePharmacie() {
   const { t, langue } = useTextes();
   const router = useRouter();
-  const accent = useAccent();
   const params = useLocalSearchParams<{
     id: string;
     recherche?: string;
@@ -440,7 +447,8 @@ export default function FichePharmacie() {
                   : undefined
               }
               apresRecherche={
-                <Section titre={t('pharmacie.pageIdentite')}>
+                // Sans titre : l'onglet au-dessus s'appelle déjà « Identité ».
+                <Section>
                   <Champ
                     nu
                     label={t('pharmacie.nom')}
@@ -473,21 +481,21 @@ export default function FichePharmacie() {
               <Bouton
                 titre={t('pharmacie.itineraire')}
                 variante="secondaire"
-                icone={<Ionicons name="navigate-outline" size={18} color={couleurs.texte} />}
+                icone={<Ionicons name="navigate-outline" size={icone.courante} color={couleurs.textePrincipal} />}
                 onPress={() => ouvrirItineraireVers(adresseUneLigne(adresse))}
               />
             )}
 
+            {/* Sans en-tête : chaque ligne commence par « Annulé le ». */}
             {!nouvelle && annules.length > 0 && (
               <>
-                <Separateur />
-                <SousTitre>{t('pharmacie.quartsAnnules')}</SousTitre>
+                <View style={styles.entreGroupes} />
                 {/* Trois annulations en un an, c'est un motif. On le dit une
                     fois, en clair, et l'usager décide seul s'il coche « à
                     éviter » : l'application ne classe personne à sa place. */}
                 {signale && (
                   <View style={styles.signal}>
-                    <Ionicons name="alert-circle-outline" size={18} color={couleurs.alerte} />
+                    <Ionicons name="alert-circle-outline" size={icone.courante} color={couleurs.alerte} />
                     <Text style={styles.signalTexte}>
                       {t('pharmacie.annuleSouvent', { count: imputables.length })}
                     </Text>
@@ -500,7 +508,8 @@ export default function FichePharmacie() {
                   <Pressable
                     key={quart.id}
                     onPress={() => router.push(`/quart/${quart.id}`)}
-                    hitSlop={4}>
+                    accessibilityRole="button"
+                    style={styles.ligneAnnulee}>
                     <Text style={styles.annule}>
                       {t('annulation.ligneFiche', {
                         jour: formatDateLongue(quart.date, langue),
@@ -514,35 +523,39 @@ export default function FichePharmacie() {
 
             {!nouvelle && (
               <>
-                <Separateur />
+                <View style={styles.entreGroupes} />
                 <View style={styles.reperes}>
                   <Pressable
                     onPress={basculerFavori}
+                    accessibilityRole="button"
+                    accessibilityState={{ checked: favori }}
                     style={({ pressed }) => [
                       styles.repere,
-                      favori && { borderColor: couleurs.favori, backgroundColor: couleurs.favoriPale },
+                      favori && { backgroundColor: couleurs.favoriPale },
                       pressed && { opacity: 0.6 },
                     ]}>
                     <Ionicons
                       name={favori ? 'star' : 'star-outline'}
-                      size={18}
-                      color={favori ? couleurs.favori : couleurs.doux}
+                      size={icone.courante}
+                      color={favori ? couleurs.favori : couleurs.texteSecondaire}
                     />
-                    <Text style={[styles.repereTexte, favori && { fontFamily: police.demi }]}>{t('pharmacie.favori')}</Text>
+                    <Text style={[styles.repereTexte, favori && { fontWeight: graisse.demi }]}>{t('pharmacie.favori')}</Text>
                   </Pressable>
                   <Pressable
                     onPress={basculerAEviter}
+                    accessibilityRole="button"
+                    accessibilityState={{ checked: aEviter }}
                     style={({ pressed }) => [
                       styles.repere,
-                      aEviter && { borderColor: couleurs.attente },
+                      aEviter && { backgroundColor: couleurs.grisPale },
                       pressed && { opacity: 0.6 },
                     ]}>
                     <Ionicons
                       name={aEviter ? 'remove-circle' : 'remove-circle-outline'}
-                      size={18}
-                      color={couleurs.doux}
+                      size={icone.courante}
+                      color={couleurs.texteSecondaire}
                     />
-                    <Text style={[styles.repereTexte, aEviter && { fontFamily: police.demi }]}>{t('pharmacie.aEviter')}</Text>
+                    <Text style={[styles.repereTexte, aEviter && { fontWeight: graisse.demi }]}>{t('pharmacie.aEviter')}</Text>
                   </Pressable>
                 </View>
                 <Doux>
@@ -579,9 +592,11 @@ export default function FichePharmacie() {
             {!!contactTelephone.trim() && (
               <Pressable
                 onPress={() => Linking.openURL(`tel:${contactTelephone.replace(/[^\d+]/g, '')}`)}
-                hitSlop={8}
+                accessibilityRole="button"
                 style={styles.lienBloc}>
-                <Text style={[styles.lien, { color: accent }]}>{t('pharmacie.appeler')}</Text>
+                {/* Une icône et un mot : aucune commande n'est du texte seul. */}
+                <Ionicons name="call-outline" size={icone.courante} color={couleurs.textePrincipal} />
+                <Text style={styles.lien}>{t('pharmacie.appeler')}</Text>
               </Pressable>
             )}
 
@@ -605,7 +620,9 @@ export default function FichePharmacie() {
             </Doux>
             <View style={styles.espacement} />
 
-            <Section titre={t('pharmacie.honoraires')}>
+            {/* Sans en-tête « Honoraires » : il ne chapeautait qu'un champ, et
+                l'étiquette dit « Taux horaire habituel ». */}
+            <Section>
               <Champ
                 nu
                 label={t('pharmacie.tauxHoraireHabituel')}
@@ -622,9 +639,10 @@ export default function FichePharmacie() {
               une pause non payée retire des heures. Les mêler, avec la même
               allure et le même geste, embrouillerait la lecture du calcul.
             */}
-            <Section titre={t('pharmacie.pauseRepas')}>
+            <Section>
               <View style={styles.champInterne}>
-                <Text style={styles.label}>{t('pharmacie.dureeHabituelle')}</Text>
+                {/* L'étiquette du champ dit ce que disait l'en-tête au-dessus. */}
+                <Text style={styles.label}>{t('pharmacie.pauseRepas')}</Text>
                 <View style={styles.puces}>
                   <Puce texte={t('commun.aucune')} actif={pause === 0} onPress={() => setPause(0)} />
                   {PAUSES.map((minutes) => (
@@ -781,9 +799,7 @@ export default function FichePharmacie() {
               Un frais ponctuel — stationnement, bonus d’un jour — se charge sur le quart lui-même,
               avec sa description, son montant et sa photo de reçu.
             </Doux>
-            <View style={styles.espacement} />
-
-            <Separateur />
+            <View style={styles.entreGroupes} />
 
             {/*
               Une seule chose est vitale pour un remplaçant : ses identifiants
@@ -795,8 +811,12 @@ export default function FichePharmacie() {
             <View style={styles.enteteSection}>
               <SousTitre>{t('pharmacie.codesLogiciel')}</SousTitre>
               {secretsVisibles && (
-                <Pressable onPress={() => setSecretsVisibles(false)} hitSlop={8}>
-                  <Text style={[styles.lien, { color: accent }]}>{t('pharmacie.masquer')}</Text>
+                <Pressable
+                  onPress={() => setSecretsVisibles(false)}
+                  accessibilityRole="button"
+                  style={styles.masquer}>
+                  <Ionicons name="eye-off-outline" size={icone.courante} color={couleurs.textePrincipal} />
+                  <Text style={styles.lien}>{t('pharmacie.masquer')}</Text>
                 </Pressable>
               )}
             </View>
@@ -818,13 +838,14 @@ export default function FichePharmacie() {
 
             {!secretsVisibles ? (
               <Carte style={styles.verrou}>
-                <Ionicons name="lock-closed-outline" size={22} color={accent} />
+                <Ionicons name="lock-closed-outline" size={icone.grande} color={couleurs.texteSecondaire} />
                 <Doux>
                   Ces identifiants ouvrent le dossier des patients. Ils sont conservés dans le
                   trousseau sécurisé de l’appareil et ne s’affichent qu’après authentification.
                 </Doux>
                 <Bouton
                   titre={t('pharmacie.afficher')}
+                  variante="secondaire"
                   onPress={async () => {
                     if (await deverrouiller()) setSecretsVisibles(true);
                   }}
@@ -834,13 +855,15 @@ export default function FichePharmacie() {
               <Fondu>
                 {/* Le NIP d'abord et en gros : le mot de passe sert une fois à
                     l'ouverture, le NIP sert toute la journée. */}
-                <Section titre={t('pharmacie.nip')}>
+                <Section>
+                  <Text style={styles.labelNip}>{t('pharmacie.nip')}</Text>
                   <TextInput
-                    style={[styles.nip, { color: accent }]}
+                    accessibilityLabel={t('pharmacie.nip')}
+                    style={styles.nip}
                     value={nip}
                     onChangeText={setNip}
                     placeholder="—"
-                    placeholderTextColor={couleurs.bordure}
+                    placeholderTextColor={couleurs.filet}
                     autoCapitalize="none"
                     autoCorrect={false}
                   />
@@ -860,19 +883,22 @@ export default function FichePharmacie() {
               </Fondu>
             )}
 
-            <Separateur />
+            <View style={styles.entreGroupes} />
 
             {/* Un code d'alarme ouvre une porte, pas un dossier de santé : il
-                n'a pas à être protégé, seulement rangé. */}
+                n'a pas à être protégé, seulement rangé. Une ligne à chevron,
+                comme « Options » du calculateur : c'est une section repliée,
+                pas un en-tête. */}
             <Pressable
-              style={styles.enteteSection}
+              style={styles.deplier}
               onPress={() => setLieuDeploye((d) => !d)}
-              hitSlop={6}>
-              <SousTitre>{t('pharmacie.accesLieu')}</SousTitre>
+              accessibilityRole="button"
+              accessibilityState={{ expanded: lieuDeploye }}>
+              <Text style={styles.deplierTexte}>{t('pharmacie.accesLieu')}</Text>
               <Ionicons
                 name={lieuDeploye ? 'chevron-up' : 'chevron-down'}
-                size={18}
-                color={accent}
+                size={icone.courante}
+                color={couleurs.texteSecondaire}
               />
             </Pressable>
 
@@ -897,7 +923,9 @@ export default function FichePharmacie() {
                     />
                     <Pressable
                       onPress={() => setCodes((actuels) => actuels.filter((_, j) => j !== i))}
-                      hitSlop={8}>
+                      accessibilityRole="button"
+                      style={styles.retirerCible}>
+                      <Ionicons name="trash-outline" size={icone.courante} color={couleurs.alerte} />
                       <Text style={styles.retirer}>{t('commun.retirer')}</Text>
                     </Pressable>
                   </Section>
@@ -947,102 +975,146 @@ export default function FichePharmacie() {
 }
 
 const styles = StyleSheet.create({
+  /** Entre deux groupes, l'espace qui remplace le filet. */
+  entreGroupes: {
+    height: dimensions.formulaire.entreGroupes,
+  },
   signal: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
+    gap: espace[2],
     backgroundColor: couleurs.alertePale,
-    borderRadius: rayon,
-    padding: espace.m,
-    marginBottom: espace.s,
+    borderRadius: dimensions.carte.rayon,
+    padding: espace[3],
+    marginBottom: espace[2],
   },
   signalTexte: {
     flex: 1,
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
     color: couleurs.alerte,
   },
+  ligneAnnulee: {
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    justifyContent: 'center',
+  },
   annule: {
-    fontSize: texte.lecture,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    paddingVertical: espace.xs,
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
   },
   reperes: {
     flexDirection: 'row',
-    gap: espace.s,
-    marginBottom: espace.s,
+    gap: espace[2],
+    marginBottom: espace[2],
   },
+  /** Blanc sur le gris ; actif, il prend la teinte de son état, jamais un contour. */
   repere: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: espace.s,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    backgroundColor: couleurs.carte,
-    borderRadius: rayon,
-    paddingVertical: espace.m,
+    gap: espace[2],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.bouton.rayon,
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   verrou: {
     alignItems: 'flex-start',
-    gap: espace.m,
+    gap: espace[3],
+  },
+  labelNip: {
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
+    paddingTop: espace[3],
   },
   nip: {
-    fontSize: texte.chiffre,
-    fontFamily: police.gras,
-    letterSpacing: 2,
-    paddingVertical: espace.s,
+    ...typo.title1,
+    fontWeight: graisse.grasse,
+    color: couleurs.textePrincipal,
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   repereTexte: {
-    fontSize: texte.lecture,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.subhead,
+    color: couleurs.textePrincipal,
   },
   enteteSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  masquer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace[1],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+  },
+  deplier: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    marginBottom: espace[2],
+  },
+  deplierTexte: {
+    ...typo.body,
+    color: couleurs.textePrincipal,
+  },
   champInterne: {
-    paddingVertical: espace.m,
+    paddingVertical: espace[3],
   },
   label: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginBottom: espace.xs,
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
+    marginBottom: dimensions.etiquette.margeBasse,
   },
   puces: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: espace.s,
+    marginBottom: espace[2],
   },
   lien: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
+  /* Remonté sous la section du contact, dont il est la suite : un calage, pas
+     un espacement. */
   lienBloc: {
-    marginTop: -espace.xl,
-    marginBottom: espace.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace[2],
+    alignSelf: 'flex-start',
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    marginTop: -espace[6],
+    marginBottom: espace[6],
+  },
+  retirerCible: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espace[1],
+    alignSelf: 'flex-start',
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   retirer: {
-    fontSize: texte.courant,
-    fontFamily: police.demi,
+    ...typo.footnote,
+    fontWeight: graisse.demi,
     color: couleurs.alerte,
-    alignSelf: 'flex-start',
-    marginBottom: espace.m,
   },
   avis: {
     backgroundColor: couleurs.alertePale,
-    borderColor: couleurs.alerte,
   },
   espacement: {
-    height: espace.m,
+    height: espace[3],
   },
   actions: {
-    marginTop: espace.l,
-    gap: espace.s,
+    marginTop: espace[4],
+    gap: espace[2],
   },
 });

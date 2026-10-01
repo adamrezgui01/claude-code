@@ -13,7 +13,7 @@ import {
 } from '../lib/adressesRecherche';
 import { creerRechercheDifferee, MINIMUM_CARACTERES } from '../lib/frappe';
 import { Champ, Puce } from './composants';
-import { couleurs, dimensions, espace, police, rayon, texte, useAccent } from './theme';
+import { couleurs, dimensions, espace, graisse, icone, typo, useAccent, CIBLE_MIN } from './theme';
 import { useTextes } from '../i18n';
 
 /**
@@ -55,7 +55,6 @@ export function SaisieAdresse({
   portee?: Portee;
 }) {
   const { t } = useTextes();
-  const accent = useAccent();
   const foyerLat = foyer?.lat;
   const foyerLon = foyer?.lon;
   const [recherche, setRecherche] = useState('');
@@ -131,28 +130,29 @@ export function SaisieAdresse({
     <View>
       <View style={styles.champ}>
           <Text style={styles.label}>{libelle ?? t('adresse.adresseLibelle')}</Text>
-          <View style={[styles.recherche, suggestions.length > 0 && { borderColor: accent }]}>
-            <Ionicons name="search" size={16} color={couleurs.doux} />
+          <View style={styles.recherche}>
+            <Ionicons name="search" size={icone.petite} color={couleurs.texteSecondaire} />
             <TextInput
               style={styles.saisie}
               value={recherche}
               onChangeText={taper}
               placeholder={invite ?? t('adresse.taperAdresse')}
-              placeholderTextColor={couleurs.doux}
+              placeholderTextColor={couleurs.texteSecondaire}
               autoCorrect={false}
             />
-            {chargement && <ActivityIndicator size="small" color={couleurs.doux} />}
+            {chargement && <ActivityIndicator size="small" color={couleurs.texteSecondaire} />}
           </View>
 
           {suggestions.map((s) => (
             <Pressable
               key={s.cle}
               onPress={() => choisir(s)}
+              accessibilityRole="button"
               style={({ pressed }) => [styles.suggestion, pressed && { opacity: 0.6 }]}>
               <Ionicons
                 name={s.nom ? 'business-outline' : 'location-outline'}
-                size={16}
-                color={accent}
+                size={icone.courante}
+                color={couleurs.texteSecondaire}
               />
               {/* Le nom d'abord, l'adresse en dessous : c'est elle qui permet de
                   reconnaître la bonne succursale quand plusieurs se ressemblent. */}
@@ -218,9 +218,13 @@ export function SaisieAdresse({
       </View>
 
       <Text style={styles.label}>{t('adresse.province')}</Text>
-      <Pressable onPress={() => setProvinces((p) => !p)} style={styles.boite}>
+      <Pressable
+        onPress={() => setProvinces((p) => !p)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: provinces }}
+        style={styles.boite}>
         <Text style={styles.boiteTexte}>{adresse.province}</Text>
-        <Ionicons name={provinces ? 'chevron-up' : 'chevron-down'} size={16} color={couleurs.doux} />
+        <Ionicons name={provinces ? 'chevron-up' : 'chevron-down'} size={icone.petite} color={couleurs.texteSecondaire} />
       </Pressable>
       {provinces && (
         <View style={styles.puces}>
@@ -248,65 +252,61 @@ function majuscule(motif: MotifEchec): string {
 
 const styles = StyleSheet.create({
   suggestionNom: {
-    fontSize: texte.lecture,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.subhead,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   suggestionAdresse: {
-    fontSize: texte.secondaire,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.caption1,
+    color: couleurs.texteSecondaire,
   },
   erreur: {
-    fontSize: texte.secondaire,
-    fontFamily: police.normal,
+    ...typo.footnote,
     color: couleurs.alerte,
-    marginTop: espace.xs,
+    marginTop: espace[1],
   },
   champ: {
-    marginBottom: espace.s,
+    marginBottom: dimensions.formulaire.entreChamps,
   },
   label: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginBottom: espace.xs,
+    ...typo.subhead,
+    color: couleurs.texteSecondaire,
+    marginBottom: dimensions.etiquette.margeBasse,
   },
+  /** La barre de recherche a la forme d'un champ : même hauteur, même rayon, aucun contour. */
   recherche: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingHorizontal: espace.l,
+    gap: espace[2],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.champ.rayon,
+    paddingHorizontal: dimensions.champ.remplissageH,
     minHeight: dimensions.champ.hauteur,
   },
   saisie: {
     flex: 1,
-    fontSize: texte.saisie,
-    fontFamily: police.normal,
-    color: couleurs.texte,
-    paddingVertical: espace.m,
+    ...typo.body,
+    color: couleurs.textePrincipal,
+    minHeight: dimensions.champ.hauteur,
+    minWidth: CIBLE_MIN,
   },
   suggestion: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espace.s,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.m,
-    marginTop: espace.xs,
+    gap: espace[3],
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    padding: espace[3],
+    marginTop: espace[1],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   suggestionTexte: {
     flex: 1,
   },
   rangee: {
     flexDirection: 'row',
-    gap: espace.m,
+    gap: espace[3],
   },
   court: {
     flex: 1,
@@ -314,26 +314,25 @@ const styles = StyleSheet.create({
   long: {
     flex: 2,
   },
+  /** La forme d'un champ : blanc sur le gris, sans contour. */
   boite: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingHorizontal: espace.l,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.champ.rayon,
+    paddingHorizontal: dimensions.champ.remplissageH,
     minHeight: dimensions.champ.hauteur,
-    marginBottom: espace.m,
+    minWidth: CIBLE_MIN,
+    marginBottom: dimensions.formulaire.entreChamps,
   },
   boiteTexte: {
-    fontSize: texte.saisie,
-    fontFamily: police.normal,
-    color: couleurs.texte,
+    ...typo.body,
+    color: couleurs.textePrincipal,
   },
   puces: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: espace.m,
+    marginBottom: espace[3],
   },
 });

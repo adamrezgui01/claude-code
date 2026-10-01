@@ -236,7 +236,6 @@ export const fr = {
     adresseNonSituee:
       'Cette adresse n’a pas pu être située : la pharmacie n’apparaît pas sur la carte. Corrigez-la ci-dessus et enregistrez de nouveau.',
     itineraire: 'Obtenir un itinéraire',
-    quartsAnnules: 'Quarts annulés',
     annuleSouvent_one:
       'Cette pharmacie a annulé {{count}} quart depuis un an.',
     annuleSouvent_other:
@@ -256,10 +255,8 @@ export const fr = {
     notesPlaceholder: 'Fonctionnement, particularités, stationnement…',
     conditionsIntro:
       'Ces valeurs préremplissent chaque nouveau quart dans cette pharmacie. Les changer ici ne touche pas aux quarts déjà entrés.',
-    honoraires: 'Honoraires',
     tauxHoraireHabituel: 'Taux horaire habituel ($/h)',
     pauseRepas: 'Pause repas',
-    dureeHabituelle: 'Durée habituelle',
     fraisTypiques: 'Frais typiques',
     kilometrage: 'Kilométrage',
     kilometrageCalcul: 'Taux au kilomètre × distance',
@@ -322,8 +319,6 @@ export const fr = {
   },
 
   repertoire: {
-    toutes: 'Toutes les pharmacies',
-    plusRecentes: 'Les plus récentes',
     triAZ: 'A – Z',
     rechercher: 'Rechercher une pharmacie',
     triePar: 'Trié par',

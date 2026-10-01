@@ -238,7 +238,6 @@ export const en: Dictionnaire = {
     adresseNonSituee:
       'This address could not be located: the pharmacy will not appear on the map. Correct it above and save again.',
     itineraire: 'Get directions',
-    quartsAnnules: 'Cancelled shifts',
     annuleSouvent_one: 'This pharmacy cancelled {{count}} shift in the past year.',
     annuleSouvent_other: 'This pharmacy cancelled {{count}} shifts in the past year.',
     annuleSouventCourt: 'Cancels often',
@@ -256,10 +255,8 @@ export const en: Dictionnaire = {
     notesPlaceholder: 'How it runs, quirks, parking…',
     conditionsIntro:
       'These values prefill every new shift at this pharmacy. Changing them here does not affect shifts already entered.',
-    honoraires: 'Fees',
     tauxHoraireHabituel: 'Usual hourly rate ($/h)',
     pauseRepas: 'Meal break',
-    dureeHabituelle: 'Usual length',
     fraisTypiques: 'Usual expenses',
     kilometrage: 'Mileage',
     kilometrageCalcul: 'Rate per kilometre × distance',
@@ -320,8 +317,6 @@ export const en: Dictionnaire = {
   },
 
   repertoire: {
-    toutes: 'All pharmacies',
-    plusRecentes: 'Most recent',
     triAZ: 'A – Z',
     rechercher: 'Search a pharmacy',
     triePar: 'Sorted by',

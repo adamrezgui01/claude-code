@@ -160,6 +160,9 @@ const PASSES_V26: string[] = [
   'Horaire · Quart (nouveau)',
   'Horaire · Quart (existant)',
   'Horaire · Frais (nouveau)',
+  'Répertoire · Répertoire',
+  'Répertoire · Pharmacie (existante)',
+  'Répertoire · Pharmacie (nouvelle)',
 ];
 
 /** Relevé au montage de chaque écran, et lu par le test 11 plus bas. */

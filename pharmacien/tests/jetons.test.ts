@@ -299,6 +299,7 @@ const PASSES_V26: Record<string, string[]> = {
     'src/ui/SelecteurPharmacie.tsx',
     'src/ui/ListeRepliable.tsx',
   ],
+  Répertoire: ['app/(tabs)/repertoire.tsx', 'app/pharmacie/[id].tsx', 'src/ui/SaisieAdresse.tsx'],
 };
 
 const lire = (f: string) => readFileSync(f, 'utf8');
