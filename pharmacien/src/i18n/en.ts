@@ -100,14 +100,6 @@ export const en: Dictionnaire = {
       'No pharmacy located yet. Add an address to a pharmacy record.',
     bandeauAide:
       'Hold a block to move it, hold longer to duplicate it. Swipe the grid to change period.',
-    aideTitre: 'Agenda gestures',
-    aideBalayage: 'Swipe the grid left or right to change day, week or month.',
-    aideDeplacer:
-      'Hold a shift block, then drag it to move it: it snaps to the nearest hour or half-hour.',
-    aideDupliquer:
-      'Hold it longer without moving your finger: a vibration confirms the switch, and dragging then drops a copy instead of moving the shift.',
-    aideVerrouille:
-      'A grey shift has been worked and invoiced: you can view it, but it no longer moves. Delete its invoice to reopen it.',
     rappelFacturesTitre: 'Have your invoices been paid?',
     rappelFacturesDetail: 'One look a month is enough to keep nothing hanging.',
     rappelFacturesVoir: 'View invoices',

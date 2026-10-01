@@ -97,15 +97,6 @@ export const fr = {
       'Aucune pharmacie localisée. Ajoutez une adresse dans une fiche de pharmacie.',
     bandeauAide:
       'Maintenez un bloc pour le déplacer, plus longtemps pour le dupliquer. Balayez la grille pour changer de période.',
-    aideTitre: 'Les gestes de l’agenda',
-    aideBalayage:
-      'Balayez la grille vers la gauche ou la droite pour changer de jour, de semaine ou de mois.',
-    aideDeplacer:
-      'Maintenez un bloc de quart, puis glissez-le pour le déplacer : il se cale à l’heure pleine ou à la demi-heure la plus proche.',
-    aideDupliquer:
-      'Maintenez-le plus longtemps, sans bouger le doigt : une vibration confirme le basculement, et le glissement dépose alors une copie au lieu de déplacer le quart.',
-    aideVerrouille:
-      'Un quart gris a été effectué et facturé : il se consulte, mais ne bouge plus. Supprimez sa facture pour le rouvrir.',
     rappelFacturesTitre: 'Vos factures ont-elles été payées ?',
     rappelFacturesDetail: 'Un coup d’œil par mois suffit à ne rien laisser traîner.',
     rappelFacturesVoir: 'Voir les factures',

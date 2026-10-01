@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router/js-tabs';
 
 import { couleurs, graisse, typo, useAccent } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
+import { enTeteDeNavigation } from '../../src/ui/EnTete';
 
 export default function DispositionOnglets() {
   const { t } = useTextes();
@@ -19,10 +20,9 @@ export default function DispositionOnglets() {
         // Blanche sur le gris de l'écran : la différence de fond marque déjà la
         // limite, le filet qui la doublait est retiré.
         tabBarStyle: { backgroundColor: couleurs.fondEleve, borderTopWidth: 0 },
-        // Le titre d'écran des HIG.
-        headerTitleStyle: { color: couleurs.textePrincipal, fontSize: typo.title1.fontSize, fontWeight: graisse.grasse },
-        headerStyle: { backgroundColor: couleurs.fondEcran },
-        headerShadowVisible: false,
+        // Le même en-tête que les écrans poussés : même composant, même
+        // hauteur, une action au plus.
+        header: enTeteDeNavigation,
         sceneStyle: { backgroundColor: couleurs.fondEcran },
       }}>
       <Tabs.Screen

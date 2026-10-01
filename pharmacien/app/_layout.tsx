@@ -18,7 +18,8 @@ import { preparerNotifications } from '../src/lib/notifications';
 import { replanifierRendezVous } from '../src/lib/reprogrammer';
 import { Bienvenue } from '../src/ui/Bienvenue';
 import { EcranDePlantage } from '../src/ui/Filet';
-import { ACCENT_DEFAUT, couleurs, FournisseurTheme, graisse, typo } from '../src/ui/theme';
+import { enTeteDeNavigation } from '../src/ui/EnTete';
+import { ACCENT_DEFAUT, couleurs, FournisseurTheme } from '../src/ui/theme';
 import { useTextes } from '../src/i18n';
 
 /**
@@ -138,19 +139,12 @@ export default function Racine() {
           <>
         <Stack
           screenOptions={{
-            // Le retour est une commande comme une autre : il n'est ni l'élément
-            // actif ni l'action principale, donc il ne prend pas le mauve.
-            headerTintColor: couleurs.textePrincipal,
-            // Le titre de barre des HIG : un écran poussé garde `headline`, un
-            // `title1` écraserait le bouton de retour.
-            headerTitleStyle: { color: couleurs.textePrincipal, fontSize: typo.headline.fontSize, fontWeight: graisse.demi },
-            headerStyle: { backgroundColor: couleurs.fondEcran },
+            // Un seul en-tête pour toute l'application : le même composant, la
+            // même hauteur, trois zones qui ne se recouvrent jamais.
+            header: enTeteDeNavigation,
             headerShadowVisible: false,
             contentStyle: { backgroundColor: couleurs.fondEcran },
             animation: 'slide_from_right',
-            // Sans ça, le bouton de retour reprend le titre de l'écran
-            // précédent — donc « (tabs) », le nom technique de la route.
-            headerBackTitle: t('commun.retour'),
           }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t('onglets.horaire') }} />
           <Stack.Screen name="quart/[id]" options={{ title: t('quart.leQuart') }} />

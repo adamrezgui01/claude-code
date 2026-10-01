@@ -42,16 +42,7 @@ import { declarerJournee, effacerJournee } from '../../src/db/disponibilites';
 import { Calendrier } from '../../src/ui/Calendrier';
 import { parametresDuQuart } from '../../src/lib/dictee';
 import { Dictee } from '../../src/ui/Dictee';
-import {
-  BandeauAide,
-  Bouton,
-  Carte,
-  Doux,
-  FicheAide,
-  Fondu,
-  Onglets,
-  Vide,
-} from '../../src/ui/composants';
+import { BandeauAide, Bouton, Carte, Doux, Fondu, Onglets, Vide } from '../../src/ui/composants';
 import { BandeAttente } from '../../src/ui/BandeAttente';
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { Pageur } from '../../src/ui/Pageur';
@@ -97,7 +88,6 @@ export default function Horaire() {
   const [rappelFactures, setRappelFactures] = useState(false);
   /** Une duplication en cours prend le doigt : rien d'autre ne doit bouger. */
   const [duplication, setDuplication] = useState(false);
-  const [aideOuverte, setAideOuverte] = useState(false);
   const [bandeauAide, setBandeauAide] = useState(false);
   /** Repère de temps, repris à chaque venue sur l'écran. */
   const [maintenant, setMaintenant] = useState(() => Date.now());
@@ -144,9 +134,10 @@ export default function Horaire() {
   );
 
   /**
-   * Deux commandes dans l'en-tête, et pas une de plus : l'aide, qu'on lit une
-   * fois, et « Mes dispos », qu'on ouvre chaque fois qu'un propriétaire
-   * demande « t'es libre quand ? ».
+   * Une seule commande dans l'en-tête : « Mes dispos », qu'on ouvre chaque fois
+   * qu'un propriétaire demande « t'es libre quand ? ». L'aide, qu'on ne lisait
+   * qu'une fois, est retirée : elle poussait le titre contre « Mes dispos », et
+   * le bandeau des trois premières ouvertures dit déjà les gestes.
    *
    * « Mes dispos » porte son nom. En icône seule — un carré avec une flèche —
    * elle est restée là des mois sans que personne ne la touche : rien ne
@@ -155,25 +146,14 @@ export default function Horaire() {
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <View style={styles.enTete}>
-          <Pressable
-            onPress={() => router.push('/disponibilites')}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('disponibilites.titre')}
-            style={styles.dispos}>
-            <Ionicons name="calendar-clear-outline" size={icone.courante} color={couleurs.textePrincipal} />
-            <Text style={styles.disposTexte}>{t('disponibilites.titre')}</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setAideOuverte(true)}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel={t('horaire.aideTitre')}
-            style={styles.icone}>
-            <Ionicons name="help-circle-outline" size={icone.grande} color={couleurs.textePrincipal} />
-          </Pressable>
-        </View>
+        <Pressable
+          onPress={() => router.push('/disponibilites')}
+          accessibilityRole="button"
+          accessibilityLabel={t('disponibilites.titre')}
+          style={styles.dispos}>
+          <Ionicons name="calendar-clear-outline" size={icone.courante} color={couleurs.textePrincipal} />
+          <Text style={styles.disposTexte}>{t('disponibilites.titre')}</Text>
+        </Pressable>
       ),
     });
   }, [navigation, router, t]);
@@ -754,21 +734,6 @@ export default function Horaire() {
         onIncomprise={noterIncomprise}
       />
 
-      <FicheAide ouvert={aideOuverte} titre={t('horaire.aideTitre')} onFermer={() => setAideOuverte(false)}>
-        <Doux>{t('horaire.aideBalayage')}</Doux>
-        <Doux>
-          Maintenez un bloc de quart, puis glissez-le pour le déplacer : il se cale à l’heure
-          pleine ou à la demi-heure la plus proche.
-        </Doux>
-        <Doux>
-          Maintenez-le plus longtemps, sans bouger le doigt : une vibration confirme le
-          basculement, et le glissement dépose alors une copie au lieu de déplacer le quart.
-        </Doux>
-        <Doux>
-          Un quart gris a été effectué et facturé : il se consulte, mais ne bouge plus. Supprimez
-          sa facture pour le rouvrir.
-        </Doux>
-      </FicheAide>
     </ScrollView>
   );
 }
@@ -827,16 +792,6 @@ const styles = StyleSheet.create({
     paddingTop: dimensions.ecran.margeHaut,
     // Le bouton d'ajout ne doit pas finir collé à la barre d'onglets.
     paddingBottom: espace[10],
-  },
-  enTete: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  icone: {
-    minHeight: CIBLE_MIN,
-    minWidth: CIBLE_MIN,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   fleche: {
     minHeight: CIBLE_MIN,

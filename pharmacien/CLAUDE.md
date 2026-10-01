@@ -372,9 +372,15 @@ qu'on ne les redécouvre pas trois fois.
     correspondre. Titre d'écran en `title1`, en-tête de section en `footnote`
     majuscule gris, nom de pharmacie en `headline`, texte courant et valeur
     d'un champ en `body`, étiquette de champ en `subhead` gris, aide en
-    `footnote` gris, étiquette de graphique en `caption1`. La barre de
-    navigation d'un écran poussé garde `headline` : c'est le titre de barre des
-    HIG, et un `title1` y écraserait le bouton de retour.
+    `footnote` gris, étiquette de graphique en `caption1`. Le titre de la
+    barre de navigation est en `headline` sur **tous** les écrans, onglets
+    compris : c'est le titre de barre des HIG, et le `title1` centré que le
+    V2.6 avait mis aux racines d'onglet touchait les commandes à côté.
+  - **Un seul en-tête**, `src/ui/EnTete.tsx`, posé par les deux navigateurs :
+    hauteur fixe, le retour ou rien à gauche, le titre sur une ligne au
+    centre, **une action au plus** à droite. Rien n'y est en position absolue.
+    Une ligne secondaire — une plage, un mois — vit sous l'en-tête, jamais
+    dedans. Aucun bouton ne flotte par-dessus le contenu.
   - La police est celle du système — SF Pro sur iOS. Aucune autre famille, et
     aucune graisse sous Regular : Light, Thin et Ultralight se voient mal dès
     que le texte est petit. Une graisse se prend dans `graisse`.

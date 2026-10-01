@@ -1,5 +1,6 @@
 jest.mock('expo-sqlite', () => require('../base').fauxExpoSqlite);
 let mockParams: Record<string, string> = {};
+const mockNavigation = { setOptions: jest.fn(), addListener: () => () => {} };
 jest.mock('expo-router', () => {
   const React = require('react');
   const routeur = { push: jest.fn(), back: jest.fn(), replace: jest.fn(), navigate: jest.fn(), setParams: jest.fn() };
@@ -9,7 +10,7 @@ jest.mock('expo-router', () => {
     useRouter: () => routeur,
     router: routeur,
     useLocalSearchParams: () => mockParams,
-    useNavigation: () => ({ setOptions: jest.fn(), addListener: () => () => {} }),
+    useNavigation: () => mockNavigation,
     useFocusEffect: (rappel: () => void | (() => void)) => React.useEffect(rappel, []),
   };
 });
@@ -291,5 +292,18 @@ describe('11 — deux champs pris sur deux onglets ont la même hauteur et le m�
     }
     // Une seule forme de champ, où qu'on le prenne.
     expect([...parForme.keys()]).toHaveLength(1);
+  });
+});
+
+describe('V2.5.4 B — l’en-tête de l’Horaire', () => {
+  test('une seule action à droite : « Mes dispos »', async () => {
+    mockNavigation.setOptions.mockClear();
+    await monter(ECRANS.find((e) => e.nom === 'Horaire')!);
+    const options = mockNavigation.setOptions.mock.calls.map((c) => c[0]).find((o) => o.headerRight);
+    expect(options).toBeTruthy();
+    await rendre(<>{options.headerRight()}</>);
+    const boutons = screen.getAllByRole('button');
+    expect(boutons).toHaveLength(1);
+    expect(boutons[0].props.accessibilityLabel).toBe('Mes dispos');
   });
 });

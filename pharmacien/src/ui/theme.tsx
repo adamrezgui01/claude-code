@@ -247,6 +247,12 @@ export const dimensions = {
     remplissageH: espace[4],
     remplissageV: espace[3],
   },
+  /**
+   * La barre de navigation : la même hauteur sur tous les écrans, celle de la
+   * barre d'iOS. Le titre y tient sur une ligne, entre le retour et une seule
+   * action.
+   */
+  barreNavigation: { hauteur: CIBLE_MIN },
   /** L'en-tête d'une section : footnote, majuscules, gris. */
   enTete: { margeBasse: espace[2] },
   /** L'étiquette au-dessus d'un champ. */
