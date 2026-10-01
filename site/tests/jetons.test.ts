@@ -207,8 +207,9 @@ describe('ce qui est écrit dans le site', () => {
 
   test('une bordure seulement là où rien d’autre ne marque la limite', () => {
     // Un champ, une carte, une capsule se posent en blanc sur le gris, sans
-    // contour. La case à cocher vide sur une ligne blanche est l'exception.
-    const PERMISES = ['.case'];
+    // contour. Deux exceptions, où le contour est la seule chose qui dessine :
+    // la case à cocher vide sur une ligne blanche, la pastille creuse.
+    const PERMISES = ['.case', '.repere'];
     const fautes: string[] = [];
     for (const f of CSS) {
       for (const d of declarations(f)) {

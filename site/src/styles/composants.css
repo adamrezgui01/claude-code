@@ -1,0 +1,294 @@
+/*
+ * Les composants partagés. Un champ, une carte, une capsule se posent en blanc
+ * sur le gris de l'écran, sans contour : la différence de fond marque déjà la
+ * limite.
+ */
+
+/* --- Boutons ---------------------------------------------------------- */
+
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espace-2);
+  min-width: var(--cible);
+  min-height: var(--bouton);
+  padding: var(--espace-3) var(--espace-4);
+  border: none;
+  border-radius: var(--rayon);
+  font: var(--headline);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.bouton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* L'action principale de l'écran : la seule qui porte le mauve plein. */
+.bouton-principal {
+  background: var(--accent);
+  color: var(--sur-accent);
+}
+
+.bouton-secondaire {
+  background: var(--fond-eleve);
+  color: var(--texte-principal);
+}
+
+.bouton-danger {
+  background: var(--fond-eleve);
+  color: var(--alerte);
+}
+
+.bouton-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--cible);
+  min-height: var(--cible);
+  padding: 0;
+  border: none;
+  border-radius: var(--rayon-capsule);
+  background: none;
+  color: var(--texte-principal);
+  cursor: pointer;
+}
+
+.bouton:focus-visible,
+.bouton-icone:focus-visible,
+.capsule:focus-visible,
+.carte-lien:focus-visible,
+.replie summary:focus-visible {
+  outline: var(--pastille-contour) solid var(--accent);
+  outline-offset: var(--espace-1);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espace-3);
+  margin-top: var(--espace-8);
+}
+
+.actions .bouton {
+  flex: 1 1 auto;
+}
+
+/* --- Capsules --------------------------------------------------------- */
+
+.choix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espace-2);
+}
+
+.capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-2);
+  min-width: var(--cible);
+  min-height: var(--cible);
+  padding: 0 var(--espace-4);
+  border: none;
+  border-radius: var(--rayon-capsule);
+  background: var(--fond-eleve);
+  color: var(--texte-principal);
+  font: var(--subhead);
+  cursor: pointer;
+}
+
+.capsule[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--sur-accent);
+  font-weight: var(--demi);
+}
+
+/* --- Champs ----------------------------------------------------------- */
+
+.formulaire {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-4);
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-2);
+  min-width: 0;
+}
+
+.etiquette {
+  font: var(--subhead);
+  color: var(--texte-secondaire);
+}
+
+.aide {
+  font: var(--footnote);
+  color: var(--texte-secondaire);
+}
+
+.saisie {
+  width: 100%;
+  min-height: var(--champ);
+  padding: var(--espace-3) var(--espace-4);
+  border: none;
+  border-radius: var(--rayon);
+  background: var(--fond-eleve);
+  font: var(--body);
+  appearance: none;
+}
+
+.saisie:focus-visible {
+  outline: var(--pastille-contour) solid var(--accent);
+  outline-offset: 0;
+}
+
+.saisie:disabled {
+  color: var(--texte-secondaire);
+}
+
+textarea.saisie {
+  resize: vertical;
+}
+
+.deux-colonnes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--espace-4);
+}
+
+/* Une case à cocher vide sur une ligne blanche : la seule bordure permise,
+   rien d'autre n'y marque la limite. */
+.case {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-3);
+  min-height: var(--cible);
+  font: var(--body);
+  cursor: pointer;
+}
+
+.case input {
+  width: var(--case);
+  height: var(--case);
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+/* --- Sections et lignes ----------------------------------------------- */
+
+.section {
+  margin-top: var(--espace-8);
+}
+
+.en-tete {
+  font: var(--footnote);
+  color: var(--texte-secondaire);
+  text-transform: uppercase;
+  margin: 0 0 var(--espace-2) var(--espace-4);
+}
+
+.section-corps {
+  background: var(--fond-eleve);
+  border-radius: var(--rayon);
+  padding: 0 var(--espace-4);
+}
+
+/* Le filet : un pixel, sur la largeur du contenu seulement, et jamais sous
+   la dernière ligne. Un fond de un pixel, pas une bordure. */
+.section-ligne + .section-ligne {
+  background: linear-gradient(var(--filet), var(--filet)) top / 100% var(--filet-epaisseur) no-repeat;
+}
+
+.rangee {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espace-4);
+  min-height: var(--cible);
+  padding: var(--espace-3) 0;
+  font: var(--body);
+}
+
+.rangee-valeur {
+  text-align: right;
+}
+
+.forte {
+  font-weight: var(--demi);
+}
+
+/* --- Repliable --------------------------------------------------------- */
+
+.replie {
+  margin-top: var(--espace-8);
+}
+
+.replie summary {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-2);
+  min-height: var(--cible);
+  list-style: none;
+  color: var(--texte-principal);
+  font: var(--body);
+  cursor: pointer;
+}
+
+.replie summary::-webkit-details-marker {
+  display: none;
+}
+
+.replie[open] summary .icone {
+  transform: rotate(180deg);
+}
+
+.replie-corps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-4);
+  padding-top: var(--espace-3);
+}
+
+/* --- Repères d'état ---------------------------------------------------- */
+
+.repere {
+  display: inline-block;
+  flex: none;
+  width: var(--pastille);
+  height: var(--pastille);
+  border-radius: var(--rayon-capsule);
+  /* Une pastille creuse : son contour est sa forme, rien d'autre ne la
+     dessine. */
+  border: var(--pastille-contour) solid currentColor;
+}
+
+.repere-plein {
+  background: currentColor;
+}
+
+/* --- Mise en page d'un écran ------------------------------------------ */
+
+.barre-titre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espace-3);
+  margin-bottom: var(--espace-6);
+}
+
+.barre-titre .titre-ecran {
+  margin-bottom: 0;
+}
+
+.retour {
+  margin-left: calc(-1 * var(--espace-3));
+  margin-bottom: var(--espace-2);
+}
+
+.alerte {
+  color: var(--alerte);
+}

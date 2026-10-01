@@ -1,0 +1,262 @@
+/*
+ * L'horaire et la fiche d'un quart.
+ *
+ * Un quart vivant — à venir, ou fait et pas encore facturé — s'écrit à
+ * l'encre du texte principal : c'est du contenu, pas un accent. Facturé ou
+ * payé, il passe au gris, et c'est la seule chose que le gris dit.
+ */
+
+.periode {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espace-2);
+  margin-top: var(--espace-4);
+}
+
+.periode-titre {
+  font: var(--title3);
+  font-weight: var(--demi);
+  text-align: center;
+}
+
+.periode-titre::first-letter,
+.jour-choisi::first-letter {
+  text-transform: uppercase;
+}
+
+.aujourdhui {
+  margin-top: var(--espace-2);
+}
+
+.resume {
+  font: var(--subhead);
+  color: var(--texte-secondaire);
+  text-align: center;
+  margin-top: var(--espace-1);
+}
+
+/* --- Cartes de quart ---------------------------------------------------- */
+
+.cartes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-3);
+}
+
+.carte-lien {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-3);
+  min-height: var(--cible);
+  padding: var(--espace-4);
+  border-radius: var(--rayon);
+  background: var(--fond-eleve);
+  color: var(--texte-principal);
+  text-decoration: none;
+}
+
+.carte-lien > .icone {
+  color: var(--texte-secondaire);
+}
+
+.carte-quart-texte {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--espace-1);
+  min-width: 0;
+}
+
+.carte-quart-nom {
+  font: var(--headline);
+}
+
+.carte-quart-heures {
+  font: var(--subhead);
+  color: var(--texte-secondaire);
+}
+
+.carte-quart-etat,
+.etat-fiche {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-2);
+  font: var(--footnote);
+  color: var(--texte-secondaire);
+}
+
+.etat-fiche {
+  margin-left: var(--espace-3);
+}
+
+.carte-quart-montant {
+  font: var(--body);
+  font-weight: var(--demi);
+  white-space: nowrap;
+}
+
+.ton-gris .carte-quart-nom,
+.ton-gris .carte-quart-montant {
+  color: var(--texte-secondaire);
+}
+
+.ton-vif .carte-quart-etat {
+  color: var(--texte-principal);
+}
+
+/* --- Semaine ------------------------------------------------------------ */
+
+.semaine {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-4);
+  margin-top: var(--espace-4);
+}
+
+.semaine-jour {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-2);
+}
+
+.semaine-date {
+  font: var(--subhead);
+  color: var(--texte-secondaire);
+}
+
+.semaine-date::first-letter {
+  text-transform: uppercase;
+}
+
+/* --- Mois --------------------------------------------------------------- */
+
+.mois {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-1);
+  margin-top: var(--espace-4);
+}
+
+.mois-rangee {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--espace-1);
+}
+
+.mois-initiale {
+  font: var(--caption1);
+  color: var(--texte-secondaire);
+  text-align: center;
+}
+
+.mois-case {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--espace-1);
+  min-width: 0;
+  min-height: var(--champ);
+  padding: var(--espace-1);
+  border: none;
+  border-radius: var(--barre-rayon);
+  background: none;
+  color: var(--texte-principal);
+  cursor: pointer;
+}
+
+.mois-case.vide-case {
+  cursor: default;
+}
+
+.mois-case[aria-pressed='true'] {
+  background: var(--accent-pale);
+}
+
+.mois-case[aria-pressed='true'] .mois-numero {
+  color: var(--accent);
+  font-weight: var(--grasse);
+}
+
+.mois-case:focus-visible {
+  outline: var(--pastille-contour) solid var(--accent);
+}
+
+.mois-numero {
+  font: var(--subhead);
+  text-align: center;
+}
+
+.aujourdhui-case .mois-numero {
+  font-weight: var(--grasse);
+}
+
+.mois-bloc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espace-1);
+  border-radius: var(--barre-rayon);
+  font: var(--caption2);
+  white-space: nowrap;
+}
+
+/* Sur un téléphone, une case fait quarante-six pixels : « 10–18 » et son
+   repère n'y entrent pas. L'heure de début reste, entière ; la plage se lit
+   sur la carte, sous la grille. Une heure coupée ne se lirait pas du tout. */
+@media (max-width: 699.98px) {
+  .mois-plage-fin {
+    display: none;
+  }
+}
+
+.mois-bloc.ton-vif {
+  background: var(--texte-principal);
+  color: var(--sur-accent);
+}
+
+.mois-bloc.ton-gris {
+  background: var(--gris-pale);
+  color: var(--texte-secondaire);
+}
+
+.jour-choisi {
+  font: var(--headline);
+  margin: var(--espace-6) 0 var(--espace-3);
+}
+
+/* --- Fiche ---------------------------------------------------------------- */
+
+.sous-titre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  font: var(--subhead);
+  color: var(--texte-secondaire);
+  margin: calc(-1 * var(--espace-4)) 0 var(--espace-6);
+}
+
+.groupe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-4);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.formulaire .replie,
+.formulaire .section,
+.formulaire .actions {
+  margin-top: var(--espace-4);
+}
+
+.semaine-date.forte {
+  color: var(--texte-principal);
+  font-weight: var(--demi);
+}
+
+.note-fige {
+  margin-bottom: var(--espace-6);
+}
