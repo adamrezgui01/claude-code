@@ -25,7 +25,7 @@ import {
   joursCourts,
 } from '../../src/lib/dates';
 import { Bouton, Doux, Onglets } from '../../src/ui/composants';
-import { GrilleDispos } from '../../src/ui/GrilleDispos';
+import { GrilleDispos, MARGE_CASE } from '../../src/ui/GrilleDispos';
 import { SelecteurDate } from '../../src/ui/Selecteurs';
 import {
   couleurs,
@@ -140,26 +140,30 @@ export default function PartagerDisponibilites() {
         {/* Fond clair quoi qu'il arrive : l'image part sur le téléphone de
             quelqu'un d'autre, dont on ne connaît ni le thème ni l'application. */}
         <ViewShot ref={capture} style={styles.image}>
-          <View style={styles.enteteImage}>
-            <Text style={styles.titre}>
-              {t('disponibilites.titreImageAvecPlage', {
-                plage: formatPlageDates(periode.debut, periode.fin, langue),
-              })}
-            </Text>
-            {!!reglages.nom.trim() && <Text style={styles.nom}>{reglages.nom.trim()}</Text>}
-          </View>
-
-          {/* La même grille, sans les gestes ni les quarts : c'est l'image. */}
-          <GrilleDispos blocs={blocs} initiales={joursCourts(langue)} langue={langue} accent={accent} />
-
-          <View style={styles.legende}>
-            <View style={styles.legendeEntree}>
-              <View testID="echantillon-actif" style={[styles.puce, { backgroundColor: accent }]} />
-              <Text style={styles.legendeTexte}>{t('disponibilites.offert')}</Text>
+          <View testID="image-partagee">
+            <View testID="entete-image" style={styles.enteteImage}>
+              <Text style={styles.titre}>
+                {t('disponibilites.titreImageAvecPlage', {
+                  plage: formatPlageDates(periode.debut, periode.fin, langue),
+                })}
+              </Text>
+              {!!reglages.nom.trim() && <Text style={styles.nom}>{reglages.nom.trim()}</Text>}
             </View>
-            <View style={styles.legendeEntree}>
-              <View style={[styles.puce, { backgroundColor: imagePartagee.libre }]} />
-              <Text style={styles.legendeTexte}>{t('disponibilites.nonDeclare')}</Text>
+
+            {/* La même grille, sans les gestes ni les quarts : c'est l'image. */}
+            <GrilleDispos blocs={blocs} initiales={joursCourts(langue)} langue={langue} accent={accent} />
+
+            {/* Dans l'image, sous le dernier mois : le bloc du mois porte déjà
+                l'espacement qui la sépare de la grille. */}
+            <View testID="legende-image" style={styles.legende}>
+              <View style={styles.legendeEntree}>
+                <View testID="echantillon-actif" style={[styles.puce, { backgroundColor: accent }]} />
+                <Text style={styles.legendeTexte}>{t('disponibilites.offert')}</Text>
+              </View>
+              <View style={styles.legendeEntree}>
+                <View style={[styles.puce, { backgroundColor: imagePartagee.libre }]} />
+                <Text style={styles.legendeTexte}>{t('disponibilites.nonDeclare')}</Text>
+              </View>
             </View>
           </View>
         </ViewShot>
@@ -207,7 +211,15 @@ const styles = StyleSheet.create({
   enteteImage: { marginBottom: espace[3] },
   titre: { ...typo.title3, fontWeight: graisse.grasse, color: imagePartagee.texte },
   nom: { ...typo.body, fontWeight: graisse.demi, color: imagePartagee.texte, marginTop: espace[1] },
-  legende: { flexDirection: 'row', flexWrap: 'wrap', gap: espace[4], marginTop: espace[1] },
+  /* Alignée sur le bord gauche visible du calendrier — la pastille, pas sa
+     case —, et sans marge à elle : l'air au-dessus est celui qui sépare
+     déjà l'en-tête du calendrier et deux mois entre eux. */
+  legende: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: espace[4],
+    paddingHorizontal: MARGE_CASE,
+  },
   legendeEntree: { flexDirection: 'row', alignItems: 'center', gap: espace[2] },
   puce: {
     width: dimensions.echantillon.largeur,

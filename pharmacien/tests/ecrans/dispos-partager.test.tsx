@@ -13,11 +13,14 @@ jest.mock('react-native-view-shot', () => {
 const mockShare = jest.fn();
 jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(async () => true), shareAsync: (...a: unknown[]) => mockShare(...a) }));
 
-import { fireEvent, screen } from '@testing-library/react-native';
+import { fireEvent, screen, within } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 
 import Partager from '../../app/disponibilites/partager';
 import { declarerJournee } from '../../src/db/disponibilites';
 import { initialiserBase } from '../../src/db/index';
+import { MARGE_CASE } from '../../src/ui/GrilleDispos';
+import { espace } from '../../src/ui/theme';
 import { neuveBase } from '../base';
 import { rendre } from './socle';
 
@@ -65,5 +68,52 @@ describe('l’écran Partager', () => {
     expect(mockShare).toHaveBeenCalledWith('file:///image.png', expect.objectContaining({ mimeType: 'image/png' }));
     await fireEvent.press(screen.getByText('Annuler'));
     expect(mockBack).toHaveBeenCalled();
+  });
+});
+
+/**
+ * V2.5.4 H — la légende de l'image partagée.
+ *
+ * Dans l'aperçu, « Offert / Non déclaré » débordait sous la grille et sortait
+ * de la carte. Elle vit dans l'image, alignée sur la marge gauche du
+ * calendrier, au même espacement que les autres éléments. Et les deux
+ * légendes — celle de la grille, à quatre entrées, et celle de l'image, à
+ * deux — ne se suivent jamais à l'écran.
+ */
+describe('V2.5.4 H — la légende de l’image', () => {
+  test('elle est dans l’image, celle qui part', async () => {
+    await rendre(<Partager />);
+    const image = screen.getByTestId('image-partagee');
+    expect(within(image).getByText('Offert')).toBeTruthy();
+    expect(within(image).getByText('Non déclaré')).toBeTruthy();
+    expect(within(image).getByTestId('legende-image')).toBeTruthy();
+  });
+
+  test('elle s’aligne sur la marge gauche du calendrier', async () => {
+    // La première pastille du calendrier commence à la marge de sa case : le
+    // premier échantillon de la légende commence au même endroit.
+    await rendre(<Partager />);
+    const legende = StyleSheet.flatten(screen.getByTestId('legende-image').props.style);
+    expect(legende.paddingLeft ?? legende.paddingHorizontal).toBe(MARGE_CASE);
+    expect(legende.marginLeft ?? legende.marginHorizontal ?? 0).toBe(0);
+  });
+
+  test('elle garde le même espacement que les autres éléments de l’image', async () => {
+    // Entre l'en-tête et le calendrier, entre deux mois : douze points. Entre
+    // le dernier mois et la légende, pareil — le bloc du mois porte déjà ses
+    // douze points en dessous, la légende n'en ajoute pas.
+    await rendre(<Partager />);
+    const legende = StyleSheet.flatten(screen.getByTestId('legende-image').props.style);
+    expect(legende.marginTop ?? 0).toBe(0);
+    expect(legende.position).toBeUndefined();
+    const entete = StyleSheet.flatten(screen.getByTestId('entete-image').props.style);
+    expect(entete.marginBottom).toBe(espace[3]);
+  });
+
+  test('la légende de la grille, à quatre entrées, n’est pas sur cet écran', async () => {
+    await rendre(<Partager />);
+    expect(screen.queryByText('Heures précises')).toBeNull();
+    expect(screen.queryByText('Quart prévu')).toBeNull();
+    expect(screen.getAllByText('Offert')).toHaveLength(1);
   });
 });

@@ -268,6 +268,12 @@ function Case({
   );
 }
 
+/**
+ * La marge d'une case autour de sa pastille. C'est elle qui place le bord
+ * gauche visible du calendrier : la légende de l'image s'y aligne.
+ */
+export const MARGE_CASE = espace[1];
+
 const styles = StyleSheet.create({
   bloc: { marginBottom: espace[3] },
   mois: {
@@ -291,7 +297,7 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: espace[1],
+    padding: MARGE_CASE,
   },
   pastille: {
     width: '100%',
