@@ -74,7 +74,9 @@ export function etiquetteDuGraphique(
   valeur: number,
   mesure: Mesure,
   format: FormatGraphique = 'pleins',
-  langue: Langue = LANGUE_DEFAUT
+  langue: Langue = LANGUE_DEFAUT,
+  /** Sans le « h » : c'est ce qui cède en premier quand la rangée ne tient pas. */
+  avecUnite = true
 ): string {
   // La barre est déjà au sol : un « 0 » posé dessus n'ajoute rien.
   if (valeur === 0) return '';
@@ -85,7 +87,7 @@ export function etiquetteDuGraphique(
   // Le « h » est une courtoisie, et il cède devant la règle des cinq
   // caractères : « 1 232 h » en fait sept. L'unité est de toute façon dite
   // par l'onglet sélectionné, comme l'est le symbole du dollar.
-  if (mesure === 'heures' && entier < 1000) return `${texte} h`;
+  if (mesure === 'heures' && entier < 1000 && avecUnite) return `${texte} h`;
   return texte;
 }
 

@@ -319,6 +319,13 @@ qu'on ne les redécouvre pas trois fois.
   le voyaient pas parce qu'ils donnaient la même valeur aux deux ; ils
   localisent maintenant le doigt comme un téléphone (`avecLocalisation`). Et
   l'origine se remesure à chaque changement de taille et à chaque contact.
+- **Une transformation animée côté natif (`useNativeDriver: true`) ne porte
+  jamais de partie fixe qui dépend des données.** La partie fixe est figée
+  dans la configuration native : les segments de la ligne des statistiques
+  gardaient la rotation d'une autre mesure, avec la longueur de la nouvelle.
+  La valeur fixe vit sur une vue parente ordinaire, l'animation sur sa fille.
+  Les tests ne le voient pas — ils n'ont pas de côté natif — : un test vérifie
+  la structure, pas seulement la géométrie.
 - Un geste qu'aucun texte n'annonce n'est pas utilisé, même réparé. Tout écran
   dont le contenu se modifie au doigt porte sa consigne en une ligne, et une
   légende quand les états se distinguent par la couleur. Sur « Mes dispos » :

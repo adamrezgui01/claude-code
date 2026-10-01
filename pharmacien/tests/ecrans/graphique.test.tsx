@@ -1,5 +1,5 @@
-import { fireEvent, screen } from '@testing-library/react-native';
-import { PixelRatio } from 'react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { PixelRatio, StyleSheet } from 'react-native';
 
 import { Graphique } from '../../src/ui/Graphique';
 import type { MoisChiffre } from '../../src/lib/mensuel';
@@ -264,5 +264,154 @@ describe('V2.5.4 G — l’espacement des étiquettes', () => {
       expect(repere.props.adjustsFontSizeToFit).toBe(true);
       expect(repere.props.numberOfLines).toBe(1);
     }
+  });
+});
+
+/**
+ * Ce que le téléphone a montré après le V2.5.4 G.
+ *
+ * Trois défauts sur la même capture : les segments de la ligne pointaient à
+ * côté de leurs points, « 155 h » était coupé en deux en haut de l'axe, et
+ * plus aucun nombre ne s'affichait au-dessus des barres en heures.
+ */
+describe('la ligne, l’axe et les nombres, sur le téléphone', () => {
+  const HEURES = [98, 96, 103, 90, 97, 97, 98, 155, 110, 132, 155, 97];
+
+  function serieComplete(): MoisChiffre[] {
+    return HEURES.map((heures, i) => ({
+      mois: `2026-${`${i + 1}`.padStart(2, '0')}-01`,
+      libelle: MOIS[i],
+      argent: 8000 + ((i * 1370) % 4000),
+      heures,
+      kilometres: 300 + ((i * 97) % 400),
+    }));
+  }
+
+  async function poserEn(mesure: 'argent' | 'heures' | 'kilometres', largeur = 393) {
+    const s = serieComplete();
+    await rendre(
+      <Graphique
+        serie={s}
+        mesure={mesure}
+        mesures={['argent', 'heures', 'kilometres']}
+        onMesure={() => {}}
+        enValeur={new Set(s.map((e) => e.mois))}
+        rejouer={0}
+      />
+    );
+    await fireEvent(screen.getByTestId('cadre-graphique'), 'layout', {
+      nativeEvent: { layout: { width: largeur, height: 260 } },
+    });
+    await fireEvent(screen.getByTestId('pageur'), 'layout', {
+      nativeEvent: { layout: { width: largeur, height: 220 } },
+    });
+    for (const zone of screen.getAllByTestId('zone-trace')) {
+      await fireEvent(zone, 'layout', { nativeEvent: { layout: { width: largeur, height: 150 } } });
+    }
+  }
+
+  /** Donner à chaque copie de mesure la largeur que le téléphone lui trouverait. */
+  async function mesurerSelon(largeurDe: (texte: string) => number) {
+    const copies = screen.queryAllByTestId(/^mesure-/, { includeHiddenElements: true });
+    for (const copie of copies) {
+      const texte = String(copie.props.children ?? '');
+      await fireEvent(copie, 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: largeurDe(texte), height: 13 } },
+      });
+    }
+  }
+
+  test('en heures, le « h » cède avant les nombres', async () => {
+    // « 103 h » ne laisse pas quatre points d'air dans une colonne de
+    // téléphone ; « 103 » oui. La règle était écrite dans CLAUDE.md — « le h
+    // lui-même cède quand il ferait déborder » — et n'était pas appliquée.
+    await poserEn('heures');
+    await mesurerSelon((texte) => (texte.endsWith('h') ? 28 : texte.length * 6.5));
+    expect(screen.getAllByText('103').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('155').length).toBeGreaterThan(0);
+    expect(screen.queryAllByTestId(/^valeur-\d+$/).some((n) => /h$/.test(String(n.props.children)))).toBe(
+      false
+    );
+  });
+
+  test('quand le « h » entre, il reste', async () => {
+    await poserEn('heures');
+    await mesurerSelon((texte) => texte.length * 4);
+    expect(screen.getAllByText('103 h').length).toBeGreaterThan(0);
+  });
+
+  test('sans le « h » non plus : aucune étiquette, l’axe reste', async () => {
+    await poserEn('heures');
+    await mesurerSelon(() => 30);
+    expect(screen.queryAllByTestId(/^valeur-\d+$/).filter((n) => n.props.children !== '')).toHaveLength(0);
+    expect(screen.getAllByText('155 h').length).toBeGreaterThan(0);
+  });
+
+  test('le repère du haut et le point le plus haut ont la place de s’afficher', async () => {
+    // Sans étiquettes au-dessus des barres, rien ne séparait le haut du tracé
+    // du bord de la page : « 155 h », remonté de sa demi-hauteur pour
+    // s'asseoir sur sa ligne, et le point du mois le plus haut étaient coupés
+    // en deux.
+    await poserEn('heures');
+    for (const page of screen.getAllByTestId('page-graphique')) {
+      const style = StyleSheet.flatten(page.props.style);
+      expect(style.paddingTop).toBeGreaterThanOrEqual(7);
+      // Et rien d'une page ne déborde sur sa voisine.
+      expect(style.overflow).toBe('hidden');
+    }
+  });
+
+  describe('la ligne', () => {
+    async function enLigne(mesure: 'argent' | 'heures' | 'kilometres') {
+      await poserEn(mesure);
+      await fireEvent.press(screen.getByLabelText('En ligne'));
+      await act(async () => {
+        jest.runAllTimers();
+      });
+    }
+
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    test('chaque segment part d’un point et arrive sur le suivant', async () => {
+      await enLigne('heures');
+      const centre = (n: ReturnType<typeof screen.getByTestId>) => {
+        const s = StyleSheet.flatten(n.props.style) as { left: number; top: number; width: number };
+        return { x: s.left + s.width / 2, y: s.top + s.width / 2 };
+      };
+      for (let i = 0; i < 11; i++) {
+        const segment = screen.getByTestId(`segment-heures-${i}`);
+        const s = StyleSheet.flatten(segment.props.style) as {
+          left: number;
+          top: number;
+          width: number;
+          height: number;
+          transform: { rotate?: string }[];
+        };
+        const angle = parseFloat(String(s.transform.find((t) => t.rotate)?.rotate));
+        const arrivee = {
+          x: s.left + s.width * Math.cos(angle),
+          y: s.top + s.height / 2 + s.width * Math.sin(angle),
+        };
+        const suivant = centre(screen.getByTestId(`point-heures-${i + 1}`));
+        expect(Math.abs(arrivee.x - suivant.x)).toBeLessThan(0.5);
+        expect(Math.abs(arrivee.y - suivant.y)).toBeLessThan(0.5);
+      }
+    });
+
+    test('la rotation d’un segment ne partage jamais sa transformation avec une animation', async () => {
+      // Le défaut du téléphone. Quand une animation tourne côté natif, la
+      // partie fixe de la transformation — ici la rotation — est figée dans la
+      // configuration native. Au changement de mesure, la largeur du segment
+      // suivait les nouvelles données, sa rotation restait celle d'avant : des
+      // traits de la bonne longueur, dans la mauvaise direction. La rotation
+      // vit donc sur une vue fixe, et seule l'échelle animée sur sa fille.
+      await enLigne('heures');
+      for (let i = 0; i < 11; i++) {
+        const segment = screen.getByTestId(`segment-heures-${i}`);
+        const transformation = (StyleSheet.flatten(segment.props.style).transform ?? []) as object[];
+        expect(transformation.map((t) => Object.keys(t)[0])).toEqual(['rotate']);
+      }
+    });
   });
 });

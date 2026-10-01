@@ -229,26 +229,40 @@ function Ligne({
         const dx = point.x - depart.x;
         const dy = point.y - depart.y;
         const longueur = Math.hypot(dx, dy);
+        // Deux vues, pas une. Quand une animation tourne côté natif, la partie
+        // fixe de sa transformation y est figée : au changement de mesure, la
+        // largeur suivait les nouvelles données et la rotation restait celle
+        // d'avant — des traits de la bonne longueur, dans la mauvaise
+        // direction. La rotation vit donc sur une vue fixe, que React met à
+        // jour comme n'importe quel style ; seule l'échelle de sa fille s'anime.
         return (
-          <Animated.View
+          <View
             key={`segment-${point.entree.mois}`}
+            testID={`segment-${mesure}-${i}`}
+            pointerEvents="none"
             style={[
               styles.segment,
               {
                 left: depart.x,
                 top: depart.y - EPAISSEUR / 2,
                 width: longueur,
-                backgroundColor: couleurs.texteSecondaire,
-                transform: [{ rotate: `${Math.atan2(dy, dx)}rad` }, { scaleX: traces[i] }],
+                transform: [{ rotate: `${Math.atan2(dy, dx)}rad` }],
               },
-            ]}
-          />
+            ]}>
+            <Animated.View
+              style={[
+                styles.trait,
+                { backgroundColor: couleurs.texteSecondaire, transform: [{ scaleX: traces[i] }] },
+              ]}
+            />
+          </View>
         );
       })}
 
       {points.map((point, i) => (
         <Animated.View
           key={point.entree.mois}
+          testID={`point-${mesure}-${i}`}
           accessibilityState={{ selected: enValeur.has(point.entree.mois) }}
           style={[
             styles.point,
@@ -297,8 +311,12 @@ function Page({
    * mal : l'œil compare des barres, pas des unités.
    */
   const format = formatDuGraphique(maxi);
-  const etiquettes = serie.map((entree) =>
+  const completes = serie.map((entree) =>
     etiquetteDuGraphique(valeurDe(entree, mesure), mesure, format, langue)
+  );
+  /** Les mêmes sans le « h » : identiques pour l'argent et les kilomètres. */
+  const courtes = serie.map((entree) =>
+    etiquetteDuGraphique(valeurDe(entree, mesure), mesure, format, langue, false)
   );
   const reperes = reperesDeLAxe(maxi, mesure, format, langue);
 
@@ -324,13 +342,18 @@ function Page({
    * suivante est pire qu'une valeur absente : « 40 h64 h » se lit mal, et
    * « 10 8… » peut être 10 800 ou 10 899. L'axe et la bulle sous le doigt
    * rendent la précision autrement.
+   *
+   * Avant de tout retirer, le « h » cède : « 103 » entre là où « 103 h » ne
+   * laissait pas d'air, et l'unité est déjà dite par l'onglet et par l'axe.
    */
-  const lisibles =
-    largeurTrace === 0 ||
+  const entrent = (textes: string[]) =>
     etiquettesSeparees(
-      etiquettes.map((texte) => largeurDe(mesuresValeurs, texte)),
+      textes.map((texte) => largeurDe(mesuresValeurs, texte)),
       pasColonne
     );
+  const etiquettes =
+    largeurTrace === 0 || entrent(completes) ? completes : entrent(courtes) ? courtes : null;
+  const lisibles = etiquettes !== null;
 
   /**
    * Les noms de mois suivent la même règle, avec un repli : si un nom complet
@@ -354,7 +377,7 @@ function Page({
   const pas = pasColonne;
 
   return (
-    <View style={styles.page}>
+    <View testID="page-graphique" style={styles.page}>
       {/*
         L'axe vertical. C'est ce qui manquait le plus : sans lui, les
         étiquettes étaient la seule échelle du graphique, d'où la pression
@@ -389,7 +412,7 @@ function Page({
         pointerEvents="none"
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants">
-        {etiquettes.map((texte, i) => (
+        {completes.map((texte, i) => (
           <Text
             key={`valeur-${i}`}
             testID={`mesure-valeur-${i}`}
@@ -399,6 +422,18 @@ function Page({
             {texte}
           </Text>
         ))}
+        {courtes.map((texte, i) =>
+          texte === completes[i] ? null : (
+            <Text
+              key={`court-${i}`}
+              testID={`mesure-court-${i}`}
+              numberOfLines={1}
+              style={[styles.valeur, styles.copie]}
+              onLayout={(e) => noter(setMesuresValeurs, texte, e.nativeEvent.layout.width)}>
+              {texte}
+            </Text>
+          )
+        )}
         {serie.map((entree, i) => (
           <Text
             key={`mois-${i}`}
@@ -411,7 +446,7 @@ function Page({
         ))}
       </View>
 
-      {lisibles && (
+      {etiquettes && (
         <View style={styles.rangee} onLayout={(e) => setHautEtiquettes(e.nativeEvent.layout.height)}>
           {serie.map((entree, i) => (
             <Text
@@ -642,6 +677,13 @@ const styles = StyleSheet.create({
    */
   page: {
     flexDirection: 'row',
+    /* L'air au-dessus du tracé, qu'il y ait des étiquettes ou non : le repère
+       du haut remonte de sa demi-hauteur pour s'asseoir sur sa ligne, et le
+       point du mois le plus haut dépasse de son rayon. Sans lui, les deux
+       étaient coupés en deux dès que les étiquettes disparaissaient. */
+    paddingTop: espace[2],
+    /* Rien d'une page ne déborde sur sa voisine dans le pageur. */
+    overflow: 'hidden',
   },
   /** L'axe vertical, à gauche du tracé. Largeur fixe : les trois repères
       partagent le même format, donc la même largeur. */
@@ -772,6 +814,11 @@ const styles = StyleSheet.create({
   segment: {
     position: 'absolute',
     height: EPAISSEUR,
+    transformOrigin: 'left center',
+  },
+  /* Le trait lui-même : il pousse depuis le point de départ. */
+  trait: {
+    flex: 1,
     borderRadius: EPAISSEUR / 2,
     transformOrigin: 'left center',
   },
