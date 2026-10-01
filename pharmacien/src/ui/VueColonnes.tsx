@@ -7,7 +7,8 @@ import { aimanter, minutesDebut, minutesEnHeure, minutesFin } from '../lib/agend
 import { MAINTIEN_COURT, MAINTIEN_LONG, TOLERANCE_IMMOBILE } from '../lib/gestes';
 import { analyserDate, aujourdhui } from '../lib/dates';
 import { etatFige, marqueDuQuart, type EtatFacturation } from '../lib/facturation';
-import { couleurs, dimensions, espace, graisse, typo, useAccent } from './theme';
+import { RepereQuart } from './RepereQuart';
+import { couleurs, dimensions, espace, graisse, quartAVenir, typo, useAccent } from './theme';
 import { useTextes } from '../i18n';
 
 /**
@@ -313,6 +314,7 @@ export function VueColonnes({
 
   return (
     <View
+      testID="vue-colonnes"
       style={styles.cadre}
       onLayout={(e: LayoutChangeEvent) => setLargeur(e.nativeEvent.layout.width)}>
       {!!source && (
@@ -389,13 +391,15 @@ export function VueColonnes({
         {rectangles.map(({ quart, x, y, largeur: l, hauteur: h }) => {
           const annule = !!quart.annule;
           const marque = marqueDuQuart(etats.get(quart.id) ?? 'aVenir');
-          const verrouille = verrouilles.has(quart.id);
           const enCours = source?.id === quart.id;
-          const vif = !annule && !verrouille;
+          const vif = !annule && marque.ton === 'vif';
           return (
             <View
               key={quart.id}
               pointerEvents="none"
+              // Un bloc de quart à venir porte le mauve (V2.5.4 C) : le test
+              // qui veille sur le mauve le reconnaît à ce repère.
+              testID={`bloc-${quart.id}`}
               style={[
                 styles.bloc,
                 {
@@ -403,51 +407,44 @@ export function VueColonnes({
                   left: x,
                   width: l,
                   height: h,
-                  // Le gris ne dit qu'une chose : effectué et facturé, donc
-                  // figé. Un quart effectué mais pas encore facturé garde sa
-                  // couleur, bien vivante — les deux états ne doivent jamais
-                  // se confondre à l'œil.
-                  // Foncé contre pâle : les deux états se distinguent sans
-                  // cadre, et sans mauve — un quart est du contenu.
+                  // Mauve translucide pour un quart à venir, gris translucide
+                  // pour un quart passé : la grille se lit au travers des
+                  // deux, et rien n'écrase l'écran comme le faisait le noir.
                   backgroundColor: annule
                     ? couleurs.fondEcran
-                    : verrouille
-                      ? couleurs.grisPale
-                      : couleurs.quartVif,
+                    : vif
+                      ? quartAVenir(accent)
+                      : couleurs.quartPasse,
                   opacity: enCours ? 0.3 : 1,
                 },
               ]}>
-              {/* La pastille dit qu'il reste un geste à poser : facturer, ou
-                  encaisser. Un quart à venir et un quart payé n'en portent
-                  pas — dans les deux cas, il n'y a rien à faire —, et la
-                  teinte du fond les sépare. */}
-              {marque.creuse && !annule && (
-                <View
-                  style={[
-                    styles.pastilleFacture,
-                    // Un repère sur une pastille change de couleur avec elle.
-                    { borderColor: vif ? couleurs.surQuartVif : couleurs.attente },
-                  ]}
+              {/* Les trois états passés partagent le gris : le repère dit
+                  lequel. Un quart à venir n'en porte pas. */}
+              {!annule && (
+                <RepereQuart
+                  repere={marque.repere}
+                  couleur={couleurs.attente}
+                  style={styles.repere}
                 />
               )}
               <Text
-                style={[styles.blocNom, vif && styles.surVif, annule && styles.barre]}
+                style={[styles.blocNom, !vif && styles.attenue, annule && styles.barre]}
                 numberOfLines={unSeulJour ? 1 : 2}>
                 {quart.pharmacie_nom}
               </Text>
               {unSeulJour ? (
-                <Text style={[styles.blocHeure, vif && styles.surVif]} numberOfLines={1}>
+                <Text style={styles.blocHeure} numberOfLines={1}>
                   {minutesEnHeure(minutesDebut(quart))} – {minutesEnHeure(minutesFin(quart))}
                 </Text>
               ) : (
                 <>
                   {/* Une heure tronquée vaut moins que pas d'heure du tout :
                       la fin ne s'affiche que s'il y a la place. */}
-                  <Text style={[styles.blocHeure, vif && styles.surVif]} numberOfLines={1}>
+                  <Text style={styles.blocHeure} numberOfLines={1}>
                     {formaterHeureCourte(minutesDebut(quart))}
                   </Text>
                   {h >= HAUTEUR_DEUX_HEURES && (
-                    <Text style={[styles.blocHeure, vif && styles.surVif]} numberOfLines={1}>
+                    <Text style={styles.blocHeure} numberOfLines={1}>
                       {formaterHeureCourte(minutesFin(quart))}
                     </Text>
                   )}
@@ -574,15 +571,12 @@ const styles = StyleSheet.create({
     paddingVertical: espace[1],
     overflow: 'hidden',
   },
-  /* Un anneau sans fond : sur le bloc, il est la seule marque de l'état. */
-  pastilleFacture: {
+  /* Le repère d'un quart passé, dans le coin : sur le gris, il est la seule
+     chose qui distingue à facturer, facturé et payé. */
+  repere: {
     position: 'absolute',
     top: espace[1],
     right: espace[1],
-    width: dimensions.pastille.cote,
-    height: dimensions.pastille.cote,
-    borderRadius: dimensions.pastille.cote / 2,
-    borderWidth: dimensions.pastille.contour,
   },
   blocNom: {
     ...typo.caption1,
@@ -593,8 +587,9 @@ const styles = StyleSheet.create({
     ...typo.caption2,
     color: couleurs.texteSecondaire,
   },
-  surVif: {
-    color: couleurs.surQuartVif,
+  /* Un quart passé : texte et fond atténués, comme le voulait le V2.5 D. */
+  attenue: {
+    color: couleurs.texteSecondaire,
   },
   barre: {
     textDecorationLine: 'line-through',

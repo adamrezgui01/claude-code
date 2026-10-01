@@ -118,31 +118,39 @@ describe('les quatre états, et leur marque', () => {
     expect(etatFacturation(quart, MAINTENANT, PAYEES)).toBe('paye');
   });
 
-  test('facturé et payé partagent le gris, et diffèrent par la pastille', () => {
+  test('facturé et payé partagent le gris, et diffèrent par leur repère', () => {
     const facture = marqueDuQuart('facture');
     const paye = marqueDuQuart('paye');
     expect(facture.ton).toBe(paye.ton);
     expect(facture.ton).toBe('gris');
-    expect(facture.creuse).not.toBe(paye.creuse);
+    expect(facture.repere).not.toBe(paye.repere);
   });
 
   test('chacun des quatre a sa propre marque', () => {
     // Deux états qui se ressemblent à l'œil sont un état de moins.
     const marques = (['aVenir', 'aFacturer', 'facture', 'paye'] as const).map((etat) => {
       const m = marqueDuQuart(etat);
-      return `${m.ton}-${m.creuse ? 'creuse' : 'pleine'}`;
+      return `${m.ton}-${m.repere}`;
     });
     expect(new Set(marques).size).toBe(4);
   });
 
-  test('un quart à venir garde la teinte vive, un quart réglé prend le gris', () => {
-    // Le vif était le mauve jusqu'au V2.6 : le mauve ne marque plus que
-    // l'élément actif et l'action principale. La règle, elle, n'a pas bougé.
+  test('un quart à venir est vif, un quart passé, facturé ou payé est gris', () => {
+    // V2.5.4 C : « Quart à venir : mauve translucide, texte foncé. Quart
+    // passé, facturé ou payé : gris translucide, avec son repère. » Jusque-là,
+    // un quart fait et pas encore facturé restait vif ; il passe au gris, et
+    // c'est son repère qui dit qu'il reste à facturer.
     expect(marqueDuQuart('aVenir').ton).toBe('vif');
-    // Fait, pas encore facturé : c'est l'étape qui rapporte, elle reste vive.
-    expect(marqueDuQuart('aFacturer').ton).toBe('vif');
+    expect(marqueDuQuart('aFacturer').ton).toBe('gris');
     expect(marqueDuQuart('facture').ton).toBe('gris');
     expect(marqueDuQuart('paye').ton).toBe('gris');
+  });
+
+  test('chaque quart passé porte son repère ; un quart à venir n’en porte pas', () => {
+    expect(marqueDuQuart('aVenir').repere).toBe('aucun');
+    const passes = (['aFacturer', 'facture', 'paye'] as const).map((e) => marqueDuQuart(e).repere);
+    expect(passes).not.toContain('aucun');
+    expect(new Set(passes).size).toBe(3);
   });
 
   test('sans liste de factures payées, rien n’est payé', () => {

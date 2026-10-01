@@ -255,6 +255,10 @@ export function mauveHorsRole(racine: Noeud | Noeud[] | null, accent: string): s
           // L'échantillon d'une légende reproduit l'élément actif pour dire ce
           // que veut sa couleur : il en porte le mauve à ce titre.
           p.props.testID === 'echantillon-actif' ||
+          // Un quart à venir est mauve translucide dans l'Horaire (V2.5.4 C) :
+          // son bloc de la semaine, son point du mois.
+          p.props.testID === 'quart-a-venir' ||
+          (typeof p.props.testID === 'string' && /^bloc-\d+$/.test(p.props.testID)) ||
           (p.type === 'RCTSwitch' && p.props.value === true)
         );
       });

@@ -60,14 +60,18 @@ export const couleurs = {
   /** L'encre d'un texte ou d'une icône posé sur l'accent plein. */
   surAccent: '#FFFFFF',
   /**
-   * Un quart vivant — à venir, ou fait et pas encore facturé. L'encre du texte
-   * principal : un quart est du contenu, pas un accent, et le mauve partout
-   * dans l'horaire n'accentuait plus rien. Facturé, il passe au gris ; c'est
-   * la seule chose que le gris dit.
+   * Le point qui dit qu'une journée porte un quart, dans la grille des dispos
+   * et la feuille de choix d'une date. L'encre du texte : il signale, il ne
+   * décrit pas l'état. Dans l'Horaire, un quart à venir est mauve translucide
+   * (`quartAVenir`) et un quart passé gris translucide (`quartPasse`).
    */
   quartVif: textePrincipal,
-  /** Ce qui s'écrit sur un quart vivant : le blanc de la carte, en encre inversée. */
-  surQuartVif: '#FFFFFF',
+  /**
+   * Le fond d'un quart passé — à facturer, facturé ou payé : le gris des
+   * repères, translucide pour que la grille se lise au travers. Son repère dit
+   * lequel des trois.
+   */
+  quartPasse: '#8A859238',
 
   /*
    * Les couleurs qui portent une information. Elles ne décorent rien : un
@@ -262,7 +266,7 @@ export const dimensions = {
   /** Le filet entre deux lignes : un point, sur la largeur du contenu seulement. */
   filet: { epaisseur: 1 },
   /** Une pastille : le point d'un quart, un repère d'état. Creuse, un anneau. */
-  pastille: { cote: 8, contour: 1.5 },
+  pastille: { cote: 8, contour: 1.5, crochet: 12 },
   /**
    * Une case à cocher. Son contour est la seule chose qui la marque sur une
    * ligne blanche : c'est l'un des rares cas où une bordure reste permise.
@@ -330,6 +334,15 @@ export function useAccent(): string {
  */
 export function accentPale(accent: string): string {
   return `${accent}1E`;
+}
+
+/**
+ * Le fond d'un quart à venir : l'accent, translucide, sous un texte foncé.
+ * Assez dense pour se lire sans contour sur la grille blanche, assez léger
+ * pour que la grille passe au travers.
+ */
+export function quartAVenir(accent: string): string {
+  return `${accent}38`;
 }
 
 export function accentMoyen(accent: string): string {

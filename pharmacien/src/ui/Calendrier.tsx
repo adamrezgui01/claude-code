@@ -6,6 +6,7 @@ import { ajouterMois, aujourdhui, formatMoisAnnee, grilleMois, JOURS_COURTS } fr
 import { marqueDuQuart, type EtatFacturation } from '../lib/facturation';
 import { useTextes } from '../i18n';
 import { Pageur } from './Pageur';
+import { RepereQuart } from './RepereQuart';
 import {
   accentPale,
   couleurs,
@@ -104,23 +105,24 @@ export function Calendrier({
                     </Text>
                     <View style={styles.points}>
                       {quarts.slice(0, 3).map((q) => {
-                        // Deux teintes et deux formes : quatre états dans un
-                        // point de sept pixels. Une nuance de gris de plus ne
-                        // se verrait pas à cette taille.
+                        // Un point mauve pour un quart à venir ; pour un quart
+                        // passé, son repère en gris — un anneau, un point, un
+                        // crochet. Une nuance de gris de plus ne se verrait
+                        // pas à cette taille, une forme oui.
                         const marque = marqueDuQuart(etats.get(q.id) ?? 'aVenir');
-                        const teinte = marque.ton === 'vif' ? couleurs.quartVif : couleurs.attente;
-                        return (
-                          <View
-                            key={q.id}
-                            style={[
-                              styles.point,
-                              marque.creuse
-                                ? { borderWidth: dimensions.pastille.contour, borderColor: teinte }
-                                : { backgroundColor: teinte },
-                              chevauchements.has(q.id) && styles.pointConflit,
-                            ]}
-                          />
-                        );
+                        if (chevauchements.has(q.id)) {
+                          return <View key={q.id} style={[styles.point, styles.pointConflit]} />;
+                        }
+                        if (marque.ton === 'vif') {
+                          return (
+                            <View
+                              key={q.id}
+                              testID="quart-a-venir"
+                              style={[styles.point, { backgroundColor: accent }]}
+                            />
+                          );
+                        }
+                        return <RepereQuart key={q.id} repere={marque.repere} couleur={couleurs.attente} />;
                       })}
                     </View>
                     {enConflit && <View style={styles.bordureConflit} />}

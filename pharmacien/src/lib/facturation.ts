@@ -124,40 +124,38 @@ export function etatFacturation(
 }
 
 /**
- * La marque d'un état : une teinte et une forme.
+ * La marque d'un état : une teinte et un repère.
  *
- * Facturé et payé sont deux situations distinctes — dans l'une on attend de
- * l'argent, dans l'autre l'affaire est close —, mais les distinguer par deux
- * nuances de gris ne les distingue pas du tout : personne ne compare deux
- * gris de mémoire, d'un écran à l'autre, en plein soleil. Ils partagent donc
- * le gris, et c'est la pastille qui tranche.
+ * Mauve translucide pour un quart à venir, gris translucide pour tout ce qui
+ * est passé (V2.5.4 C). Le noir plein du V2.6 écrasait l'écran : un quart noir
+ * sur une grille blanche, c'était la seule chose qu'on voyait.
  *
- * Creux veut dire « il reste quelque chose » : facturer, ou encaisser. Plein
- * veut dire « rien à faire » : le quart s'en vient, ou il est réglé.
+ * Les trois états passés partagent le gris, et c'est le repère qui les
+ * distingue : personne ne compare deux gris de mémoire, d'un écran à l'autre,
+ * en plein soleil. Les trois repères se lisent comme une suite — un anneau
+ * vide, la facture reste à faire ; un point plein, elle est partie ; un
+ * crochet, elle est payée.
  */
 export type MarqueQuart = {
-  /**
-   * Vif : il reste de l'argent en jeu. Gris : facturé, donc figé. Le vif était
-   * le mauve de l'application jusqu'au V2.6 ; c'est maintenant l'encre du
-   * texte, parce que le mauve ne marque plus que l'élément actif et l'action
-   * principale.
-   */
+  /** Vif : le quart s'en vient, il est mauve. Gris : il est passé. */
   ton: 'vif' | 'gris' | 'annule';
-  creuse: boolean;
+  repere: RepereEtat;
 };
+
+export type RepereEtat = 'aucun' | 'creux' | 'plein' | 'crochet';
 
 export function marqueDuQuart(etat: EtatFacturation): MarqueQuart {
   switch (etat) {
     case 'annule':
-      return { ton: 'annule', creuse: true };
+      return { ton: 'annule', repere: 'aucun' };
     case 'aVenir':
-      return { ton: 'vif', creuse: false };
+      return { ton: 'vif', repere: 'aucun' };
     case 'aFacturer':
-      return { ton: 'vif', creuse: true };
+      return { ton: 'gris', repere: 'creux' };
     case 'facture':
-      return { ton: 'gris', creuse: true };
+      return { ton: 'gris', repere: 'plein' };
     case 'paye':
-      return { ton: 'gris', creuse: false };
+      return { ton: 'gris', repere: 'crochet' };
   }
 }
 

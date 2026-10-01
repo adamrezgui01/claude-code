@@ -142,18 +142,21 @@ qu'on ne les redécouvre pas trois fois.
   trois choses : la bascule, le verrou de facturation et la couleur. Deux
   définitions finiraient par diverger, et le verrou est celle qui protège une
   facture déjà envoyée.
-- Le gris ne dit qu'une chose : **facturé, donc figé**. Un quart fait mais pas
-  encore facturé est exactement le contraire — c'est celui sur lequel il reste
-  du travail, et c'est l'étape qui rapporte. Il garde sa couleur et porte une
-  pastille ; le griser dirait « rien à voir ici » sur la seule chose qui
-  attend.
-- Facturé et payé partagent ce gris et se distinguent par leur **pastille**,
-  jamais par une nuance de gris : personne ne compare deux gris de mémoire,
-  d'un écran à l'autre, en plein soleil. Une pastille creuse dit qu'il reste un
-  geste à poser — facturer, ou encaisser —, une pastille pleine qu'il n'en
-  reste aucun. Les quatre états sortent d'un seul endroit, `etatFacturation`,
-  et leur apparence d'un seul autre, `marqueDuQuart` : trois vues qui
-  recalculeraient elles-mêmes finiraient par diverger.
+- Dans l'Horaire, un quart **à venir** est mauve translucide, sous un texte
+  foncé ; un quart **passé** — à facturer, facturé ou payé — est gris
+  translucide, avec son repère (V2.5.4 C). Le noir plein du V2.6 écrasait
+  l'écran : un quart noir sur une grille blanche était la seule chose qu'on
+  voyait. C'est l'exception nommée à la règle du mauve rare, et le test du
+  mauve la reconnaît au bloc de la semaine et au point du mois.
+- Les trois états passés partagent ce gris et se distinguent par leur
+  **repère**, jamais par une nuance de gris : personne ne compare deux gris de
+  mémoire, d'un écran à l'autre, en plein soleil. Un anneau vide, la facture
+  reste à faire ; un point plein, elle est partie ; un crochet, elle est payée.
+  Le gris ne fige rien pour autant : un quart à facturer se déplace encore,
+  seuls facturé et payé sont sourds au glisser-déposer. Les quatre états
+  sortent d'un seul endroit, `etatFacturation`, et leur apparence d'un seul
+  autre, `marqueDuQuart` : trois vues qui recalculeraient elles-mêmes
+  finiraient par diverger.
 - Toute somme sortie d'un calcul est arrondie au cent avant d'être conservée.
 - Un montant facturable se calcule et s'arrondit **une seule fois**, sur le
   quart. Factures et statistiques additionnent des montants déjà arrondis :
@@ -417,7 +420,8 @@ qu'on ne les redécouvre pas trois fois.
     dans une liste ne flotte pas, un bouton non plus.
   - Une section facultative commence repliée, derrière une ligne à chevron.
   - Le mauve reste l'accent, et devient **rare** : il marque l'élément actif et
-    l'action principale de l'écran, rien d'autre. L'élément actif le dit à
+    l'action principale de l'écran, rien d'autre — sauf le quart à venir dans
+    l'Horaire, en translucide (V2.5.4 C). L'élément actif le dit à
     VoiceOver (`selected`, `checked`, un interrupteur allumé), l'action
     principale porte le repère `action-principale` — une par écran. Une valeur
     qu'on vient chercher sur une ligne passe en gras, pas en mauve.
