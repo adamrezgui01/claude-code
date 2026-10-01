@@ -3,14 +3,18 @@ import { Router } from 'wouter';
 
 import App from '../src/App';
 
-/** Le site rendu à une adresse, sans navigateur. */
+/**
+ * Le site rendu à une adresse, sans navigateur. Les espaces insécables que
+ * `Intl` pose devant « $ » et entre les milliers deviennent des espaces
+ * ordinaires, pour qu'un test s'écrive comme on lit l'écran.
+ */
 export function rendre(adresse: string): string {
   const [chemin, recherche = ''] = adresse.split('?');
   return renderToStaticMarkup(
     <Router ssrPath={chemin} ssrSearch={recherche}>
       <App />
     </Router>
-  );
+  ).replace(/[\u00a0\u202f]/g, ' ');
 }
 
 /**

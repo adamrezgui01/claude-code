@@ -1,0 +1,139 @@
+/* Le répertoire et la fiche d'une pharmacie. */
+
+.recherche {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-3);
+  min-height: var(--champ);
+  padding: 0 var(--espace-4);
+  border-radius: var(--rayon);
+  background: var(--fond-eleve);
+  color: var(--texte-secondaire);
+}
+
+.recherche:focus-within {
+  outline: var(--pastille-contour) solid var(--accent);
+}
+
+.recherche-saisie {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--cible);
+  border: none;
+  background: none;
+  color: var(--texte-principal);
+  font: var(--body);
+  outline: none;
+}
+
+.repertoire-tri {
+  margin: var(--espace-4) 0;
+}
+
+.ligne-pharmacie {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-1);
+  margin-left: calc(-1 * var(--espace-2));
+}
+
+.etoile {
+  color: var(--texte-secondaire);
+}
+
+/* L'étoile d'un favori : une couleur qui porte une information, pas le mauve. */
+.etoile.favori {
+  color: var(--favori);
+}
+
+.ligne-pharmacie-lien,
+.ligne-historique {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--espace-3);
+  min-width: 0;
+  min-height: var(--cible);
+  padding: var(--espace-3) 0;
+  color: var(--texte-principal);
+  text-decoration: none;
+}
+
+.ligne-pharmacie-lien > .icone,
+.ligne-historique > .icone {
+  color: var(--texte-secondaire);
+}
+
+.ligne-pharmacie-texte,
+.ligne-historique-texte {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--espace-1);
+  min-width: 0;
+}
+
+.ligne-historique-texte > span:first-child::first-letter {
+  text-transform: uppercase;
+}
+
+.a-eviter,
+.etat-ligne {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-1);
+}
+
+.etat-ligne {
+  margin-left: var(--espace-3);
+}
+
+.taux,
+.ligne-historique-montant {
+  white-space: nowrap;
+}
+
+.ton-gris .ligne-historique-montant {
+  color: var(--texte-secondaire);
+}
+
+.resume-historique {
+  font: var(--subhead);
+  color: var(--texte-secondaire);
+  margin: 0 0 var(--espace-3) var(--espace-4);
+}
+
+.controle-liste {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-2);
+  width: 100%;
+  min-height: var(--cible);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--texte-principal);
+  font: var(--body);
+  cursor: pointer;
+}
+
+.controle-liste:focus-visible,
+.ligne-pharmacie-lien:focus-visible,
+.ligne-historique:focus-visible,
+.etoile:focus-visible {
+  outline: var(--pastille-contour) solid var(--accent);
+}
+
+.notes {
+  padding: var(--espace-3) 0;
+  white-space: pre-wrap;
+}
+
+.formulaire .en-tete {
+  margin-left: 0;
+  margin-bottom: 0;
+}
+
+.formulaire .en-tete-groupe {
+  margin-top: var(--espace-4);
+}

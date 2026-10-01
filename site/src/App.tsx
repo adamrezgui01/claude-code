@@ -1,6 +1,7 @@
 import { Route, Switch } from 'wouter';
 
 import Clinique from './ecrans/Clinique';
+import FichePharmacie from './ecrans/FichePharmacie';
 import FicheQuart from './ecrans/FicheQuart';
 import Horaire from './ecrans/Horaire';
 import Menu from './ecrans/Menu';
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/" component={Horaire} />
           <Route path="/quart/:id" component={FicheQuart} />
           <Route path="/repertoire" component={Repertoire} />
+          <Route path="/repertoire/:id" component={FichePharmacie} />
           <Route path="/clinique" component={Clinique} />
           <Route path="/statistiques" component={Statistiques} />
           <Route path="/menu" component={Menu} />
