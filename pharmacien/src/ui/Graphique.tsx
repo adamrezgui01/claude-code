@@ -4,6 +4,7 @@ import {
   Animated,
   Easing,
   LayoutChangeEvent,
+  PixelRatio,
   Pressable,
   StyleSheet,
   Text,
@@ -13,8 +14,10 @@ import {
 import type { Langue } from '../lib/langue';
 import {
   etiquetteDuGraphique,
-  etiquettesLisibles,
+  etiquettesSeparees,
   formatDuGraphique,
+  initialeDuMois,
+  largeurEstimee,
   reperesDeLAxe,
   maximum,
   mesureVoisine,
@@ -69,6 +72,20 @@ const LARGEUR_BULLE = 96;
  * pleins, « 12,4k » en milliers abrégés.
  */
 const LARGEUR_AXE = 34;
+/** Un repère d'axe trop large rapetisse jusqu'aux trois quarts, plutôt que de se couper. */
+const ECHELLE_MIN_REPERE = 0.75;
+
+/** Retenir une largeur mesurée, sans redessiner si elle n'a pas changé. */
+function noter(
+  definir: (maj: (actuelles: Record<string, number>) => Record<string, number>) => void,
+  texte: string,
+  largeur: number
+) {
+  const arrondie = Math.ceil(largeur);
+  definir((actuelles) =>
+    actuelles[texte] === arrondie ? actuelles : { ...actuelles, [texte]: arrondie }
+  );
+}
 
 /** La moitié de la hauteur d'un repère d'axe, pour l'asseoir sur sa ligne. */
 const CALAGE_REPERE = 6;
@@ -289,13 +306,42 @@ function Page({
   const largeurTrace = Math.max(0, largeur - LARGEUR_AXE);
 
   /**
-   * Soit toutes les étiquettes entrent, soit aucune ne s'affiche. Une valeur
-   * coupée est pire qu'une valeur absente : « 10 8… » peut être 10 800 ou
-   * 10 899. L'axe et la bulle sous le doigt rendent la précision autrement.
+   * Les largeurs réelles, mesurées sur une copie invisible de chaque
+   * étiquette : la police du système en demi-gras, à la taille de texte que
+   * l'usager a choisie dans iOS. Tant qu'une copie n'a pas répondu, on estime,
+   * à l'échelle de cette taille de texte.
    */
-  const plusLarge = etiquettes.reduce((a, b) => (b.length > a.length ? b : a), '');
+  const [mesuresValeurs, setMesuresValeurs] = useState<Record<string, number>>({});
+  const [mesuresMois, setMesuresMois] = useState<Record<string, number>>({});
+  const echelle = PixelRatio.getFontScale();
+  const largeurDe = (mesures: Record<string, number>, texte: string) =>
+    mesures[texte] ?? largeurEstimee(texte) * echelle;
+  const pasColonne = largeurTrace / Math.max(1, serie.length);
+
+  /**
+   * Soit toutes les étiquettes entrent, avec quatre points d'air entre deux
+   * voisines, soit aucune ne s'affiche. Une valeur coupée ou collée à la
+   * suivante est pire qu'une valeur absente : « 40 h64 h » se lit mal, et
+   * « 10 8… » peut être 10 800 ou 10 899. L'axe et la bulle sous le doigt
+   * rendent la précision autrement.
+   */
   const lisibles =
-    largeurTrace === 0 || etiquettesLisibles(largeurTrace / Math.max(1, serie.length), plusLarge);
+    largeurTrace === 0 ||
+    etiquettesSeparees(
+      etiquettes.map((texte) => largeurDe(mesuresValeurs, texte)),
+      pasColonne
+    );
+
+  /**
+   * Les noms de mois suivent la même règle, avec un repli : si un nom complet
+   * n'entre pas, l'initiale pour les douze. Jamais « se… » pour septembre seul.
+   */
+  const moisComplets =
+    largeurTrace === 0 ||
+    etiquettesSeparees(
+      serie.map((entree) => largeurDe(mesuresMois, entree.libelle)),
+      pasColonne
+    );
 
   /**
    * Le mois touché. La bulle rend la précision que l'étiquette a laissée
@@ -305,7 +351,7 @@ function Page({
   const [hautEtiquettes, setHautEtiquettes] = useState(0);
   const choisi = serie.find((e) => e.mois === touche) ?? null;
   const rang = choisi ? serie.indexOf(choisi) : 0;
-  const pas = largeurTrace / Math.max(1, serie.length);
+  const pas = pasColonne;
 
   return (
     <View style={styles.page}>
@@ -317,8 +363,15 @@ function Page({
       <View style={styles.colonneAxe}>
         <View style={{ height: lisibles ? hautEtiquettes : 0 }} />
         <View style={[styles.reperes, { height: hauteurZone }]}>
+          {/* Un repère ne se coupe pas : trop large pour l'axe, il rapetisse. */}
           {reperes.map((repere, i) => (
-            <Text key={i} style={styles.repereTexte} numberOfLines={1}>
+            <Text
+              key={i}
+              testID={`repere-axe-${i}`}
+              style={styles.repereTexte}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={ECHELLE_MIN_REPERE}>
               {repere.etiquette}
             </Text>
           ))}
@@ -326,11 +379,44 @@ function Page({
       </View>
 
       <View style={styles.trace}>
+      {/*
+        Les copies de mesure : chaque étiquette et chaque nom de mois, à leur
+        largeur naturelle, invisibles et hors de VoiceOver. Elles disent ce
+        que l'œil verra, là où une estimation se trompait d'une police.
+      */}
+      <View
+        style={styles.mesures}
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants">
+        {etiquettes.map((texte, i) => (
+          <Text
+            key={`valeur-${i}`}
+            testID={`mesure-valeur-${i}`}
+            numberOfLines={1}
+            style={[styles.valeur, styles.copie]}
+            onLayout={(e) => noter(setMesuresValeurs, texte, e.nativeEvent.layout.width)}>
+            {texte}
+          </Text>
+        ))}
+        {serie.map((entree, i) => (
+          <Text
+            key={`mois-${i}`}
+            testID={`mesure-mois-${i}`}
+            numberOfLines={1}
+            style={[styles.mois, styles.copie]}
+            onLayout={(e) => noter(setMesuresMois, entree.libelle, e.nativeEvent.layout.width)}>
+            {entree.libelle}
+          </Text>
+        ))}
+      </View>
+
       {lisibles && (
         <View style={styles.rangee} onLayout={(e) => setHautEtiquettes(e.nativeEvent.layout.height)}>
           {serie.map((entree, i) => (
             <Text
               key={entree.mois}
+              testID={`valeur-${i}`}
               style={[styles.valeur, !enValeur.has(entree.mois) && { color: couleurs.texteSecondaire }]}
               numberOfLines={1}>
               {etiquettes[i]}
@@ -436,7 +522,7 @@ function Page({
       <View style={styles.rangee}>
         {serie.map((entree) => (
           <Text key={entree.mois} style={styles.mois} numberOfLines={1}>
-            {entree.libelle}
+            {moisComplets ? entree.libelle : initialeDuMois(entree.libelle)}
           </Text>
         ))}
       </View>
@@ -595,6 +681,22 @@ const styles = StyleSheet.create({
   },
   rangee: {
     flexDirection: 'row',
+  },
+  /* Hors du flux, invisibles : elles ne prennent aucune place à l'écran. */
+  mesures: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    opacity: 0,
+    alignItems: 'flex-start',
+  },
+  /* Une copie garde la police de son modèle, pas sa colonne : sa largeur est
+     celle du texte. */
+  copie: {
+    flex: 0,
+    marginTop: 0,
+    marginBottom: 0,
   },
   zone: {
     height: HAUTEUR_VISEE,

@@ -167,7 +167,7 @@ export function reperesDeLAxe(
  * C'est une estimation, pas une mesure : mesurer douze textes à chaque rendu
  * coûterait plus cher que la marge qu'on garde ici.
  */
-function largeurEstimee(texte: string): number {
+export function largeurEstimee(texte: string): number {
   let total = 0;
   for (const c of texte) {
     if (c === ',' || c === '.') total += 3.1;
@@ -190,6 +190,31 @@ export const ECART_ETIQUETTES = 4;
 export function etiquettesLisibles(largeurColonne: number, plusLarge: string): boolean {
   if (!plusLarge) return true;
   return largeurEstimee(plusLarge) + ECART_ETIQUETTES <= largeurColonne;
+}
+
+/**
+ * Une rangée d'étiquettes centrées chacune sur sa colonne : chacune entre-t-
+ * elle dans la sienne, et deux voisines gardent-elles au moins
+ * `ECART_ETIQUETTES` entre elles (V2.5.4 G) ?
+ *
+ * L'air entre deux voisines est le pas, moins la moitié de chacune. C'est la
+ * règle qui manquait : vérifier la plus large seule laissait « 40 h » et
+ * « 64 h » se coller dès que la largeur réelle dépassait l'estimation.
+ */
+export function etiquettesSeparees(largeurs: number[], pas: number): boolean {
+  return largeurs.every(
+    (largeur, i) =>
+      largeur <= pas && (i === 0 || pas - (largeurs[i - 1] + largeur) / 2 >= ECART_ETIQUETTES)
+  );
+}
+
+/**
+ * L'initiale d'un mois — J F M A M J J A S O N D —, quand un nom complet
+ * n'entre pas. Pour les douze à la fois : une abréviation coupée pour un seul
+ * mois se lit plus mal qu'une lettre pour tous.
+ */
+export function initialeDuMois(libelle: string): string {
+  return libelle.charAt(0).toLocaleUpperCase();
 }
 
 /**

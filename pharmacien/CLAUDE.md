@@ -337,9 +337,17 @@ qu'on ne les redécouvre pas trois fois.
   déploie douze lignes ou quarante. Une liste qu'on peut ouvrir sans pouvoir la
   refermer est un piège, et le repli ramène la vue sur l'en-tête de la section :
   sinon on se retrouve au milieu de l'écran sans savoir où.
-- **Une étiquette de graphique ne se tronque jamais.** Soit elle entre en
-  entier, soit elle ne s'affiche pas. « 10 8… » peut être 10 800 ou 10 899, et
-  on ne le sait pas : une valeur coupée est pire qu'une valeur absente.
+- **Une étiquette de graphique ne se tronque jamais, et ne touche jamais sa
+  voisine.** Soit toutes entrent en entier avec quatre points d'air entre deux
+  voisines, soit aucune ne s'affiche. « 10 8… » peut être 10 800 ou 10 899, et
+  « 40 h64 h » se lit mal : une valeur coupée ou collée est pire qu'une valeur
+  absente. La largeur se **mesure** sur une copie invisible de chaque
+  étiquette, hors de VoiceOver : l'estimation calée sur l'ancienne police
+  laissait coller « 40 h » et « 64 h » en SF Pro demi-gras, et ne voyait pas
+  la taille de texte choisie dans iOS. Elle ne sert plus qu'avant la mesure.
+  Un nom de mois qui n'entre pas fait passer **les douze** à l'initiale — J F
+  M A M J J A S O N D —, jamais « se… » pour septembre seul. Un repère de
+  l'axe trop large rapetisse plutôt que de se couper.
   Le format se choisit **par graphique**, sur sa plus grande valeur, et
   s'applique aux douze colonnes — mélanger « 8 564 » et « 10k » dans le même
   graphique se lit mal, l'œil compare des barres et non des unités.
