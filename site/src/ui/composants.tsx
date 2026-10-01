@@ -164,3 +164,39 @@ export function Replie({ titre, children }: { titre: string; children: ReactNode
 export function Repere({ forme }: { forme: 'creux' | 'plein' }) {
   return <span className={`repere repere-${forme}`} aria-hidden="true" />;
 }
+
+/**
+ * Un champ de recherche : la loupe, le champ, et une croix pour l'effacer dès
+ * qu'il y a quelque chose. La croix est une icône seule : effacer une recherche
+ * n'a pas besoin d'être dit.
+ */
+export function Recherche({
+  valeur,
+  onChange,
+  etiquette,
+  invite,
+}: {
+  valeur: string;
+  onChange: (v: string) => void;
+  etiquette: string;
+  invite: string;
+}) {
+  return (
+    <div className="recherche">
+      <Icone nom="rechercher" />
+      <input
+        className="recherche-saisie"
+        type="search"
+        value={valeur}
+        placeholder={invite}
+        aria-label={etiquette}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      {valeur && (
+        <button type="button" className="bouton-icone effacer" aria-label="Effacer la recherche" title="Effacer" onClick={() => onChange('')}>
+          <Icone nom="fermer" />
+        </button>
+      )}
+    </div>
+  );
+}

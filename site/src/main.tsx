@@ -7,6 +7,7 @@ import './styles/composants.css';
 import './styles/horaire.css';
 import './styles/repertoire.css';
 import './styles/statistiques.css';
+import './styles/clinique.css';
 import App from './App';
 
 createRoot(document.getElementById('racine')!).render(

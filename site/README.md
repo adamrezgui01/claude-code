@@ -56,6 +56,19 @@ s'arrondit une seule fois, sur le quart ; zéro est une valeur, et seul le vide
 hérite ; un quart de nuit appartient au jour où il commence ; un quart fige
 ses taux le jour de sa création, et un quart facturé ne se modifie plus.
 
+## Les sources cliniques
+
+`src/donnees/sources.ts` est produit par `npx tsx scripts/sources.ts`, à partir
+des sources de l'application (`pharmacien/src/lib/veille/depart.ts`) : une
+adresse de document se recopie, elle ne se retape jamais. Un test vérifie que
+les deux fichiers disent la même chose ; s'il tombe, on relance le script.
+
+Le document s'ouvre en principal, dans un nouvel onglet ; la page officielle,
+qui suit la version courante du document, en secondaire. L'application vérifie
+par une requête `HEAD` qu'un document existe encore avant de l'ouvrir ; un
+navigateur ne peut pas le faire sur un autre domaine, et le site ouvre donc le
+document tel quel, avec la page officielle à côté.
+
 ## Les jetons
 
 Les mêmes que ceux de l'application (V2.6), parce que le site et l'application

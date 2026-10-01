@@ -7,7 +7,7 @@ import { valeur } from '../lib/heritage';
 import { filtrerPharmacies, trierPharmacies, type Tri } from '../lib/repertoire';
 import { aujourdhui } from '../lib/temps';
 import type { Pharmacie } from '../lib/types';
-import { Choix } from '../ui/composants';
+import { Choix, Recherche } from '../ui/composants';
 import { Vide } from '../ui/Ecran';
 import { Icone } from '../ui/Icone';
 
@@ -38,17 +38,7 @@ export default function Repertoire() {
         </Link>
       </div>
 
-      <label className="recherche">
-        <Icone nom="rechercher" />
-        <input
-          className="recherche-saisie"
-          type="search"
-          value={recherche}
-          placeholder="Nom ou ville"
-          aria-label="Chercher une pharmacie"
-          onChange={(e) => setRecherche(e.target.value)}
-        />
-      </label>
+      <Recherche valeur={recherche} onChange={setRecherche} etiquette="Chercher une pharmacie" invite="Nom ou ville" />
 
       <div className="repertoire-tri">
         <Choix

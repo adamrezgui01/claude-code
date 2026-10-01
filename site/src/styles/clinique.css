@@ -1,0 +1,78 @@
+/* La clinique : la recherche, les outils, les liens utiles. */
+
+.indication {
+  margin-top: var(--espace-2);
+}
+
+.sous-section {
+  margin-top: var(--espace-8);
+}
+
+.titre-sous-section {
+  font: var(--title3);
+  font-weight: var(--demi);
+  margin-bottom: var(--espace-3);
+}
+
+.theme + .theme {
+  margin-top: var(--espace-6);
+}
+
+.en-tete-theme {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-2);
+}
+
+.ligne-source {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-2);
+}
+
+.ligne-source-lien {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--espace-3);
+  min-width: 0;
+  min-height: var(--cible);
+  padding: var(--espace-3) 0;
+  color: var(--texte-principal);
+  text-decoration: none;
+}
+
+.ligne-source-lien > .icone {
+  color: var(--texte-secondaire);
+}
+
+.ligne-source-texte {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--espace-1);
+  min-width: 0;
+}
+
+.a-remettre {
+  margin-left: var(--espace-2);
+  color: var(--texte-principal);
+  font-weight: var(--demi);
+}
+
+.lien-source {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-1);
+  min-width: var(--cible);
+  min-height: var(--cible);
+  padding: 0 var(--espace-2);
+  color: var(--texte-secondaire);
+  font: var(--footnote);
+  text-decoration: none;
+}
+
+.ligne-source-lien:focus-visible,
+.lien-source:focus-visible {
+  outline: var(--pastille-contour) solid var(--accent);
+}
