@@ -11,19 +11,10 @@ import { formatDateCourte } from '../../src/lib/dates';
 import { partagerPdf, pdfDepuisHtml } from '../../src/lib/facturePdf';
 import { argent, heures } from '../../src/lib/format';
 import { ajusterRelance, ancienneteFacture, supprimerFactureEtRappel } from '../../src/lib/relanceFactures';
-import {
-  Bouton,
-  Carte,
-  Doux,
-  Ecran,
-  Etiquette,
-  Rangee,
-  Separateur,
-  SousTitre,
-} from '../../src/ui/composants';
+import { Bouton, Carte, Doux, Ecran, Etiquette, Rangee, SousTitre } from '../../src/ui/composants';
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { Recompense } from '../../src/ui/Recompense';
-import { couleurs, espace, police, texte } from '../../src/ui/theme';
+import { couleurs, dimensions, espace, graisse, icone, typo } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 /**
@@ -120,7 +111,7 @@ export default function VueFacture() {
 
       <Carte style={styles.totaux}>
         <Text style={styles.total}>{argent(facture.total)}</Text>
-        <Separateur />
+        <View style={styles.avantDetail} />
         <Rangee label={t('statistiques.heures')} valeur={heures(facture.total_heures)} />
         {facture.deplacement_montant > 0 && (
           <Rangee label={t('facture.deplacement')} valeur={argent(facture.deplacement_montant)} />
@@ -139,7 +130,7 @@ export default function VueFacture() {
       <View style={styles.actions}>
         <Bouton
           titre={t('facture.repartager')}
-          icone={<Ionicons name="share-outline" size={18} color="#FFFFFF" />}
+          icone={<Ionicons name="share-outline" size={icone.courante} color={couleurs.surAccent} />}
           onPress={() => void partager(facture)}
         />
         <Bouton
@@ -149,8 +140,9 @@ export default function VueFacture() {
         />
       </View>
 
-      <Separateur />
-
+      {/* L'espace sépare les blocs ; les deux filets qui le faisaient en plus
+          sont retirés. */}
+      <View style={styles.entreGroupes} />
       <SousTitre>{t('compteur.quartFacture', { count: quarts.length })}</SousTitre>
       {quarts.map((q) => (
         <LigneQuart
@@ -161,8 +153,7 @@ export default function VueFacture() {
         />
       ))}
 
-      <Separateur />
-
+      <View style={styles.entreGroupes} />
       <Doux>
         Supprimer cette facture relibère ses quarts : ils redeviennent modifiables et
         facturables. C’est la seule façon de corriger un quart déjà facturé.
@@ -183,25 +174,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: espace.m,
-    marginBottom: espace.xs,
+    gap: espace[3],
+    marginBottom: espace[1],
   },
   pharmacie: {
     flex: 1,
-    fontSize: texte.grandTitre,
-    fontFamily: police.gras,
-    color: couleurs.texte,
+    ...typo.title3,
+    fontWeight: graisse.grasse,
+    color: couleurs.textePrincipal,
   },
   totaux: {
-    marginTop: espace.l,
+    marginTop: espace[4],
   },
+  avantDetail: { height: espace[3] },
+  entreGroupes: { height: dimensions.formulaire.entreGroupes },
   total: {
-    fontSize: texte.chiffre,
-    fontFamily: police.gras,
-    color: couleurs.texte,
+    ...typo.title1,
+    fontWeight: graisse.grasse,
+    color: couleurs.textePrincipal,
   },
   actions: {
-    marginTop: espace.m,
-    gap: espace.s,
+    marginTop: espace[3],
+    gap: espace[2],
   },
 });

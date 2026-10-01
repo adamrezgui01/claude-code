@@ -10,7 +10,16 @@ import { formatDateCourte } from '../src/lib/dates';
 import { argent, heures } from '../src/lib/format';
 import { ancienneteFacture, relanceDue } from '../src/lib/relanceFactures';
 import { Bouton, Doux, Etiquette, Fondu, Vide } from '../src/ui/composants';
-import { couleurs, espace, ombre, police, rayon, texte, useAccent } from '../src/ui/theme';
+import {
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from '../src/ui/theme';
 import { useTextes } from '../src/i18n';
 
 /**
@@ -21,7 +30,6 @@ import { useTextes } from '../src/i18n';
 export default function Factures() {
   const { t } = useTextes();
   const router = useRouter();
-  const accent = useAccent();
   const params = useLocalSearchParams<{ ids?: string }>();
   const nouvelles = params.ids ? params.ids.split(',').map(Number) : null;
 
@@ -65,13 +73,15 @@ export default function Factures() {
             const enRetard = relanceDue(f, delai);
             return (
               <Fondu key={f.id}>
+                {/* Blanche sur le gris, sans contour ni ombre. Payée, elle prend
+                    son fond vert pâle ; en retard, son étiquette rouge le dit,
+                    et le contour rouge qui le répétait est retiré. */}
                 <Pressable
                   onPress={() => router.push(`/facture/${f.id}`)}
+                  accessibilityRole="button"
                   style={({ pressed }) => [
                     styles.carte,
-                    ombre(accent, 'carte'),
                     paye && styles.cartePayee,
-                    enRetard && styles.carteRetard,
                     pressed && { opacity: 0.7 },
                   ]}>
                   <View style={styles.entete}>
@@ -98,7 +108,7 @@ export default function Factures() {
                     <Text style={styles.montant}>
                       {argent(f.total)} · {heures(f.total_heures)}
                     </Text>
-                    <Ionicons name="chevron-forward" size={18} color={couleurs.doux} />
+                    <Ionicons name="chevron-forward" size={icone.courante} color={couleurs.texteSecondaire} />
                   </View>
                 </Pressable>
               </Fondu>
@@ -124,60 +134,56 @@ export default function Factures() {
 const styles = StyleSheet.create({
   cadre: {
     flex: 1,
-    backgroundColor: couleurs.fond,
+    backgroundColor: couleurs.fondEcran,
   },
   contenu: {
-    padding: espace.l,
-    paddingBottom: espace.xxl,
+    paddingHorizontal: dimensions.ecran.margeH,
+    paddingTop: dimensions.ecran.margeHaut,
+    paddingBottom: espace[10],
   },
   resume: {
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.texte,
-    marginBottom: espace.m,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
+    marginBottom: espace[3],
   },
   carte: {
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.l,
-    marginBottom: espace.s,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    padding: dimensions.carte.remplissage,
+    marginBottom: espace[2],
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
   },
   cartePayee: {
-    borderColor: couleurs.succes,
     backgroundColor: couleurs.succesPale,
-  },
-  carteRetard: {
-    borderColor: couleurs.alerte,
   },
   entete: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: espace.m,
-    marginBottom: espace.xs,
+    gap: espace[3],
+    marginBottom: espace[1],
   },
   pharmacie: {
     flex: 1,
-    fontSize: texte.saisie,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   detail: {
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.footnote,
+    color: couleurs.texteSecondaire,
   },
   bas: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: espace.xs,
+    marginTop: espace[1],
   },
   montant: {
-    fontSize: texte.corps,
-    fontFamily: police.demi,
-    color: couleurs.texte,
+    ...typo.body,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
 });

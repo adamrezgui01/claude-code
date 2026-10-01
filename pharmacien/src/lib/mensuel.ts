@@ -150,8 +150,14 @@ export function reperesDeLAxe(
 }
 
 /**
- * Largeur approximative d'un caractère d'étiquette, à onze points, en Nunito
- * demi-gras.
+ * Largeur approximative d'un caractère d'étiquette, à onze points, demi-gras.
+ *
+ * Relevée sur le Nunito, avant que l'application passe à la police du système
+ * (V2.6). SF Pro dessine ses chiffres dans le même ordre de largeur — un peu
+ * plus de la moitié d'un cadratin —, et c'est pourquoi les étiquettes restent
+ * en caption2, onze points : à douze, « 1,2k » ne tiendrait plus dans une
+ * colonne de téléphone, et la règle « jamais tronquée » les ferait toutes
+ * disparaître.
  *
  * Par classe de caractère, et non une moyenne : une virgule fait la moitié
  * d'un chiffre, et un séparateur de milliers moins encore. Une moyenne plate

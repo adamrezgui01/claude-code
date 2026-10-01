@@ -379,8 +379,6 @@ export const fr = {
     hebergement: 'Hébergement',
     hebergementDetail: 'Prérempli depuis la fiche de chaque pharmacie',
     hebergementFourni: '{{pharmacie}} : hébergement fourni par la pharmacie, rien à facturer.',
-    aGenerer: 'Facture à générer',
-    aGenererPlusieurs: '{{count}} factures à générer',
     generer: 'Générer la facture',
     genererPlusieurs: 'Générer les {{count}} factures',
     generation: 'Génération…',

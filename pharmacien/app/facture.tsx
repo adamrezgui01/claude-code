@@ -36,13 +36,13 @@ import {
   Onglets,
   Puce,
   Rangee,
-  Separateur,
+  Section,
   SousTitre,
   Vide,
 } from '../src/ui/composants';
 import { SelecteurDate } from '../src/ui/Selecteurs';
 import { SelecteurPharmacie } from '../src/ui/SelecteurPharmacie';
-import { couleurs, espace, police, texte } from '../src/ui/theme';
+import { couleurs, dimensions, espace, typo } from '../src/ui/theme';
 import { useTextes } from '../src/i18n';
 
 type Groupe = { pharmacie: Pharmacie; quarts: QuartDetaille[]; frais: FraisExtra[] };
@@ -290,8 +290,6 @@ export default function GenererFacture() {
         />
       </View>
 
-      <Separateur />
-
       {groupes.length === 0 ? (
         <Vide texte={t('facture.rienAFacturer')} />
       ) : (
@@ -307,22 +305,20 @@ export default function GenererFacture() {
             </Carte>
           )}
 
-          <SousTitre>{t('facture.aInclure')}</SousTitre>
-          <Carte>
+          {/* Une section : elle pose elle-même le filet entre deux lignes. */}
+          <Section titre={t('facture.aInclure')}>
             <Interrupteur
               label={t('facture.deplacement')}
               detail={t('facture.deplacementDetail')}
               valeur={inclureDeplacement}
               onChange={setInclureDeplacement}
             />
-            <Separateur />
             <Interrupteur
               label={t('facture.perDiem')}
               detail={t('facture.perDiemDetail')}
               valeur={inclurePerDiem}
               onChange={setInclurePerDiem}
             />
-            <Separateur />
             <Interrupteur
               label={t('facture.fraisExtra')}
               detail={
@@ -333,7 +329,6 @@ export default function GenererFacture() {
               valeur={inclureFrais}
               onChange={setInclureFrais}
             />
-            <Separateur />
             <Interrupteur
               label={t('facture.hebergement')}
               detail={t('facture.hebergementDetail')}
@@ -348,6 +343,7 @@ export default function GenererFacture() {
                   </Doux>
                 ) : (
                   <Champ
+                    nu
                     key={g.pharmacie.id}
                     label={g.pharmacie.nom}
                     valeur={hebergements[g.pharmacie.id] ?? `${g.pharmacie.hebergement_montant || ''}`}
@@ -359,17 +355,16 @@ export default function GenererFacture() {
                   />
                 )
               )}
-          </Carte>
+          </Section>
 
-          <SousTitre>
-            {groupes.length > 1
-              ? t('facture.aGenererPlusieurs', { count: groupes.length })
-              : t('facture.aGenerer')}
-          </SousTitre>
+          {/* Ce qui va partir, une ligne par pharmacie, juste au-dessus du
+              bouton qui le génère. L'en-tête « À générer » le disait une fois
+              de plus. */}
+          <Section>
           {groupes.map((g) => {
             const totaux = calculerTotaux(options(g));
             return (
-              <Carte key={g.pharmacie.id}>
+              <View key={g.pharmacie.id} style={styles.groupe}>
                 <Rangee label={g.pharmacie.nom} valeur={argent(totaux.total)} fort />
                 <Doux>
                   {t('facture.resumeHonoraires', {
@@ -390,9 +385,10 @@ export default function GenererFacture() {
                     ? t('facture.resumeHebergement', { montant: argent(totaux.hebergement) })
                     : ''}
                 </Doux>
-              </Carte>
+              </View>
             );
           })}
+          </Section>
 
           {enteteIncomplete && (
             <Text style={styles.avertissement}>{t('facture.enteteIncomplete')}</Text>
@@ -417,17 +413,18 @@ export default function GenererFacture() {
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: espace.l,
-    marginBottom: espace.m,
+    marginTop: espace[4],
+    marginBottom: dimensions.formulaire.entreGroupes,
+  },
+  groupe: {
+    paddingVertical: espace[2],
   },
   avis: {
     backgroundColor: couleurs.alertePale,
-    borderColor: couleurs.alerte,
   },
   avertissement: {
     color: couleurs.alerte,
-    fontSize: texte.courant,
-    fontFamily: police.normal,
-    marginBottom: espace.m,
+    ...typo.footnote,
+    marginBottom: espace[3],
   },
 });

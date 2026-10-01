@@ -310,6 +310,13 @@ const PASSES_V26: Record<string, string[]> = {
     'src/ui/ListeRepliable.tsx',
   ],
   Répertoire: ['app/(tabs)/repertoire.tsx', 'app/pharmacie/[id].tsx', 'src/ui/SaisieAdresse.tsx'],
+  Statistiques: [
+    'app/(tabs)/statistiques.tsx',
+    'src/ui/Graphique.tsx',
+    'app/facture.tsx',
+    'app/factures.tsx',
+    'app/facture/[id].tsx',
+  ],
 };
 
 const lire = (f: string) => readFileSync(f, 'utf8');

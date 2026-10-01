@@ -377,8 +377,6 @@ export const en: Dictionnaire = {
     hebergement: 'Lodging',
     hebergementDetail: 'Prefilled from each pharmacy’s record',
     hebergementFourni: '{{pharmacie}}: lodging provided by the pharmacy, nothing to bill.',
-    aGenerer: 'Invoice to generate',
-    aGenererPlusieurs: '{{count}} invoices to generate',
     generer: 'Generate the invoice',
     genererPlusieurs: 'Generate the {{count}} invoices',
     generation: 'Generating…',

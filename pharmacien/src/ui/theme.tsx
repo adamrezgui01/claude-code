@@ -334,6 +334,8 @@ export const dimensions = {
   point: { cote: 4 },
   /** Une colonne de roulette : heures, minutes. */
   rouleau: { largeur: 96 },
+  /** Une barre du graphique : coins du haut arrondis, deux points au moins pour qu'un zéro se voie. */
+  barre: { rayon: 4, minimum: 2 },
   /** La carte de la question, en révision : elle ne change pas de taille d'une question à l'autre. */
   question: { hauteur: 120 },
   /** La carte géographique de l'horaire, et ses repères. */

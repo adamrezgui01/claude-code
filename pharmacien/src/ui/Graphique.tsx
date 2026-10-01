@@ -26,7 +26,17 @@ import {
 } from '../lib/mensuel';
 import { Pageur } from './Pageur';
 import { useTextes } from '../i18n';
-import { accentPale, couleurs, espace, police, rayon, texte, useAccent } from './theme';
+import {
+  couleurs,
+  dimensions,
+  espace,
+  graisse,
+  icone,
+  ombreFlottante,
+  typo,
+  useAccent,
+  CIBLE_MIN,
+} from './theme';
 
 /**
  * Douze mois, deux lectures. Les barres disent le mois, la ligne dit la
@@ -109,13 +119,15 @@ function Barre({
 
   return (
     <View style={styles.colonne}>
+      {/* Les mois de la période choisie sont la sélection : ils portent le
+          mauve. Les autres passent au gris du filet, et plus au mauve pâle. */}
       <Animated.View
+        accessibilityState={{ selected: enValeur && valeur !== 0 }}
         style={[
           styles.barre,
           {
             height: hauteur,
-            backgroundColor:
-              valeur === 0 ? couleurs.bordure : enValeur ? accent : accentPale(accent),
+            backgroundColor: valeur !== 0 && enValeur ? accent : couleurs.filet,
           },
         ]}
       />
@@ -209,7 +221,7 @@ function Ligne({
                 left: depart.x,
                 top: depart.y - EPAISSEUR / 2,
                 width: longueur,
-                backgroundColor: accent,
+                backgroundColor: couleurs.texteSecondaire,
                 transform: [{ rotate: `${Math.atan2(dy, dx)}rad` }, { scaleX: traces[i] }],
               },
             ]}
@@ -220,13 +232,14 @@ function Ligne({
       {points.map((point, i) => (
         <Animated.View
           key={point.entree.mois}
+          accessibilityState={{ selected: enValeur.has(point.entree.mois) }}
           style={[
             styles.point,
             {
               left: point.x - POINT / 2,
               top: point.y - POINT / 2,
-              borderColor: accent,
-              backgroundColor: enValeur.has(point.entree.mois) ? accent : couleurs.carte,
+              borderColor: enValeur.has(point.entree.mois) ? accent : couleurs.texteSecondaire,
+              backgroundColor: enValeur.has(point.entree.mois) ? accent : couleurs.fondEleve,
               opacity: apparition[i],
               transform: [{ scale: apparition[i] }],
             },
@@ -259,7 +272,6 @@ function Page({
   langue: Langue;
   onMesurerZone: (hauteur: number) => void;
 }) {
-  const accent = useAccent();
   const maxi = maximum(serie, mesure);
 
   /**
@@ -319,7 +331,7 @@ function Page({
           {serie.map((entree, i) => (
             <Text
               key={entree.mois}
-              style={[styles.valeur, !enValeur.has(entree.mois) && { color: couleurs.doux }]}
+              style={[styles.valeur, !enValeur.has(entree.mois) && { color: couleurs.texteSecondaire }]}
               numberOfLines={1}>
               {etiquettes[i]}
             </Text>
@@ -404,7 +416,6 @@ function Page({
             pointerEvents="none"
             style={[
               styles.bulle,
-              { borderColor: accent },
               {
                 left: Math.min(
                   Math.max(0, pas * rang + pas / 2 - LARGEUR_BULLE / 2),
@@ -413,7 +424,7 @@ function Page({
               },
             ]}>
             <Text style={styles.bulleMois}>{choisi.libelle}</Text>
-            <Text style={[styles.bulleValeur, { color: accent }]} numberOfLines={1}>
+            <Text style={styles.bulleValeur} numberOfLines={1}>
               {valeurComplete(valeurDe(choisi, mesure), mesure, langue)}
             </Text>
           </View>
@@ -472,7 +483,7 @@ export function Graphique({
     <View
       testID="cadre-graphique"
       style={styles.cadre}
-      onLayout={(e: LayoutChangeEvent) => setLargeur(e.nativeEvent.layout.width - espace.s * 2)}>
+      onLayout={(e: LayoutChangeEvent) => setLargeur(e.nativeEvent.layout.width - espace[2] * 2)}>
       {/*
         Le balayage entre les mesures passe par la même liste paginée que les
         calendriers. C'est ce qui règle le conflit avec le défilement vertical
@@ -513,14 +524,14 @@ export function Graphique({
               setForme(choix.valeur);
               setRejeuForme((n) => n + 1);
             }}
-            hitSlop={10}
             accessibilityRole="button"
             accessibilityLabel={t(choix.cle)}
+            accessibilityState={{ selected: forme === choix.valeur }}
             style={styles.forme}>
             <Ionicons
               name={choix.icone}
-              size={18}
-              color={forme === choix.valeur ? accent : accentPale(accent)}
+              size={icone.courante}
+              color={forme === choix.valeur ? accent : couleurs.texteSecondaire}
             />
           </Pressable>
         ))}
@@ -530,14 +541,13 @@ export function Graphique({
 }
 
 const styles = StyleSheet.create({
+  /** Blanc sur le gris de l'écran : pas de contour. */
   cadre: {
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    paddingTop: espace.l,
-    paddingHorizontal: espace.s,
-    marginBottom: espace.m,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    paddingTop: espace[4],
+    paddingHorizontal: espace[2],
+    marginBottom: espace[4],
   },
   /**
    * Une seule rangée de douze colonnes égales, réutilisée pour les valeurs, les
@@ -551,15 +561,14 @@ const styles = StyleSheet.create({
       partagent le même format, donc la même largeur. */
   colonneAxe: {
     width: LARGEUR_AXE,
-    paddingRight: espace.xs,
+    paddingRight: espace[1],
   },
   reperes: {
     justifyContent: 'space-between',
   },
   repereTexte: {
-    fontSize: texte.minuscule,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.caption2,
+    color: couleurs.texteSecondaire,
     textAlign: 'right',
     /*
       Un calage optique, pas un espacement : le repère doit s'asseoir sur sa
@@ -578,8 +587,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   ligneRepere: {
-    height: 1,
-    backgroundColor: couleurs.bordurePale,
+    height: dimensions.filet.epaisseur,
+    backgroundColor: couleurs.filet,
   },
   trace: {
     flex: 1,
@@ -601,26 +610,27 @@ const styles = StyleSheet.create({
   colonneTactile: {
     flex: 1,
   },
+  /** La bulle flotte au-dessus du tracé : elle porte l'ombre, pas un contour mauve. */
   bulle: {
     position: 'absolute',
     top: 0,
     width: LARGEUR_BULLE,
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderRadius: rayon,
-    paddingVertical: espace.xs,
-    paddingHorizontal: espace.s,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.bloc.rayon,
+    ...ombreFlottante,
+    paddingVertical: espace[1],
+    paddingHorizontal: espace[2],
     alignItems: 'center',
   },
   bulleMois: {
-    fontSize: texte.minuscule,
-    fontFamily: police.normal,
-    color: couleurs.doux,
+    ...typo.caption2,
+    color: couleurs.texteSecondaire,
     textTransform: 'capitalize',
   },
   bulleValeur: {
-    fontSize: texte.courant,
-    fontFamily: police.demi,
+    ...typo.footnote,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
   },
   barres: {
     flexDirection: 'row',
@@ -635,27 +645,26 @@ const styles = StyleSheet.create({
   valeur: {
     flex: 1,
     /* Onze points : c'est ce qui se lit sans loupe sur une rangée de douze. */
-    fontSize: texte.fin,
-    fontFamily: police.demi,
-    color: couleurs.texte,
-    marginBottom: espace.xs,
+    ...typo.caption2,
+    fontWeight: graisse.demi,
+    color: couleurs.textePrincipal,
+    marginBottom: espace[1],
     textAlign: 'center',
   },
   barre: {
     /* Au plus soixante pour cent de la colonne : le reste est l'air qui
        sépare deux étiquettes voisines. */
     width: '60%',
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
-    minHeight: 2,
+    borderTopLeftRadius: dimensions.barre.rayon,
+    borderTopRightRadius: dimensions.barre.rayon,
+    minHeight: dimensions.barre.minimum,
   },
   mois: {
     flex: 1,
-    fontSize: texte.minuscule,
-    fontFamily: police.normal,
-    color: couleurs.doux,
-    marginTop: espace.xs,
-    marginBottom: espace.m,
+    ...typo.caption2,
+    color: couleurs.texteSecondaire,
+    marginTop: espace[1],
+    marginBottom: espace[3],
     textAlign: 'center',
   },
   segment: {
@@ -664,26 +673,29 @@ const styles = StyleSheet.create({
     borderRadius: EPAISSEUR / 2,
     transformOrigin: 'left center',
   },
+  /* Un anneau autour d'un point blanc : sur la ligne, c'est le contour qui le
+     dessine, rien d'autre ne le marque. */
   point: {
     position: 'absolute',
     width: POINT,
     height: POINT,
     borderRadius: POINT / 2,
-    borderWidth: 2,
+    borderWidth: dimensions.fantome.contour,
   },
   /** La règle qui ferme le bas du tracé. L'axe, lui, est vertical. */
   regleBasse: {
-    height: 1,
-    backgroundColor: couleurs.bordure,
+    height: dimensions.filet.epaisseur,
+    backgroundColor: couleurs.filet,
   },
   formes: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: espace.m,
-    paddingBottom: espace.s,
-    paddingRight: espace.s,
+    paddingRight: espace[2],
   },
   forme: {
-    padding: espace.xs,
+    minHeight: CIBLE_MIN,
+    minWidth: CIBLE_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -28,7 +28,7 @@ import {
 } from '../../src/ui/composants';
 import { SelecteurDate } from '../../src/ui/Selecteurs';
 import { SelecteurPharmacie } from '../../src/ui/SelecteurPharmacie';
-import { couleurs, espace, police, rayon, texte } from '../../src/ui/theme';
+import { couleurs, dimensions, espace, graisse, typo } from '../../src/ui/theme';
 import { useTextes } from '../../src/i18n';
 
 /** Une minute : de quoi distinguer un vrai départ d'un aller-retour immédiat. */
@@ -132,7 +132,7 @@ export default function Statistiques() {
         </Doux>
       )}
 
-      <Separateur />
+      <View style={styles.entreGroupes} />
 
       {/* Indépendant du sélecteur de période : une série mensuelle a besoin de
           plusieurs mois. */}
@@ -164,8 +164,6 @@ export default function Statistiques() {
         rejouer={rejouer}
       />
 
-      <Separateur />
-
       <View style={styles.section}>
         <SousTitre>{t('statistiques.pharmacies')}</SousTitre>
         <SelecteurPharmacie
@@ -186,7 +184,9 @@ export default function Statistiques() {
           <Carte>
             <Text style={styles.revenu}>{argent(stats.revenuEstime)}</Text>
             <Doux>{t('statistiques.revenuEstime')}</Doux>
-            <Separateur />
+            {/* L'espace sépare le revenu de son détail ; le filet qui le
+                faisait en plus est retiré. */}
+            <View style={styles.avantDetail} />
             <Rangee label={t('statistiques.quarts')} valeur={`${stats.nombreQuarts}`} />
             <Rangee label={t('statistiques.heuresTravaillees')} valeur={heures(stats.totalHeures)} />
             <Rangee label={t('statistiques.honoraires')} valeur={argent(stats.montantHoraire)} />
@@ -258,30 +258,31 @@ export default function Statistiques() {
 }
 
 const styles = StyleSheet.create({
+  entreGroupes: { height: dimensions.formulaire.entreGroupes },
+  avantDetail: { height: espace[3] },
   puces: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  /* La carte enveloppe la liste entière, contrôle compris : replier ne doit
-     pas laisser un bouton flotter hors du cadre. */
+  /* Le fond enveloppe la liste entière, contrôle compris : replier ne doit
+     pas laisser un bouton flotter hors du cadre. Blanc sur le gris, sans
+     contour. */
   parPharmacie: {
-    backgroundColor: couleurs.carte,
-    borderWidth: 1,
-    borderColor: couleurs.bordure,
-    borderRadius: rayon,
-    padding: espace.l,
+    backgroundColor: couleurs.fondEleve,
+    borderRadius: dimensions.carte.rayon,
+    padding: dimensions.carte.remplissage,
   },
   section: {
-    marginTop: espace.l,
-    marginBottom: espace.m,
+    marginTop: dimensions.formulaire.entreGroupes,
+    marginBottom: espace[4],
   },
   revenu: {
-    fontSize: texte.chiffre,
-    fontFamily: police.gras,
-    color: couleurs.texte,
+    ...typo.title1,
+    fontWeight: graisse.grasse,
+    color: couleurs.textePrincipal,
   },
   actions: {
-    marginTop: espace.l,
-    gap: espace.s,
+    marginTop: espace[4],
+    gap: espace[2],
   },
 });

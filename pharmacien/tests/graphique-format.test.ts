@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { argent, heures } from '../src/lib/format';
-import { texte } from '../src/ui/theme';
+import { typo } from '../src/ui/theme';
 import {
   etiquetteDuGraphique,
   etiquettesLisibles,
@@ -283,11 +283,12 @@ describe('l’écran, tel qu’il pose tout ça', () => {
 
   test('les étiquettes prennent leur taille du jeton', () => {
     // Une dimension, pas un comportement : elle ne se lit pas dans l'arbre
-    // rendu autrement qu'en recomposant la feuille de styles. Depuis la phase
-    // 3 de H, elle vient de l'échelle plutôt que d'un nombre écrit ici.
+    // rendu autrement qu'en recomposant la feuille de styles. Depuis le V2.6,
+    // elle vient des onze rôles des HIG : caption2, onze points — à douze,
+    // « 1,2k » ne tiendrait plus dans une colonne de téléphone.
     const bloc = graphique.slice(graphique.indexOf('  valeur: {'));
-    expect(bloc.slice(0, bloc.indexOf('\n  },'))).toContain('fontSize: texte.fin');
-    expect(texte.fin).toBe(11);
+    expect(bloc.slice(0, bloc.indexOf('\n  },'))).toContain('...typo.caption2');
+    expect(typo.caption2.fontSize).toBe(11);
   });
 
   test('la barre laisse de l’air à sa voisine', () => {
