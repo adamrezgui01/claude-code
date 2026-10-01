@@ -6,6 +6,7 @@ jest.mock('expo-router', () => {
     Stack: { Screen: () => null },
     useRouter: () => routeur,
     useLocalSearchParams: () => ({}),
+    useNavigation: () => ({ isFocused: () => true, addListener: () => () => {} }),
     useFocusEffect: (rappel: () => void | (() => void)) => React.useEffect(rappel, []),
   };
 });

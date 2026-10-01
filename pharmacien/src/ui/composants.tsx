@@ -33,6 +33,7 @@ import {
 } from 'react-native';
 
 import { formaterTelephone, formaterTelephoneSaisie } from '../lib/telephone';
+import { INTERVALLE_DEFILEMENT, noterPosition, RetourEnHaut } from './RetourEnHaut';
 import {
   accentPale,
   couleurs,
@@ -70,23 +71,35 @@ export function Ecran({
   children,
   style,
   fond,
+  onglet,
 }: {
   children: ReactNode;
   style?: ViewStyle;
   /** Écran hors navigation : il porte alors lui-même le fond de l'application. */
   fond?: boolean;
+  /**
+   * L'écran est un onglet : toucher son icône quand on y est déjà le ramène
+   * en haut (V2.5.4 E).
+   */
+  onglet?: boolean;
 }) {
   const liste = useRef<ScrollView>(null);
+  const position = useRef(0);
   const defilement = useMemo(
     () => ({ vers: (y: number) => liste.current?.scrollTo({ y, animated: true }) }),
     []
   );
+  const surDefilement = useMemo(() => noterPosition(position), []);
   return (
     <KeyboardAvoidingView
       style={[styles.ecran, fond && { backgroundColor: couleurs.fondEcran }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {onglet && <RetourEnHaut liste={liste} position={position} />}
       <ScrollView
         ref={liste}
+        testID={onglet ? 'defilement-onglet' : undefined}
+        onScroll={onglet ? surDefilement : undefined}
+        scrollEventThrottle={onglet ? INTERVALLE_DEFILEMENT : undefined}
         style={styles.ecran}
         contentContainerStyle={[styles.ecranContenu, style]}
         keyboardShouldPersistTaps="handled"

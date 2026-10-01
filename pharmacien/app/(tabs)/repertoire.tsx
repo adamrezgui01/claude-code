@@ -56,7 +56,7 @@ export default function Repertoire() {
   }
 
   return (
-    <Ecran>
+    <Ecran onglet>
       {pharmacies.length > 0 && (
         <>
           <View style={styles.recherche}>

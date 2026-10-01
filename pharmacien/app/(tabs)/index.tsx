@@ -43,6 +43,7 @@ import { Calendrier } from '../../src/ui/Calendrier';
 import { parametresDuQuart } from '../../src/lib/dictee';
 import { Dictee } from '../../src/ui/Dictee';
 import { BandeauAide, Bouton, Carte, Doux, Fondu, Onglets, Vide } from '../../src/ui/composants';
+import { INTERVALLE_DEFILEMENT, noterPosition, RetourEnHaut } from '../../src/ui/RetourEnHaut';
 import { BandeAttente } from '../../src/ui/BandeAttente';
 import { LigneQuart } from '../../src/ui/LigneQuart';
 import { Pageur } from '../../src/ui/Pageur';
@@ -69,6 +70,9 @@ export default function Horaire() {
   const { t } = useTextes();
   const router = useRouter();
   const navigation = useNavigation();
+  const liste = useRef<ScrollView>(null);
+  const position = useRef(0);
+  const surDefilement = useMemo(() => noterPosition(position), []);
   // Ce qui reste à l'agenda une fois l'en-tête, la barre d'onglets et le bouton
   // d'ajout déduits : la vue s'y ajuste plutôt que d'imposer un défilement.
   const { height } = useWindowDimensions();
@@ -439,7 +443,14 @@ export default function Horaire() {
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.contenu} scrollEnabled={!duplication}>
+    <ScrollView
+      ref={liste}
+      testID="defilement-onglet"
+      onScroll={surDefilement}
+      scrollEventThrottle={INTERVALLE_DEFILEMENT}
+      contentContainerStyle={styles.contenu}
+      scrollEnabled={!duplication}>
+      <RetourEnHaut liste={liste} position={position} />
       {rappelFactures && (
         <Fondu>
           <Carte>

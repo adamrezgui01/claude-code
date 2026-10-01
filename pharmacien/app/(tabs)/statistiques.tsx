@@ -98,7 +98,7 @@ export default function Statistiques() {
   }
 
   return (
-    <Ecran>
+    <Ecran onglet>
       {/* Dans l'ordre du temps, du plus court au plus long : Mois dernier ·
           Ce mois · 3 mois · 12 mois · Autre. 12 mois reste choisi à
           l'ouverture sans être le premier. La rangée ne défile pas : un onglet

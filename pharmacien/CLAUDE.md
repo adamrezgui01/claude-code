@@ -384,6 +384,10 @@ qu'on ne les redécouvre pas trois fois.
     centre, **une action au plus** à droite. Rien n'y est en position absolue.
     Une ligne secondaire — une plage, un mois — vit sous l'en-tête, jamais
     dedans. Aucun bouton ne flotte par-dessus le contenu.
+  - Toucher l'icône de l'onglet où l'on est déjà ramène son défilement en
+    haut, animé ; déjà en haut, rien. Chaque racine d'onglet le porte —
+    `<Ecran onglet>`, ou `RetourEnHaut` à côté de son propre `ScrollView` — et
+    un test le vérifie sur les cinq.
   - La police est celle du système — SF Pro sur iOS. Aucune autre famille, et
     aucune graisse sous Regular : Light, Thin et Ultralight se voient mal dès
     que le texte est petit. Une graisse se prend dans `graisse`.

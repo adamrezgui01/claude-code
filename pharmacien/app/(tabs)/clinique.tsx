@@ -169,7 +169,7 @@ export default function Clinique() {
   const cherche = recherche.trim().length > 0;
 
   return (
-    <Ecran style={styles.contenu}>
+    <Ecran onglet style={styles.contenu}>
       {/* Rien à revoir : pas de ligne. Un compteur à zéro s'apprend à ne plus
           se lire, et emporte avec lui celui qui ne l'est pas. */}
       {/* Trois fois la même question en trois mois : c'est un sujet qui ne

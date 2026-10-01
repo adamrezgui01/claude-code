@@ -35,7 +35,7 @@ export default function Menu() {
    * cherchait.
    */
   return (
-    <Ecran>
+    <Ecran onglet>
       <Section>
         {ENTREES.map((entree) => (
           <Pressable
