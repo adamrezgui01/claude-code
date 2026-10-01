@@ -34,6 +34,28 @@ partir de `src/styles/jetons.css`, et les icônes sont dessinées dans
 `src/ui/Icone.tsx` : une vingtaine de traits ne justifient pas une quatrième
 dépendance.
 
+## Les données
+
+Aucune base. `src/donnees.ts` garde tout en mémoire et le recopie dans
+`localStorage` à chaque changement. Au premier chargement, c'est le jeu de
+démonstration qui s'installe (`src/lib/demo.ts`) : huit pharmacies, de A à H,
+des quarts d'octobre 2025 à novembre 2026, 20 à 35 heures par semaine, des taux
+de 80 à 100 $ de l'heure, des distances de 10 à 150 km aller simple.
+
+C'est le jeu du mode démonstration de l'application, tiré avec la même graine
+et dans le même ordre : les pharmacies ont les mêmes taux et les mêmes
+distances des deux côtés, et un test le vérifie contre le générateur de
+l'application. Une seule différence : une facture ne part qu'une fois le mois
+terminé et une semaine après le dernier quart, pour que les quatre états — à
+venir, à facturer, facturé, payé — se voient dès le premier jour.
+
+Vider les données du navigateur remet le jeu de démonstration.
+
+Les règles de calcul sont celles de l'application : un montant se calcule et
+s'arrondit une seule fois, sur le quart ; zéro est une valeur, et seul le vide
+hérite ; un quart de nuit appartient au jour où il commence ; un quart fige
+ses taux le jour de sa création, et un quart facturé ne se modifie plus.
+
 ## Les jetons
 
 Les mêmes que ceux de l'application (V2.6), parce que le site et l'application
